@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Auditoria de Veículos — AVP</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -21,13 +22,46 @@
   --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);
   --font:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;
 }
+[data-theme="dark"]{
+  --bg:#121212;--surface:#1e1e1e;--border:#2e2e2e;--border-light:#252525;
+  --text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--blue-light:#1e3a5f;--blue-bg:#172554;
+  --green:#34d399;--green-light:#064e3b;--green-bg:#022c22;
+  --amber:#fbbf24;--amber-light:#78350f;--amber-bg:#451a03;
+  --red:#f87171;--red-light:#7f1d1d;--red-bg:#450a0a;
+  --purple:#a78bfa;--purple-light:#2e1065;
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.4),0 2px 4px -2px rgba(0,0,0,.3);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.5),0 4px 6px -4px rgba(0,0,0,.4);
+}
+[data-theme="dark"] input,[data-theme="dark"] select{background:var(--surface);color:var(--text1);border-color:var(--border)}
+[data-theme="dark"] textarea{background:var(--surface);color:var(--text1);border-color:var(--border)}
+[data-theme="dark"] .tab.active{box-shadow:0 2px 4px rgba(59,130,246,.4)}
+[data-theme="dark"] tr:hover{background:rgba(59,130,246,.1)}
+[data-theme="dark"] .clickable-row:hover{background:rgba(59,130,246,.15)}
 html{font-size:14px}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5}
 
 /* ========= LAYOUT ========= */
-.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
 .app-logo{font-size:1.25rem;font-weight:700;color:var(--blue);letter-spacing:-.5px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.85rem;margin-left:8px}
+.header-actions{display:flex;align-items:center;gap:10px}
+.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
+.theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
+.theme-toggle .label{font-size:.75rem;font-weight:500;color:var(--text2)}
+.upload-btn{background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s}
+.upload-btn:hover{background:#1d4ed8}
+.base-info{font-size:.7rem;color:var(--text3);text-align:right;line-height:1.4;max-width:200px}
+.upload-modal-content{display:flex;flex-direction:column;gap:14px}
+.upload-dropzone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-dropzone:hover,.upload-dropzone.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-dropzone .icon{font-size:2.5rem;margin-bottom:8px}
+.upload-dropzone p{color:var(--text2);font-size:.82rem}
+.upload-dropzone .formats{font-size:.7rem;color:var(--text3);margin-top:6px}
+.upload-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:.82rem}
+.upload-preview .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)}
+.upload-preview .stat:last-child{border-bottom:none}
 .app-container{max-width:1440px;margin:0 auto;padding:24px 32px 60px}
 
 /* ========= TABS ========= */
@@ -181,6 +215,11 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 <!-- ========= HEADER ========= -->
 <header class="app-header">
   <div class="app-logo">AVP<span>Dashboard de Auditoria de Veículos</span></div>
+  <div class="header-actions">
+    <div class="base-info" id="baseInfo"></div>
+    <button class="upload-btn" onclick="showUploadModal()">📤 Atualizar Base</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Alternar tema">🌙 <span class="label">Escuro</span></button>
+  </div>
 </header>
 
 <!-- ========= MAIN CONTAINER ========= -->
@@ -1189,6 +1228,280 @@ commitStaging = function(){
     },'green');
 };
 
+// ========= THEME TOGGLE =========
+function initTheme(){
+  const saved = localStorage.getItem('avp-theme');
+  if(saved==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    updateThemeButton('dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    updateThemeButton('light');
+  }
+}
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  if(current==='dark'){
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('avp-theme','light');
+    updateThemeButton('light');
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem('avp-theme','dark');
+    updateThemeButton('dark');
+  }
+}
+
+function updateThemeButton(theme){
+  const btn = document.getElementById('themeToggle');
+  if(!btn) return;
+  if(theme==='dark'){
+    btn.innerHTML='☀️ <span class="label">Claro</span>';
+    btn.title='Alternar para tema claro';
+  } else {
+    btn.innerHTML='🌙 <span class="label">Escuro</span>';
+    btn.title='Alternar para tema escuro';
+  }
+}
+
+// ========= UPLOAD / ATUALIZAR BASE =========
+let baseFileInfo = null;
+
+function showUploadModal(){
+  let body = `<div class="upload-modal-content">
+    <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">📁</div>
+      <p><strong>Clique aqui</strong> ou arraste um arquivo</p>
+      <div class="formats">Formatos aceitos: .xlsx, .xls, .csv</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+    <div id="uploadPreview" style="display:none"></div>
+  </div>`;
+  showModal('📤 Atualizar Base de Dados', body, null);
+  // Setup drag and drop
+  setTimeout(()=>{
+    const dz = document.getElementById('uploadDropzone');
+    if(!dz) return;
+    dz.addEventListener('dragover',(e)=>{e.preventDefault();dz.classList.add('dragover');});
+    dz.addEventListener('dragleave',()=>{dz.classList.remove('dragover');});
+    dz.addEventListener('drop',(e)=>{
+      e.preventDefault();dz.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if(file) processUploadedFile(file);
+    });
+  },100);
+}
+
+function handleFileSelect(event){
+  const file = event.target.files[0];
+  if(file) processUploadedFile(file);
+}
+
+function processUploadedFile(file){
+  const validExts = ['.xlsx','.xls','.csv'];
+  const ext = '.'+file.name.split('.').pop().toLowerCase();
+  if(!validExts.includes(ext)){
+    showToast('Formato inválido. Use .xlsx, .xls ou .csv','error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      let parsedData;
+      if(ext==='.csv'){
+        parsedData = parseCSVFile(e.target.result);
+      } else {
+        parsedData = parseExcelFile(e.target.result);
+      }
+      if(!parsedData){
+        showToast('Erro ao processar arquivo. Verifique a estrutura.','error');
+        return;
+      }
+      showUploadPreview(file, parsedData);
+    } catch(err){
+      console.error('Erro no upload:',err);
+      showToast('Erro ao ler arquivo: '+err.message,'error');
+    }
+  };
+  if(ext==='.csv') reader.readAsText(file,'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseExcelFile(data){
+  const workbook = XLSX.read(data, {type:'array'});
+  const result = {};
+  // Try to detect structure: multiple sheets = categories, or single sheet with Categoria column
+  if(workbook.SheetNames.length > 1){
+    // Multiple sheets: each sheet is a category
+    for(const sheetName of workbook.SheetNames){
+      if(sheetName==='Historico') continue;
+      const ws = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if(rows.length<2) continue;
+      const header = rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+      let marcaIdx = header.findIndex(h=>h.includes('marca'));
+      let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+      if(marcaIdx===-1) marcaIdx=0;
+      if(modeloIdx===-1) modeloIdx=1;
+      const cat = sheetName;
+      if(!result[cat]) result[cat]={total:0,brands:{}};
+      for(let i=1;i<rows.length;i++){
+        const marca = (rows[i][marcaIdx]||'').toString().trim();
+        const modelo = (rows[i][modeloIdx]||'').toString().trim();
+        if(!marca||!modelo) continue;
+        if(marca==='---'||marca.includes('HISTORICO')) break;
+        if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+        result[cat].brands[marca].push(modelo);
+        result[cat].total++;
+      }
+    }
+  } else {
+    // Single sheet: look for Categoria column
+    const ws = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+    if(rows.length<2) return null;
+    const header = rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+    let catIdx = header.findIndex(h=>h.includes('categoria')||h.includes('category'));
+    let marcaIdx = header.findIndex(h=>h.includes('marca'));
+    let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+    if(catIdx===-1||marcaIdx===-1||modeloIdx===-1){
+      // Try positional: col0=cat, col1=marca, col2=modelo
+      catIdx=0;marcaIdx=1;modeloIdx=2;
+    }
+    for(let i=1;i<rows.length;i++){
+      const cat = (rows[i][catIdx]||'').toString().trim();
+      const marca = (rows[i][marcaIdx]||'').toString().trim();
+      const modelo = (rows[i][modeloIdx]||'').toString().trim();
+      if(!cat||!marca||!modelo) continue;
+      if(!result[cat]) result[cat]={total:0,brands:{}};
+      if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+      result[cat].brands[marca].push(modelo);
+      result[cat].total++;
+    }
+  }
+  if(Object.keys(result).length===0) return null;
+  return result;
+}
+
+function parseCSVFile(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return null;
+  const sep = lines[0].includes(';')?';':',';
+  const header = lines[0].split(sep).map(h=>h.replace(/"/g,'').toLowerCase().trim());
+  let catIdx = header.findIndex(h=>h.includes('categoria'));
+  let marcaIdx = header.findIndex(h=>h.includes('marca'));
+  let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+  if(catIdx===-1||marcaIdx===-1||modeloIdx===-1){
+    catIdx=0;marcaIdx=1;modeloIdx=2;
+  }
+  const result = {};
+  for(let i=1;i<lines.length;i++){
+    const cols = lines[i].split(sep).map(c=>c.replace(/"/g,'').trim());
+    const cat=cols[catIdx],marca=cols[marcaIdx],modelo=cols[modeloIdx];
+    if(!cat||!marca||!modelo) continue;
+    if(!result[cat]) result[cat]={total:0,brands:{}};
+    if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+    result[cat].brands[marca].push(modelo);
+    result[cat].total++;
+  }
+  if(Object.keys(result).length===0) return null;
+  return result;
+}
+
+function showUploadPreview(file, parsedData){
+  const cats = Object.keys(parsedData);
+  let totalModels=0, brandSet=new Set();
+  for(const cat of cats){
+    for(const[brand,models] of Object.entries(parsedData[cat].brands)){
+      brandSet.add(brand);
+      totalModels+=models.length;
+    }
+  }
+  const preview = document.getElementById('uploadPreview');
+  if(preview){
+    preview.style.display='block';
+    preview.innerHTML=`<div class="upload-preview">
+      <div class="stat"><span>Arquivo:</span><strong>${file.name}</strong></div>
+      <div class="stat"><span>Tamanho:</span><strong>${(file.size/1024).toFixed(1)} KB</strong></div>
+      <div class="stat"><span>Categorias:</span><strong>${cats.length}</strong></div>
+      <div class="stat"><span>Marcas:</span><strong>${brandSet.size}</strong></div>
+      <div class="stat"><span>Modelos:</span><strong>${totalModels.toLocaleString()}</strong></div>
+    </div>`;
+  }
+  // Update modal actions to show confirm
+  const actions = document.getElementById('modalActions');
+  if(actions){
+    actions.innerHTML=`<button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-blue" onclick="confirmUpload()">✓ Confirmar Atualização</button>`;
+  }
+  // Store parsed data temporarily
+  window._pendingUpload = {file, data:parsedData, totalModels, brands:brandSet.size, cats:cats.length};
+}
+
+async function confirmUpload(){
+  const pending = window._pendingUpload;
+  if(!pending) return;
+  // Replace RAW data
+  for(const key of Object.keys(RAW)) delete RAW[key];
+  for(const[key,val] of Object.entries(pending.data)) RAW[key]=val;
+  // Recompute everything
+  recomputeAll();
+  initAnos();
+  renderKPIs();
+  renderOverviewTable();
+  renderDupTable();
+  renderStagingBars();
+  renderStagingTable();
+  renderMgmtKpis();
+  // Save base info
+  baseFileInfo = {
+    name: pending.file.name,
+    date: new Date().toLocaleString('pt-BR'),
+    records: pending.totalModels,
+    categories: pending.cats,
+    brands: pending.brands
+  };
+  localStorage.setItem('avp-base-info', JSON.stringify(baseFileInfo));
+  updateBaseInfo();
+  // Register in history
+  HISTORY.push({
+    timestamp: new Date().toLocaleString('pt-BR'),
+    type: 'Atualização de Base',
+    marca: pending.file.name,
+    modelo: pending.totalModels+' registros',
+    catFrom: pending.cats+' categorias',
+    catTo: pending.brands+' marcas'
+  });
+  // Sync with Google Sheets
+  if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+    await sheetsInit();
+    await sheetsSaveHistory([{
+      timestamp: new Date().toLocaleString('pt-BR'),
+      type:'Atualização de Base',
+      marca:pending.file.name,
+      modelo:pending.totalModels+' registros',
+      catFrom:pending.cats+' categorias',
+      catTo:pending.brands+' marcas'
+    }]);
+  }
+  window._pendingUpload = null;
+  closeModal();
+  showToast('Base atualizada com sucesso! '+pending.totalModels+' registros importados.','success');
+}
+
+function updateBaseInfo(){
+  const el = document.getElementById('baseInfo');
+  if(!el) return;
+  if(!baseFileInfo){
+    const saved = localStorage.getItem('avp-base-info');
+    if(saved) baseFileInfo = JSON.parse(saved);
+  }
+  if(baseFileInfo){
+    el.innerHTML=`<strong>${baseFileInfo.name}</strong><br>${baseFileInfo.date}<br>${baseFileInfo.records} registros`;
+  }
+}
+
 // ========= INITIALIZATION =========
 async function initSheetsIntegration(){
   createSyncIndicator();
@@ -1205,6 +1518,7 @@ async function initSheetsIntegration(){
 }
 
 function initApp(){
+  initTheme();
   recomputeAll();
   initAnos();
   renderKPIs();
@@ -1212,6 +1526,7 @@ function initApp(){
   renderMgmtKpis();
   renderStagingBars();
   renderStagingTable();
+  updateBaseInfo();
   initSheetsIntegration();
 }
 
