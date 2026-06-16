@@ -1036,11 +1036,16 @@ function acOpen(inputId, type){
   const dd=document.getElementById(inputId+'_dd');
   if(!input||!dd) return;
   const data=acGetData(type);
-  const query=norm(input.value);
-  const filtered=query?data.filter(d=>norm(d).includes(query)):data;
-  acRenderOptions(dd, filtered, inputId, type);
+  // Show all options when opening (don't filter by current value)
+  acRenderOptions(dd, data, inputId, type);
   dd.classList.add('open');
   acHighlightIdx=-1;
+  // Select/highlight current value in the list
+  const current=input.value.trim();
+  if(current){
+    const options=dd.querySelectorAll('.ac-option');
+    options.forEach(o=>{if(o.dataset.value===current) o.classList.add('selected');});
+  }
 }
 
 function acFilter(inputId, type){
