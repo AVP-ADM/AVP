@@ -262,6 +262,25 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .search-result-table tr{cursor:pointer}
 .search-result-table tr:hover td{background:var(--blue-bg)}
 
+/* ========= AUTOCOMPLETE COMPONENT ========= */
+.ac-wrap{position:relative}
+.ac-input{width:100%;padding:9px 32px 9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;background:var(--surface);color:var(--text1);transition:border-color .2s}
+.ac-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.ac-input.valid{border-color:var(--green)}
+.ac-input.invalid{border-color:var(--red)}
+.ac-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.75rem;pointer-events:none}
+.ac-icon.valid{color:var(--green)}
+.ac-icon.invalid{color:var(--red)}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);max-height:180px;overflow-y:auto;z-index:10;display:none;box-shadow:var(--shadow-md)}
+.ac-dropdown.open{display:block}
+.ac-option{padding:8px 12px;font-size:.82rem;cursor:pointer;color:var(--text1);transition:background .1s}
+.ac-option:hover,.ac-option.highlighted{background:var(--blue-bg);color:var(--blue)}
+.ac-option.selected{background:var(--blue-light);font-weight:600}
+.ac-empty{padding:12px;font-size:.78rem;color:var(--text3);text-align:center}
+.ac-msg{font-size:.7rem;margin-top:3px;padding:0 2px}
+.ac-msg.valid{color:var(--green)}
+.ac-msg.invalid{color:var(--red)}
+
 /* ========= EMPTY STATE ========= */
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty .empty-icon{font-size:2.5rem;margin-bottom:10px}
@@ -953,62 +972,215 @@ function openModelDetail(marca, modelo){
 
 function openModelEdit(marca, modelo, categoria){
   const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'Ano da categoria';
-  const catOptions=CATEGORIES.map(c=>`<option value="${c}" ${c===categoria?'selected':''}>${c}</option>`).join('');
-  const brandOptions=ALL_BRANDS.map(b=>`<option value="${b}" ${b===marca?'selected':''}>${b}</option>`).join('');
-  showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:10px">
-    <label style="font-size:.78rem;color:var(--text2)">Marca:</label>
-    <div style="position:relative">
-      <input id="edit_marca_search" placeholder="Pesquisar marca..." oninput="filterEditSelect('edit_marca_search','edit_marca')" style="margin-bottom:4px">
-      <select id="edit_marca" size="1">${brandOptions}</select>
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
+  showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_marca" placeholder="Digite para pesquisar marca..." value="${marca}" onfocus="acOpen('ac_marca','brands')" oninput="acFilter('ac_marca','brands')" onkeydown="acKeydown(event,'ac_marca','brands')">
+      <span class="ac-icon" id="ac_marca_icon">▼</span>
+      <div class="ac-dropdown" id="ac_marca_dd"></div>
     </div>
-    <label style="font-size:.78rem;color:var(--text2)">Modelo:</label>
-    <input id="edit_modelo" value="${modelo}">
-    <label style="font-size:.78rem;color:var(--text2)">Categoria:</label>
-    <div style="position:relative">
-      <input id="edit_cat_search" placeholder="Pesquisar categoria..." oninput="filterEditSelect('edit_cat_search','edit_cat')" style="margin-bottom:4px">
-      <select id="edit_cat" size="1">${catOptions}</select>
+    <div class="ac-msg" id="ac_marca_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_modelo" placeholder="Digite para pesquisar modelo..." value="${modelo}" onfocus="acOpen('ac_modelo','models')" oninput="acFilter('ac_modelo','models')" onkeydown="acKeydown(event,'ac_modelo','models')">
+      <span class="ac-icon" id="ac_modelo_icon">▼</span>
+      <div class="ac-dropdown" id="ac_modelo_dd"></div>
     </div>
-    <label style="font-size:.78rem;color:var(--text2)">Ano de Aceitação:</label>
-    <input id="edit_ano" value="${ano}">
-    <span style="font-size:.72rem;color:var(--text3)">As alterações serão adicionadas às Alterações Pendentes.</span>
-  </div>`,function(){
-    const newMarca=document.getElementById('edit_marca').value;
-    const newModelo=document.getElementById('edit_modelo').value.trim();
-    const newCat=document.getElementById('edit_cat').value;
-    const newAno=document.getElementById('edit_ano').value.trim();
-    if(!newMarca||!newModelo) return alert('Selecione marca e preencha modelo');
-    // If category changed, it's a move
-    if(newCat!==categoria){
-      addToStaging({type:'Movimentação',marca:marca,modelo:modelo,catFrom:categoria,catTo:newCat});
-    }
-    // If marca or modelo changed, remove old + add new
-    if(newMarca!==marca||newModelo!==modelo){
-      addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:newCat!==categoria?categoria:categoria,catTo:null});
-      addToStaging({type:'Adição',marca:newMarca,modelo:newModelo,catFrom:null,catTo:newCat!==categoria?newCat:categoria});
-    }
-    // Update ano
-    if(newAno){
-      const key=(newCat!==categoria?newCat:categoria)+'|||'+(newMarca||marca)+'|||'+(newModelo||modelo);
-      ANOS_ACEITACAO[key]=newAno;
-    }
-    closeModal();
-    closeDrawer();
-    showToast('Edição adicionada às alterações pendentes','success');
-  },'blue');
+    <div class="ac-msg" id="ac_modelo_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_cat" placeholder="Digite para pesquisar categoria..." value="${categoria}" onfocus="acOpen('ac_cat','cats')" oninput="acFilter('ac_cat','cats')" onkeydown="acKeydown(event,'ac_cat','cats')">
+      <span class="ac-icon" id="ac_cat_icon">▼</span>
+      <div class="ac-dropdown" id="ac_cat_dd"></div>
+    </div>
+    <div class="ac-msg" id="ac_cat_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Ano de Aceitação:</label>
+    <input id="edit_ano" value="${ano}" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem">
+
+    <span style="font-size:.72rem;color:var(--text3)">Selecione apenas valores existentes na base. O botão será habilitado quando todos os campos forem válidos.</span>
+  </div>`,null,'blue');
+
+  // Store original values and setup
+  window._editCtx={marca,modelo,categoria,ano};
+  window._acSelected={marca:marca,modelo:modelo,cat:categoria};
+
+  // Replace modal confirm button with controlled one
+  setTimeout(()=>{
+    const actions=document.getElementById('modalActions');
+    actions.innerHTML=`<button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-blue" id="editSaveBtn" onclick="saveModelEdit()" disabled style="opacity:.5">🔒 Salvar Alteração</button>`;
+    acValidateAll();
+    // Close dropdown on outside click
+    document.addEventListener('click',acCloseAll);
+  },50);
 }
 
-function filterEditSelect(searchId, selectId){
-  const query=norm(document.getElementById(searchId).value);
-  const select=document.getElementById(selectId);
-  if(!select) return;
-  const options=select.querySelectorAll('option');
-  options.forEach(opt=>{
-    if(!query||norm(opt.textContent).includes(query)){opt.style.display='';opt.hidden=false;}
-    else{opt.style.display='none';opt.hidden=true;}
-  });
-  // Auto-select first visible if current is hidden
-  const visible=Array.from(options).filter(o=>!o.hidden);
-  if(visible.length===1) select.value=visible[0].value;
+// Autocomplete data sources
+function acGetData(type){
+  if(type==='brands') return ALL_BRANDS;
+  if(type==='models') return [...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
+  if(type==='cats') return CATEGORIES;
+  return [];
+}
+
+// Autocomplete state
+let acHighlightIdx=-1;
+
+function acOpen(inputId, type){
+  acCloseAllDropdowns();
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(!input||!dd) return;
+  const data=acGetData(type);
+  const query=norm(input.value);
+  const filtered=query?data.filter(d=>norm(d).includes(query)):data;
+  acRenderOptions(dd, filtered, inputId, type);
+  dd.classList.add('open');
+  acHighlightIdx=-1;
+}
+
+function acFilter(inputId, type){
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(!input||!dd) return;
+  const data=acGetData(type);
+  const query=norm(input.value);
+  const filtered=query?data.filter(d=>norm(d).includes(query)):data;
+  acRenderOptions(dd, filtered, inputId, type);
+  dd.classList.add('open');
+  acHighlightIdx=-1;
+  // Clear selection if value changed
+  const selKey=type==='brands'?'marca':type==='models'?'modelo':'cat';
+  if(window._acSelected) window._acSelected[selKey]='';
+  acValidateField(inputId, type);
+}
+
+function acRenderOptions(dd, items, inputId, type){
+  if(!items.length){
+    dd.innerHTML='<div class="ac-empty">Nenhum resultado encontrado</div>';
+    return;
+  }
+  dd.innerHTML=items.slice(0,100).map((item,i)=>`
+    <div class="ac-option" data-value="${item}" data-idx="${i}" onmousedown="acSelect('${inputId}','${type}','${item.replace(/'/g,"\\'")}')">${item}</div>
+  `).join('');
+}
+
+function acSelect(inputId, type, value){
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(input) input.value=value;
+  if(dd) dd.classList.remove('open');
+  const selKey=type==='brands'?'marca':type==='models'?'modelo':'cat';
+  if(window._acSelected) window._acSelected[selKey]=value;
+  acValidateField(inputId, type);
+  acValidateAll();
+}
+
+function acKeydown(event, inputId, type){
+  const dd=document.getElementById(inputId+'_dd');
+  if(!dd) return;
+  const options=dd.querySelectorAll('.ac-option');
+  if(event.key==='ArrowDown'){
+    event.preventDefault();
+    acHighlightIdx=Math.min(acHighlightIdx+1, options.length-1);
+    options.forEach((o,i)=>o.classList.toggle('highlighted',i===acHighlightIdx));
+    if(options[acHighlightIdx]) options[acHighlightIdx].scrollIntoView({block:'nearest'});
+  } else if(event.key==='ArrowUp'){
+    event.preventDefault();
+    acHighlightIdx=Math.max(acHighlightIdx-1, 0);
+    options.forEach((o,i)=>o.classList.toggle('highlighted',i===acHighlightIdx));
+    if(options[acHighlightIdx]) options[acHighlightIdx].scrollIntoView({block:'nearest'});
+  } else if(event.key==='Enter'){
+    event.preventDefault();
+    if(acHighlightIdx>=0&&options[acHighlightIdx]){
+      const val=options[acHighlightIdx].dataset.value;
+      acSelect(inputId, type, val);
+    }
+  } else if(event.key==='Escape'){
+    dd.classList.remove('open');
+  }
+}
+
+function acValidateField(inputId, type){
+  const input=document.getElementById(inputId);
+  const icon=document.getElementById(inputId+'_icon');
+  const msg=document.getElementById(inputId+'_msg');
+  if(!input) return;
+  const val=input.value.trim();
+  const data=acGetData(type);
+  const isValid=data.some(d=>d===val);
+  input.classList.toggle('valid',isValid);
+  input.classList.toggle('invalid',val.length>0&&!isValid);
+  if(icon){
+    icon.textContent=isValid?'✓':val.length>0?'✕':'▼';
+    icon.className='ac-icon '+(isValid?'valid':val.length>0?'invalid':'');
+  }
+  if(msg){
+    const labels={brands:'Marca',models:'Modelo',cats:'Categoria'};
+    if(isValid){msg.textContent='✓ '+labels[type]+' válida';msg.className='ac-msg valid';}
+    else if(val.length>0){msg.textContent='✕ '+labels[type]+' não encontrada na base';msg.className='ac-msg invalid';}
+    else{msg.textContent='';msg.className='ac-msg';}
+  }
+}
+
+function acValidateAll(){
+  const marcaValid=ALL_BRANDS.includes(document.getElementById('ac_marca')?.value.trim()||'');
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))];
+  const modeloValid=allModelos.includes(document.getElementById('ac_modelo')?.value.trim()||'');
+  const catValid=CATEGORIES.includes(document.getElementById('ac_cat')?.value.trim()||'');
+  const btn=document.getElementById('editSaveBtn');
+  if(btn){
+    const allValid=marcaValid&&modeloValid&&catValid;
+    btn.disabled=!allValid;
+    btn.style.opacity=allValid?'1':'.5';
+    btn.textContent=allValid?'✓ Salvar Alteração':'🔒 Salvar Alteração';
+  }
+}
+
+function acCloseAllDropdowns(){
+  document.querySelectorAll('.ac-dropdown.open').forEach(d=>d.classList.remove('open'));
+}
+
+function acCloseAll(e){
+  if(!e.target.closest('.ac-wrap')){acCloseAllDropdowns();}
+}
+
+function saveModelEdit(){
+  const ctx=window._editCtx;
+  if(!ctx) return;
+  const newMarca=document.getElementById('ac_marca').value.trim();
+  const newModelo=document.getElementById('ac_modelo').value.trim();
+  const newCat=document.getElementById('ac_cat').value.trim();
+  const newAno=document.getElementById('edit_ano').value.trim();
+  if(!newMarca||!newModelo||!newCat) return;
+  // Validate against base
+  if(!ALL_BRANDS.includes(newMarca)){showToast('Marca não encontrada na base','error');return;}
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))];
+  if(!allModelos.includes(newModelo)){showToast('Modelo não encontrado na base','error');return;}
+  if(!CATEGORIES.includes(newCat)){showToast('Categoria não encontrada na base','error');return;}
+
+  // If category changed, it's a move
+  if(newCat!==ctx.categoria){
+    addToStaging({type:'Movimentação',marca:ctx.marca,modelo:ctx.modelo,catFrom:ctx.categoria,catTo:newCat});
+  }
+  // If marca or modelo changed, remove old + add new
+  if(newMarca!==ctx.marca||newModelo!==ctx.modelo){
+    addToStaging({type:'Remoção',marca:ctx.marca,modelo:ctx.modelo,catFrom:newCat!==ctx.categoria?ctx.categoria:ctx.categoria,catTo:null});
+    addToStaging({type:'Adição',marca:newMarca,modelo:newModelo,catFrom:null,catTo:newCat!==ctx.categoria?newCat:ctx.categoria});
+  }
+  // Update ano
+  if(newAno){
+    const key=(newCat!==ctx.categoria?newCat:ctx.categoria)+'|||'+newMarca+'|||'+newModelo;
+    ANOS_ACEITACAO[key]=newAno;
+  }
+  document.removeEventListener('click',acCloseAll);
+  closeModal();
+  closeDrawer();
+  showToast('Edição adicionada às alterações pendentes','success');
 }
 
 function openModelRemove(marca, modelo){
