@@ -336,10 +336,11 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
           <option value="count_asc">Menos modelos</option>
           <option value="brands">Mais marcas</option>
         </select>
+        <button class="btn btn-sm btn-green" onclick="openAddCategory()">+ Nova Categoria</button>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados</th><th>Divergências</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="ovTableBody"></tbody>
         </table>
       </div>
@@ -674,12 +675,16 @@ function renderOverviewTable(){
         divs += modelsMe.filter(m=>!modelsOther.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).length;
       }
     }
-    return `<tr class="clickable-row" onclick="openDrawer('${cat.replace(/'/g,"\\'")}')">
-      <td><strong>${cat}</strong></td>
+    return `<tr>
+      <td onclick="openDrawer('${cat.replace(/'/g,"\\'")}')"><strong style="cursor:pointer">${cat}</strong></td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${CAT_TOTALS[cat]}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="event.stopPropagation();openRenameCategory('${cat.replace(/'/g,"\\'")}')" title="Renomear" style="padding:4px 6px;font-size:.7rem">✏️</button>
+        <button class="btn btn-sm btn-red" onclick="event.stopPropagation();openRemoveCategory('${cat.replace(/'/g,"\\'")}')" title="Remover" style="padding:4px 6px;font-size:.7rem">🗑️</button>
+      </td>
     </tr>`;
   }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria</td></tr>';
 
@@ -778,14 +783,20 @@ function openDrawer(cat){
   </div>`;
   for(const b of brandNames){
     html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${b} <span style="color:var(--text3);font-weight:400">(${brands[b].length})</span></div>`;
-    html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
     for(const m of brands[b]){
       const ano = typeof getAno==='function'?getAno(cat,b,m):'';
       const key = norm(b)+'|||'+norm(m);
       const isDup = modelStatus[key]==='Duplicado';
-      html += `<span class="tag ${isDup?'tag-red':'tag-gray'}">${m}${ano?' · '+ano:''}</span>`;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)">
+        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}</span>
+        <span style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem" title="Editar">✏️</button>
+          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem" title="Remover">🗑️</button>
+          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)" title="Mover">↔️</button>
+        </span>
+      </div>`;
     }
-    html += '</div></div>';
+    html += '</div>';
   }
   document.getElementById('drawerContent').innerHTML = html;
   document.getElementById('drawer').classList.add('open');
@@ -1366,6 +1377,87 @@ function cancelPendingRemoval(marca, modelo, categoria){
     renderStagingTable();
     showToast('Remoção cancelada','warning');
   }
+}
+
+// ========= CATEGORY MANAGEMENT =========
+function openAddCategory(){
+  showModal('+ Nova Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
+    <input id="new_cat_name" placeholder="Digite o nome da categoria...">
+    <div id="new_cat_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    const name=document.getElementById('new_cat_name').value.trim();
+    if(!name){showToast('Digite o nome da categoria','error');return;}
+    if(CATEGORIES.includes(name)){showToast('Categoria já existe!','error');return;}
+    addToStaging({type:'Adição',marca:'[CATEGORIA]',modelo:name,catFrom:null,catTo:name});
+    // Also create empty category in RAW for immediate use
+    if(!RAW[name]) RAW[name]={total:0,brands:{}};
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
+    closeModal();
+    showToast('Categoria "'+name+'" adicionada às pendentes','success');
+  },'green');
+  // Validate on input
+  setTimeout(()=>{
+    const input=document.getElementById('new_cat_name');
+    if(input) input.oninput=function(){
+      const msg=document.getElementById('new_cat_msg');
+      const val=this.value.trim();
+      if(!val){msg.textContent='';msg.className='ac-msg';return;}
+      if(CATEGORIES.includes(val)){msg.textContent='✕ Categoria já existe';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openRenameCategory(cat){
+  showModal('✏️ Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+    <label style="font-size:.78rem;color:var(--text2)">Categoria atual:</label>
+    <div style="font-weight:600;font-size:.9rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius)">${cat}</div>
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
+    <input id="rename_cat" value="${cat}">
+    <div id="rename_cat_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A renomeação será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('rename_cat').value.trim();
+    if(!newName){showToast('Digite o novo nome','error');return;}
+    if(newName===cat){closeModal();return;}
+    if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
+    addToStaging({type:'Movimentação',marca:'[CATEGORIA]',modelo:cat,catFrom:cat,catTo:newName});
+    closeModal();
+    showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
+  },'blue');
+  setTimeout(()=>{
+    const input=document.getElementById('rename_cat');
+    if(input) input.oninput=function(){
+      const msg=document.getElementById('rename_cat_msg');
+      const val=this.value.trim();
+      if(!val||val===cat){msg.textContent='';msg.className='ac-msg';return;}
+      if(CATEGORIES.includes(val)){msg.textContent='✕ Nome já existe';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openRemoveCategory(cat){
+  const total=CAT_TOTALS[cat]||0;
+  if(total>0){
+    showModal('⚠️ Não é possível remover',`<div style="line-height:1.8">
+      <strong>${cat}</strong><br><br>
+      Existem <strong>${total} modelos</strong> vinculados a esta categoria.<br><br>
+      <span style="color:var(--text2)">Remova ou mova os modelos antes de excluir a categoria.</span>
+    </div>`,function(){closeModal();},'blue');
+    return;
+  }
+  showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
+    <strong>${cat}</strong><br><br>
+    Esta categoria está vazia e será removida.<br>
+    <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    addToStaging({type:'Remoção',marca:'[CATEGORIA]',modelo:cat,catFrom:cat,catTo:null});
+    closeModal();
+    showToast('Remoção da categoria "'+cat+'" pendente','success');
+  },'red');
 }
 
 // ========= DIVERGENCES =========
