@@ -2496,6 +2496,8 @@ async function initSheetsIntegration(){
   if(syncBtn){syncBtn.disabled=true;syncBtn.style.opacity='.5';}
   if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
     showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
+    // Render empty state
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
     return;
   }
   const loaded=await sheetsLoad();
@@ -2504,24 +2506,28 @@ async function initSheetsIntegration(){
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
+    // NOW render everything with the loaded data
+    renderKPIs();
     renderOverviewTable();
-    renderDupTable();
+    renderMgmtKpis();
+    renderStagingBars();
+    renderStagingTable();
     // Enable sync button now that data is loaded
     if(syncBtn){syncBtn.disabled=false;syncBtn.style.opacity='1';}
+  } else {
+    // Failed to load - show error state
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+    showToast('Falha ao carregar dados do Google Sheets. Verifique a conexão.','error');
   }
 }
 
 function initApp(){
   initTheme();
-  recomputeAll();
-  initAnos();
-  renderKPIs();
-  renderOverviewTable();
-  renderMgmtKpis();
-  renderStagingBars();
-  renderStagingTable();
   updateBaseInfo();
   updateSyncInfo();
+  // Don't render anything until data loads from Sheets
+  // Show loading state
+  document.getElementById('kpiGrid').innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><div class="spinner" style="margin:0 auto 10px"></div>Carregando dados do Google Sheets...</div>';
   initSheetsIntegration();
 }
 
