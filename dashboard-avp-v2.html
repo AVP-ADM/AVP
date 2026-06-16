@@ -93,8 +93,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 
 /* ========= CARDS & KPIs ========= */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);transition:box-shadow .2s}
-.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);transition:box-shadow .2s;cursor:pointer}
+.kpi-card:hover{box-shadow:var(--shadow-md);border-color:var(--blue)}
+.kpi-card:active{transform:scale(.98)}
 .kpi-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px}
 .kpi-value{font-size:1.75rem;font-weight:700;color:var(--text1)}
 .kpi-card.blue .kpi-value{color:var(--blue)}
@@ -156,6 +157,18 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .drawer-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text2);padding:4px 8px;border-radius:var(--radius)}
 .drawer-close:hover{background:var(--bg)}
 .drawer-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;padding-right:40px}
+.drawer-subtitle{font-size:.78rem;color:var(--text2);margin-top:-14px;margin-bottom:16px}
+.drawer-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.drawer-toolbar input{flex:1;min-width:150px}
+.drawer-toolbar .btn{white-space:nowrap}
+.drawer-count{font-size:.75rem;color:var(--text3);margin-bottom:10px}
+.drawer-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.drawer-table th{padding:8px 10px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
+.drawer-table th:hover{color:var(--blue)}
+.drawer-table td{padding:7px 10px;border-bottom:1px solid var(--border-light);color:var(--text1)}
+.drawer-table tr:hover td{background:var(--blue-bg)}
+.clickable-num{cursor:pointer;transition:all .15s}
+.clickable-num:hover{opacity:.8;transform:scale(1.05);text-decoration:underline}
 
 /* ========= PAGINATION ========= */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
@@ -564,11 +577,11 @@ function renderKPIs(){
   }
 
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card blue"><div class="kpi-label">Total Categorias</div><div class="kpi-value">${totalCats}</div></div>
-    <div class="kpi-card green"><div class="kpi-label">Total Marcas</div><div class="kpi-value">${totalBrands}</div></div>
-    <div class="kpi-card purple"><div class="kpi-label">Total Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div></div>
-    <div class="kpi-card red"><div class="kpi-label">Duplicados</div><div class="kpi-value">${totalDups}</div></div>
-    <div class="kpi-card amber"><div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivs}</div></div>
+    <div class="kpi-card blue" onclick="showKpiDetail('categorias')"><div class="kpi-label">Total Categorias</div><div class="kpi-value">${totalCats}</div></div>
+    <div class="kpi-card green" onclick="showKpiDetail('marcas')"><div class="kpi-label">Total Marcas</div><div class="kpi-value">${totalBrands}</div></div>
+    <div class="kpi-card purple" onclick="showKpiDetail('modelos')"><div class="kpi-label">Total Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div></div>
+    <div class="kpi-card red" onclick="showKpiDetail('duplicados')"><div class="kpi-label">Duplicados</div><div class="kpi-value">${totalDups}</div></div>
+    <div class="kpi-card amber" onclick="showKpiDetail('divergencias')"><div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivs}</div></div>
   `;
 }
 
@@ -609,10 +622,10 @@ function renderOverviewTable(){
     }
     return `<tr class="clickable-row" onclick="openDrawer('${cat.replace(/'/g,"\\'")}')">
       <td><strong>${cat}</strong></td>
-      <td><span class="badge badge-blue">${CAT_TOTALS[cat]}</span></td>
-      <td><span class="badge badge-green">${brands.length}</span></td>
-      <td>${dups>0?`<span class="badge badge-red">${dups}</span>`:'—'}</td>
-      <td>${divs>0?`<span class="badge badge-amber">${divs}</span>`:'—'}</td>
+      <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${CAT_TOTALS[cat]}</span></td>
+      <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
+      <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
+      <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria</td></tr>';
 
@@ -708,6 +721,151 @@ function openDrawer(cat){
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// ========= KPI DETAIL DRAWER =========
+function showKpiDetail(type){
+  let title='', html='';
+  if(type==='categorias'){
+    title='Todas as Categorias ('+CATEGORIES.length+')';
+    html=buildDrawerTable(
+      ['Categoria','Modelos','Marcas'],
+      CATEGORIES.sort().map(c=>[c, CAT_TOTALS[c], Object.keys(RAW[c].brands||{}).length]),
+      'categorias'
+    );
+  } else if(type==='marcas'){
+    title='Todas as Marcas ('+ALL_BRANDS.length+')';
+    const brandData=ALL_BRANDS.map(b=>{
+      const cats=new Set();let count=0;
+      for(const r of ALL_RECORDS){if(r.marca===b){cats.add(r.categoria);count++;}}
+      return [b, count, [...cats].join(', ')];
+    });
+    html=buildDrawerTable(['Marca','Modelos','Categorias'],brandData,'marcas');
+  } else if(type==='modelos'){
+    title='Todos os Modelos ('+ALL_RECORDS.length.toLocaleString()+')';
+    const data=ALL_RECORDS.map(r=>[r.categoria, r.marca, r.modelo]);
+    html=buildDrawerTable(['Categoria','Marca','Modelo'],data,'modelos');
+  } else if(type==='duplicados'){
+    title='Modelos Duplicados ('+DUPLICATES.length+')';
+    const data=DUPLICATES.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
+    html=buildDrawerTable(['Marca','Modelo','Qtd.','Categorias'],data,'duplicados');
+  } else if(type==='divergencias'){
+    title='Divergências';
+    const data=[];
+    for(const g of COMP_GROUPS){
+      const modelsA=getModelsForCat(g.a);
+      const modelsB=getModelsForCat(g.b);
+      const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+      const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+      for(const m of onlyA) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.a]);
+      for(const m of onlyB) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.b]);
+    }
+    title+=' ('+data.length+')';
+    html=buildDrawerTable(['Comparação','Marca','Modelo','Situação'],data,'divergencias');
+  }
+  openDetailDrawer(title, html);
+}
+
+function showCatDetail(cat, type){
+  let title='', html='';
+  if(type==='modelos'){
+    const models=getModelsForCat(cat);
+    title='Modelos - '+cat+' ('+models.length+')';
+    const data=models.map(m=>[m.marca, m.modelo]);
+    html=buildDrawerTable(['Marca','Modelo'],data,'cat-modelos');
+  } else if(type==='marcas'){
+    const brands=Object.keys(RAW[cat].brands||{}).sort();
+    title='Marcas - '+cat+' ('+brands.length+')';
+    const data=brands.map(b=>[b, (RAW[cat].brands[b]||[]).length]);
+    html=buildDrawerTable(['Marca','Qtd. Modelos'],data,'cat-marcas');
+  } else if(type==='duplicados'){
+    const dups=DUPLICATES.filter(d=>d.cats.includes(cat));
+    title='Duplicados - '+cat+' ('+dups.length+')';
+    const data=dups.map(d=>[d.marca, d.modelo, d.cats.filter(c=>c!==cat).join(', ')]);
+    html=buildDrawerTable(['Marca','Modelo','Também em'],data,'cat-dups');
+  } else if(type==='divergencias'){
+    const data=[];
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other=g.a===cat?g.b:g.a;
+        const modelsMe=getModelsForCat(cat);
+        const modelsOther=getModelsForCat(other);
+        const onlyMe=modelsMe.filter(m=>!modelsOther.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+        for(const m of onlyMe) data.push([m.marca, m.modelo, 'Ausente em '+other]);
+      }
+    }
+    title='Divergências - '+cat+' ('+data.length+')';
+    html=buildDrawerTable(['Marca','Modelo','Situação'],data,'cat-diverg');
+  }
+  openDetailDrawer(title, html);
+}
+
+function buildDrawerTable(headers, data, id){
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTable(\''+searchId+'\',\''+tableId+'\')">';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTable(\''+tableId+'\',\''+id+'\')">📥 Exportar</button>';
+  html+='</div>';
+  html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto">';
+  html+='<table class="drawer-table" id="'+tableId+'">';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTable(\''+tableId+'\','+i+')">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<tbody>';
+  for(const row of data){
+    html+='<tr>'+row.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>';
+  }
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function openDetailDrawer(title, content){
+  let html='<div class="drawer-title">'+title+'</div>';
+  html+=content;
+  document.getElementById('drawerContent').innerHTML=html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function filterDrawerTable(searchId, tableId){
+  const query=norm(document.getElementById(searchId).value);
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  const rows=table.querySelectorAll('tbody tr');
+  let visible=0;
+  rows.forEach(row=>{
+    const text=norm(row.textContent);
+    if(!query||text.includes(query)){row.style.display='';visible++;}
+    else{row.style.display='none';}
+  });
+  const countEl=document.getElementById('count_'+tableId);
+  if(countEl) countEl.textContent=visible+' registros';
+}
+
+function sortDrawerTable(tableId, colIdx){
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  const tbody=table.querySelector('tbody');
+  const rows=Array.from(tbody.querySelectorAll('tr'));
+  const dir=table.dataset.sortDir==='asc'?'desc':'asc';
+  table.dataset.sortDir=dir;
+  rows.sort((a,b)=>{
+    const aVal=a.cells[colIdx]?.textContent||'';
+    const bVal=b.cells[colIdx]?.textContent||'';
+    const aNum=parseFloat(aVal), bNum=parseFloat(bVal);
+    if(!isNaN(aNum)&&!isNaN(bNum)) return dir==='asc'?aNum-bNum:bNum-aNum;
+    return dir==='asc'?aVal.localeCompare(bVal):bVal.localeCompare(aVal);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function exportDrawerTable(tableId, name){
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  const headers=Array.from(table.querySelectorAll('thead th')).map(th=>th.textContent.replace(' ↕',''));
+  const rows=Array.from(table.querySelectorAll('tbody tr')).filter(r=>r.style.display!=='none').map(r=>Array.from(r.cells).map(c=>c.textContent));
+  downloadCSV(toCSV(rows,headers), name+'_export.csv');
+  showToast('Exportado com sucesso!','success');
 }
 
 // ========= DUPLICATES TABLE =========
@@ -1133,7 +1291,7 @@ function getAno(categoria,marca,modelo){
 }
 
 // ========= GOOGLE SHEETS INTEGRATION =========
-const APPS_SCRIPT_URL = 'COLE_SUA_URL_AQUI';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxANONLwDXpOPxrkVZiUSZ-WUB4uZ60I8hmrpISXBJRj3TWVs-uK_03FxtYvkpd-tJH_Q/exec';
 
 let isConnected = false;
 let isSyncing = false;
