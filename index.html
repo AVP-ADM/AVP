@@ -943,7 +943,6 @@ function openModelDetail(marca, modelo){
   html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">`;
   html+=`<button class="btn btn-sm btn-blue" onclick="openModelEdit('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}','${cats[0].replace(/'/g,"\\'")}')">✏️ Editar</button>`;
   html+=`<button class="btn btn-sm btn-red" onclick="openModelRemove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">🗑️ Remover</button>`;
-  html+=`<button class="btn btn-sm btn-green" onclick="openModelAddCat('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >➕ Adicionar Categoria</button>`;
   html+=`<button class="btn btn-sm" style="background:var(--purple);color:#fff;border-color:var(--purple)" onclick="openModelMove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >↔️ Mover Categoria</button>`;
   html+=`</div>`;
 
@@ -955,29 +954,36 @@ function openModelDetail(marca, modelo){
 function openModelEdit(marca, modelo, categoria){
   const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'Ano da categoria';
   const catOptions=CATEGORIES.map(c=>`<option value="${c}" ${c===categoria?'selected':''}>${c}</option>`).join('');
+  const brandOptions=ALL_BRANDS.map(b=>`<option value="${b}" ${b===marca?'selected':''}>${b}</option>`).join('');
   showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:10px">
     <label style="font-size:.78rem;color:var(--text2)">Marca:</label>
-    <input id="edit_marca" value="${marca}">
+    <div style="position:relative">
+      <input id="edit_marca_search" placeholder="Pesquisar marca..." oninput="filterEditSelect('edit_marca_search','edit_marca')" style="margin-bottom:4px">
+      <select id="edit_marca" size="1">${brandOptions}</select>
+    </div>
     <label style="font-size:.78rem;color:var(--text2)">Modelo:</label>
     <input id="edit_modelo" value="${modelo}">
     <label style="font-size:.78rem;color:var(--text2)">Categoria:</label>
-    <select id="edit_cat">${catOptions}</select>
+    <div style="position:relative">
+      <input id="edit_cat_search" placeholder="Pesquisar categoria..." oninput="filterEditSelect('edit_cat_search','edit_cat')" style="margin-bottom:4px">
+      <select id="edit_cat" size="1">${catOptions}</select>
+    </div>
     <label style="font-size:.78rem;color:var(--text2)">Ano de Aceitação:</label>
     <input id="edit_ano" value="${ano}">
     <span style="font-size:.72rem;color:var(--text3)">As alterações serão adicionadas às Alterações Pendentes.</span>
   </div>`,function(){
-    const newMarca=document.getElementById('edit_marca').value.trim();
+    const newMarca=document.getElementById('edit_marca').value;
     const newModelo=document.getElementById('edit_modelo').value.trim();
     const newCat=document.getElementById('edit_cat').value;
     const newAno=document.getElementById('edit_ano').value.trim();
-    if(!newMarca||!newModelo) return alert('Preencha marca e modelo');
+    if(!newMarca||!newModelo) return alert('Selecione marca e preencha modelo');
     // If category changed, it's a move
     if(newCat!==categoria){
       addToStaging({type:'Movimentação',marca:marca,modelo:modelo,catFrom:categoria,catTo:newCat});
     }
     // If marca or modelo changed, remove old + add new
     if(newMarca!==marca||newModelo!==modelo){
-      addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:categoria,catTo:null});
+      addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:newCat!==categoria?categoria:categoria,catTo:null});
       addToStaging({type:'Adição',marca:newMarca,modelo:newModelo,catFrom:null,catTo:newCat!==categoria?newCat:categoria});
     }
     // Update ano
@@ -989,6 +995,20 @@ function openModelEdit(marca, modelo, categoria){
     closeDrawer();
     showToast('Edição adicionada às alterações pendentes','success');
   },'blue');
+}
+
+function filterEditSelect(searchId, selectId){
+  const query=norm(document.getElementById(searchId).value);
+  const select=document.getElementById(selectId);
+  if(!select) return;
+  const options=select.querySelectorAll('option');
+  options.forEach(opt=>{
+    if(!query||norm(opt.textContent).includes(query)){opt.style.display='';opt.hidden=false;}
+    else{opt.style.display='none';opt.hidden=true;}
+  });
+  // Auto-select first visible if current is hidden
+  const visible=Array.from(options).filter(o=>!o.hidden);
+  if(visible.length===1) select.value=visible[0].value;
 }
 
 function openModelRemove(marca, modelo){
@@ -1008,26 +1028,6 @@ function openModelRemove(marca, modelo){
     closeDrawer();
     showToast('Remoção adicionada às alterações pendentes','success');
   },'red');
-}
-
-function openModelAddCat(marca, modelo){
-  const currentCats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
-  const available=CATEGORIES.filter(c=>!currentCats.includes(c));
-  if(!available.length){showToast('Modelo já está em todas as categorias','warning');return;}
-  const catOptions=available.map(c=>`<option value="${c}">${c}</option>`).join('');
-  showModal('➕ Adicionar a Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
-    <strong>${marca} — ${modelo}</strong>
-    <label style="font-size:.78rem;color:var(--text2)">Selecione a nova categoria:</label>
-    <select id="addcat_cat">${catOptions}</select>
-    <span style="font-size:.72rem;color:var(--text3)">Será adicionado às Alterações Pendentes.</span>
-  </div>`,function(){
-    const cat=document.getElementById('addcat_cat').value;
-    if(!cat) return;
-    addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat});
-    closeModal();
-    closeDrawer();
-    showToast('Adição à categoria pendente','success');
-  },'green');
 }
 
 function openModelMove(marca, modelo){
