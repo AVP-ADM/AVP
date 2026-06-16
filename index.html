@@ -650,9 +650,9 @@ function renderOverviewTable(){
 function renderTopDuplicates(){
   const top = DUPLICATES.slice(0,10);
   document.getElementById('topDuplicates').innerHTML = top.length?top.map((d,i)=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px;padding:8px 6px" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background=''">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background=''">
       <span style="font-size:.82rem"><strong>${d.marca}</strong> — ${d.modelo}</span>
-      <span class="badge badge-red clickable-num">${d.count} cat.</span>
+      <span class="badge badge-red">${d.count} cat.</span>
     </div>
   `).join(''):'<div class="empty">Nenhum duplicado</div>';
 }
@@ -671,7 +671,7 @@ function renderTopDivergences(){
   document.getElementById('topDivergences').innerHTML = items.length?items.map(it=>`
     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDivergence(${it.groupIdx})" onmouseover="this.style.background='var(--amber-bg)'" onmouseout="this.style.background=''">
       <span style="font-size:.82rem">${it.label}</span>
-      <span class="badge badge-amber clickable-num">${it.count} dif.</span>
+      <span class="badge badge-amber">${it.count} dif.</span>
     </div>
   `).join(''):'<div class="empty">Nenhuma divergência</div>';
 }
