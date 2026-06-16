@@ -1417,18 +1417,15 @@ function openAddCategory(){
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
     <input id="new_cat_name" placeholder="Digite o nome da categoria...">
     <div id="new_cat_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A categoria será criada e sincronizada com o Google Sheets ao salvar.</span>
+    <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
     const name=document.getElementById('new_cat_name').value.trim();
     if(!name){showToast('Digite o nome da categoria','error');return;}
     if(CATEGORIES.includes(name)){showToast('Categoria já existe!','error');return;}
-    // Create empty category directly in RAW
-    if(!RAW[name]) RAW[name]={total:0,brands:{}};
-    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
+    addToStaging({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name});
     closeModal();
-    showToast('Categoria "'+name+'" criada. Clique em "Sincronizar" para salvar no Sheets.','success');
+    showToast('Criação de "'+name+'" adicionada às pendentes','success');
   },'green');
-  // Validate on input
   setTimeout(()=>{
     const input=document.getElementById('new_cat_name');
     if(input) input.oninput=function(){
@@ -1448,27 +1445,15 @@ function openRenameCategory(cat){
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
     <input id="rename_cat" value="${cat}">
     <div id="rename_cat_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A renomeação será aplicada e sincronizada ao clicar em "Sincronizar".</span>
+    <span style="font-size:.72rem;color:var(--text3)">A renomeação será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
     const newName=document.getElementById('rename_cat').value.trim();
     if(!newName){showToast('Digite o novo nome','error');return;}
     if(newName===cat){closeModal();return;}
     if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
-    // Rename directly in RAW
-    if(RAW[cat]){
-      RAW[newName]=RAW[cat];
-      delete RAW[cat];
-    }
-    // Update ANOS_ACEITACAO keys
-    const keysToUpdate=Object.keys(ANOS_ACEITACAO).filter(k=>k.startsWith(cat+'|||'));
-    for(const k of keysToUpdate){
-      const newKey=newName+k.substring(cat.length);
-      ANOS_ACEITACAO[newKey]=ANOS_ACEITACAO[k];
-      delete ANOS_ACEITACAO[k];
-    }
-    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
+    addToStaging({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName});
     closeModal();
-    showToast('Categoria renomeada: "'+cat+'" → "'+newName+'". Sincronize para salvar.','success');
+    showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
   },'blue');
   setTimeout(()=>{
     const input=document.getElementById('rename_cat');
@@ -1495,13 +1480,11 @@ function openRemoveCategory(cat){
   showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
     <strong>${cat}</strong><br><br>
     Esta categoria está vazia e será removida.<br>
-    <span style="font-size:.78rem;color:var(--text3)">Sincronize para aplicar a remoção no Google Sheets.</span>
+    <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
-    // Remove directly from RAW
-    if(RAW[cat]) delete RAW[cat];
-    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
+    addToStaging({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null});
     closeModal();
-    showToast('Categoria "'+cat+'" removida. Sincronize para salvar.','success');
+    showToast('Remoção da categoria "'+cat+'" pendente','success');
   },'red');
 }
 
@@ -1629,15 +1612,19 @@ function renderStagingBars(){
 
 function renderStagingTable(){
   const tbody = document.getElementById('stagingTableBody');
-  tbody.innerHTML = STAGING.ops.map((op,i)=>`<tr>
+  tbody.innerHTML = STAGING.ops.map((op,i)=>{
+    const isCatOp=op.type.includes('Categoria');
+    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':'tag-blue';
+    return `<tr>
     <td>${i+1}</td>
-    <td><span class="tag ${op.type==='Adição'?'tag-green':op.type==='Remoção'?'tag-red':'tag-blue'}">${op.type}</span></td>
-    <td>${op.marca}</td>
+    <td><span class="tag ${tagClass}">${op.type}</span></td>
+    <td>${isCatOp?'—':op.marca}</td>
     <td>${op.modelo}</td>
     <td>${op.catFrom||'—'}</td>
     <td>${op.catTo||'—'}</td>
     <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})">✕</button></td>
-  </tr>`).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente</td></tr>';
+  </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente</td></tr>';
 }
 
 function renderMgmtKpis(){
@@ -1987,18 +1974,55 @@ commitStaging = function(){
   }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Google Sheets?',
     async function(){
-      const d=getStagingData();
-      for(const[k,v] of Object.entries(d)) RAW[k]=v;
+      // Apply category operations first
+      for(const op of STAGING.ops){
+        if(op.type==='Criação de Categoria'){
+          const catName=op.catTo;
+          if(!RAW[catName]) RAW[catName]={total:0,brands:{}};
+        } else if(op.type==='Renomeação de Categoria'){
+          const oldName=op.catFrom;
+          const newName=op.catTo;
+          if(RAW[oldName]){
+            RAW[newName]=RAW[oldName];
+            delete RAW[oldName];
+          }
+          // Update ANOS_ACEITACAO keys
+          const keysToUpdate=Object.keys(ANOS_ACEITACAO).filter(k=>k.startsWith(oldName+'|||'));
+          for(const k of keysToUpdate){
+            const newKey=newName+k.substring(oldName.length);
+            ANOS_ACEITACAO[newKey]=ANOS_ACEITACAO[k];
+            delete ANOS_ACEITACAO[k];
+          }
+        } else if(op.type==='Remoção de Categoria'){
+          const catName=op.catFrom;
+          if(RAW[catName]) delete RAW[catName];
+        }
+      }
+      // Apply model operations via getStagingData
+      const modelOps=STAGING.ops.filter(op=>!op.type.includes('Categoria'));
+      if(modelOps.length>0){
+        // Temporarily set staging to only model ops for getStagingData
+        const allOps=STAGING.ops;
+        STAGING.ops=modelOps;
+        const d=getStagingData();
+        STAGING.ops=allOps;
+        for(const[k,v] of Object.entries(d)){
+          if(RAW[k]) RAW[k]=v;
+          else RAW[k]=v;
+        }
+      }
       const newHistoryEntries=[];
       for(const op of STAGING.ops){
         HISTORY.push({...op});
         newHistoryEntries.push({...op});
-        mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':'moved']++;
+        if(op.type==='Adição') mgmtStats.added++;
+        else if(op.type==='Remoção') mgmtStats.removed++;
+        else mgmtStats.moved++;
         mgmtStats.session++;
       }
       STAGING.ops=[];STAGING.data=null;
       recomputeAll();initAnos();
-      renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
+      renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();renderOverviewTable();
       chartsInitialized=false;
       closeModal();
       showToast('Alterações salvas com sucesso!','success');
