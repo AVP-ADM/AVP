@@ -650,29 +650,49 @@ function renderOverviewTable(){
 function renderTopDuplicates(){
   const top = DUPLICATES.slice(0,10);
   document.getElementById('topDuplicates').innerHTML = top.length?top.map((d,i)=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px;padding:8px 6px" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background=''">
       <span style="font-size:.82rem"><strong>${d.marca}</strong> — ${d.modelo}</span>
-      <span class="badge badge-red">${d.count} cat.</span>
+      <span class="badge badge-red clickable-num">${d.count} cat.</span>
     </div>
   `).join(''):'<div class="empty">Nenhum duplicado</div>';
 }
 
 function renderTopDivergences(){
   let items=[];
-  for(const g of COMP_GROUPS){
+  for(let i=0;i<COMP_GROUPS.length;i++){
+    const g=COMP_GROUPS[i];
     const modelsA = getModelsForCat(g.a);
     const modelsB = getModelsForCat(g.b);
     const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
     const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    items.push({label:g.label, count:onlyA.length+onlyB.length, onlyA:onlyA.length, onlyB:onlyB.length});
+    items.push({label:g.label, count:onlyA.length+onlyB.length, groupIdx:i});
   }
   items.sort((a,b)=>b.count-a.count);
   document.getElementById('topDivergences').innerHTML = items.length?items.map(it=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-light)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDivergence(${it.groupIdx})" onmouseover="this.style.background='var(--amber-bg)'" onmouseout="this.style.background=''">
       <span style="font-size:.82rem">${it.label}</span>
-      <span class="badge badge-amber">${it.count} dif.</span>
+      <span class="badge badge-amber clickable-num">${it.count} dif.</span>
     </div>
   `).join(''):'<div class="empty">Nenhuma divergência</div>';
+}
+
+function navigateToDuplicate(marca, modelo){
+  // Navigate to Duplicidades tab and filter by this model
+  goTab('duplicates');
+  setTimeout(()=>{
+    const modelInput=document.getElementById('dupModelFilter');
+    const brandInput=document.getElementById('dupBrandFilter');
+    if(modelInput) modelInput.value=modelo;
+    if(brandInput) brandInput.value=marca;
+    renderDupTable();
+  },100);
+}
+
+function navigateToDivergence(groupIdx){
+  // Navigate to Divergências tab and select the correct group
+  currentCompGroup=groupIdx;
+  goTab('divergences');
+  setTimeout(()=>{renderDivergences();},100);
 }
 
 // ========= CATEGORIES TABLE =========
