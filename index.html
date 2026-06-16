@@ -1417,17 +1417,16 @@ function openAddCategory(){
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
     <input id="new_cat_name" placeholder="Digite o nome da categoria...">
     <div id="new_cat_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
+    <span style="font-size:.72rem;color:var(--text3)">A categoria será criada e sincronizada com o Google Sheets ao salvar.</span>
   </div>`,function(){
     const name=document.getElementById('new_cat_name').value.trim();
     if(!name){showToast('Digite o nome da categoria','error');return;}
     if(CATEGORIES.includes(name)){showToast('Categoria já existe!','error');return;}
-    addToStaging({type:'Adição',marca:'[CATEGORIA]',modelo:name,catFrom:null,catTo:name});
-    // Also create empty category in RAW for immediate use
+    // Create empty category directly in RAW
     if(!RAW[name]) RAW[name]={total:0,brands:{}};
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();
     closeModal();
-    showToast('Categoria "'+name+'" adicionada às pendentes','success');
+    showToast('Categoria "'+name+'" criada. Clique em "Sincronizar" para salvar no Sheets.','success');
   },'green');
   // Validate on input
   setTimeout(()=>{
@@ -1449,15 +1448,27 @@ function openRenameCategory(cat){
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
     <input id="rename_cat" value="${cat}">
     <div id="rename_cat_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A renomeação será adicionada às Alterações Pendentes.</span>
+    <span style="font-size:.72rem;color:var(--text3)">A renomeação será aplicada e sincronizada ao clicar em "Sincronizar".</span>
   </div>`,function(){
     const newName=document.getElementById('rename_cat').value.trim();
     if(!newName){showToast('Digite o novo nome','error');return;}
     if(newName===cat){closeModal();return;}
     if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
-    addToStaging({type:'Movimentação',marca:'[CATEGORIA]',modelo:cat,catFrom:cat,catTo:newName});
+    // Rename directly in RAW
+    if(RAW[cat]){
+      RAW[newName]=RAW[cat];
+      delete RAW[cat];
+    }
+    // Update ANOS_ACEITACAO keys
+    const keysToUpdate=Object.keys(ANOS_ACEITACAO).filter(k=>k.startsWith(cat+'|||'));
+    for(const k of keysToUpdate){
+      const newKey=newName+k.substring(cat.length);
+      ANOS_ACEITACAO[newKey]=ANOS_ACEITACAO[k];
+      delete ANOS_ACEITACAO[k];
+    }
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
     closeModal();
-    showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
+    showToast('Categoria renomeada: "'+cat+'" → "'+newName+'". Sincronize para salvar.','success');
   },'blue');
   setTimeout(()=>{
     const input=document.getElementById('rename_cat');
@@ -1484,11 +1495,13 @@ function openRemoveCategory(cat){
   showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
     <strong>${cat}</strong><br><br>
     Esta categoria está vazia e será removida.<br>
-    <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
+    <span style="font-size:.78rem;color:var(--text3)">Sincronize para aplicar a remoção no Google Sheets.</span>
   </div>`,function(){
-    addToStaging({type:'Remoção',marca:'[CATEGORIA]',modelo:cat,catFrom:cat,catTo:null});
+    // Remove directly from RAW
+    if(RAW[cat]) delete RAW[cat];
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();
     closeModal();
-    showToast('Remoção da categoria "'+cat+'" pendente','success');
+    showToast('Categoria "'+cat+'" removida. Sincronize para salvar.','success');
   },'red');
 }
 
