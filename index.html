@@ -1889,11 +1889,13 @@ async function sheetsLoad(){
       if(result.anos){for(const[key,val] of Object.entries(result.anos)) ANOS_ACEITACAO[key]=val;}
       recomputeAll();initAnos();renderKPIs();
       isConnected=true;
+      dataLoadedFromSheets=true; // Mark as safely loaded
       showSyncStatus('success','Dados carregados do Google Sheets');
       return true;
     } else if(result.success&&(!result.data||Object.keys(result.data).length===0)){
       showSyncStatus('warning','Planilha vazia. Enviando dados iniciais...');
       await sheetsInit();
+      dataLoadedFromSheets=true;
       return true;
     } else{
       showSyncStatus('error','Erro: '+(result.error||'Falha ao carregar'));
@@ -1966,6 +1968,10 @@ function showSyncStatus(type,msg){
 const _originalCommitStaging = commitStaging;
 commitStaging = function(){
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+    showToast('Aguarde o carregamento dos dados do Google Sheets antes de salvar','error');
+    return;
+  }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Google Sheets?',
     async function(){
       const d=getStagingData();
@@ -2126,10 +2132,21 @@ document.addEventListener('keydown',function(e){
 
 // ========= SYNC MANUAL + EXPORT XLSX =========
 let lastSyncInfo = null;
+let dataLoadedFromSheets = false; // Flag to prevent overwriting Sheets with empty data
 
 async function manualSync(){
   if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
     showToast('Configure a URL do Apps Script primeiro','warning');
+    return;
+  }
+  // PROTECTION: Never sync if data wasn't loaded from Sheets first
+  if(!dataLoadedFromSheets){
+    showToast('Aguarde o carregamento dos dados do Google Sheets antes de sincronizar','error');
+    return;
+  }
+  // PROTECTION: Never sync empty data
+  if(Object.keys(RAW).length===0){
+    showToast('Base de dados vazia. Não é possível sincronizar dados vazios.','error');
     return;
   }
   const btn = document.getElementById('btnSync');
@@ -2422,6 +2439,7 @@ async function confirmUpload(){
   renderStagingBars();
   renderStagingTable();
   renderMgmtKpis();
+  dataLoadedFromSheets=true; // Mark as valid data loaded
   // Save base info
   baseFileInfo = {
     name: pending.file.name,
@@ -2473,6 +2491,9 @@ function updateBaseInfo(){
 // ========= INITIALIZATION =========
 async function initSheetsIntegration(){
   createSyncIndicator();
+  // Disable sync button until data is loaded
+  const syncBtn=document.getElementById('btnSync');
+  if(syncBtn){syncBtn.disabled=true;syncBtn.style.opacity='.5';}
   if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
     showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
     return;
@@ -2485,6 +2506,8 @@ async function initSheetsIntegration(){
     updateSyncInfo();
     renderOverviewTable();
     renderDupTable();
+    // Enable sync button now that data is loaded
+    if(syncBtn){syncBtn.disabled=false;syncBtn.style.opacity='1';}
   }
 }
 
