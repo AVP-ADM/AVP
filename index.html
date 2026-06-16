@@ -262,6 +262,17 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .search-result-table tr{cursor:pointer}
 .search-result-table tr:hover td{background:var(--blue-bg)}
 
+/* ========= CONTEXT MENU (3 dots) ========= */
+.row-actions{position:relative;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+.row-actions-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text3);padding:4px 8px;border-radius:var(--radius);transition:all .15s;letter-spacing:1px}
+.row-actions-btn:hover{background:var(--bg);color:var(--text1)}
+.row-menu{position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:50;display:none;min-width:160px;padding:4px 0}
+.row-menu.open{display:block}
+.row-menu-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:.78rem;color:var(--text1);cursor:pointer;transition:background .1s;white-space:nowrap}
+.row-menu-item:hover{background:var(--blue-bg)}
+.row-menu-item.danger:hover{background:var(--red-bg);color:var(--red)}
+
 /* ========= AUTOCOMPLETE COMPONENT ========= */
 .ac-wrap{position:relative}
 .ac-input{width:100%;padding:9px 32px 9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;background:var(--surface);color:var(--text1);transition:border-color .2s}
@@ -682,8 +693,13 @@ function renderOverviewTable(){
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm" onclick="event.stopPropagation();openRenameCategory('${cat.replace(/'/g,"\\'")}')" title="Renomear" style="padding:4px 6px;font-size:.7rem">✏️</button>
-        <button class="btn btn-sm btn-red" onclick="event.stopPropagation();openRemoveCategory('${cat.replace(/'/g,"\\'")}')" title="Remover" style="padding:4px 6px;font-size:.7rem">🗑️</button>
+        <div class="row-actions">
+          <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
+          <div class="row-menu">
+            <div class="row-menu-item" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')">✏️ Renomear</div>
+            <div class="row-menu-item danger" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')">🗑️ Remover</div>
+          </div>
+        </div>
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria</td></tr>';
@@ -1378,6 +1394,22 @@ function cancelPendingRemoval(marca, modelo, categoria){
     showToast('Remoção cancelada','warning');
   }
 }
+
+// ========= ROW CONTEXT MENU =========
+function toggleRowMenu(btn){
+  closeAllRowMenus();
+  const menu=btn.nextElementSibling;
+  if(menu) menu.classList.add('open');
+}
+
+function closeAllRowMenus(){
+  document.querySelectorAll('.row-menu.open').forEach(m=>m.classList.remove('open'));
+}
+
+// Close menus on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.row-actions')) closeAllRowMenus();
+});
 
 // ========= CATEGORY MANAGEMENT =========
 function openAddCategory(){
