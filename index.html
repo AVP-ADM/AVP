@@ -126,7 +126,12 @@ tr:last-child td{border-bottom:none}
 .badge-red{background:var(--red-light);color:var(--red)}
 .badge-purple{background:var(--purple-light);color:var(--purple)}
 .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:500;margin:1px 2px}
-.tag-blue{background:var(--blue-light);color:var(--blue)}
+.tag-blue{background:var(--blue-light);color:var(--blue);position:relative;padding-right:8px;transition:padding .15s}
+.tag-blue.removable{cursor:default}
+.tag-blue.removable:hover{padding-right:22px}
+.tag-blue .tag-remove{display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:.8;transition:opacity .15s}
+.tag-blue.removable:hover .tag-remove{display:inline-block}
+.tag-blue .tag-remove:hover{opacity:1}
 .tag-green{background:var(--green-light);color:var(--green)}
 .tag-dup,.tag-red{background:var(--red-light);color:var(--red)}
 .tag-warn,.tag-amber{background:var(--amber-light);color:var(--amber)}
@@ -942,12 +947,22 @@ function renderDupTable(){
   const tbody = document.getElementById('dupTableBody');
   tbody.innerHTML = page.map((d,i)=>{
     const ano = typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'—';
+    const catBadges = d.cats.map(c=>{
+      const canRemove = d.cats.length > 1;
+      const escapedCat = c.replace(/'/g,"\\'");
+      const escapedMarca = d.marca.replace(/'/g,"\\'");
+      const escapedModelo = d.modelo.replace(/'/g,"\\'");
+      if(canRemove){
+        return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
+      }
+      return `<span class="tag tag-blue" title="Última categoria - não pode remover">${c}</span>`;
+    }).join(' ');
     return `<tr>
       <td style="color:var(--text2)">${start+i+1}</td>
       <td><strong>${d.marca}</strong></td>
       <td>${d.modelo}</td>
       <td><span class="tag tag-gray">${ano}</span></td>
-      <td>${d.cats.map(c=>'<span class="tag tag-blue">'+c+'</span>').join(' ')}</td>
+      <td>${catBadges}</td>
       <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="6" class="empty">Nenhum duplicado encontrado</td></tr>';
@@ -958,6 +973,55 @@ function renderDupTable(){
 function exportDuplicates(){
   const rows = DUPLICATES.map(d=>[d.marca,d.modelo,typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'',d.cats.join('; '),d.count]);
   downloadCSV(toCSV(rows,['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias']),'duplicados.csv');
+}
+
+function confirmRemoveFromCat(marca, modelo, categoria){
+  showModal(
+    'Remover modelo da categoria?',
+    `<div style="line-height:1.8">
+      <strong>Modelo:</strong><br>${marca} — ${modelo}<br><br>
+      <strong>Categoria a remover:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
+      <span style="font-size:.78rem;color:var(--text2)">O modelo será removido apenas desta categoria. As demais permanecerão inalteradas.</span>
+    </div>`,
+    async function(){
+      // Remove from RAW
+      if(RAW[categoria] && RAW[categoria].brands && RAW[categoria].brands[marca]){
+        const idx = RAW[categoria].brands[marca].indexOf(modelo);
+        if(idx>=0){
+          RAW[categoria].brands[marca].splice(idx,1);
+          RAW[categoria].total--;
+          if(RAW[categoria].brands[marca].length===0) delete RAW[categoria].brands[marca];
+        }
+      }
+      // Register in history
+      const entry = {
+        timestamp: new Date().toLocaleString('pt-BR'),
+        type: 'Remoção',
+        marca: marca,
+        modelo: modelo,
+        catFrom: categoria,
+        catTo: null
+      };
+      HISTORY.push(entry);
+      mgmtStats.removed++;
+      mgmtStats.session++;
+      // Recompute
+      recomputeAll();
+      initAnos();
+      renderKPIs();
+      renderDupTable();
+      renderOverviewTable();
+      renderMgmtKpis();
+      closeModal();
+      showToast('Modelo removido de "'+categoria+'" com sucesso!','success');
+      // Sync with Sheets
+      if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+        await sheetsSave();
+        await sheetsSaveHistory([entry]);
+      }
+    },
+    'red'
+  );
 }
 
 // ========= DIVERGENCES =========
