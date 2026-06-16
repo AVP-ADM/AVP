@@ -230,23 +230,32 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .section-title{font-size:.95rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 
 /* ========= GLOBAL SEARCH ========= */
-.search-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+.search-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:none;align-items:flex-start;justify-content:center;padding-top:10vh}
 .search-overlay.open{display:flex}
-.search-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:580px;max-width:92vw;box-shadow:var(--shadow-lg);overflow:hidden}
-.search-input-wrap{display:flex;align-items:center;padding:14px 18px;gap:10px;border-bottom:1px solid var(--border)}
+.search-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:640px;max-width:94vw;box-shadow:var(--shadow-lg);overflow:hidden}
+.search-tabs{display:flex;gap:6px;padding:14px 18px 10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-tab{padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text2);transition:all .2s}
+.search-tab:hover{border-color:var(--blue);color:var(--blue)}
+.search-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-input-wrap{display:flex;align-items:center;padding:12px 18px;gap:10px;border-bottom:1px solid var(--border)}
 .search-input-wrap .icon{font-size:1.1rem;color:var(--text3)}
-.search-input-wrap input{flex:1;border:none;outline:none;font-size:.95rem;background:transparent;color:var(--text1)}
+.search-input-wrap input{flex:1;border:none;outline:none;font-size:.9rem;background:transparent;color:var(--text1)}
 .search-input-wrap .shortcut{font-size:.65rem;color:var(--text3);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
-.search-results{max-height:400px;overflow-y:auto;padding:8px 0}
+.search-results{max-height:380px;overflow-y:auto;padding:6px 0}
 .search-result-item{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer;transition:background .15s}
 .search-result-item:hover{background:var(--blue-bg)}
 .search-result-item .result-icon{font-size:1rem;width:28px;text-align:center}
 .search-result-item .result-info{flex:1}
-.search-result-item .result-title{font-size:.85rem;font-weight:600;color:var(--text1)}
+.search-result-item .result-title{font-size:.83rem;font-weight:600;color:var(--text1)}
 .search-result-item .result-sub{font-size:.72rem;color:var(--text2)}
 .search-result-item .result-badge{font-size:.68rem}
 .search-empty{padding:30px;text-align:center;color:var(--text3);font-size:.85rem}
 .search-footer{padding:8px 18px;border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;justify-content:space-between}
+.search-result-table{width:100%;border-collapse:collapse;font-size:.78rem;margin:0}
+.search-result-table th{padding:8px 18px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.3px;background:var(--bg)}
+.search-result-table td{padding:7px 18px;border-bottom:1px solid var(--border-light);color:var(--text1)}
+.search-result-table tr{cursor:pointer}
+.search-result-table tr:hover td{background:var(--blue-bg)}
 
 /* ========= EMPTY STATE ========= */
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
@@ -456,16 +465,23 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 <!-- ========= GLOBAL SEARCH ========= -->
 <div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeGlobalSearch()">
   <div class="search-box">
+    <div class="search-tabs">
+      <button class="search-tab active" onclick="setSearchType('modelo')">Modelo</button>
+      <button class="search-tab" onclick="setSearchType('categoria')">Categoria</button>
+      <button class="search-tab" onclick="setSearchType('marca')">Marca</button>
+      <button class="search-tab" onclick="setSearchType('duplicidade')">Duplicidade</button>
+      <button class="search-tab" onclick="setSearchType('divergencia')">Divergência</button>
+    </div>
     <div class="search-input-wrap">
       <span class="icon">🔍</span>
-      <input type="text" id="globalSearchInput" placeholder="Buscar categorias, marcas, modelos..." oninput="performGlobalSearch()" autocomplete="off">
+      <input type="text" id="globalSearchInput" placeholder="Digite sua pesquisa..." oninput="performGlobalSearch()" autocomplete="off">
       <span class="shortcut">ESC</span>
     </div>
     <div class="search-results" id="globalSearchResults">
-      <div class="search-empty">Digite para pesquisar em toda a base</div>
+      <div class="search-empty">Selecione o tipo e digite para pesquisar</div>
     </div>
     <div class="search-footer">
-      <span>↑↓ Navegar · Enter Selecionar · Esc Fechar</span>
+      <span>Clique no resultado para navegar</span>
       <span>Ctrl+K para abrir</span>
     </div>
   </div>
@@ -1443,87 +1459,131 @@ commitStaging = function(){
 };
 
 // ========= GLOBAL SEARCH =========
+let searchType = 'modelo';
+
 function openGlobalSearch(){
   document.getElementById('searchOverlay').classList.add('open');
   const input=document.getElementById('globalSearchInput');
   input.value='';
   input.focus();
-  document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Digite para pesquisar em toda a base</div>';
+  updateSearchPlaceholder();
+  document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Selecione o tipo e digite para pesquisar</div>';
 }
 
 function closeGlobalSearch(){
   document.getElementById('searchOverlay').classList.remove('open');
 }
 
+function setSearchType(type){
+  searchType=type;
+  document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  updateSearchPlaceholder();
+  performGlobalSearch();
+}
+
+function updateSearchPlaceholder(){
+  const input=document.getElementById('globalSearchInput');
+  const placeholders={modelo:'Pesquisar modelo...',categoria:'Pesquisar categoria...',marca:'Pesquisar marca...',duplicidade:'Pesquisar modelo duplicado...',divergencia:'Pesquisar modelo divergente...'};
+  input.placeholder=placeholders[searchType]||'Digite sua pesquisa...';
+}
+
 function performGlobalSearch(){
   const query=norm(document.getElementById('globalSearchInput').value);
   const container=document.getElementById('globalSearchResults');
-  if(!query||query.length<2){
-    container.innerHTML='<div class="search-empty">Digite pelo menos 2 caracteres</div>';
+  if(!query||query.length<1){
+    container.innerHTML='<div class="search-empty">Digite para pesquisar</div>';
     return;
   }
+  let html='';
+  if(searchType==='modelo'){
+    html=searchModelos(query);
+  } else if(searchType==='categoria'){
+    html=searchCategorias(query);
+  } else if(searchType==='marca'){
+    html=searchMarcas(query);
+  } else if(searchType==='duplicidade'){
+    html=searchDuplicidades(query);
+  } else if(searchType==='divergencia'){
+    html=searchDivergencias(query);
+  }
+  container.innerHTML=html||'<div class="search-empty">Nenhum resultado encontrado</div>';
+}
+
+function searchModelos(query){
   const results=[];
-  const maxResults=30;
-  // Search categories
-  for(const cat of CATEGORIES){
-    if(norm(cat).includes(query)){
-      results.push({type:'categoria',icon:'📂',title:cat,sub:CAT_TOTALS[cat]+' modelos · '+Object.keys(RAW[cat].brands||{}).length+' marcas',action:()=>{ closeGlobalSearch(); openDrawer(cat); }});
-    }
-    if(results.length>=maxResults) break;
+  const seen=new Set();
+  for(const r of ALL_RECORDS){
+    if(!norm(r.modelo).includes(query)&&!norm(r.marca).includes(query)) continue;
+    const key=r.marca+'|||'+r.modelo+'|||'+r.categoria;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    results.push(r);
+    if(results.length>=50) break;
   }
-  // Search brands
-  if(results.length<maxResults){
-    for(const brand of ALL_BRANDS){
-      if(norm(brand).includes(query)){
-        const cats=new Set();let count=0;
-        for(const r of ALL_RECORDS){if(r.marca===brand){cats.add(r.categoria);count++;}}
-        results.push({type:'marca',icon:'🏭',title:brand,sub:count+' modelos em '+cats.size+' categorias',action:()=>{ closeGlobalSearch(); showKpiDetail('marcas'); setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value=brand;filterDrawerTable('drawerSearch_marcas','drawerTableData_marcas');}},200); }});
-      }
-      if(results.length>=maxResults) break;
-    }
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
+  for(const r of results){
+    html+=`<tr onclick="closeGlobalSearch();showCatDetail('${r.categoria.replace(/'/g,"\\'")}','modelos')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
   }
-  // Search models
-  if(results.length<maxResults){
-    const seen=new Set();
-    for(const r of ALL_RECORDS){
-      if(results.length>=maxResults) break;
-      if(!norm(r.modelo).includes(query)) continue;
-      const key=norm(r.marca)+'|||'+norm(r.modelo);
-      if(seen.has(key)) continue;
-      seen.add(key);
-      const isDup=modelStatus[key]==='Duplicado';
-      const dupInfo=isDup?DUPLICATES.find(d=>norm(d.marca)===norm(r.marca)&&norm(d.modelo)===norm(r.modelo)):null;
-      let sub=r.marca+' · '+r.categoria;
-      let badge='';
-      if(isDup&&dupInfo){sub+=` · Duplicado em ${dupInfo.count} categorias`;badge='<span class="result-badge badge badge-red">DUP</span>';}
-      results.push({type:'modelo',icon:'🚗',title:r.modelo,sub:sub,badge:badge,action:()=>{ closeGlobalSearch(); showCatDetail(r.categoria,'modelos'); }});
-    }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchCategorias(query){
+  const results=CATEGORIES.filter(c=>norm(c).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th></tr></thead><tbody>';
+  for(const cat of results){
+    const brands=Object.keys(RAW[cat].brands||{});
+    html+=`<tr onclick="closeGlobalSearch();openDrawer('${cat.replace(/'/g,"\\'")}')"><td><strong>${cat}</strong></td><td>${CAT_TOTALS[cat]}</td><td>${brands.length}</td></tr>`;
   }
-  // Search duplicates specifically
-  if(results.length<maxResults){
-    for(const d of DUPLICATES){
-      if(results.length>=maxResults) break;
-      if(!norm(d.marca).includes(query)&&!norm(d.modelo).includes(query)) continue;
-      const already=results.find(r=>r.type==='modelo'&&norm(r.title)===norm(d.modelo));
-      if(already) continue;
-      results.push({type:'duplicado',icon:'⚠️',title:d.marca+' — '+d.modelo,sub:'Duplicado em '+d.count+' categorias: '+d.cats.join(', '),badge:'<span class="result-badge badge badge-red">'+d.count+'x</span>',action:()=>{ closeGlobalSearch(); showKpiDetail('duplicados'); }});
-    }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchMarcas(query){
+  const results=ALL_BRANDS.filter(b=>norm(b).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Total Modelos</th><th>Categorias</th></tr></thead><tbody>';
+  for(const brand of results){
+    const cats=new Set();let count=0;
+    for(const r of ALL_RECORDS){if(r.marca===brand){cats.add(r.categoria);count++;}}
+    html+=`<tr onclick="closeGlobalSearch();showKpiDetail('marcas');setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value='${brand.replace(/'/g,"\\'")}';filterDrawerTable('drawerSearch_marcas','drawerTableData_marcas');}},200)"><td><strong>${brand}</strong></td><td>${count}</td><td>${cats.size}</td></tr>`;
   }
-  if(results.length===0){
-    container.innerHTML='<div class="search-empty">Nenhum resultado para "'+document.getElementById('globalSearchInput').value+'"</div>';
-    return;
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchDuplicidades(query){
+  const results=DUPLICATES.filter(d=>norm(d.marca).includes(query)||norm(d.modelo).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categorias</th></tr></thead><tbody>';
+  for(const d of results.slice(0,40)){
+    html+=`<tr onclick="closeGlobalSearch();navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" ><td><strong>${d.marca}</strong></td><td>${d.modelo}</td><td>${d.cats.map(c=>'<span class=\\"tag tag-blue\\">'+c+'</span>').join(' ')}</td></tr>`;
   }
-  container.innerHTML=results.map((r,i)=>`
-    <div class="search-result-item" onclick="globalSearchResults[${i}].action()" data-idx="${i}">
-      <span class="result-icon">${r.icon}</span>
-      <div class="result-info">
-        <div class="result-title">${r.title}</div>
-        <div class="result-sub">${r.sub}</div>
-      </div>
-      ${r.badge||''}
-    </div>
-  `).join('');
-  window.globalSearchResults=results;
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchDivergencias(query){
+  const data=[];
+  for(let i=0;i<COMP_GROUPS.length;i++){
+    const g=COMP_GROUPS[i];
+    const modelsA=getModelsForCat(g.a);
+    const modelsB=getModelsForCat(g.b);
+    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    for(const m of onlyA){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.a,groupIdx:i});}
+    for(const m of onlyB){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.b,groupIdx:i});}
+  }
+  if(!data.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Modelo</th><th>Marca</th><th>Comparação</th><th>Status</th></tr></thead><tbody>';
+  for(const d of data.slice(0,40)){
+    html+=`<tr onclick="closeGlobalSearch();navigateToDivergence(${d.groupIdx})"><td><strong>${d.modelo}</strong></td><td>${d.marca}</td><td>${d.comp}</td><td><span class="tag tag-amber">${d.status}</span></td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
 }
 
 // Keyboard shortcut
