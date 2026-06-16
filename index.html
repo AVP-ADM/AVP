@@ -952,6 +952,10 @@ function renderDupTable(){
       const escapedCat = c.replace(/'/g,"\\'");
       const escapedMarca = d.marca.replace(/'/g,"\\'");
       const escapedModelo = d.modelo.replace(/'/g,"\\'");
+      const pending = isPendingRemoval(d.marca, d.modelo, c);
+      if(pending){
+        return `<span class="tag tag-amber" title="Remoção pendente - aguardando salvar">${c} ⏳</span>`;
+      }
       if(canRemove){
         return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
       }
@@ -981,47 +985,27 @@ function confirmRemoveFromCat(marca, modelo, categoria){
     `<div style="line-height:1.8">
       <strong>Modelo:</strong><br>${marca} — ${modelo}<br><br>
       <strong>Categoria a remover:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
-      <span style="font-size:.78rem;color:var(--text2)">O modelo será removido apenas desta categoria. As demais permanecerão inalteradas.</span>
+      <span style="font-size:.78rem;color:var(--text2)">A remoção será adicionada às Alterações Pendentes. Para aplicar, clique em "Salvar Alterações" na aba Manutenção.</span>
     </div>`,
-    async function(){
-      // Remove from RAW
-      if(RAW[categoria] && RAW[categoria].brands && RAW[categoria].brands[marca]){
-        const idx = RAW[categoria].brands[marca].indexOf(modelo);
-        if(idx>=0){
-          RAW[categoria].brands[marca].splice(idx,1);
-          RAW[categoria].total--;
-          if(RAW[categoria].brands[marca].length===0) delete RAW[categoria].brands[marca];
-        }
-      }
-      // Register in history
-      const entry = {
-        timestamp: new Date().toLocaleString('pt-BR'),
-        type: 'Remoção',
+    function(){
+      // Add to staging instead of applying immediately
+      addToStaging({
+        type:'Remoção',
         marca: marca,
         modelo: modelo,
         catFrom: categoria,
         catTo: null
-      };
-      HISTORY.push(entry);
-      mgmtStats.removed++;
-      mgmtStats.session++;
-      // Recompute
-      recomputeAll();
-      initAnos();
-      renderKPIs();
-      renderDupTable();
-      renderOverviewTable();
-      renderMgmtKpis();
+      });
       closeModal();
-      showToast('Modelo removido de "'+categoria+'" com sucesso!','success');
-      // Sync with Sheets
-      if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
-        await sheetsSave();
-        await sheetsSaveHistory([entry]);
-      }
+      renderDupTable();
+      showToast('Remoção adicionada às alterações pendentes','success');
     },
     'red'
   );
+}
+
+function isPendingRemoval(marca, modelo, categoria){
+  return STAGING.ops.some(op=>op.type==='Remoção'&&op.marca===marca&&op.modelo===modelo&&op.catFrom===categoria);
 }
 
 // ========= DIVERGENCES =========
