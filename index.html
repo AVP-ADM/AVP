@@ -229,6 +229,25 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 /* ========= SECTION TITLE ========= */
 .section-title{font-size:.95rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 
+/* ========= GLOBAL SEARCH ========= */
+.search-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+.search-overlay.open{display:flex}
+.search-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:580px;max-width:92vw;box-shadow:var(--shadow-lg);overflow:hidden}
+.search-input-wrap{display:flex;align-items:center;padding:14px 18px;gap:10px;border-bottom:1px solid var(--border)}
+.search-input-wrap .icon{font-size:1.1rem;color:var(--text3)}
+.search-input-wrap input{flex:1;border:none;outline:none;font-size:.95rem;background:transparent;color:var(--text1)}
+.search-input-wrap .shortcut{font-size:.65rem;color:var(--text3);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.search-results{max-height:400px;overflow-y:auto;padding:8px 0}
+.search-result-item{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer;transition:background .15s}
+.search-result-item:hover{background:var(--blue-bg)}
+.search-result-item .result-icon{font-size:1rem;width:28px;text-align:center}
+.search-result-item .result-info{flex:1}
+.search-result-item .result-title{font-size:.85rem;font-weight:600;color:var(--text1)}
+.search-result-item .result-sub{font-size:.72rem;color:var(--text2)}
+.search-result-item .result-badge{font-size:.68rem}
+.search-empty{padding:30px;text-align:center;color:var(--text3);font-size:.85rem}
+.search-footer{padding:8px 18px;border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;justify-content:space-between}
+
 /* ========= EMPTY STATE ========= */
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty .empty-icon{font-size:2.5rem;margin-bottom:10px}
@@ -250,6 +269,7 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
   <div class="header-actions">
     <div class="sync-info" id="syncInfo"></div>
     <div class="base-info" id="baseInfo"></div>
+    <button class="header-btn" style="background:var(--bg);color:var(--text2);border:1px solid var(--border)" onclick="openGlobalSearch()" title="Busca global (Ctrl+K)">🔍 <span style="font-size:.7rem;opacity:.6">Ctrl+K</span></button>
     <button class="header-btn btn-import" onclick="showUploadModal()">📁 Importar Nova Planilha</button>
     <button class="header-btn btn-sync" onclick="manualSync()" id="btnSync">🔄 Sincronizar com Google Sheets</button>
     <button class="header-btn btn-export-xlsx" onclick="exportFullBaseXLSX()">📥 Exportar XLSX</button>
@@ -263,7 +283,6 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
   <!-- ========= NAVIGATION TABS ========= -->
   <div class="tabs" id="mainTabs">
     <button class="tab active" onclick="goTab('overview')">Visão Geral</button>
-    <button class="tab" onclick="goTab('categories')">Categorias</button>
     <button class="tab" onclick="goTab('duplicates')">Duplicidades</button>
     <button class="tab" onclick="goTab('divergences')">Divergências</button>
     <button class="tab" onclick="goTab('management')">Manutenção</button>
@@ -300,28 +319,6 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
       <div class="card">
         <div class="card-title"><span class="icon">⚠️</span> Top Divergências por Categoria</div>
         <div id="topDivergences"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========= TAB: CATEGORIAS ========= -->
-  <div class="tab-panel" id="panel-categories">
-    <div class="card">
-      <div class="card-title"><span class="icon">📂</span> Análise por Categoria</div>
-      <div class="filter-row">
-        <input type="text" id="catFilter" placeholder="Buscar categoria..." oninput="renderCategoryTable()">
-        <select id="catSort" onchange="renderCategoryTable()">
-          <option value="name">A-Z</option>
-          <option value="models_desc">Mais modelos</option>
-          <option value="models_asc">Menos modelos</option>
-          <option value="brands_desc">Mais marcas</option>
-        </select>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Divergências</th><th></th></tr></thead>
-          <tbody id="catTableBody"></tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -456,6 +453,24 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 
 </div><!-- end app-container -->
 
+<!-- ========= GLOBAL SEARCH ========= -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="globalSearchInput" placeholder="Buscar categorias, marcas, modelos..." oninput="performGlobalSearch()" autocomplete="off">
+      <span class="shortcut">ESC</span>
+    </div>
+    <div class="search-results" id="globalSearchResults">
+      <div class="search-empty">Digite para pesquisar em toda a base</div>
+    </div>
+    <div class="search-footer">
+      <span>↑↓ Navegar · Enter Selecionar · Esc Fechar</span>
+      <span>Ctrl+K para abrir</span>
+    </div>
+  </div>
+</div>
+
 <!-- ========= DRAWER ========= -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -549,12 +564,11 @@ function goTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   const tabs = document.querySelectorAll('.tab');
-  const tabMap = ['overview','categories','duplicates','divergences','management','history','exports'];
+  const tabMap = ['overview','duplicates','divergences','management','history','exports'];
   const idx = tabMap.indexOf(tab);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
 
   if(tab==='overview') renderOverviewTable();
-  if(tab==='categories') renderCategoryTable();
   if(tab==='duplicates') renderDupTable();
   if(tab==='divergences') renderDivergences();
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
@@ -1407,6 +1421,96 @@ commitStaging = function(){
       }
     },'green');
 };
+
+// ========= GLOBAL SEARCH =========
+function openGlobalSearch(){
+  document.getElementById('searchOverlay').classList.add('open');
+  const input=document.getElementById('globalSearchInput');
+  input.value='';
+  input.focus();
+  document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Digite para pesquisar em toda a base</div>';
+}
+
+function closeGlobalSearch(){
+  document.getElementById('searchOverlay').classList.remove('open');
+}
+
+function performGlobalSearch(){
+  const query=norm(document.getElementById('globalSearchInput').value);
+  const container=document.getElementById('globalSearchResults');
+  if(!query||query.length<2){
+    container.innerHTML='<div class="search-empty">Digite pelo menos 2 caracteres</div>';
+    return;
+  }
+  const results=[];
+  const maxResults=30;
+  // Search categories
+  for(const cat of CATEGORIES){
+    if(norm(cat).includes(query)){
+      results.push({type:'categoria',icon:'📂',title:cat,sub:CAT_TOTALS[cat]+' modelos · '+Object.keys(RAW[cat].brands||{}).length+' marcas',action:()=>{ closeGlobalSearch(); openDrawer(cat); }});
+    }
+    if(results.length>=maxResults) break;
+  }
+  // Search brands
+  if(results.length<maxResults){
+    for(const brand of ALL_BRANDS){
+      if(norm(brand).includes(query)){
+        const cats=new Set();let count=0;
+        for(const r of ALL_RECORDS){if(r.marca===brand){cats.add(r.categoria);count++;}}
+        results.push({type:'marca',icon:'🏭',title:brand,sub:count+' modelos em '+cats.size+' categorias',action:()=>{ closeGlobalSearch(); showKpiDetail('marcas'); setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value=brand;filterDrawerTable('drawerSearch_marcas','drawerTableData_marcas');}},200); }});
+      }
+      if(results.length>=maxResults) break;
+    }
+  }
+  // Search models
+  if(results.length<maxResults){
+    const seen=new Set();
+    for(const r of ALL_RECORDS){
+      if(results.length>=maxResults) break;
+      if(!norm(r.modelo).includes(query)) continue;
+      const key=norm(r.marca)+'|||'+norm(r.modelo);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      const isDup=modelStatus[key]==='Duplicado';
+      const dupInfo=isDup?DUPLICATES.find(d=>norm(d.marca)===norm(r.marca)&&norm(d.modelo)===norm(r.modelo)):null;
+      let sub=r.marca+' · '+r.categoria;
+      let badge='';
+      if(isDup&&dupInfo){sub+=` · Duplicado em ${dupInfo.count} categorias`;badge='<span class="result-badge badge badge-red">DUP</span>';}
+      results.push({type:'modelo',icon:'🚗',title:r.modelo,sub:sub,badge:badge,action:()=>{ closeGlobalSearch(); showCatDetail(r.categoria,'modelos'); }});
+    }
+  }
+  // Search duplicates specifically
+  if(results.length<maxResults){
+    for(const d of DUPLICATES){
+      if(results.length>=maxResults) break;
+      if(!norm(d.marca).includes(query)&&!norm(d.modelo).includes(query)) continue;
+      const already=results.find(r=>r.type==='modelo'&&norm(r.title)===norm(d.modelo));
+      if(already) continue;
+      results.push({type:'duplicado',icon:'⚠️',title:d.marca+' — '+d.modelo,sub:'Duplicado em '+d.count+' categorias: '+d.cats.join(', '),badge:'<span class="result-badge badge badge-red">'+d.count+'x</span>',action:()=>{ closeGlobalSearch(); showKpiDetail('duplicados'); }});
+    }
+  }
+  if(results.length===0){
+    container.innerHTML='<div class="search-empty">Nenhum resultado para "'+document.getElementById('globalSearchInput').value+'"</div>';
+    return;
+  }
+  container.innerHTML=results.map((r,i)=>`
+    <div class="search-result-item" onclick="globalSearchResults[${i}].action()" data-idx="${i}">
+      <span class="result-icon">${r.icon}</span>
+      <div class="result-info">
+        <div class="result-title">${r.title}</div>
+        <div class="result-sub">${r.sub}</div>
+      </div>
+      ${r.badge||''}
+    </div>
+  `).join('');
+  window.globalSearchResults=results;
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openGlobalSearch();}
+  if(e.key==='Escape'&&document.getElementById('searchOverlay').classList.contains('open')){closeGlobalSearch();}
+});
 
 // ========= SYNC MANUAL + EXPORT XLSX =========
 let lastSyncInfo = null;
