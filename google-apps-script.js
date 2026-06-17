@@ -10,6 +10,8 @@ function doGet(e) {
       result = loadHistory();
     } else if (action === 'validateLogin') {
       result = validateLogin(e.parameter.user, e.parameter.pass);
+    } else if (action === 'getTimestamp') {
+      result = getLastModifiedTimestamp();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -32,6 +34,12 @@ function doPost(e) {
       result = saveHistory(data.payload);
     } else if (action === 'init') {
       result = initializeSheet(data.payload);
+    } else if (action === 'acquireLock') {
+      result = acquireLock(data.user);
+    } else if (action === 'releaseLock') {
+      result = releaseLock(data.user);
+    } else if (action === 'updateTimestamp') {
+      result = updateTimestamp(data.user);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -274,4 +282,77 @@ function validateLogin(user, pass) {
     }
   }
   return { success: true, valid: false };
+}
+
+
+
+// ========= CONCURRENCY CONTROL =========
+function getControlSheet() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) {
+    sheet = ss.insertSheet('_Control');
+    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
+    sheet.getRange(2, 1, 2, 4).setValues([
+      ['lock', '', '', ''],
+      ['lastModified', '', '', '']
+    ]);
+    sheet.hideSheet();
+  }
+  return sheet;
+}
+
+function acquireLock(user) {
+  var sheet = getControlSheet();
+  var lockCell = sheet.getRange(2, 2);
+  var lockUser = sheet.getRange(2, 3);
+  var lockDate = sheet.getRange(2, 4);
+  var currentLock = lockCell.getValue();
+  var currentUser = lockUser.getValue();
+  var currentDate = lockDate.getValue();
+  
+  // Check if lock exists and is recent (within 30 seconds)
+  if (currentLock && currentDate) {
+    var lockTime = new Date(currentDate).getTime();
+    var now = new Date().getTime();
+    if (now - lockTime < 30000 && currentUser !== user) {
+      return { success: false, lockedBy: currentUser };
+    }
+  }
+  
+  // Acquire lock
+  lockCell.setValue('locked');
+  lockUser.setValue(user);
+  lockDate.setValue(new Date().toISOString());
+  return { success: true };
+}
+
+function releaseLock(user) {
+  var sheet = getControlSheet();
+  sheet.getRange(2, 2).setValue('');
+  sheet.getRange(2, 3).setValue('');
+  sheet.getRange(2, 4).setValue('');
+  return { success: true };
+}
+
+function getLastModifiedTimestamp() {
+  var sheet = getControlSheet();
+  var ts = sheet.getRange(3, 2).getValue();
+  var user = sheet.getRange(3, 3).getValue();
+  var date = sheet.getRange(3, 4).getValue();
+  return { 
+    success: true, 
+    timestamp: ts ? new Date(ts).getTime() : 0,
+    lastUser: user || '',
+    lastDate: date || ''
+  };
+}
+
+function updateTimestamp(user) {
+  var sheet = getControlSheet();
+  var now = new Date();
+  sheet.getRange(3, 2).setValue(now.toISOString());
+  sheet.getRange(3, 3).setValue(user);
+  sheet.getRange(3, 4).setValue(now.toLocaleString('pt-BR'));
+  return { success: true };
 }

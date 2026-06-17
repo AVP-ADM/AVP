@@ -3100,6 +3100,7 @@ async function sheetsLoad(){
       recomputeAll();initAnos();renderKPIs();
       isConnected=true;
       dataLoadedFromSheets=true; // Mark as safely loaded
+      _dataLoadTimestamp=Date.now();
       showSyncStatus('success','Dados carregados do Google Sheets');
       return true;
     } else if(result.success&&(!result.data||Object.keys(result.data).length===0)){
@@ -3116,6 +3117,82 @@ async function sheetsLoad(){
     console.error('Erro ao carregar do Sheets:',err);
     return false;
   }
+}
+
+// ========= CONCURRENCY CONTROL =========
+let _dataLoadTimestamp=null; // When data was last loaded from Sheets
+
+async function acquireLock(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'acquireLock',user:currentUser||'unknown'})});
+    const result=await resp.json();
+    return result;
+  }catch(e){return {success:false,error:e.message};}
+}
+
+async function releaseLock(){
+  try{
+    await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'releaseLock',user:currentUser||'unknown'})});
+  }catch(e){}
+}
+
+async function checkTimestamp(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=getTimestamp');
+    const result=await resp.json();
+    return result;
+  }catch(e){return {success:false};}
+}
+
+async function safeSave(){
+  // 1. Try to acquire lock
+  const lockResult=await acquireLock();
+  if(!lockResult.success){
+    if(lockResult.lockedBy){
+      showToast('Outro usuário ('+lockResult.lockedBy+') está salvando. Aguarde...','warning');
+    } else {
+      showToast('Erro ao verificar lock: '+(lockResult.error||''),'error');
+    }
+    return false;
+  }
+  // 2. Check timestamp
+  const tsResult=await checkTimestamp();
+  if(tsResult.success&&tsResult.timestamp&&_dataLoadTimestamp){
+    if(tsResult.timestamp>_dataLoadTimestamp){
+      await releaseLock();
+      showModal('⚠️ Base Atualizada por Outro Usuário',
+        '<div style="line-height:1.8">A base de dados foi alterada por <strong>'+(tsResult.lastUser||'outro usuário')+'</strong> em '+(tsResult.lastDate||'')+'.<br><br>Suas alterações pendentes foram mantidas.<br><br><span style="color:var(--text2);font-size:.78rem">Clique em "Recarregar" para baixar os dados mais recentes e depois salve novamente.</span></div>',
+        async function(){
+          closeModal();
+          showToast('Recarregando dados...','warning');
+          await sheetsLoad();
+          await sheetsLoadHistory();
+          recomputeAll();initAnos();
+          refreshActiveTab();
+          renderKPIs();renderOverviewTable();
+          showToast('Dados recarregados. Suas pendências foram mantidas.','success');
+        },'blue');
+      // Change button text
+      setTimeout(()=>{
+        const actions=document.getElementById('modalActions');
+        if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-blue" onclick="closeModal();sheetsLoad().then(()=>{sheetsLoadHistory();recomputeAll();initAnos();refreshActiveTab();renderKPIs();renderOverviewTable();showToast(\'Dados recarregados\',\'success\');})">🔄 Recarregar</button>';
+      },50);
+      return false;
+    }
+  }
+  // 3. Save
+  try{
+    await sheetsSave();
+    // 4. Update timestamp
+    await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'updateTimestamp',user:currentUser||'unknown'})});
+    _dataLoadTimestamp=Date.now();
+  }catch(e){
+    await releaseLock();
+    throw e;
+  }
+  // 5. Release lock
+  await releaseLock();
+  return true;
 }
 
 async function sheetsSave(){
@@ -3401,15 +3478,17 @@ async function manualSync(){
   const btn = document.getElementById('btnSyncItem');
   if(btn) btn.style.opacity='.5';
   try{
-    await sheetsSave();
-    lastSyncInfo = {
-      date: new Date().toLocaleString('pt-BR'),
-      records: ALL_RECORDS.length,
-      status: 'ok'
-    };
-    localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
-    updateSyncInfo();
-    showToast('Dados sincronizados com sucesso! '+ALL_RECORDS.length+' registros enviados.','success');
+    const saved=await safeSave();
+    if(saved){
+      lastSyncInfo = {
+        date: new Date().toLocaleString('pt-BR'),
+        records: ALL_RECORDS.length,
+        status: 'ok'
+      };
+      localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
+      updateSyncInfo();
+      showToast('Dados sincronizados com sucesso! '+ALL_RECORDS.length+' registros enviados.','success');
+    }
   } catch(err){
     lastSyncInfo = {date: new Date().toLocaleString('pt-BR'), records:0, status:'error', error:err.message};
     localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
