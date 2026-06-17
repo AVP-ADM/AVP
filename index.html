@@ -989,6 +989,7 @@ function buildModelListWithActions(models, cat){
   let html='<div class="drawer-toolbar">';
   html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar modelo ou marca..." oninput="filterModelList()">';
   html+=`<button class="btn btn-sm btn-green" onclick="openAddModelToCat('${eCat}')">+ Adicionar Modelo</button>`;
+  html+=`<button class="btn btn-sm btn-blue" onclick="exportCategoryXLSX('${eCat}')" title="Exportar esta categoria">📥 Exportar</button>`;
   html+='</div>';
   html+='<div class="drawer-count" id="modelListCount">'+models.length+' modelos</div>';
   html+='<div id="modelListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
@@ -2760,6 +2761,55 @@ function updateSyncInfo(){
   } else {
     el.innerHTML='<span class="status pending">Não sincronizado</span>';
   }
+}
+
+function exportCategoryXLSX(cat){
+  if(typeof XLSX==='undefined'){
+    showToast('Biblioteca XLSX não carregada','error');
+    return;
+  }
+  if(!RAW[cat]){showToast('Categoria não encontrada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  // Row 1: blank for data cols + "HISTÓRICO DA CATEGORIA" merged in E1:G1
+  rows.push(['','','','','HISTÓRICO DA CATEGORIA','','']);
+  // Row 2: headers
+  rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe']);
+  // Get history entries for this category
+  const catHistory = HISTORY.filter(h=>h.catFrom===cat||h.catTo===cat);
+  // Build data rows
+  const dataRows = [];
+  for(const[brand, models] of Object.entries(RAW[cat].brands||{})){
+    for(const m of models){
+      const ano = typeof getAno==='function'?getAno(cat,brand,m):'Ano da categoria';
+      dataRows.push([brand, m, ano]);
+    }
+  }
+  // Build history rows
+  const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
+  // Merge data + history side by side
+  const maxRows = Math.max(dataRows.length, histRows.length);
+  for(let i=0;i<maxRows;i++){
+    const d = dataRows[i]||['','',''];
+    const h = histRows[i]||['','',''];
+    rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
+  ws['!merges']=[{s:{r:0,c:4},e:{r:0,c:6}}];
+  // Style E1 (HISTÓRICO DA CATEGORIA) - dark blue
+  if(ws['E1']) ws['E1'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+  // Style row 2 headers - black background
+  const headers = ['A2','B2','C2','E2','F2','G2'];
+  for(const c of headers){
+    if(!ws[c]) ws[c]={v:'',t:'s'};
+    ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
+  if(safeName.length>31) safeName=safeName.substring(0,31);
+  XLSX.utils.book_append_sheet(wb, ws, safeName);
+  XLSX.writeFile(wb, safeName+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Categoria "'+cat+'" exportada com sucesso!','success');
 }
 
 function exportFullBaseXLSX(){
