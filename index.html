@@ -1000,7 +1000,7 @@ function buildModelListWithActions(models, cat){
     const pendingLabel = pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente';
     let pendingBadge='';
     if(pending){
-      pendingBadge=` <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle;padding-right:18px;position:relative">⏳ ${pendingLabel}<span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar pendência">✕</span></span>`;
+      pendingBadge=` <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle;padding-right:18px;position:relative">⏳ ${pendingLabel}<span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity='1';this.style.transform='translateY(-50%) scale(1.3)'" onmouseout="this.style.opacity='.7';this.style.transform='translateY(-50%) scale(1)'" title="Cancelar pendência">✕</span></span>`;
     }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
