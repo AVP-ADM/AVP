@@ -1103,9 +1103,8 @@ function openSimpleModelEdit(marca, modelo, categoria){
     const models=getModelsForCat(categoria);
     const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(newName));
     if(exists){showToast('Já existe um modelo com esse nome nesta categoria.','error');return;}
-    // Create two staging ops: remove old + add new (as a rename)
-    addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:categoria,catTo:null},true);
-    addToStaging({type:'Adição',marca:marca,modelo:newName,catFrom:null,catTo:categoria},true);
+    // Create a single staging op for rename (instead of remove + add)
+    addToStaging({type:'Edição',marca:marca,modelo:modelo+' → '+newName,catFrom:categoria,catTo:categoria,oldModelo:modelo,newModelo:newName},true);
     closeModal();
     showToast('Renomeação de "'+modelo+'" → "'+newName+'" pendente','success');
     // Refresh the drawer
@@ -1631,10 +1630,12 @@ function isPendingRemoval(marca, modelo, categoria){
 function hasPendingChange(marca, modelo, categoria){
   return STAGING.ops.some(op=>{
     if(op.type.includes('Categoria')) return false;
+    // For Edição type, check oldModelo
+    const opModelo = op.oldModelo || op.modelo;
     if(categoria){
-      return op.marca===marca && op.modelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
     }
-    return op.marca===marca && op.modelo===modelo;
+    return op.marca===marca && opModelo===modelo;
   });
 }
 
@@ -1642,10 +1643,11 @@ function hasPendingChange(marca, modelo, categoria){
 function getPendingChangeType(marca, modelo, categoria){
   const op = STAGING.ops.find(op=>{
     if(op.type.includes('Categoria')) return false;
+    const opModelo = op.oldModelo || op.modelo;
     if(categoria){
-      return op.marca===marca && op.modelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
     }
-    return op.marca===marca && op.modelo===modelo;
+    return op.marca===marca && opModelo===modelo;
   });
   return op ? op.type : null;
 }
@@ -1853,6 +1855,13 @@ function getStagingData(){
       if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
       copy[op.catTo].brands[op.marca].push(op.modelo);
       copy[op.catTo].total++;
+    } else if(op.type==='Edição'){
+      // Remove old model name, add new model name in same category
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const idx = copy[op.catFrom].brands[op.marca].indexOf(op.oldModelo);
+        if(idx>=0) copy[op.catFrom].brands[op.marca].splice(idx,1);
+        copy[op.catFrom].brands[op.marca].push(op.newModelo);
+      }
     }
   }
   return copy;
@@ -1915,7 +1924,7 @@ function commitStaging(){
     for(const[k,v] of Object.entries(d)) RAW[k]=v;
     for(const op of STAGING.ops){
       HISTORY.push({...op});
-      mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':'moved']++;
+      mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':op.type==='Edição'?'moved':'moved']++;
       mgmtStats.session++;
     }
     STAGING.ops=[];STAGING.data=null;
@@ -1936,7 +1945,8 @@ function renderStagingTable(){
   const tbody = document.getElementById('stagingTableBody');
   tbody.innerHTML = STAGING.ops.map((op,i)=>{
     const isCatOp=op.type.includes('Categoria');
-    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':'tag-blue';
+    const isEdit=op.type==='Edição';
+    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':isEdit?'tag-amber':'tag-blue';
     return `<tr>
     <td>${i+1}</td>
     <td><span class="tag ${tagClass}">${op.type}</span></td>
