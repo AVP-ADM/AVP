@@ -1121,6 +1121,7 @@ function cancelPendingModelChange(marca, modelo, categoria){
 
 // ========= ADD MODEL TO CATEGORY =========
 function openAddModelToCat(categoria){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
@@ -1305,6 +1306,7 @@ function filterBrandList(){
 }
 
 function openAddBrandToCat(categoria){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('➕ Adicionar Marca em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
@@ -2034,6 +2036,7 @@ document.addEventListener('click',function(e){
 
 // ========= CATEGORY MANAGEMENT =========
 function openAddCategory(){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('+ Nova Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
     <input id="new_cat_name" placeholder="Digite o nome da categoria...">
@@ -2206,6 +2209,7 @@ function isPendingCopyTo(marca, modelo, catTo){
 
 // Copy a single model to the compared category
 function copyModelToCategory(marca, modelo, catFrom, catTo){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   // Validate: check if already exists in destination
   const destModels=getModelsForCat(catTo);
   if(destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
@@ -2226,6 +2230,7 @@ function copyModelToCategory(marca, modelo, catFrom, catTo){
 
 // Copy all divergences from one side to the other
 function copyAllDivergences(catFrom, catTo){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   const modelsFrom=getModelsForCat(catFrom);
   const modelsTo=getModelsForCat(catTo);
   const only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
@@ -2338,6 +2343,10 @@ function getStagingData(){
 function hasStagingChanges(){return STAGING.ops.length>0;}
 
 function addToStaging(op, silent){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+    showToast('Aguarde o carregamento dos dados antes de realizar alterações','error');
+    return;
+  }
   op.timestamp = new Date().toLocaleString('pt-BR');
   STAGING.ops.push(op);
   STAGING.data = null;
@@ -2508,6 +2517,7 @@ function renderMgmtKpis(){
 }
 
 function showMgmtModal(type){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   const catOptions = CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
   const brandOptions = ALL_BRANDS.map(b=>`<option value="${b}">${b}</option>`).join('');
   let title='', body='', onConfirm=null;
