@@ -50,7 +50,7 @@ html{font-size:14px}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5}
 
 /* ========= LAYOUT ========= */
-.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:16px;position:relative;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
 .app-logo{font-size:1.25rem;font-weight:700;color:var(--blue);letter-spacing:-.5px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.85rem;margin-left:8px}
 .header-actions{display:flex;align-items:center;gap:10px}
@@ -96,7 +96,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .app-container{max-width:1440px;margin:0 auto;padding:24px 32px 60px}
 
 /* ========= TABS ========= */
-.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:57px;z-index:90;box-shadow:var(--shadow);align-items:center}
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:0;z-index:90;box-shadow:var(--shadow);align-items:center}
 .tabs .tabs-spacer{flex:1}
 .tabs .search-trigger{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .2s;margin-right:4px;white-space:nowrap}
 .tabs .search-trigger:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
