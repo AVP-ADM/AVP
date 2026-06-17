@@ -929,9 +929,10 @@ function showCatDetail(cat, type){
     html=buildModelListWithActions(models, cat);
   } else if(type==='marcas'){
     const brands=Object.keys(RAW[cat].brands||{}).sort();
-    title='Marcas - '+cat+' ('+brands.length+')';
-    const data=brands.map(b=>[b, (RAW[cat].brands[b]||[]).length]);
-    html=buildDrawerTable(['Marca','Qtd. Modelos'],data,'cat-marcas');
+    // Filter out brands with pending removal
+    const effectiveBrands=brands.filter(b=>!isPendingBrandRemoval(b, cat));
+    title='Marcas - '+cat+' ('+effectiveBrands.length+')';
+    html=buildBrandListWithActions(effectiveBrands, cat);
   } else if(type==='duplicados'){
     const dups=DUPLICATES.filter(d=>d.cats.includes(cat));
     title='Duplicados - '+cat+' ('+dups.length+')';
@@ -1123,6 +1124,165 @@ function openSimpleModelEdit(marca, modelo, categoria){
       else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
     };
   },50);
+}
+
+// ========= BRAND LIST WITH ACTIONS =========
+function isPendingBrandRemoval(marca, categoria){
+  return STAGING.ops.some(op=>op.type==='Remoção de Marca'&&op.marca===marca&&op.catFrom===categoria);
+}
+
+function hasPendingBrandChange(marca, categoria){
+  return STAGING.ops.some(op=>(op.type==='Remoção de Marca'||op.type==='Edição de Marca')&&op.marca===marca&&op.catFrom===categoria);
+}
+
+function getPendingBrandChangeType(marca, categoria){
+  const op=STAGING.ops.find(op=>(op.type==='Remoção de Marca'||op.type==='Edição de Marca')&&op.marca===marca&&op.catFrom===categoria);
+  return op?op.type:null;
+}
+
+function buildBrandListWithActions(brands, cat){
+  const searchId='drawerSearch_catBrands';
+  const eCat=cat.replace(/'/g,"\\'");
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar marca..." oninput="filterBrandList()">';
+  html+=`<button class="btn btn-sm btn-green" onclick="openAddBrandToCat('${eCat}')">+ Adicionar Marca</button>`;
+  html+='</div>';
+  html+='<div class="drawer-count" id="brandListCount">'+brands.length+' marcas</div>';
+  html+='<div id="brandListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
+  for(const b of brands){
+    const eMarca=b.replace(/'/g,"\\'");
+    const modelCount=(RAW[cat].brands[b]||[]).length;
+    const pending=hasPendingBrandChange(b,cat);
+    const pendingType=pending?getPendingBrandChangeType(b,cat):null;
+    html+=`<div class="model-action-row" data-search="${norm(b)}" style="${pending?'opacity:.6':''}">
+      <div class="model-action-info">
+        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span class="model-action-brand">${modelCount} modelo${modelCount!==1?'s':''}</span>
+      </div>
+      <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
+        <button class="btn btn-sm" onclick="openSimpleBrandEdit('${eMarca}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
+        <button class="btn btn-sm btn-red" onclick="confirmRemoveBrandFromCat('${eMarca}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>🗑️</button>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+function filterBrandList(){
+  const query=norm(document.getElementById('drawerSearch_catBrands').value);
+  const rows=document.querySelectorAll('.model-action-row');
+  let visible=0;
+  rows.forEach(row=>{
+    if(!query||row.dataset.search.includes(query)){row.style.display='';visible++;}
+    else{row.style.display='none';}
+  });
+  const countEl=document.getElementById('brandListCount');
+  if(countEl) countEl.textContent=visible+' marcas';
+}
+
+function openAddBrandToCat(categoria){
+  showModal('➕ Adicionar Marca em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <input id="addBrand_marca" placeholder="Digite o nome da marca..." list="addBrandList">
+    <datalist id="addBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
+
+    <div id="addBrand_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A marca será adicionada às Alterações Pendentes. Após salvar, você poderá incluir modelos nela.</span>
+  </div>`,function(){
+    const marca=document.getElementById('addBrand_marca').value.trim();
+    if(!marca){showToast('Preencha o nome da marca','error');return;}
+    // Validate: check if brand already exists in this category
+    const existingBrands=Object.keys(RAW[categoria].brands||{});
+    if(existingBrands.some(b=>norm(b)===norm(marca))){showToast('Esta marca já está cadastrada nesta categoria.','error');return;}
+    // Check pending
+    const pendingAdd=STAGING.ops.some(op=>op.type==='Adição de Marca'&&norm(op.marca)===norm(marca)&&op.catTo===categoria);
+    if(pendingAdd){showToast('Já existe uma adição pendente para esta marca nesta categoria.','warning');return;}
+    addToStaging({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria},true);
+    closeModal();
+    showToast('Adição da marca "'+marca+'" pendente em '+categoria,'success');
+    showCatDetail(categoria,'marcas');
+  },'green');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('addBrand_marca');
+    const msg=document.getElementById('addBrand_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val){msg.textContent='';msg.className='ac-msg';return;}
+      const existingBrands=Object.keys(RAW[categoria].brands||{});
+      if(existingBrands.some(b=>norm(b)===norm(val))){msg.textContent='✕ Esta marca já existe nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Marca disponível para inclusão';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openSimpleBrandEdit(marca, categoria){
+  if(hasPendingBrandChange(marca,categoria)){
+    showToast('Esta marca já possui uma alteração pendente.','warning');
+    return;
+  }
+  showModal('✏️ Editar Nome da Marca',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome da marca:</label>
+    <input id="brandEdit_marca" value="${marca}" placeholder="Nome da marca...">
+
+    <div id="brandEdit_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A alteração será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('brandEdit_marca').value.trim();
+    if(!newName){showToast('Digite o nome da marca','error');return;}
+    if(newName===marca){closeModal();return;}
+    // Validate
+    const existingBrands=Object.keys(RAW[categoria].brands||{});
+    if(existingBrands.some(b=>norm(b)===norm(newName))){showToast('Já existe uma marca com esse nome nesta categoria.','error');return;}
+    addToStaging({type:'Edição de Marca',marca:marca,modelo:marca+' → '+newName,catFrom:categoria,catTo:categoria,oldMarca:marca,newMarca:newName},true);
+    closeModal();
+    showToast('Renomeação de "'+marca+'" → "'+newName+'" pendente','success');
+    showCatDetail(categoria,'marcas');
+  },'blue');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('brandEdit_marca');
+    const msg=document.getElementById('brandEdit_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val||val===marca){msg.textContent='';msg.className='ac-msg';return;}
+      const existingBrands=Object.keys(RAW[categoria].brands||{});
+      if(existingBrands.some(b=>norm(b)===norm(val))){msg.textContent='✕ Já existe uma marca com esse nome nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function confirmRemoveBrandFromCat(marca, categoria){
+  if(hasPendingBrandChange(marca,categoria)){
+    showToast('Esta marca já possui uma alteração pendente.','warning');
+    return;
+  }
+  // Check if brand has models
+  const models=RAW[categoria].brands[marca]||[];
+  if(models.length>0){
+    showToast('Existem '+models.length+' modelo(s) vinculado(s) a esta marca. Remova ou mova os modelos antes de remover a marca.','error');
+    return;
+  }
+  showModal('Remover marca da categoria?',`<div style="line-height:1.8">
+    <strong>Marca:</strong><br>${marca}<br><br>
+    <strong>Categoria:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
+    <span style="font-size:.78rem;color:var(--text2)">A remoção será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    addToStaging({type:'Remoção de Marca',marca:marca,modelo:'—',catFrom:categoria,catTo:null},true);
+    closeModal();
+    renderOverviewTable();
+    renderKPIs();
+    showToast('Remoção da marca "'+marca+'" pendente','success');
+    showCatDetail(categoria,'marcas');
+  },'red');
 }
 
 // ========= MODEL DETAIL PANEL =========
@@ -1862,6 +2022,18 @@ function getStagingData(){
         if(idx>=0) copy[op.catFrom].brands[op.marca].splice(idx,1);
         copy[op.catFrom].brands[op.marca].push(op.newModelo);
       }
+    } else if(op.type==='Adição de Marca'){
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
+    } else if(op.type==='Remoção de Marca'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        delete copy[op.catFrom].brands[op.marca];
+      }
+    } else if(op.type==='Edição de Marca'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.oldMarca]){
+        copy[op.catFrom].brands[op.newMarca]=copy[op.catFrom].brands[op.oldMarca];
+        delete copy[op.catFrom].brands[op.oldMarca];
+      }
     }
   }
   return copy;
@@ -1884,8 +2056,8 @@ function removeFromStaging(idx){
   STAGING.data = null;
   renderStagingBars();
   renderStagingTable();
-  // If a removal was cancelled, re-render views to restore the model visually
-  if(op && op.type==='Remoção'){
+  // If a removal was cancelled, re-render views to restore visually
+  if(op && (op.type==='Remoção'||op.type==='Remoção de Marca'||op.type==='Edição de Marca')){
     renderOverviewTable();
     renderKPIs();
     renderDupTable();
@@ -1896,6 +2068,8 @@ function removeFromStaging(idx){
         openDrawer(op.catFrom);
       } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+op.catFrom)){
         showCatDetail(op.catFrom, 'modelos');
+      } else if(drawerTitle && drawerTitle.textContent.includes('Marcas - '+op.catFrom)){
+        showCatDetail(op.catFrom, 'marcas');
       }
     }
   }
