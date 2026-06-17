@@ -699,6 +699,8 @@ function renderOverviewTable(){
   tbody.innerHTML = cats.map(cat=>{
     const brands = Object.keys(RAW[cat].brands||{});
     const dups = DUPLICATES.filter(d=>d.cats.includes(cat)).length;
+    const catPending = hasPendingCategoryChange(cat);
+    const catPendingType = catPending ? getPendingCategoryChangeType(cat) : null;
     let divs = 0;
     for(const g of COMP_GROUPS){
       if(g.a===cat||g.b===cat){
@@ -709,7 +711,7 @@ function renderOverviewTable(){
       }
     }
     return `<tr>
-      <td onclick="openDrawer('${cat.replace(/'/g,"\\'")}')"><strong style="cursor:pointer">${cat}</strong></td>
+      <td onclick="openDrawer('${cat.replace(/'/g,"\\'")}')"><strong style="cursor:pointer">${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
@@ -718,8 +720,8 @@ function renderOverviewTable(){
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
           <div class="row-menu">
-            <div class="row-menu-item" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')">✏️ Renomear</div>
-            <div class="row-menu-item danger" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')">🗑️ Remover</div>
+            <div class="row-menu-item${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')">✏️ Renomear</div>
+            <div class="row-menu-item danger${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')">🗑️ Remover</div>
           </div>
         </div>
       </td>
@@ -829,12 +831,14 @@ function openDrawer(cat){
       const ano = typeof getAno==='function'?getAno(cat,b,m):'';
       const key = norm(b)+'|||'+norm(m);
       const isDup = modelStatus[key]==='Duplicado';
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)">
-        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}</span>
+      const pending = hasPendingChange(b, m, cat);
+      const pendingType = pending ? getPendingChangeType(b, m, cat) : null;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
+        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
         <span style="display:flex;gap:4px;flex-shrink:0">
-          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem" title="Editar">✏️</button>
-          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem" title="Remover">🗑️</button>
-          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)" title="Mover">↔️</button>
+          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}>✏️</button>
+          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}>🗑️</button>
+          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)${pending?';opacity:.3;pointer-events:none':''}" title="Mover"${pending?' disabled':''}>↔️</button>
         </span>
       </div>`;
     }
@@ -966,15 +970,17 @@ function buildModelListWithActions(models, cat){
     const eMarca=m.marca.replace(/'/g,"\\'");
     const eModelo=m.modelo.replace(/'/g,"\\'");
     const eCat=cat.replace(/'/g,"\\'");
-    html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}">
+    const pending = hasPendingChange(m.marca, m.modelo, cat);
+    const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
+    html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
         <span class="model-action-brand">${m.marca}</span>
-        <span class="model-action-name">${m.modelo}</span>
+        <span class="model-action-name">${m.modelo}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
       </div>
-      <div class="model-action-btns">
-        <button class="btn btn-sm" onclick="openModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar" style="padding:3px 6px;font-size:.65rem">✏️</button>
-        <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${eMarca}','${eModelo}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem">🗑️</button>
-        <button class="btn btn-sm" onclick="openModelMove('${eMarca}','${eModelo}')" title="Mover" style="padding:3px 6px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)">↔️</button>
+      <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
+        <button class="btn btn-sm" onclick="openModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
+        <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${eMarca}','${eModelo}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>🗑️</button>
+        <button class="btn btn-sm" onclick="openModelMove('${eMarca}','${eModelo}')" title="Mover" style="padding:3px 6px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)"${pending?' disabled':''}>↔️</button>
       </div>
     </div>`;
   }
@@ -1019,6 +1025,11 @@ function openModelDetail(marca, modelo){
   if(isDup){status='Duplicado ('+cats.length+' categorias)';statusClass='tag-dup';}
   else if(divergences.length){status='Divergente';statusClass='tag-amber';}
 
+  // Check for pending changes
+  const modelPending = hasPendingChange(marca, modelo, null);
+  const modelPendingType = modelPending ? getPendingChangeType(marca, modelo, null) : null;
+  if(modelPending){status='Alteração Pendente ('+modelPendingType+')';statusClass='tag-amber';}
+
   let html=`<div class="drawer-title">${modelo}</div>`;
   html+=`<div style="margin-bottom:20px">`;
   html+=`<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;line-height:2">`;
@@ -1053,9 +1064,16 @@ function openModelDetail(marca, modelo){
 
   // Action buttons
   html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">`;
-  html+=`<button class="btn btn-sm btn-blue" onclick="openModelEdit('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}','${cats[0].replace(/'/g,"\\'")}')">✏️ Editar</button>`;
-  html+=`<button class="btn btn-sm btn-red" onclick="openModelRemove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">🗑️ Remover</button>`;
-  html+=`<button class="btn btn-sm" style="background:var(--purple);color:#fff;border-color:var(--purple)" onclick="openModelMove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >↔️ Mover Categoria</button>`;
+  if(modelPending){
+    html+=`<div style="font-size:.78rem;color:var(--amber);font-weight:600;width:100%;margin-bottom:6px">⏳ Este registro possui uma alteração pendente (${modelPendingType}). Ações bloqueadas até que seja salva ou cancelada.</div>`;
+    html+=`<button class="btn btn-sm btn-blue" disabled style="opacity:.4;pointer-events:none">✏️ Editar</button>`;
+    html+=`<button class="btn btn-sm btn-red" disabled style="opacity:.4;pointer-events:none">🗑️ Remover</button>`;
+    html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none;background:var(--purple);color:#fff;border-color:var(--purple)">↔️ Mover Categoria</button>`;
+  } else {
+    html+=`<button class="btn btn-sm btn-blue" onclick="openModelEdit('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}','${cats[0].replace(/'/g,"\\'")}')">✏️ Editar</button>`;
+    html+=`<button class="btn btn-sm btn-red" onclick="openModelRemove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">🗑️ Remover</button>`;
+    html+=`<button class="btn btn-sm" style="background:var(--purple);color:#fff;border-color:var(--purple)" onclick="openModelMove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >↔️ Mover Categoria</button>`;
+  }
   html+=`</div>`;
 
   document.getElementById('drawerContent').innerHTML=html;
@@ -1064,6 +1082,12 @@ function openModelDetail(marca, modelo){
 }
 
 function openModelEdit(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
   const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'Ano da categoria';
   const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
   showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
@@ -1301,6 +1325,12 @@ function openModelRemove(marca, modelo){
 }
 
 function openModelMove(marca, modelo){
+  // Block if model already has a pending change (check without specific category)
+  if(hasPendingChange(marca, modelo, null)){
+    const type = getPendingChangeType(marca, modelo, null);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
   const currentCats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
   const fromOptions=currentCats.map(c=>`<option value="${c}">${c}</option>`).join('');
   const toOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -1421,6 +1451,16 @@ function exportDuplicates(){
 }
 
 function confirmRemoveFromCat(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    if(type==='Remoção'){
+      showToast('Já existe uma remoção pendente para este registro.','warning');
+    } else {
+      showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    }
+    return;
+  }
   showModal(
     'Remover modelo da categoria?',
     `<div style="line-height:1.8">
@@ -1459,6 +1499,40 @@ function confirmRemoveFromCat(marca, modelo, categoria){
 
 function isPendingRemoval(marca, modelo, categoria){
   return STAGING.ops.some(op=>op.type==='Remoção'&&op.marca===marca&&op.modelo===modelo&&op.catFrom===categoria);
+}
+
+// Check if a model has ANY pending change (removal, move, edit) in any category
+function hasPendingChange(marca, modelo, categoria){
+  return STAGING.ops.some(op=>{
+    if(op.type.includes('Categoria')) return false;
+    if(categoria){
+      return op.marca===marca && op.modelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+    }
+    return op.marca===marca && op.modelo===modelo;
+  });
+}
+
+// Get the type of pending change for a model (for informational messages)
+function getPendingChangeType(marca, modelo, categoria){
+  const op = STAGING.ops.find(op=>{
+    if(op.type.includes('Categoria')) return false;
+    if(categoria){
+      return op.marca===marca && op.modelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+    }
+    return op.marca===marca && op.modelo===modelo;
+  });
+  return op ? op.type : null;
+}
+
+// Check if a category has any pending change (rename, removal, creation)
+function hasPendingCategoryChange(cat){
+  return STAGING.ops.some(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
+}
+
+// Get the type of pending category change
+function getPendingCategoryChangeType(cat){
+  const op = STAGING.ops.find(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
+  return op ? op.type : null;
 }
 
 function cancelPendingRemoval(marca, modelo, categoria){
@@ -1528,6 +1602,11 @@ function openAddCategory(){
 }
 
 function openRenameCategory(cat){
+  // Block if category already has a pending change
+  if(hasPendingCategoryChange(cat)){
+    showToast('Esta categoria já possui uma alteração pendente.','warning');
+    return;
+  }
   showModal('✏️ Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
     <label style="font-size:.78rem;color:var(--text2)">Categoria atual:</label>
     <div style="font-weight:600;font-size:.9rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius)">${cat}</div>
@@ -1557,6 +1636,11 @@ function openRenameCategory(cat){
 }
 
 function openRemoveCategory(cat){
+  // Block if category already has a pending change
+  if(hasPendingCategoryChange(cat)){
+    showToast('Esta categoria já possui uma alteração pendente.','warning');
+    return;
+  }
   const total=CAT_TOTALS[cat]||0;
   if(total>0){
     showModal('⚠️ Não é possível remover',`<div style="line-height:1.8">
