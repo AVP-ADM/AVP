@@ -343,7 +343,7 @@ tr:hover .row-actions{opacity:1}
       <div class="settings-dropdown" id="settingsDropdown">
         <div class="settings-item" onclick="showUploadModal();closeSettings()"><span class="si-icon">📁</span><span class="si-label">Importar Nova Planilha</span></div>
         <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon">🔄</span><span class="si-label">Sincronizar com Google Sheets</span></div>
-        <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar XLSX</span></div>
+        <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar Base Completa</span></div>
         <div class="settings-divider"></div>
         <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span></div>
       </div>
@@ -2768,23 +2768,31 @@ function exportFullBaseXLSX(){
     return;
   }
   const wb = XLSX.utils.book_new();
-  // Create one sheet per category
+  // Create single "Dados" sheet matching Google Sheets format: Categoria | Marca | Modelo | Ano de Aceitação
+  const rows = [['Categoria','Marca','Modelo','Ano de Aceitação']];
   for(const[cat, catData] of Object.entries(RAW)){
-    const rows = [['Marca','Modelo','Ano de Aceitação']];
     for(const[brand, models] of Object.entries(catData.brands||{})){
       for(const m of models){
         const ano = typeof getAno==='function'?getAno(cat,brand,m):'Ano da categoria';
-        rows.push([brand, m, ano]);
+        rows.push([cat, brand, m, ano]);
       }
     }
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    // Sanitize sheet name
-    let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
-    if(safeName.length>31) safeName=safeName.substring(0,31);
-    XLSX.utils.book_append_sheet(wb, ws, safeName);
   }
+  const wsDados = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, wsDados, 'Dados');
+
+  // Create "Historico" sheet matching Google Sheets format
+  if(HISTORY && HISTORY.length>0){
+    const histRows = [['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']];
+    for(const h of HISTORY){
+      histRows.push([h.timestamp||'', h.type||'', h.marca||'', h.modelo||'', h.catFrom||'', h.catTo||'']);
+    }
+    const wsHist = XLSX.utils.aoa_to_sheet(histRows);
+    XLSX.utils.book_append_sheet(wb, wsHist, 'Historico');
+  }
+
   XLSX.writeFile(wb, 'base_avp_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  showToast('Arquivo XLSX exportado com sucesso!','success');
+  showToast('Base completa exportada com sucesso!','success');
 }
 
 // ========= THEME TOGGLE =========
