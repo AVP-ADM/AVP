@@ -466,12 +466,26 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div class="card">
       <div class="card-title"><span class="icon">📝</span> Alterações Pendentes</div>
+      <div id="stagingSummary" style="margin-bottom:12px"></div>
+      <div class="filter-row" id="stagingFilterRow" style="display:none">
+        <input type="text" id="stagingFilter" placeholder="Filtrar pendentes..." oninput="renderStagingTable()">
+        <select id="stagingTypeFilter" onchange="renderStagingTable()">
+          <option value="">Todos os tipos</option>
+          <option value="Adição">Adição</option>
+          <option value="Remoção">Remoção</option>
+          <option value="Edição">Edição</option>
+          <option value="Movimentação">Movimentação</option>
+          <option value="Categoria">Categoria</option>
+          <option value="Marca">Marca</option>
+        </select>
+      </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th><th></th></tr></thead>
           <tbody id="stagingTableBody"></tbody>
         </table>
       </div>
+      <div id="stagingPagination" class="pagination"></div>
     </div>
   </div>
 
@@ -2362,9 +2376,58 @@ function renderStagingBars(){
   else{bar.classList.remove('visible');}
 }
 
+let stagingPage=1;
+const STAGING_PER_PAGE=10;
+
 function renderStagingTable(){
   const tbody = document.getElementById('stagingTableBody');
-  tbody.innerHTML = STAGING.ops.map((op,i)=>{
+  const filterRow = document.getElementById('stagingFilterRow');
+  const summaryEl = document.getElementById('stagingSummary');
+
+  // Show filter row and summary only when there are items
+  if(STAGING.ops.length>0){
+    filterRow.style.display='flex';
+  } else {
+    filterRow.style.display='none';
+  }
+
+  // Build summary by type
+  if(STAGING.ops.length>0){
+    const counts={};
+    for(const op of STAGING.ops){
+      const t=op.type;
+      counts[t]=(counts[t]||0)+1;
+    }
+    summaryEl.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.78rem">'+
+      Object.entries(counts).map(([type,count])=>{
+        const tagClass=type.includes('Adição')||type.includes('Criação')?'tag-green':type.includes('Remoção')?'tag-red':type.includes('Edição')?'tag-amber':'tag-blue';
+        return `<span class="tag ${tagClass}" style="font-size:.72rem">${type}: ${count}</span>`;
+      }).join('')+
+      `<span style="color:var(--text3);margin-left:8px">Total: ${STAGING.ops.length}</span></div>`;
+  } else {
+    summaryEl.innerHTML='';
+  }
+
+  // Apply filters
+  const textFilter=norm((document.getElementById('stagingFilter')||{}).value||'');
+  const typeFilter=(document.getElementById('stagingTypeFilter')||{}).value||'';
+  let filtered=STAGING.ops.map((op,i)=>({...op,_idx:i}));
+  if(textFilter){
+    filtered=filtered.filter(op=>norm(op.marca+' '+op.modelo+(op.catFrom||'')+(op.catTo||'')).includes(textFilter));
+  }
+  if(typeFilter){
+    filtered=filtered.filter(op=>op.type.includes(typeFilter));
+  }
+
+  // Pagination
+  const total=filtered.length;
+  const pages=Math.ceil(total/STAGING_PER_PAGE);
+  if(stagingPage>pages) stagingPage=1;
+  const start=(stagingPage-1)*STAGING_PER_PAGE;
+  const page=filtered.slice(start,start+STAGING_PER_PAGE);
+
+  tbody.innerHTML = page.map((op)=>{
+    const i=op._idx;
     const isCatOp=op.type.includes('Categoria');
     const isBrandOp=op.type.includes('Marca');
     const isEdit=op.type==='Edição';
@@ -2381,7 +2444,22 @@ function renderStagingTable(){
     <td>${op.catTo||'—'}</td>
     <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})">✕</button></td>
   </tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente'+(textFilter||typeFilter?' (com filtro aplicado)':'')+'</td></tr>';
+
+  // Render pagination
+  const pagEl=document.getElementById('stagingPagination');
+  if(pagEl){
+    if(pages<=1){pagEl.innerHTML='';return;}
+    let html=`<button ${stagingPage===1?'disabled':''} onclick="stagingPage=${stagingPage-1};renderStagingTable()">← Anterior</button>`;
+    const maxVisible=7;
+    let startP=Math.max(1,stagingPage-3), endP=Math.min(pages,startP+maxVisible-1);
+    if(endP-startP<maxVisible-1) startP=Math.max(1,endP-maxVisible+1);
+    for(let p=startP;p<=endP;p++){
+      html+=`<button class="${p===stagingPage?'active':''}" onclick="stagingPage=${p};renderStagingTable()">${p}</button>`;
+    }
+    html+=`<button ${stagingPage===pages?'disabled':''} onclick="stagingPage=${stagingPage+1};renderStagingTable()">Próximo →</button>`;
+    pagEl.innerHTML=html;
+  }
 }
 
 function renderMgmtKpis(){
