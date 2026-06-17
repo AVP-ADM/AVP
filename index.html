@@ -984,15 +984,16 @@ function openDetailDrawer(title, content){
 // ========= MODEL LIST WITH ACTIONS =========
 function buildModelListWithActions(models, cat){
   const searchId='drawerSearch_catModels';
+  const eCat=cat.replace(/'/g,"\\'");
   let html='<div class="drawer-toolbar">';
   html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar modelo ou marca..." oninput="filterModelList()">';
+  html+=`<button class="btn btn-sm btn-green" onclick="openAddModelToCat('${eCat}')">+ Adicionar Modelo</button>`;
   html+='</div>';
   html+='<div class="drawer-count" id="modelListCount">'+models.length+' modelos</div>';
   html+='<div id="modelListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
   for(const m of models){
     const eMarca=m.marca.replace(/'/g,"\\'");
     const eModelo=m.modelo.replace(/'/g,"\\'");
-    const eCat=cat.replace(/'/g,"\\'");
     const pending = hasPendingChange(m.marca, m.modelo, cat);
     const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
@@ -1001,7 +1002,7 @@ function buildModelListWithActions(models, cat){
         <span class="model-action-name">${m.modelo}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
-        <button class="btn btn-sm" onclick="openModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
+        <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
         <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${eMarca}','${eModelo}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>🗑️</button>
         <button class="btn btn-sm" onclick="openModelMove('${eMarca}','${eModelo}')" title="Mover" style="padding:3px 6px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)"${pending?' disabled':''}>↔️</button>
       </div>
@@ -1021,6 +1022,108 @@ function filterModelList(){
   });
   const countEl=document.getElementById('modelListCount');
   if(countEl) countEl.textContent=visible+' modelos';
+}
+
+// ========= ADD MODEL TO CATEGORY =========
+function openAddModelToCat(categoria){
+  showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <input id="addModel_marca" placeholder="Digite a marca..." list="addModelBrandList">
+    <datalist id="addModelBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
+    <input id="addModel_modelo" placeholder="Digite o nome do modelo...">
+
+    <div id="addModel_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A adição será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const marca=document.getElementById('addModel_marca').value.trim();
+    const modelo=document.getElementById('addModel_modelo').value.trim();
+    if(!marca||!modelo){showToast('Preencha Marca e Modelo','error');return;}
+    // Validate: check if already exists in this category
+    const models=getModelsForCat(categoria);
+    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo));
+    if(exists){showToast('Este modelo já está cadastrado nesta categoria.','error');return;}
+    // Check if there's already a pending addition for the same model
+    const pendingAdd=STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
+    if(pendingAdd){showToast('Já existe uma adição pendente para este modelo nesta categoria.','warning');return;}
+    addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria},true);
+    closeModal();
+    showToast('Adição de "'+marca+' '+modelo+'" pendente em '+categoria,'success');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  },'green');
+  // Real-time validation
+  setTimeout(()=>{
+    const marcaInput=document.getElementById('addModel_marca');
+    const modeloInput=document.getElementById('addModel_modelo');
+    const msg=document.getElementById('addModel_msg');
+    function validate(){
+      const m=marcaInput.value.trim();
+      const mod=modeloInput.value.trim();
+      if(!m||!mod){msg.textContent='';msg.className='ac-msg';return;}
+      const models=getModelsForCat(categoria);
+      const exists=models.some(x=>norm(x.marca)===norm(m)&&norm(x.modelo)===norm(mod));
+      if(exists){msg.textContent='✕ Este modelo já existe nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Modelo disponível para inclusão';msg.className='ac-msg valid';}
+    }
+    if(marcaInput) marcaInput.oninput=validate;
+    if(modeloInput) modeloInput.oninput=validate;
+  },50);
+}
+
+// ========= SIMPLE MODEL EDIT (name only) =========
+function openSimpleModelEdit(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
+  showModal('✏️ Editar Nome do Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${marca}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome do modelo:</label>
+    <input id="simpleEdit_modelo" value="${modelo}" placeholder="Nome do modelo...">
+
+    <div id="simpleEdit_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A alteração será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('simpleEdit_modelo').value.trim();
+    if(!newName){showToast('Digite o nome do modelo','error');return;}
+    if(newName===modelo){closeModal();return;}
+    // Validate: check if the new name already exists in this category with same brand
+    const models=getModelsForCat(categoria);
+    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(newName));
+    if(exists){showToast('Já existe um modelo com esse nome nesta categoria.','error');return;}
+    // Create two staging ops: remove old + add new (as a rename)
+    addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:categoria,catTo:null},true);
+    addToStaging({type:'Adição',marca:marca,modelo:newName,catFrom:null,catTo:categoria},true);
+    closeModal();
+    showToast('Renomeação de "'+modelo+'" → "'+newName+'" pendente','success');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  },'blue');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('simpleEdit_modelo');
+    const msg=document.getElementById('simpleEdit_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val||val===modelo){msg.textContent='';msg.className='ac-msg';return;}
+      const models=getModelsForCat(categoria);
+      const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(val));
+      if(exists){msg.textContent='✕ Já existe um modelo com esse nome nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
 }
 
 // ========= MODEL DETAIL PANEL =========
