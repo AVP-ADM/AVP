@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Auditoria de Veículos — AVP</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -2786,8 +2786,13 @@ function exportFullBaseXLSX(){
     // Build history rows
     const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
     // Merge data + history side by side
+    // Row 2: sub-headers for history columns
+    const firstDataRow = dataRows[0]||['','',''];
+    const firstHistRow = histRows.length>0?histRows[0]:['','',''];
+    rows.push([firstDataRow[0], firstDataRow[1], firstDataRow[2], '', 'Data/Hora', 'Tipo', 'Detalhe']);
+    // Remaining rows
     const maxRows = Math.max(dataRows.length, histRows.length);
-    for(let i=0;i<maxRows;i++){
+    for(let i=1;i<maxRows;i++){
       const d = dataRows[i]||['','',''];
       const h = histRows[i]||['','',''];
       rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
@@ -2795,6 +2800,18 @@ function exportFullBaseXLSX(){
     const ws = XLSX.utils.aoa_to_sheet(rows);
     // Set column widths
     ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
+    // Apply dark header styling to row 1 (data headers + HISTÓRICO DA CATEGORIA)
+    const headerCells = ['A1','B1','C1','E1'];
+    for(const c of headerCells){
+      if(!ws[c]) ws[c]={v:'',t:'s'};
+      ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+    }
+    // Style history sub-headers row 2 cols E-G
+    const histSubHeaders = ['E2','F2','G2'];
+    for(const c of histSubHeaders){
+      if(!ws[c]) ws[c]={v:'',t:'s'};
+      ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:10},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+    }
     // Sanitize sheet name
     let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
     if(safeName.length>31) safeName=safeName.substring(0,31);
@@ -2807,6 +2824,13 @@ function exportFullBaseXLSX(){
       histRows.push([h.timestamp||'', h.type||'', h.marca||'', h.modelo||'', h.catFrom||'', h.catTo||'']);
     }
     const wsHist = XLSX.utils.aoa_to_sheet(histRows);
+    // Style history header
+    const histHeaders = ['A1','B1','C1','D1','E1','F1'];
+    for(const c of histHeaders){
+      if(!wsHist[c]) wsHist[c]={v:'',t:'s'};
+      wsHist[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+    }
+    wsHist['!cols']=[{wch:18},{wch:14},{wch:20},{wch:45},{wch:25},{wch:25}];
     XLSX.utils.book_append_sheet(wb, wsHist, 'Historico');
   }
   XLSX.writeFile(wb, 'base_avp_'+new Date().toISOString().slice(0,10)+'.xlsx');
