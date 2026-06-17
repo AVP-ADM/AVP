@@ -734,7 +734,7 @@ function renderOverviewTable(){
       }
     }
     return `<tr>
-      <td onclick="openDrawer('${cat.replace(/'/g,"\\'")}')"><strong style="cursor:pointer">${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
+      <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
