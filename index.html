@@ -681,6 +681,11 @@ function recomputeAll(){
 }
 
 // ========= NAVIGATION =========
+// Dirty flags - mark tabs that need re-render
+let _dirtyTabs={overview:true,duplicates:true,divergences:true,management:true,history:true};
+function markAllDirty(){_dirtyTabs={overview:true,duplicates:true,divergences:true,management:true,history:true};}
+function markDirty(tab){_dirtyTabs[tab]=true;}
+
 function getActiveTab(){
   const panels=['overview','duplicates','divergences','management','history','exports'];
   for(const p of panels){
@@ -692,11 +697,11 @@ function getActiveTab(){
 
 function refreshActiveTab(){
   const tab=getActiveTab();
-  if(tab==='overview'){renderKPIs();renderOverviewTable();}
-  if(tab==='duplicates') renderDupTable();
-  if(tab==='divergences') renderDivergences();
+  if(tab==='overview'){renderKPIs();renderOverviewTable();_dirtyTabs.overview=false;}
+  if(tab==='duplicates'){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(tab==='divergences'){renderDivergences();_dirtyTabs.divergences=false;}
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
-  if(tab==='history') renderHistory();
+  if(tab==='history'){renderHistory();_dirtyTabs.history=false;}
 }
 
 function goTab(tab){
@@ -713,11 +718,11 @@ function goTab(tab){
   const idx = tabMap.indexOf(tab);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
 
-  if(tab==='overview') renderOverviewTable();
-  if(tab==='duplicates') renderDupTable();
-  if(tab==='divergences') renderDivergences();
+  if(tab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
+  if(tab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(tab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
-  if(tab==='history') renderHistory();
+  if(tab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
 }
 
 function resetTabFilters(){
@@ -2377,6 +2382,7 @@ function addToStaging(op, silent){
   op.timestamp = new Date().toLocaleString('pt-BR');
   STAGING.ops.push(op);
   STAGING.data = null;
+  markAllDirty();
   renderStagingBars();
   renderStagingTable();
   if(!silent) showToast('Operação adicionada ao staging','success');
@@ -2386,6 +2392,7 @@ function removeFromStaging(idx){
   const op = STAGING.ops[idx];
   STAGING.ops.splice(idx,1);
   STAGING.data = null;
+  markAllDirty();
   renderStagingBars();
   renderStagingTable();
   // If a removal was cancelled, re-render views to restore visually
