@@ -238,9 +238,9 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .comp-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .comp-section{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}
 @media(max-width:900px){.comp-section{grid-template-columns:1fr}}
-.comp-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px}
+.comp-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column}
 .comp-card h5{font-size:.82rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.comp-card .model-list{max-height:300px;overflow-y:auto;font-size:.78rem;color:var(--text2)}
+.comp-card .model-list{max-height:300px;overflow-y:auto;font-size:.78rem;color:var(--text2);flex:1}
 .comp-card .model-list div{padding:3px 0;border-bottom:1px solid var(--border-light)}
 
 /* ========= SPINNER ========= */
@@ -2161,6 +2161,7 @@ function renderDivergences(){
     </div>
     <div class="comp-card" style="border-color:var(--green-light)">
       <h5><span class="badge badge-green">${inBoth.length+pendingCopiesCount}</span> Em ambas</h5>
+      <div style="height:38px"></div>
       <div class="model-list">${(()=>{
         // Pending copies shown first with highlight
         const pendingCopies=STAGING.ops.filter(op=>op.type==='Adição'&&op._divCopy&&(op.catTo===g.a||op.catTo===g.b));
