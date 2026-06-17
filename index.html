@@ -644,6 +644,11 @@ function recomputeAll(){
 
 // ========= NAVIGATION =========
 function goTab(tab){
+  // Close drawer and modal if open
+  closeDrawer();
+  // Reset all filters and state
+  resetTabFilters();
+
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
@@ -657,6 +662,30 @@ function goTab(tab){
   if(tab==='divergences') renderDivergences();
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
   if(tab==='history') renderHistory();
+}
+
+function resetTabFilters(){
+  // Overview filters
+  const ovFilter=document.getElementById('ovFilter');
+  if(ovFilter) ovFilter.value='';
+  const ovSort=document.getElementById('ovSort');
+  if(ovSort) ovSort.value='name';
+  // Duplicates filters
+  const dupBrand=document.getElementById('dupBrandFilter');
+  if(dupBrand) dupBrand.value='';
+  const dupModel=document.getElementById('dupModelFilter');
+  if(dupModel) dupModel.value='';
+  const dupCount=document.getElementById('dupCountFilter');
+  if(dupCount) dupCount.value='0';
+  dupPage=1;
+  // History filters
+  const histFilter=document.getElementById('histFilter');
+  if(histFilter) histFilter.value='';
+  const histType=document.getElementById('histType');
+  if(histType) histType.value='';
+  histPage=1;
+  // Divergences - reset to first group
+  currentCompGroup=0;
 }
 
 // ========= KPIs =========
