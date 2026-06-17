@@ -2733,18 +2733,36 @@ function exportChangesXLSX(){
 }
 
 function exportDivergencesXLSX(){
-  const headers=['Grupo','Situação','Marca','Modelo'];
-  const data=[];
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  let hasData=false;
   for(const g of COMP_GROUPS){
     const modelsA=getModelsForCat(g.a);
     const modelsB=getModelsForCat(g.b);
     const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
     const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    for(const m of onlyA) data.push([g.label,'Somente em '+g.a,m.marca,m.modelo]);
-    for(const m of onlyB) data.push([g.label,'Somente em '+g.b,m.marca,m.modelo]);
+    if(!onlyA.length&&!onlyB.length) continue;
+    hasData=true;
+    const headers=['Situação','Marca','Modelo'];
+    const rows=[];
+    rows.push(headers.map(()=>'')); // Row 1: blank
+    rows.push(headers); // Row 2: headers
+    for(const m of onlyA) rows.push(['Somente em '+g.a, m.marca, m.modelo]);
+    for(const m of onlyB) rows.push(['Somente em '+g.b, m.marca, m.modelo]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    const colLetters='ABC';
+    for(let i=0;i<headers.length;i++){
+      const cell=colLetters[i]+'2';
+      if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+    }
+    ws['!cols']=[{wch:30},{wch:20},{wch:50}];
+    let safeName=g.label.replace(/[\\\/?*\[\]]/g,'-');
+    if(safeName.length>31) safeName=safeName.substring(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, safeName);
   }
-  if(!data.length) return showToast('Nenhuma divergência encontrada','warning');
-  styledXLSX(headers, data, 'Divergências', 'divergencias_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  if(!hasData) return showToast('Nenhuma divergência encontrada','warning');
+  XLSX.writeFile(wb, 'divergencias_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Relatório de divergências exportado com sucesso!','success');
 }
 
 function exportHistoryXLSX(){
