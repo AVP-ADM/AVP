@@ -335,12 +335,30 @@ tr:hover .row-actions{opacity:1}
 </head>
 <body>
 
+<!-- ========= LOGIN SCREEN ========= -->
+<div id="loginScreen" style="position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;width:360px;max-width:90vw;box-shadow:var(--shadow-lg);text-align:center">
+    <div style="font-size:1.5rem;font-weight:700;color:var(--blue);margin-bottom:6px">🔒 AVP</div>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:24px">Dashboard de Auditoria de Veículos</div>
+    <div style="display:flex;flex-direction:column;gap:12px;text-align:left">
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Usuário</label>
+      <input id="loginUser" placeholder="Digite seu nome de usuário..." style="padding:10px 14px;font-size:.88rem">
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Senha</label>
+      <input id="loginPass" type="password" placeholder="Digite sua senha..." style="padding:10px 14px;font-size:.88rem" onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="loginError" style="font-size:.78rem;color:var(--red);display:none;margin-top:4px"></div>
+      <button onclick="doLogin()" style="margin-top:12px;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--blue)'">Entrar</button>
+    </div>
+    <div style="margin-top:16px;font-size:.68rem;color:var(--text3)">Acesso restrito a usuários autorizados</div>
+  </div>
+</div>
+
 <!-- ========= HEADER ========= -->
-<header class="app-header">
+<header class="app-header" id="appHeader" style="display:none">
   <div class="app-logo">AVP<span>Dashboard de Auditoria de Veículos</span></div>
   <div class="header-right">
     <div class="sync-info" id="syncInfo"></div>
     <div class="base-info" id="baseInfo"></div>
+    <span id="userDisplay" style="font-size:.75rem;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:5px"><span style="font-size:.85rem">👤</span> <span id="userName"></span></span>
     <div class="settings-wrap">
       <button class="settings-btn" onclick="toggleSettings()" title="Configurações">⚙️</button>
       <div class="settings-dropdown" id="settingsDropdown">
@@ -349,13 +367,15 @@ tr:hover .row-actions{opacity:1}
         <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar Base Completa</span></div>
         <div class="settings-divider"></div>
         <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" onclick="doLogout()" style="color:var(--red)"><span class="si-icon">🚪</span><span class="si-label">Sair</span></div>
       </div>
     </div>
   </div>
 </header>
 
 <!-- ========= MAIN CONTAINER ========= -->
-<div class="app-container">
+<div class="app-container" id="appContainer" style="display:none">
 
   <!-- ========= NAVIGATION TABS ========= -->
   <div class="tabs" id="mainTabs">
@@ -2484,6 +2504,7 @@ function addToStaging(op, silent){
     return;
   }
   op.timestamp = new Date().toLocaleString('pt-BR');
+  op.usuario = currentUser || 'Desconhecido';
   STAGING.ops.push(op);
   STAGING.data = null;
   rebuildPendingIndex();
@@ -3879,6 +3900,73 @@ async function initSheetsIntegration(){
   }
 }
 
+// ========= LOGIN SYSTEM =========
+let currentUser=null;
+const SESSION_HOURS=8;
+
+function checkSession(){
+  try{
+    const session=JSON.parse(localStorage.getItem('avp-session')||'null');
+    if(session&&session.user&&session.expires>Date.now()){
+      currentUser=session.user;
+      showApp();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function saveSession(user){
+  currentUser=user;
+  const expires=Date.now()+(SESSION_HOURS*60*60*1000);
+  localStorage.setItem('avp-session',JSON.stringify({user:user,expires:expires}));
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appHeader').style.display='';
+  document.getElementById('appContainer').style.display='';
+  document.getElementById('userName').textContent=currentUser;
+}
+
+async function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginError');
+  if(!user||!pass){errEl.textContent='Preencha usuário e senha';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  // Validate against Sheets
+  try{
+    const url=APPS_SCRIPT_URL+'?action=validateLogin&user='+encodeURIComponent(user)+'&pass='+encodeURIComponent(pass);
+    const resp=await fetch(url);
+    const result=await resp.json();
+    if(result.success&&result.valid){
+      saveSession(user);
+      showApp();
+      initApp();
+    } else {
+      errEl.textContent='Usuário ou senha incorretos';
+      errEl.style.display='block';
+    }
+  }catch(e){
+    // Fallback: if can't reach Apps Script, allow with simple local validation
+    // This allows offline usage with stored credentials
+    errEl.textContent='Erro de conexão. Verifique sua internet.';
+    errEl.style.display='block';
+  }
+}
+
+function doLogout(){
+  closeSettings();
+  currentUser=null;
+  localStorage.removeItem('avp-session');
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appHeader').style.display='none';
+  document.getElementById('appContainer').style.display='none';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
 function initApp(){
   initTheme();
   updateBaseInfo();
@@ -3918,8 +4006,17 @@ function enableExportButtons(){
 }
 
 // Start the app
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initApp);}
-else{initApp();}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',startApp);}
+else{startApp();}
+
+function startApp(){
+  initTheme();
+  // Check if session exists
+  if(checkSession()){
+    initApp();
+  }
+  // Otherwise login screen is shown, initApp will be called after login
+}
 </script>
 </body>
 </html>

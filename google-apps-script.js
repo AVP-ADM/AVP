@@ -8,6 +8,8 @@ function doGet(e) {
       result = loadData();
     } else if (action === 'loadHistory') {
       result = loadHistory();
+    } else if (action === 'validateLogin') {
+      result = validateLogin(e.parameter.user, e.parameter.pass);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -242,4 +244,34 @@ function saveHistory(payload) {
   sheet.getRange(lastRow + 1, 1, rows.length, 6).setValues(rows);
   formatarAbaHistorico(sheet, sheet.getLastRow() - 1);
   return { success: true, message: rows.length + ' registros de historico salvos' };
+}
+
+
+
+// ========= LOGIN VALIDATION =========
+function validateLogin(user, pass) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('Usuarios');
+  if (!sheet) {
+    // Create Usuarios sheet with default admin user
+    sheet = ss.insertSheet('Usuarios');
+    sheet.getRange(1, 1, 1, 3).setValues([['Usuario', 'Senha', 'Perfil']]);
+    sheet.getRange(2, 1, 1, 3).setValues([['admin', 'admin123', 'Administrador']]);
+    // Format header
+    var header = sheet.getRange(1, 1, 1, 3);
+    header.setFontWeight('bold');
+    header.setBackground('#1a1a2e');
+    header.setFontColor('#ffffff');
+  }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { success: true, valid: false };
+  }
+  var values = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  for (var i = 0; i < values.length; i++) {
+    if (values[i][0] === user && values[i][1] === pass) {
+      return { success: true, valid: true, perfil: values[i][2] || 'Usuario' };
+    }
+  }
+  return { success: true, valid: false };
 }
