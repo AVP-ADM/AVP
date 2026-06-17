@@ -1,0 +1,3720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Auditoria de Veículos — AVP</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+/* ========= RESET & VARIABLES ========= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f9fc;--surface:#ffffff;--border:#e2e8f0;--border-light:#f1f5f9;
+  --text1:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --blue:#2563eb;--blue-light:#dbeafe;--blue-bg:#eff6ff;
+  --green:#10b981;--green-light:#d1fae5;--green-bg:#ecfdf5;
+  --amber:#f59e0b;--amber-light:#fef3c7;--amber-bg:#fffbeb;
+  --red:#ef4444;--red-light:#fee2e2;--red-bg:#fef2f2;
+  --purple:#8b5cf6;--purple-light:#ede9fe;
+  --radius:8px;--radius-lg:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);
+  --font:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#121212;--surface:#1e1e1e;--border:#2e2e2e;--border-light:#252525;
+  --text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#3b82f6;--blue-light:#1e3a5f;--blue-bg:#172554;
+  --green:#34d399;--green-light:#064e3b;--green-bg:#022c22;
+  --amber:#fbbf24;--amber-light:#78350f;--amber-bg:#451a03;
+  --red:#f87171;--red-light:#7f1d1d;--red-bg:#450a0a;
+  --purple:#a78bfa;--purple-light:#2e1065;
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 2px rgba(0,0,0,.2);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.4),0 2px 4px -2px rgba(0,0,0,.3);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.5),0 4px 6px -4px rgba(0,0,0,.4);
+}
+[data-theme="dark"] input,[data-theme="dark"] select{background:var(--surface);color:var(--text1);border-color:var(--border)}
+[data-theme="dark"] textarea{background:var(--surface);color:var(--text1);border-color:var(--border)}
+[data-theme="dark"] .tab.active{box-shadow:0 2px 4px rgba(59,130,246,.4)}
+[data-theme="dark"] tr:hover{background:rgba(59,130,246,.1)}
+[data-theme="dark"] .clickable-row:hover{background:rgba(59,130,246,.15)}
+[data-theme="dark"] .tag-gray{background:#2a2f3a;color:#94a3b8;border:1px solid #3a4050}
+[data-theme="dark"] .tag-red,[data-theme="dark"] .tag-dup{background:#3b1a1a;color:#fca5a5;border:1px solid #5c2020}
+[data-theme="dark"] .drawer{background:#1a1a1a;box-shadow:-4px 0 30px rgba(0,0,0,.5)}
+[data-theme="dark"] .badge-blue{background:#1e3a5f;color:#93c5fd}
+[data-theme="dark"] .badge-green{background:#064e3b;color:#6ee7b7}
+[data-theme="dark"] .badge-amber,.badge-orange{background:#78350f;color:#fcd34d}
+[data-theme="dark"] .badge-red{background:#7f1d1d;color:#fca5a5}
+html{font-size:14px}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5}
+
+/* ========= LAYOUT ========= */
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
+.app-logo{font-size:1.25rem;font-weight:700;color:var(--blue);letter-spacing:-.5px}
+.app-logo span{color:var(--text2);font-weight:400;font-size:.85rem;margin-left:8px}
+.header-actions{display:flex;align-items:center;gap:10px}
+.header-right{display:flex;align-items:center;gap:10px}
+.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
+.theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
+.theme-toggle .label{font-size:.75rem;font-weight:500;color:var(--text2)}
+.header-btn{border:none;border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s}
+.header-btn:hover{opacity:.9;transform:translateY(-1px)}
+.btn-import{background:var(--blue);color:#fff}
+.btn-import:hover{background:#1d4ed8}
+.btn-sync{background:var(--green);color:#fff}
+.btn-sync:hover{background:#059669}
+.btn-sync.syncing{opacity:.7;pointer-events:none}
+.btn-export-xlsx{background:var(--purple);color:#fff}
+.btn-export-xlsx:hover{background:#7c3aed}
+.sync-info{font-size:.68rem;color:var(--text3);text-align:right;line-height:1.4;max-width:220px}
+.sync-info .status{font-weight:600}
+.sync-info .status.ok{color:var(--green)}
+.sync-info .status.error{color:var(--red)}
+.sync-info .status.pending{color:var(--amber)}
+.base-info{font-size:.7rem;color:var(--text3);text-align:right;line-height:1.4;max-width:200px}
+/* Settings dropdown */
+.settings-wrap{position:relative}
+.settings-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1.1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
+.settings-btn:hover{background:var(--blue-bg);border-color:var(--blue)}
+.settings-dropdown{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:110;display:none;min-width:220px;padding:6px 0}
+.settings-dropdown.open{display:block}
+.settings-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:.82rem;color:var(--text1);cursor:pointer;transition:background .1s;white-space:nowrap}
+.settings-item:hover{background:var(--blue-bg)}
+.settings-item .si-icon{font-size:1rem;width:22px;text-align:center}
+.settings-item .si-label{flex:1}
+.settings-divider{height:1px;background:var(--border);margin:4px 0}
+.upload-modal-content{display:flex;flex-direction:column;gap:14px}
+.upload-dropzone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-dropzone:hover,.upload-dropzone.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-dropzone .icon{font-size:2.5rem;margin-bottom:8px}
+.upload-dropzone p{color:var(--text2);font-size:.82rem}
+.upload-dropzone .formats{font-size:.7rem;color:var(--text3);margin-top:6px}
+.upload-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:.82rem}
+.upload-preview .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)}
+.upload-preview .stat:last-child{border-bottom:none}
+.app-container{max-width:1440px;margin:0 auto;padding:24px 32px 60px}
+
+/* ========= TABS ========= */
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:61px;z-index:90;box-shadow:var(--shadow);align-items:center}
+.tabs .tabs-spacer{flex:1}
+.tabs .search-trigger{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .2s;margin-right:4px;white-space:nowrap}
+.tabs .search-trigger:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.tabs .search-trigger .shortcut{font-size:.65rem;opacity:.5;background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)}
+.tab{padding:10px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;border:none;background:none}
+.tab:hover{color:var(--text1);background:var(--bg)}
+.tab.active{background:var(--blue);color:#fff;box-shadow:0 2px 4px rgba(37,99,235,.25)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ========= CARDS & KPIs ========= */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);transition:box-shadow .2s;cursor:pointer}
+.kpi-card:hover{box-shadow:var(--shadow-md);border-color:var(--blue)}
+.kpi-card:active{transform:scale(.98)}
+.kpi-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px}
+.kpi-value{font-size:1.75rem;font-weight:700;color:var(--text1)}
+.kpi-card.blue .kpi-value{color:var(--blue)}
+.kpi-card.green .kpi-value{color:var(--green)}
+.kpi-card.amber .kpi-value{color:var(--amber)}
+.kpi-card.red .kpi-value{color:var(--red)}
+.kpi-card.purple .kpi-value{color:var(--purple)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-title{font-size:1rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title .icon{font-size:1.1rem}
+
+/* ========= TABLES ========= */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead{background:var(--bg)}
+th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border-light)}
+tr:hover{background:var(--blue-bg)}
+tr:last-child td{border-bottom:none}
+.clickable-row{cursor:pointer}
+
+/* ========= BADGES & TAGS ========= */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-orange,.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:500;margin:1px 2px}
+.tag-blue{background:var(--blue-light);color:var(--blue);position:relative;padding-right:8px;transition:padding .15s}
+.tag-blue.removable{cursor:default}
+.tag-blue.removable:hover{padding-right:22px}
+.tag-blue .tag-remove{display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:.8;transition:opacity .15s}
+.tag-blue.removable:hover .tag-remove{display:inline-block}
+.tag-blue .tag-remove:hover{opacity:1}
+.tag-green{background:var(--green-light);color:var(--green)}
+.tag-dup,.tag-red{background:var(--red-light);color:var(--red)}
+.tag-warn,.tag-amber{background:var(--amber-light);color:var(--amber)}
+.tag-gray{background:#f1f5f9;color:var(--text2)}
+.tag-excl{background:var(--green-light);color:var(--green)}
+
+/* ========= INPUTS & BUTTONS ========= */
+input,select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);transition:border-color .2s}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:.82rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text1);transition:all .2s}
+.btn:hover{background:var(--bg);box-shadow:var(--shadow)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-blue:hover{background:#1d4ed8}
+.btn-green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-green:hover{background:#059669}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-red:hover{background:#dc2626}
+.btn-amber{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn-amber:hover{background:#d97706}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+
+/* ========= DRAWER ========= */
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:-500px;width:480px;max-width:90vw;height:100vh;background:var(--surface);z-index:201;box-shadow:-4px 0 20px rgba(0,0,0,.12);transition:right .3s;overflow-y:auto;padding:28px}
+.drawer.open{right:0}
+.drawer-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text2);padding:4px 8px;border-radius:var(--radius)}
+.drawer-close:hover{background:var(--bg)}
+.drawer-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;padding-right:40px}
+.drawer-subtitle{font-size:.78rem;color:var(--text2);margin-top:-14px;margin-bottom:16px}
+.drawer-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.drawer-toolbar input{flex:1;min-width:150px}
+.drawer-toolbar .btn{white-space:nowrap}
+.drawer-count{font-size:.75rem;color:var(--text3);margin-bottom:10px}
+.drawer-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.drawer-table th{padding:8px 10px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
+.drawer-table th:hover{color:var(--blue)}
+.drawer-table td{padding:7px 10px;border-bottom:1px solid var(--border-light);color:var(--text1)}
+.drawer-table tr:hover td{background:var(--blue-bg)}
+.clickable-num{cursor:pointer;transition:all .15s}
+.clickable-num:hover{opacity:.8;transform:scale(1.05);text-decoration:underline}
+
+/* ========= PAGINATION ========= */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px}
+.pagination button{padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;font-size:.78rem;color:var(--text2)}
+.pagination button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pagination button:hover:not(.active){background:var(--bg)}
+
+/* ========= MODAL ========= */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:28px;max-width:500px;width:90%;box-shadow:var(--shadow-lg)}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:12px}
+.modal-body{color:var(--text2);font-size:.88rem;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+
+/* ========= TOAST ========= */
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:var(--radius);color:#fff;font-size:.82rem;font-weight:500;z-index:400;transform:translateX(120%);transition:transform .3s;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateX(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.toast.warning{background:var(--amber)}
+
+/* ========= STAGING BAR ========= */
+.staging-bar{background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:12px 18px;display:none;align-items:center;justify-content:space-between;margin-bottom:16px}
+.staging-bar.visible{display:flex}
+.staging-bar .count{font-weight:600;color:var(--amber)}
+
+/* ========= MGMT CARDS ========= */
+.mgmt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:24px}
+.mgmt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;cursor:pointer;transition:all .2s}
+.mgmt-card:hover{box-shadow:var(--shadow-md);border-color:var(--blue)}
+.mgmt-card h4{font-size:.9rem;margin-bottom:6px}
+.mgmt-card p{font-size:.78rem;color:var(--text2)}
+
+/* ========= EXPORT CARDS ========= */
+.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.export-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.export-card:hover{box-shadow:var(--shadow-md)}
+.export-card .icon{font-size:2rem;margin-bottom:10px}
+.export-card h4{margin-bottom:6px}
+.export-card p{font-size:.78rem;color:var(--text2);margin-bottom:14px}
+
+/* ========= COMPARISON CARDS ========= */
+.comp-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.comp-tab{padding:8px 14px;border-radius:var(--radius);font-size:.78rem;font-weight:500;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--text2)}
+.comp-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.comp-section{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:900px){.comp-section{grid-template-columns:1fr}}
+.comp-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;display:flex;flex-direction:column}
+.comp-card h5{font-size:.82rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.comp-card .model-list{max-height:300px;overflow-y:auto;font-size:.78rem;color:var(--text2);flex:1}
+.comp-card .model-list div{padding:3px 0;border-bottom:1px solid var(--border-light)}
+
+/* ========= SPINNER ========= */
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ========= SECTION TITLE ========= */
+.section-title{font-size:.95rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ========= GLOBAL SEARCH ========= */
+.search-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:500;display:none;align-items:flex-start;justify-content:center;padding-top:10vh}
+.search-overlay.open{display:flex}
+.search-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:640px;max-width:94vw;box-shadow:var(--shadow-lg);overflow:hidden}
+.search-tabs{display:flex;gap:6px;padding:14px 18px 10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-tab{padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text2);transition:all .2s}
+.search-tab:hover{border-color:var(--blue);color:var(--blue)}
+.search-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.search-input-wrap{display:flex;align-items:center;padding:12px 18px;gap:10px;border-bottom:1px solid var(--border)}
+.search-input-wrap .icon{font-size:1.1rem;color:var(--text3)}
+.search-input-wrap input{flex:1;border:none;outline:none;font-size:.9rem;background:transparent;color:var(--text1)}
+.search-input-wrap .shortcut{font-size:.65rem;color:var(--text3);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.search-results{max-height:380px;overflow-y:auto;padding:6px 0}
+.search-result-item{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer;transition:background .15s}
+.search-result-item:hover{background:var(--blue-bg)}
+.search-result-item .result-icon{font-size:1rem;width:28px;text-align:center}
+.search-result-item .result-info{flex:1}
+.search-result-item .result-title{font-size:.83rem;font-weight:600;color:var(--text1)}
+.search-result-item .result-sub{font-size:.72rem;color:var(--text2)}
+.search-result-item .result-badge{font-size:.68rem}
+.search-empty{padding:30px;text-align:center;color:var(--text3);font-size:.85rem}
+.search-footer{padding:8px 18px;border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;justify-content:space-between}
+.search-result-table{width:100%;border-collapse:collapse;font-size:.78rem;margin:0}
+.search-result-table th{padding:8px 18px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.3px;background:var(--bg)}
+.search-result-table td{padding:7px 18px;border-bottom:1px solid var(--border-light);color:var(--text1)}
+.search-result-table tr{cursor:pointer}
+.search-result-table tr:hover td{background:var(--blue-bg)}
+
+/* ========= MODEL LIST WITH ACTIONS ========= */
+.model-action-row{display:flex;align-items:center;justify-content:space-between;padding:8px 6px;border-bottom:1px solid var(--border-light);border-radius:4px}
+.model-action-row:hover{background:var(--bg)}
+.model-action-info{flex:1;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.model-action-brand{font-size:.7rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.model-action-name{font-size:.82rem;color:var(--text1)}
+.model-action-btns{display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.model-action-row:hover .model-action-btns{opacity:1}
+
+/* ========= CONTEXT MENU (3 dots) ========= */
+.row-actions{position:relative;opacity:0;transition:opacity .2s}
+tr:hover .row-actions{opacity:1}
+.row-actions-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text3);padding:4px 8px;border-radius:var(--radius);transition:all .15s;letter-spacing:1px}
+.row-actions-btn:hover{background:var(--bg);color:var(--text1)}
+.row-menu{position:absolute;right:0;top:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:50;display:none;min-width:160px;padding:4px 0}
+.row-menu.open{display:block}
+.row-menu-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:.78rem;color:var(--text1);cursor:pointer;transition:background .1s;white-space:nowrap}
+.row-menu-item:hover{background:var(--blue-bg)}
+.row-menu-item.danger:hover{background:var(--red-bg);color:var(--red)}
+
+/* ========= AUTOCOMPLETE COMPONENT ========= */
+.ac-wrap{position:relative}
+.ac-input{width:100%;padding:9px 32px 9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;background:var(--surface);color:var(--text1);transition:border-color .2s}
+.ac-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.ac-input.valid{border-color:var(--green)}
+.ac-input.invalid{border-color:var(--red)}
+.ac-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.75rem;pointer-events:none}
+.ac-icon.valid{color:var(--green)}
+.ac-icon.invalid{color:var(--red)}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);max-height:180px;overflow-y:auto;z-index:10;display:none;box-shadow:var(--shadow-md)}
+.ac-dropdown.open{display:block}
+.ac-option{padding:8px 12px;font-size:.82rem;cursor:pointer;color:var(--text1);transition:background .1s}
+.ac-option:hover,.ac-option.highlighted{background:var(--blue-bg);color:var(--blue)}
+.ac-option.selected{background:var(--blue-light);font-weight:600}
+.ac-empty{padding:12px;font-size:.78rem;color:var(--text3);text-align:center}
+.ac-msg{font-size:.7rem;margin-top:3px;padding:0 2px}
+.ac-msg.valid{color:var(--green)}
+.ac-msg.invalid{color:var(--red)}
+
+/* ========= EMPTY STATE ========= */
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty .empty-icon{font-size:2.5rem;margin-bottom:10px}
+
+/* ========= RESPONSIVE ========= */
+@media(max-width:768px){
+  .app-container{padding:16px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .tabs{flex-wrap:nowrap;overflow-x:auto}
+  .drawer{width:100vw}
+}
+</style>
+</head>
+<body>
+
+<!-- ========= HEADER ========= -->
+<header class="app-header">
+  <div class="app-logo">AVP<span>Dashboard de Auditoria de Veículos</span></div>
+  <div class="header-right">
+    <div class="sync-info" id="syncInfo"></div>
+    <div class="base-info" id="baseInfo"></div>
+    <div class="settings-wrap">
+      <button class="settings-btn" onclick="toggleSettings()" title="Configurações">⚙️</button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <div class="settings-item" onclick="showUploadModal();closeSettings()"><span class="si-icon">📁</span><span class="si-label">Importar Nova Planilha</span></div>
+        <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon">🔄</span><span class="si-label">Sincronizar com Google Sheets</span></div>
+        <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar Base Completa</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ========= MAIN CONTAINER ========= -->
+<div class="app-container">
+
+  <!-- ========= NAVIGATION TABS ========= -->
+  <div class="tabs" id="mainTabs">
+    <button class="tab active" onclick="goTab('overview')">Visão Geral</button>
+    <button class="tab" onclick="goTab('duplicates')">Duplicidades</button>
+    <button class="tab" onclick="goTab('divergences')">Divergências</button>
+    <button class="tab" onclick="goTab('management')">Manutenção</button>
+    <button class="tab" onclick="goTab('history')">Histórico</button>
+    <button class="tab" onclick="goTab('exports')">Exportações</button>
+    <button class="search-trigger" onclick="openGlobalSearch()" title="Busca global (Ctrl+K)">🔍 Pesquisar <span class="shortcut">Ctrl+K</span></button>
+    <span class="tabs-spacer"></span>
+  </div>
+
+  <!-- ========= TAB: VISÃO GERAL ========= -->
+  <div class="tab-panel active" id="panel-overview">
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> Resumo por Categorias</div>
+      <div class="filter-row">
+        <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="debouncedRenderOverviewTable()">
+        <select id="ovSort" onchange="renderOverviewTable()">
+          <option value="name">A-Z</option>
+          <option value="count_desc">Mais modelos</option>
+          <option value="count_asc">Menos modelos</option>
+          <option value="brands">Mais marcas</option>
+        </select>
+        <button class="btn btn-sm btn-green" onclick="openAddCategory()">+ Nova Categoria</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
+          <tbody id="ovTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card">
+        <div class="card-title"><span class="icon">🔁</span> Top 10 Duplicados</div>
+        <div id="topDuplicates"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">⚠️</span> Top Divergências por Categoria</div>
+        <div id="topDivergences"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: DUPLICIDADES ========= -->
+  <div class="tab-panel" id="panel-duplicates">
+    <div class="card">
+      <div class="card-title"><span class="icon">🔁</span> Modelos Duplicados (em múltiplas categorias)</div>
+      <div class="filter-row">
+        <input type="text" id="dupBrandFilter" placeholder="Filtrar marca..." oninput="debouncedRenderDupTable()">
+        <input type="text" id="dupModelFilter" placeholder="Filtrar modelo..." oninput="debouncedRenderDupTable()">
+        <select id="dupCountFilter" onchange="renderDupTable()">
+          <option value="0">Todas as qtd.</option>
+          <option value="2">≥ 2 categorias</option>
+          <option value="3">≥ 3 categorias</option>
+          <option value="4">≥ 4 categorias</option>
+        </select>
+        <button class="btn btn-blue btn-sm" onclick="exportDuplicates()">📥 Exportar</button>
+      </div>
+      <div id="dupCount" style="font-size:.78rem;color:var(--text2);margin-bottom:10px"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Marca</th><th>Modelo</th><th>Ano Aceitação</th><th>Categorias</th><th>Qtd.</th></tr></thead>
+          <tbody id="dupTableBody"></tbody>
+        </table>
+      </div>
+      <div id="dupPagination" class="pagination"></div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: DIVERGÊNCIAS ========= -->
+  <div class="tab-panel" id="panel-divergences">
+    <div class="card">
+      <div class="card-title"><span class="icon">⚖️</span> Comparação entre Categorias</div>
+      <div class="comp-tabs" id="compTabs"></div>
+      <div id="compStats" style="display:flex;gap:12px;margin-bottom:16px"></div>
+      <div class="comp-section" id="compContent"></div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: MANUTENÇÃO ========= -->
+  <div class="tab-panel" id="panel-management">
+    <div class="staging-bar" id="stagingBar">
+      <span>⚠️ <span class="count" id="stagingCount">0</span> alteração(ões) pendente(s)</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green btn-sm" onclick="commitStaging()">✓ Salvar</button>
+        <button class="btn btn-red btn-sm" onclick="clearStaging()">✕ Descartar</button>
+      </div>
+    </div>
+    <div class="kpi-grid" id="mgmtKpis" style="margin-bottom:20px"></div>
+    <div class="mgmt-grid">
+      <div class="mgmt-card" onclick="showMgmtModal('add')">
+        <h4>➕ Adicionar Modelo</h4>
+        <p>Inserir novo modelo em uma categoria</p>
+      </div>
+      <div class="mgmt-card" onclick="showMgmtModal('remove')">
+        <h4>➖ Remover Modelo</h4>
+        <p>Remover modelo de uma categoria</p>
+      </div>
+      <div class="mgmt-card" onclick="showMgmtModal('move')">
+        <h4>↔️ Mover Modelo</h4>
+        <p>Mover modelo entre categorias</p>
+      </div>
+      <div class="mgmt-card" onclick="showMgmtModal('mass')">
+        <h4>📋 Correção em Massa</h4>
+        <p>Aplicar alterações em lote via lista</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">📝</span> Alterações Pendentes</div>
+      <div id="stagingSummary" style="margin-bottom:12px"></div>
+      <div class="filter-row" id="stagingFilterRow" style="display:none">
+        <input type="text" id="stagingFilter" placeholder="Filtrar pendentes..." oninput="debouncedRenderStagingTable()">
+        <select id="stagingTypeFilter" onchange="renderStagingTable()">
+          <option value="">Todos os tipos</option>
+          <option value="Adição">Adição</option>
+          <option value="Remoção">Remoção</option>
+          <option value="Edição">Edição</option>
+          <option value="Movimentação">Movimentação</option>
+          <option value="Categoria">Categoria</option>
+          <option value="Marca">Marca</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th><th></th></tr></thead>
+          <tbody id="stagingTableBody"></tbody>
+        </table>
+      </div>
+      <div id="stagingPagination" class="pagination"></div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: HISTÓRICO ========= -->
+  <div class="tab-panel" id="panel-history">
+    <div class="card">
+      <div class="card-title"><span class="icon">📜</span> Histórico de Alterações</div>
+      <div class="filter-row">
+        <input type="text" id="histFilter" placeholder="Buscar..." oninput="debouncedRenderHistory()">
+        <select id="histType" onchange="renderHistory()">
+          <option value="">Todos os tipos</option>
+          <option value="Adição">Adição</option>
+          <option value="Remoção">Remoção</option>
+          <option value="Movimentação">Movimentação</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Data/Hora</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th></tr></thead>
+          <tbody id="histTableBody"></tbody>
+        </table>
+      </div>
+      <div id="histPagination" class="pagination"></div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: EXPORTAÇÕES ========= -->
+  <div class="tab-panel" id="panel-exports">
+    <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="spinner" style="margin:0 auto 10px"></div>Aguardando carregamento dos dados...</div>
+    <div class="export-grid" id="exportsGrid">
+      <div class="export-card">
+        <div class="icon">📦</div>
+        <h4>Base Completa</h4>
+        <p>Exportar todos os modelos separados por categoria com histórico ao lado</p>
+        <button class="btn btn-blue export-btn" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">📝</div>
+        <h4>Apenas Alterações</h4>
+        <p>Exportar somente as modificações realizadas na sessão atual</p>
+        <button class="btn btn-green export-btn" onclick="exportChangesXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">⚖️</div>
+        <h4>Relatório de Divergências</h4>
+        <p>Exportar comparação detalhada entre categorias similares</p>
+        <button class="btn btn-amber export-btn" onclick="exportDivergencesXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">📜</div>
+        <h4>Histórico Completo</h4>
+        <p>Exportar todo o histórico de alterações registradas</p>
+        <button class="btn btn-blue export-btn" onclick="exportHistoryXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">🔁</div>
+        <h4>Duplicidades</h4>
+        <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
+        <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app-container -->
+
+<!-- ========= GLOBAL SEARCH ========= -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="search-box">
+    <div class="search-tabs">
+      <button class="search-tab active" onclick="setSearchType('modelo')">Modelo</button>
+      <button class="search-tab" onclick="setSearchType('categoria')">Categoria</button>
+      <button class="search-tab" onclick="setSearchType('marca')">Marca</button>
+      <button class="search-tab" onclick="setSearchType('duplicidade')">Duplicidade</button>
+      <button class="search-tab" onclick="setSearchType('divergencia')">Divergência</button>
+    </div>
+    <div class="search-input-wrap">
+      <span class="icon">🔍</span>
+      <input type="text" id="globalSearchInput" placeholder="Digite sua pesquisa..." oninput="performGlobalSearch()" autocomplete="off">
+      <span class="shortcut">ESC</span>
+    </div>
+    <div class="search-results" id="globalSearchResults">
+      <div class="search-empty">Selecione o tipo e digite para pesquisar</div>
+    </div>
+    <div class="search-footer">
+      <span>Clique no resultado para navegar</span>
+      <span>Ctrl+K para abrir</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========= DRAWER ========= -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <div id="drawerContent"></div>
+</div>
+
+<!-- ========= MODAL ========= -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- ========= TOAST ========= -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========= RAW DATA =========
+const RAW = {}; // Os dados serão carregados automaticamente do Google Sheets
+
+// ========= DERIVED DATA =========
+let CATEGORIES = [];
+let CAT_TOTALS = {};
+let ALL_RECORDS = [];
+let ALL_BRANDS = [];
+let DUPLICATES = [];
+let modelStatus = {};
+let chartsInitialized = false;
+
+// ========= COMPARISON GROUPS =========
+const COMP_GROUPS = [
+  {label:'Passeio Nacional vs Importado', a:'Passeio - Nacional', b:'Passeio - Importado'},
+  {label:'SUV/Caminhonete vs Importado', a:'SUV|Caminhonete|Utilitário', b:'SUV|Caminhonete|Utilitário - I'}
+];
+
+// ========= PAGINATION STATE =========
+let dupPage = 1;
+const DUP_PER_PAGE = 25;
+let histPage = 1;
+const HIST_PER_PAGE = 25;
+
+// ========= HISTORY & STAGING =========
+let HISTORY = [];
+let STAGING = {ops:[], data:null};
+let mgmtStats = {added:0, removed:0, moved:0, session:0};
+
+// ========= UTILITY FUNCTIONS =========
+const _normCache={};
+function norm(s){
+  if(!s) return '';
+  if(_normCache[s]!==undefined) return _normCache[s];
+  const r=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  _normCache[s]=r;
+  return r;
+}
+
+// Debounce utility
+function debounce(fn, delay){
+  let timer;
+  return function(...args){clearTimeout(timer);timer=setTimeout(()=>fn.apply(this,args),delay);}
+}
+const debouncedRenderOverviewTable=debounce(()=>renderOverviewTable(),200);
+const debouncedRenderDupTable=debounce(()=>renderDupTable(),200);
+const debouncedRenderHistory=debounce(()=>renderHistory(),200);
+const debouncedRenderStagingTable=debounce(()=>renderStagingTable(),200);
+
+function recomputeAll(){
+  CATEGORIES = Object.keys(RAW);
+  CAT_TOTALS = {};
+  ALL_RECORDS = [];
+  ALL_BRANDS = [];
+  const brandSet = new Set();
+  const modelMap = {};
+
+  for(const cat of CATEGORIES){
+    let total = 0;
+    const brands = RAW[cat].brands || {};
+    for(const [brand, models] of Object.entries(brands)){
+      brandSet.add(brand);
+      for(const model of models){
+        ALL_RECORDS.push({categoria:cat, marca:brand, modelo:model});
+        const key = norm(brand)+'|||'+norm(model);
+        if(!modelMap[key]) modelMap[key]={marca:brand, modelo:model, cats:[]};
+        modelMap[key].cats.push(cat);
+        total++;
+      }
+    }
+    CAT_TOTALS[cat] = total;
+  }
+
+  ALL_BRANDS = Array.from(brandSet).sort();
+  DUPLICATES = Object.values(modelMap).filter(m=>m.cats.length>1).map(m=>({...m, count:m.cats.length}));
+  DUPLICATES.sort((a,b)=>b.count-a.count);
+
+  modelStatus = {};
+  for(const d of DUPLICATES){
+    const key = norm(d.marca)+'|||'+norm(d.modelo);
+    modelStatus[key] = 'Duplicado';
+  }
+}
+
+// ========= NAVIGATION =========
+// Dirty flags - mark tabs that need re-render
+let _dirtyTabs={overview:true,duplicates:true,divergences:true,management:true,history:true};
+function markAllDirty(){_dirtyTabs={overview:true,duplicates:true,divergences:true,management:true,history:true};}
+function markDirty(tab){_dirtyTabs[tab]=true;}
+
+function getActiveTab(){
+  const panels=['overview','duplicates','divergences','management','history','exports'];
+  for(const p of panels){
+    const el=document.getElementById('panel-'+p);
+    if(el&&el.classList.contains('active')) return p;
+  }
+  return 'overview';
+}
+
+function refreshActiveTab(){
+  const tab=getActiveTab();
+  if(tab==='overview'){renderKPIs();renderOverviewTable();_dirtyTabs.overview=false;}
+  if(tab==='duplicates'){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(tab==='divergences'){renderDivergences();_dirtyTabs.divergences=false;}
+  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
+  if(tab==='history'){renderHistory();_dirtyTabs.history=false;}
+}
+
+function goTab(tab){
+  // Close drawer and modal if open
+  closeDrawer();
+  // Reset all filters and state
+  resetTabFilters();
+
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const tabMap = ['overview','duplicates','divergences','management','history','exports'];
+  const idx = tabMap.indexOf(tab);
+  if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
+
+  if(tab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
+  if(tab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(tab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
+  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
+  if(tab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
+}
+
+function resetTabFilters(){
+  // Overview filters
+  const ovFilter=document.getElementById('ovFilter');
+  if(ovFilter) ovFilter.value='';
+  const ovSort=document.getElementById('ovSort');
+  if(ovSort) ovSort.value='name';
+  // Duplicates filters
+  const dupBrand=document.getElementById('dupBrandFilter');
+  if(dupBrand) dupBrand.value='';
+  const dupModel=document.getElementById('dupModelFilter');
+  if(dupModel) dupModel.value='';
+  const dupCount=document.getElementById('dupCountFilter');
+  if(dupCount) dupCount.value='0';
+  dupPage=1;
+  // History filters
+  const histFilter=document.getElementById('histFilter');
+  if(histFilter) histFilter.value='';
+  const histType=document.getElementById('histType');
+  if(histType) histType.value='';
+  histPage=1;
+  // Divergences - reset to first group
+  currentCompGroup=0;
+}
+
+// ========= KPIs =========
+function renderKPIs(){
+  const totalCats = CATEGORIES.length;
+  const totalBrands = ALL_BRANDS.length;
+  const pendingRemovals = STAGING.ops.filter(op=>op.type==='Remoção').length;
+  const totalModels = ALL_RECORDS.length - pendingRemovals;
+  const totalDups = DUPLICATES.length;
+  let totalDivs = 0;
+  for(const g of COMP_GROUPS){
+    const modelsA = getModelsForCat(g.a);
+    const modelsB = getModelsForCat(g.b);
+    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    totalDivs += onlyA.length + onlyB.length;
+  }
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card blue" onclick="showKpiDetail('categorias')"><div class="kpi-label">Total Categorias</div><div class="kpi-value">${totalCats}</div></div>
+    <div class="kpi-card green" onclick="showKpiDetail('marcas')"><div class="kpi-label">Total Marcas</div><div class="kpi-value">${totalBrands}</div></div>
+    <div class="kpi-card purple" onclick="showKpiDetail('modelos')"><div class="kpi-label">Total Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div></div>
+    <div class="kpi-card red" onclick="showKpiDetail('duplicados')"><div class="kpi-label">Duplicados</div><div class="kpi-value">${totalDups}</div></div>
+    <div class="kpi-card amber" onclick="showKpiDetail('divergencias')"><div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivs}</div></div>
+  `;
+}
+
+function getModelsForCat(catName){
+  if(!RAW[catName]) return [];
+  const result=[];
+  for(const [brand,models] of Object.entries(RAW[catName].brands||{})){
+    for(const m of models) result.push({marca:brand,modelo:m});
+  }
+  return result;
+}
+
+// Returns models for a category excluding those with pending removal in staging
+function getEffectiveModelsForCat(catName){
+  return getModelsForCat(catName).filter(m=>!isPendingRemoval(m.marca, m.modelo, catName));
+}
+
+// Returns the effective model count for a category (subtracting pending removals)
+function getEffectiveCatTotal(catName){
+  const base = CAT_TOTALS[catName]||0;
+  const pendingRemovals = STAGING.ops.filter(op=>op.type==='Remoção'&&op.catFrom===catName).length;
+  return base - pendingRemovals;
+}
+
+// ========= OVERVIEW TABLE =========
+function renderOverviewTable(){
+  const filt = norm(document.getElementById('ovFilter').value);
+  const sort = document.getElementById('ovSort').value;
+  let cats = CATEGORIES.filter(c=>{
+    if(!filt) return true;
+    return norm(c).includes(filt);
+  });
+  if(sort==='name') cats.sort((a,b)=>a.localeCompare(b));
+  else if(sort==='count_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
+  else if(sort==='count_asc') cats.sort((a,b)=>CAT_TOTALS[a]-CAT_TOTALS[b]);
+  else if(sort==='brands') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length - Object.keys(RAW[a].brands||{}).length);
+
+  const tbody = document.getElementById('ovTableBody');
+  tbody.innerHTML = cats.map(cat=>{
+    const brands = Object.keys(RAW[cat].brands||{});
+    const dups = DUPLICATES.filter(d=>d.cats.includes(cat)).length;
+    const catPending = hasPendingCategoryChange(cat);
+    const catPendingType = catPending ? getPendingCategoryChangeType(cat) : null;
+    let divs = 0;
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other = g.a===cat?g.b:g.a;
+        const modelsMe = getModelsForCat(cat);
+        const modelsOther = getModelsForCat(other);
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+      }
+    }
+    return `<tr>
+      <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
+      <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
+      <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
+      <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
+      <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <div class="row-actions">
+          <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
+          <div class="row-menu">
+            <div class="row-menu-item${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')">✏️ Renomear</div>
+            <div class="row-menu-item danger${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')">🗑️ Remover</div>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria</td></tr>';
+
+  renderTopDuplicates();
+  renderTopDivergences();
+}
+
+function renderTopDuplicates(){
+  const top = DUPLICATES.slice(0,10);
+  document.getElementById('topDuplicates').innerHTML = top.length?top.map((d,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background=''">
+      <span style="font-size:.82rem"><strong>${d.marca}</strong> — ${d.modelo}</span>
+      <span class="badge badge-red">${d.count} cat.</span>
+    </div>
+  `).join(''):'<div class="empty">Nenhum duplicado</div>';
+}
+
+function renderTopDivergences(){
+  let items=[];
+  for(let i=0;i<COMP_GROUPS.length;i++){
+    const g=COMP_GROUPS[i];
+    const modelsA = getModelsForCat(g.a);
+    const modelsB = getModelsForCat(g.b);
+    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    items.push({label:g.label, count:onlyA.length+onlyB.length, groupIdx:i});
+  }
+  items.sort((a,b)=>b.count-a.count);
+  document.getElementById('topDivergences').innerHTML = items.length?items.map(it=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDivergence(${it.groupIdx})" onmouseover="this.style.background='var(--amber-bg)'" onmouseout="this.style.background=''">
+      <span style="font-size:.82rem">${it.label}</span>
+      <span class="badge badge-amber">${it.count} dif.</span>
+    </div>
+  `).join(''):'<div class="empty">Nenhuma divergência</div>';
+}
+
+function navigateToDuplicate(marca, modelo){
+  // Navigate to Duplicidades tab and filter by this model
+  goTab('duplicates');
+  setTimeout(()=>{
+    const modelInput=document.getElementById('dupModelFilter');
+    const brandInput=document.getElementById('dupBrandFilter');
+    if(modelInput) modelInput.value=modelo;
+    if(brandInput) brandInput.value=marca;
+    renderDupTable();
+  },100);
+}
+
+function navigateToDivergence(groupIdx){
+  // Navigate to Divergências tab and select the correct group
+  currentCompGroup=groupIdx;
+  goTab('divergences');
+  setTimeout(()=>{renderDivergences();},100);
+}
+
+// ========= CATEGORIES TABLE =========
+function renderCategoryTable(){
+  const filt = norm(document.getElementById('catFilter').value);
+  const sort = document.getElementById('catSort').value;
+  let cats = CATEGORIES.filter(c=>!filt||norm(c).includes(filt));
+  if(sort==='name') cats.sort((a,b)=>a.localeCompare(b));
+  else if(sort==='models_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
+  else if(sort==='models_asc') cats.sort((a,b)=>CAT_TOTALS[a]-CAT_TOTALS[b]);
+  else if(sort==='brands_desc') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length-Object.keys(RAW[a].brands||{}).length);
+
+  const tbody = document.getElementById('catTableBody');
+  tbody.innerHTML = cats.map(cat=>{
+    const brands = Object.keys(RAW[cat].brands||{});
+    let divs = 0;
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other = g.a===cat?g.b:g.a;
+        const modelsMe = getModelsForCat(cat);
+        const modelsOther = getModelsForCat(other);
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+      }
+    }
+    return `<tr class="clickable-row" onclick="openDrawer('${cat.replace(/'/g,"\\'")}')">
+      <td><strong>${cat}</strong></td>
+      <td>${CAT_TOTALS[cat]}</td>
+      <td>${brands.length}</td>
+      <td>${divs>0?`<span class="badge badge-amber">${divs}</span>`:'—'}</td>
+      <td><button class="btn btn-sm" onclick="event.stopPropagation();openDrawer('${cat.replace(/'/g,"\\'")}')">Detalhes →</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria encontrada</td></tr>';
+}
+
+// ========= DRAWER =========
+function openDrawer(cat){
+  const brands = RAW[cat]?RAW[cat].brands||{}:{};
+  const brandNames = Object.keys(brands).sort();
+  const effectiveTotal = getEffectiveCatTotal(cat);
+  let html = `<div class="drawer-title">${cat}</div>`;
+  html += `<div style="display:flex;gap:10px;margin-bottom:20px">
+    <span class="badge badge-blue">${effectiveTotal} modelos</span>
+    <span class="badge badge-green">${brandNames.length} marcas</span>
+  </div>`;
+  for(const b of brandNames){
+    // Filter out models with pending removal
+    const visibleModels = brands[b].filter(m=>!isPendingRemoval(b, m, cat));
+    if(visibleModels.length===0) continue;
+    html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${b} <span style="color:var(--text3);font-weight:400">(${visibleModels.length})</span></div>`;
+    for(const m of visibleModels){
+      const ano = typeof getAno==='function'?getAno(cat,b,m):'';
+      const key = norm(b)+'|||'+norm(m);
+      const isDup = modelStatus[key]==='Duplicado';
+      const pending = hasPendingChange(b, m, cat);
+      const pendingType = pending ? getPendingChangeType(b, m, cat) : null;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
+        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}>✏️</button>
+          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}>🗑️</button>
+          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)${pending?';opacity:.3;pointer-events:none':''}" title="Mover"${pending?' disabled':''}>↔️</button>
+        </span>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  document.getElementById('drawerContent').innerHTML = html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// ========= KPI DETAIL DRAWER =========
+function showKpiDetail(type){
+  let title='', html='';
+  if(type==='categorias'){
+    title='Todas as Categorias ('+CATEGORIES.length+')';
+    html=buildDrawerTable(
+      ['Categoria','Modelos','Marcas'],
+      CATEGORIES.sort().map(c=>[c, CAT_TOTALS[c], Object.keys(RAW[c].brands||{}).length]),
+      'categorias'
+    );
+  } else if(type==='marcas'){
+    title='Todas as Marcas ('+ALL_BRANDS.length+')';
+    const brandData=ALL_BRANDS.map(b=>{
+      const cats=new Set();let count=0;
+      for(const r of ALL_RECORDS){if(r.marca===b){cats.add(r.categoria);count++;}}
+      return [b, count, [...cats].join(', ')];
+    });
+    html=buildDrawerTable(['Marca','Modelos','Categorias'],brandData,'marcas');
+  } else if(type==='modelos'){
+    const effectiveRecords=ALL_RECORDS.filter(r=>!isPendingRemoval(r.marca, r.modelo, r.categoria));
+    title='Todos os Modelos ('+effectiveRecords.length.toLocaleString()+')';
+    const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo]);
+    html=buildDrawerTable(['Categoria','Marca','Modelo'],data,'modelos');
+  } else if(type==='duplicados'){
+    title='Modelos Duplicados ('+DUPLICATES.length+')';
+    const data=DUPLICATES.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
+    html=buildDrawerTable(['Marca','Modelo','Qtd.','Categorias'],data,'duplicados');
+  } else if(type==='divergencias'){
+    title='Divergências';
+    const data=[];
+    for(const g of COMP_GROUPS){
+      const modelsA=getModelsForCat(g.a);
+      const modelsB=getModelsForCat(g.b);
+      const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+      const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+      for(const m of onlyA) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.a]);
+      for(const m of onlyB) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.b]);
+    }
+    title+=' ('+data.length+')';
+    html=buildDrawerTable(['Comparação','Marca','Modelo','Situação'],data,'divergencias');
+  }
+  openDetailDrawer(title, html);
+}
+
+function showCatDetail(cat, type){
+  let title='', html='';
+  if(type==='modelos'){
+    const models=getModelsForCat(cat);
+    title='Modelos - '+cat+' ('+getEffectiveCatTotal(cat)+')';
+    html=buildModelListWithActions(models, cat);
+  } else if(type==='marcas'){
+    const brands=Object.keys(RAW[cat].brands||{}).sort();
+    // Filter out brands with pending removal
+    const effectiveBrands=brands.filter(b=>!isPendingBrandRemoval(b, cat));
+    title='Marcas - '+cat+' ('+effectiveBrands.length+')';
+    html=buildBrandListWithActions(effectiveBrands, cat);
+  } else if(type==='duplicados'){
+    const dups=DUPLICATES.filter(d=>d.cats.includes(cat));
+    title='Duplicados - '+cat+' ('+dups.length+')';
+    const data=dups.map(d=>[d.marca, d.modelo, d.cats.filter(c=>c!==cat).join(', ')]);
+    html=buildDrawerTable(['Marca','Modelo','Também em'],data,'cat-dups');
+  } else if(type==='divergencias'){
+    const data=[];
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other=g.a===cat?g.b:g.a;
+        const modelsMe=getModelsForCat(cat);
+        const modelsOther=getModelsForCat(other);
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        const onlyMe=modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo)));
+        for(const m of onlyMe) data.push([m.marca, m.modelo, 'Ausente em '+other]);
+      }
+    }
+    title='Divergências - '+cat+' ('+data.length+')';
+    html=buildDrawerTable(['Marca','Modelo','Situação'],data,'cat-diverg');
+  }
+  openDetailDrawer(title, html);
+}
+
+function buildDrawerTable(headers, data, id){
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTable(\''+searchId+'\',\''+tableId+'\')">';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTable(\''+tableId+'\',\''+id+'\')">📥 Exportar</button>';
+  html+='</div>';
+  html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto">';
+  html+='<table class="drawer-table" id="'+tableId+'">';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTable(\''+tableId+'\','+i+')">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<tbody>';
+  for(const row of data){
+    html+='<tr>'+row.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>';
+  }
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function openDetailDrawer(title, content){
+  let html='<div class="drawer-title">'+title+'</div>';
+  html+=content;
+  document.getElementById('drawerContent').innerHTML=html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+// ========= MODEL LIST WITH ACTIONS =========
+function buildModelListWithActions(models, cat){
+  const searchId='drawerSearch_catModels';
+  const eCat=cat.replace(/'/g,"\\'");
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar modelo ou marca..." oninput="filterModelList()">';
+  html+=`<button class="btn btn-sm btn-green" onclick="openAddModelToCat('${eCat}')">+ Adicionar Modelo</button>`;
+  html+=`<button class="btn btn-sm btn-blue" onclick="exportCategoryXLSX('${eCat}')" title="Exportar esta categoria">📥 Exportar</button>`;
+  html+='</div>';
+  html+='<div class="drawer-count" id="modelListCount">'+models.length+' modelos</div>';
+  html+='<div id="modelListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
+  for(const m of models){
+    const eMarca=m.marca.replace(/'/g,"\\'");
+    const eModelo=m.modelo.replace(/'/g,"\\'");
+    const pending = hasPendingChange(m.marca, m.modelo, cat);
+    const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
+    const pendingLabel = pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente';
+    let pendingBadge='';
+    if(pending){
+      pendingBadge=` <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle;padding-right:18px;position:relative">⏳ ${pendingLabel}<span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity='1';this.style.transform='translateY(-50%) scale(1.3)'" onmouseout="this.style.opacity='.7';this.style.transform='translateY(-50%) scale(1)'" title="Cancelar pendência">✕</span></span>`;
+    }
+    html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
+      <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
+        <span class="model-action-brand">${m.marca}</span>
+        <span class="model-action-name">${m.modelo}${pendingBadge}</span>
+      </div>
+      <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
+        <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
+        <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${eMarca}','${eModelo}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>🗑️</button>
+        <button class="btn btn-sm" onclick="openModelMove('${eMarca}','${eModelo}')" title="Mover" style="padding:3px 6px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)"${pending?' disabled':''}>↔️</button>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+function filterModelList(){
+  const query=norm(document.getElementById('drawerSearch_catModels').value);
+  const rows=document.querySelectorAll('.model-action-row');
+  let visible=0;
+  rows.forEach(row=>{
+    if(!query||row.dataset.search.includes(query)){row.style.display='';visible++;}
+    else{row.style.display='none';}
+  });
+  const countEl=document.getElementById('modelListCount');
+  if(countEl) countEl.textContent=visible+' modelos';
+}
+
+// Cancel any pending change for a model from the drawer list
+function cancelPendingModelChange(marca, modelo, categoria){
+  const idx = STAGING.ops.findIndex(op=>{
+    if(op.type.includes('Categoria')||op.type.includes('Marca')) return false;
+    const opModelo = op.oldModelo || op.modelo;
+    return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+  });
+  if(idx>=0){
+    STAGING.ops.splice(idx,1);
+    STAGING.data=null;
+    renderStagingBars();
+    renderStagingTable();
+    renderOverviewTable();
+    renderKPIs();
+    showToast('Alteração pendente cancelada','warning');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  }
+}
+
+// ========= ADD MODEL TO CATEGORY =========
+function openAddModelToCat(categoria){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <input id="addModel_marca" placeholder="Digite a marca..." list="addModelBrandList">
+    <datalist id="addModelBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
+    <input id="addModel_modelo" placeholder="Digite o nome do modelo...">
+
+    <div id="addModel_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A adição será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const marca=document.getElementById('addModel_marca').value.trim();
+    const modelo=document.getElementById('addModel_modelo').value.trim();
+    if(!marca||!modelo){showToast('Preencha Marca e Modelo','error');return;}
+    // Validate: check if already exists in this category
+    const models=getModelsForCat(categoria);
+    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo));
+    if(exists){showToast('Este modelo já está cadastrado nesta categoria.','error');return;}
+    // Check if there's already a pending addition for the same model
+    const pendingAdd=STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
+    if(pendingAdd){showToast('Já existe uma adição pendente para este modelo nesta categoria.','warning');return;}
+    addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria},true);
+    closeModal();
+    showToast('Adição de "'+marca+' '+modelo+'" pendente em '+categoria,'success');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  },'green');
+  // Real-time validation
+  setTimeout(()=>{
+    const marcaInput=document.getElementById('addModel_marca');
+    const modeloInput=document.getElementById('addModel_modelo');
+    const msg=document.getElementById('addModel_msg');
+    function validate(){
+      const m=marcaInput.value.trim();
+      const mod=modeloInput.value.trim();
+      if(!m||!mod){msg.textContent='';msg.className='ac-msg';return;}
+      const models=getModelsForCat(categoria);
+      const exists=models.some(x=>norm(x.marca)===norm(m)&&norm(x.modelo)===norm(mod));
+      if(exists){msg.textContent='✕ Este modelo já existe nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Modelo disponível para inclusão';msg.className='ac-msg valid';}
+    }
+    if(marcaInput) marcaInput.oninput=validate;
+    if(modeloInput) modeloInput.oninput=validate;
+  },50);
+}
+
+// ========= SIMPLE MODEL EDIT (name only) =========
+function openSimpleModelEdit(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
+  showModal('✏️ Editar Nome do Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${marca}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome do modelo:</label>
+    <input id="simpleEdit_modelo" value="${modelo}" placeholder="Nome do modelo...">
+
+    <div id="simpleEdit_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A alteração será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('simpleEdit_modelo').value.trim();
+    if(!newName){showToast('Digite o nome do modelo','error');return;}
+    if(newName===modelo){closeModal();return;}
+    // Validate: check if the new name already exists in this category with same brand
+    const models=getModelsForCat(categoria);
+    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(newName));
+    if(exists){showToast('Já existe um modelo com esse nome nesta categoria.','error');return;}
+    // Create a single staging op for rename (instead of remove + add)
+    addToStaging({type:'Edição',marca:marca,modelo:modelo+' → '+newName,catFrom:categoria,catTo:categoria,oldModelo:modelo,newModelo:newName},true);
+    closeModal();
+    showToast('Renomeação de "'+modelo+'" → "'+newName+'" pendente','success');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  },'blue');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('simpleEdit_modelo');
+    const msg=document.getElementById('simpleEdit_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val||val===modelo){msg.textContent='';msg.className='ac-msg';return;}
+      const models=getModelsForCat(categoria);
+      const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(val));
+      if(exists){msg.textContent='✕ Já existe um modelo com esse nome nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+// ========= BRAND LIST WITH ACTIONS =========
+function isPendingBrandRemoval(marca, categoria){
+  return STAGING.ops.some(op=>op.type==='Remoção de Marca'&&op.marca===marca&&op.catFrom===categoria);
+}
+
+function hasPendingBrandChange(marca, categoria){
+  return STAGING.ops.some(op=>(op.type==='Remoção de Marca'||op.type==='Edição de Marca')&&op.marca===marca&&op.catFrom===categoria);
+}
+
+function getPendingBrandChangeType(marca, categoria){
+  const op=STAGING.ops.find(op=>(op.type==='Remoção de Marca'||op.type==='Edição de Marca')&&op.marca===marca&&op.catFrom===categoria);
+  return op?op.type:null;
+}
+
+function exportBrandsXLSX(cat){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  if(!RAW[cat]){showToast('Categoria não encontrada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const brands=Object.keys(RAW[cat].brands||{}).sort();
+  const rows = [];
+  // Row 1: blank
+  rows.push(['','']);
+  // Row 2: headers
+  rows.push(['Marca','Qtd. Modelos']);
+  // Row 3+: data
+  for(const b of brands){
+    rows.push([b, (RAW[cat].brands[b]||[]).length]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:25},{wch:14}];
+  // Style row 2 headers
+  const headerCells=['A2','B2'];
+  for(const c of headerCells){
+    if(ws[c]) ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  let safeName = ('Marcas_'+cat).replace(/[\\\/?*\[\]]/g,'-');
+  if(safeName.length>31) safeName=safeName.substring(0,31);
+  XLSX.utils.book_append_sheet(wb, ws, safeName);
+  XLSX.writeFile(wb, safeName+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Marcas de "'+cat+'" exportadas com sucesso!','success');
+}
+
+function buildBrandListWithActions(brands, cat){
+  const searchId='drawerSearch_catBrands';
+  const eCat=cat.replace(/'/g,"\\'");
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar marca..." oninput="filterBrandList()">';
+  html+=`<button class="btn btn-sm btn-green" onclick="openAddBrandToCat('${eCat}')">+ Adicionar Marca</button>`;
+  html+=`<button class="btn btn-sm btn-blue" onclick="exportBrandsXLSX('${eCat}')" title="Exportar marcas desta categoria">📥 Exportar</button>`;
+  html+='</div>';
+  html+='<div class="drawer-count" id="brandListCount">'+brands.length+' marcas</div>';
+  html+='<div id="brandListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
+  for(const b of brands){
+    const eMarca=b.replace(/'/g,"\\'");
+    const modelCount=(RAW[cat].brands[b]||[]).length;
+    const pending=hasPendingBrandChange(b,cat);
+    const pendingType=pending?getPendingBrandChangeType(b,cat):null;
+    html+=`<div class="model-action-row" data-search="${norm(b)}" style="${pending?'opacity:.6':''}">
+      <div class="model-action-info">
+        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span class="model-action-brand">${modelCount} modelo${modelCount!==1?'s':''}</span>
+      </div>
+      <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
+        <button class="btn btn-sm" onclick="openSimpleBrandEdit('${eMarca}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
+        <button class="btn btn-sm btn-red" onclick="confirmRemoveBrandFromCat('${eMarca}','${eCat}')" title="Remover" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>🗑️</button>
+      </div>
+    </div>`;
+  }
+  html+='</div>';
+  return html;
+}
+
+function filterBrandList(){
+  const query=norm(document.getElementById('drawerSearch_catBrands').value);
+  const rows=document.querySelectorAll('.model-action-row');
+  let visible=0;
+  rows.forEach(row=>{
+    if(!query||row.dataset.search.includes(query)){row.style.display='';visible++;}
+    else{row.style.display='none';}
+  });
+  const countEl=document.getElementById('brandListCount');
+  if(countEl) countEl.textContent=visible+' marcas';
+}
+
+function openAddBrandToCat(categoria){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  showModal('➕ Adicionar Marca em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <input id="addBrand_marca" placeholder="Digite o nome da marca..." list="addBrandList">
+    <datalist id="addBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
+
+    <div id="addBrand_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A marca será adicionada às Alterações Pendentes. Após salvar, você poderá incluir modelos nela.</span>
+  </div>`,function(){
+    const marca=document.getElementById('addBrand_marca').value.trim();
+    if(!marca){showToast('Preencha o nome da marca','error');return;}
+    // Validate: check if brand already exists in this category
+    const existingBrands=Object.keys(RAW[categoria].brands||{});
+    if(existingBrands.some(b=>norm(b)===norm(marca))){showToast('Esta marca já está cadastrada nesta categoria.','error');return;}
+    // Check pending
+    const pendingAdd=STAGING.ops.some(op=>op.type==='Adição de Marca'&&norm(op.marca)===norm(marca)&&op.catTo===categoria);
+    if(pendingAdd){showToast('Já existe uma adição pendente para esta marca nesta categoria.','warning');return;}
+    addToStaging({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria},true);
+    closeModal();
+    showToast('Adição da marca "'+marca+'" pendente em '+categoria,'success');
+    showCatDetail(categoria,'marcas');
+  },'green');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('addBrand_marca');
+    const msg=document.getElementById('addBrand_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val){msg.textContent='';msg.className='ac-msg';return;}
+      const existingBrands=Object.keys(RAW[categoria].brands||{});
+      if(existingBrands.some(b=>norm(b)===norm(val))){msg.textContent='✕ Esta marca já existe nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Marca disponível para inclusão';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openSimpleBrandEdit(marca, categoria){
+  if(hasPendingBrandChange(marca,categoria)){
+    showToast('Esta marca já possui uma alteração pendente.','warning');
+    return;
+  }
+  showModal('✏️ Editar Nome da Marca',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome da marca:</label>
+    <input id="brandEdit_marca" value="${marca}" placeholder="Nome da marca...">
+
+    <div id="brandEdit_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A alteração será incluída nas Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('brandEdit_marca').value.trim();
+    if(!newName){showToast('Digite o nome da marca','error');return;}
+    if(newName===marca){closeModal();return;}
+    // Validate
+    const existingBrands=Object.keys(RAW[categoria].brands||{});
+    if(existingBrands.some(b=>norm(b)===norm(newName))){showToast('Já existe uma marca com esse nome nesta categoria.','error');return;}
+    addToStaging({type:'Edição de Marca',marca:marca,modelo:marca+' → '+newName,catFrom:categoria,catTo:categoria,oldMarca:marca,newMarca:newName},true);
+    closeModal();
+    showToast('Renomeação de "'+marca+'" → "'+newName+'" pendente','success');
+    showCatDetail(categoria,'marcas');
+  },'blue');
+  // Real-time validation
+  setTimeout(()=>{
+    const input=document.getElementById('brandEdit_marca');
+    const msg=document.getElementById('brandEdit_msg');
+    if(input) input.oninput=function(){
+      const val=this.value.trim();
+      if(!val||val===marca){msg.textContent='';msg.className='ac-msg';return;}
+      const existingBrands=Object.keys(RAW[categoria].brands||{});
+      if(existingBrands.some(b=>norm(b)===norm(val))){msg.textContent='✕ Já existe uma marca com esse nome nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function confirmRemoveBrandFromCat(marca, categoria){
+  if(hasPendingBrandChange(marca,categoria)){
+    showToast('Esta marca já possui uma alteração pendente.','warning');
+    return;
+  }
+  // Check if brand has models
+  const models=RAW[categoria].brands[marca]||[];
+  if(models.length>0){
+    showToast('Existem '+models.length+' modelo(s) vinculado(s) a esta marca. Remova ou mova os modelos antes de remover a marca.','error');
+    return;
+  }
+  showModal('Remover marca da categoria?',`<div style="line-height:1.8">
+    <strong>Marca:</strong><br>${marca}<br><br>
+    <strong>Categoria:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
+    <span style="font-size:.78rem;color:var(--text2)">A remoção será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    addToStaging({type:'Remoção de Marca',marca:marca,modelo:'—',catFrom:categoria,catTo:null},true);
+    closeModal();
+    renderOverviewTable();
+    renderKPIs();
+    showToast('Remoção da marca "'+marca+'" pendente','success');
+    showCatDetail(categoria,'marcas');
+  },'red');
+}
+
+// ========= MODEL DETAIL PANEL =========
+function openModelDetail(marca, modelo){
+  // Find all occurrences of this model
+  const occurrences=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo);
+  if(!occurrences.length) return;
+  const cats=occurrences.map(r=>r.categoria);
+  const key=norm(marca)+'|||'+norm(modelo);
+  const isDup=modelStatus[key]==='Duplicado';
+  const dupInfo=isDup?DUPLICATES.find(d=>norm(d.marca)===norm(marca)&&norm(d.modelo)===norm(modelo)):null;
+  const ano=typeof getAno==='function'?getAno(cats[0],marca,modelo):'Ano da categoria';
+  // Check divergences
+  let divergences=[];
+  for(const g of COMP_GROUPS){
+    const inA=cats.includes(g.a), inB=cats.includes(g.b);
+    if(inA&&!inB) divergences.push('Somente em '+g.a+' (ausente em '+g.b+')');
+    if(inB&&!inA) divergences.push('Somente em '+g.b+' (ausente em '+g.a+')');
+  }
+  // Check history for this model
+  const modelHistory=HISTORY.filter(h=>norm(h.marca)===norm(marca)&&norm(h.modelo)===norm(modelo));
+
+  let status='Normal';
+  let statusClass='tag-green';
+  if(isDup){status='Duplicado ('+cats.length+' categorias)';statusClass='tag-dup';}
+  else if(divergences.length){status='Divergente';statusClass='tag-amber';}
+
+  // Check for pending changes
+  const modelPending = hasPendingChange(marca, modelo, null);
+  const modelPendingType = modelPending ? getPendingChangeType(marca, modelo, null) : null;
+  if(modelPending){status='Alteração Pendente ('+modelPendingType+')';statusClass='tag-amber';}
+
+  let html=`<div class="drawer-title">${modelo}</div>`;
+  html+=`<div style="margin-bottom:20px">`;
+  html+=`<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;line-height:2">`;
+  html+=`<span style="color:var(--text2);font-weight:600">Marca:</span><span>${marca}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Modelo:</span><span>${modelo}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Ano:</span><span>${ano}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Status:</span><span class="tag ${statusClass}">${status}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Ocorrências:</span><span>${cats.length} categoria(s)</span>`;
+  html+=`</div></div>`;
+
+  // Categories
+  html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Categorias</div>`;
+  html+=cats.map(c=>`<div style="padding:4px 0;font-size:.82rem"><span class="tag tag-blue">${c}</span></div>`).join('');
+  html+=`</div>`;
+
+  // Divergences
+  if(divergences.length){
+    html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Divergências</div>`;
+    html+=divergences.map(d=>`<div style="padding:4px 0;font-size:.82rem"><span class="tag tag-amber">${d}</span></div>`).join('');
+    html+=`</div>`;
+  }
+
+  // History
+  if(modelHistory.length){
+    html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Histórico</div>`;
+    html+=`<div style="font-size:.78rem">`;
+    for(const h of modelHistory.slice(-10).reverse()){
+      html+=`<div style="padding:4px 0;border-bottom:1px solid var(--border-light)"><span class="tag ${h.type==='Adição'?'tag-green':h.type==='Remoção'?'tag-red':'tag-blue'}">${h.type}</span> ${h.timestamp||''} ${h.catFrom?'de '+h.catFrom:''} ${h.catTo?'→ '+h.catTo:''}</div>`;
+    }
+    html+=`</div></div>`;
+  }
+
+  // Action buttons
+  html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">`;
+  if(modelPending){
+    html+=`<div style="font-size:.78rem;color:var(--amber);font-weight:600;width:100%;margin-bottom:6px">⏳ Este registro possui uma alteração pendente (${modelPendingType}). Ações bloqueadas até que seja salva ou cancelada.</div>`;
+    html+=`<button class="btn btn-sm btn-blue" disabled style="opacity:.4;pointer-events:none">✏️ Editar</button>`;
+    html+=`<button class="btn btn-sm btn-red" disabled style="opacity:.4;pointer-events:none">🗑️ Remover</button>`;
+    html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none;background:var(--purple);color:#fff;border-color:var(--purple)">↔️ Mover Categoria</button>`;
+  } else {
+    html+=`<button class="btn btn-sm btn-blue" onclick="openModelEdit('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}','${cats[0].replace(/'/g,"\\'")}')">✏️ Editar</button>`;
+    html+=`<button class="btn btn-sm btn-red" onclick="openModelRemove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">🗑️ Remover</button>`;
+    html+=`<button class="btn btn-sm" style="background:var(--purple);color:#fff;border-color:var(--purple)" onclick="openModelMove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >↔️ Mover Categoria</button>`;
+  }
+  html+=`</div>`;
+
+  document.getElementById('drawerContent').innerHTML=html;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function openModelEdit(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
+  const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'Ano da categoria';
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
+  showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_marca" placeholder="Digite para pesquisar marca..." value="${marca}" onfocus="acOpen('ac_marca','brands')" oninput="acFilter('ac_marca','brands')" onkeydown="acKeydown(event,'ac_marca','brands')">
+      <span class="ac-icon" id="ac_marca_icon">▼</span>
+      <div class="ac-dropdown" id="ac_marca_dd"></div>
+    </div>
+    <div class="ac-msg" id="ac_marca_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_modelo" placeholder="Digite para pesquisar modelo..." value="${modelo}" onfocus="acOpen('ac_modelo','models')" oninput="acFilter('ac_modelo','models')" onkeydown="acKeydown(event,'ac_modelo','models')">
+      <span class="ac-icon" id="ac_modelo_icon">▼</span>
+      <div class="ac-dropdown" id="ac_modelo_dd"></div>
+    </div>
+    <div class="ac-msg" id="ac_modelo_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+    <div class="ac-wrap">
+      <input class="ac-input" id="ac_cat" placeholder="Digite para pesquisar categoria..." value="${categoria}" onfocus="acOpen('ac_cat','cats')" oninput="acFilter('ac_cat','cats')" onkeydown="acKeydown(event,'ac_cat','cats')">
+      <span class="ac-icon" id="ac_cat_icon">▼</span>
+      <div class="ac-dropdown" id="ac_cat_dd"></div>
+    </div>
+    <div class="ac-msg" id="ac_cat_msg"></div>
+
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Ano de Aceitação:</label>
+    <input id="edit_ano" value="${ano}" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem">
+
+    <span style="font-size:.72rem;color:var(--text3)">Selecione apenas valores existentes na base. O botão será habilitado quando todos os campos forem válidos.</span>
+  </div>`,null,'blue');
+
+  // Store original values and setup
+  window._editCtx={marca,modelo,categoria,ano};
+  window._acSelected={marca:marca,modelo:modelo,cat:categoria};
+
+  // Replace modal confirm button with controlled one
+  setTimeout(()=>{
+    const actions=document.getElementById('modalActions');
+    actions.innerHTML=`<button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-blue" id="editSaveBtn" onclick="saveModelEdit()" disabled style="opacity:.5">🔒 Salvar Alteração</button>`;
+    acValidateAll();
+    // Close dropdown on outside click
+    document.addEventListener('click',acCloseAll);
+  },50);
+}
+
+// Autocomplete data sources
+function acGetData(type){
+  if(type==='brands') return ALL_BRANDS;
+  if(type==='models') return [...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
+  if(type==='cats') return CATEGORIES;
+  return [];
+}
+
+// Autocomplete state
+let acHighlightIdx=-1;
+
+function acOpen(inputId, type){
+  acCloseAllDropdowns();
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(!input||!dd) return;
+  const data=acGetData(type);
+  // Show all options when opening (don't filter by current value)
+  acRenderOptions(dd, data, inputId, type);
+  dd.classList.add('open');
+  acHighlightIdx=-1;
+  // Select/highlight current value in the list
+  const current=input.value.trim();
+  if(current){
+    const options=dd.querySelectorAll('.ac-option');
+    options.forEach(o=>{if(o.dataset.value===current) o.classList.add('selected');});
+  }
+}
+
+function acFilter(inputId, type){
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(!input||!dd) return;
+  const data=acGetData(type);
+  const query=norm(input.value);
+  const filtered=query?data.filter(d=>norm(d).includes(query)):data;
+  acRenderOptions(dd, filtered, inputId, type);
+  dd.classList.add('open');
+  acHighlightIdx=-1;
+  // Clear selection if value changed
+  const selKey=type==='brands'?'marca':type==='models'?'modelo':'cat';
+  if(window._acSelected) window._acSelected[selKey]='';
+  acValidateField(inputId, type);
+}
+
+function acRenderOptions(dd, items, inputId, type){
+  if(!items.length){
+    dd.innerHTML='<div class="ac-empty">Nenhum resultado encontrado</div>';
+    return;
+  }
+  dd.innerHTML=items.slice(0,100).map((item,i)=>`
+    <div class="ac-option" data-value="${item}" data-idx="${i}" onmousedown="acSelect('${inputId}','${type}','${item.replace(/'/g,"\\'")}')">${item}</div>
+  `).join('');
+}
+
+function acSelect(inputId, type, value){
+  const input=document.getElementById(inputId);
+  const dd=document.getElementById(inputId+'_dd');
+  if(input) input.value=value;
+  if(dd) dd.classList.remove('open');
+  const selKey=type==='brands'?'marca':type==='models'?'modelo':'cat';
+  if(window._acSelected) window._acSelected[selKey]=value;
+  acValidateField(inputId, type);
+  acValidateAll();
+}
+
+function acKeydown(event, inputId, type){
+  const dd=document.getElementById(inputId+'_dd');
+  if(!dd) return;
+  const options=dd.querySelectorAll('.ac-option');
+  if(event.key==='ArrowDown'){
+    event.preventDefault();
+    acHighlightIdx=Math.min(acHighlightIdx+1, options.length-1);
+    options.forEach((o,i)=>o.classList.toggle('highlighted',i===acHighlightIdx));
+    if(options[acHighlightIdx]) options[acHighlightIdx].scrollIntoView({block:'nearest'});
+  } else if(event.key==='ArrowUp'){
+    event.preventDefault();
+    acHighlightIdx=Math.max(acHighlightIdx-1, 0);
+    options.forEach((o,i)=>o.classList.toggle('highlighted',i===acHighlightIdx));
+    if(options[acHighlightIdx]) options[acHighlightIdx].scrollIntoView({block:'nearest'});
+  } else if(event.key==='Enter'){
+    event.preventDefault();
+    if(acHighlightIdx>=0&&options[acHighlightIdx]){
+      const val=options[acHighlightIdx].dataset.value;
+      acSelect(inputId, type, val);
+    }
+  } else if(event.key==='Escape'){
+    dd.classList.remove('open');
+  }
+}
+
+function acValidateField(inputId, type){
+  const input=document.getElementById(inputId);
+  const icon=document.getElementById(inputId+'_icon');
+  const msg=document.getElementById(inputId+'_msg');
+  if(!input) return;
+  const val=input.value.trim();
+  const data=acGetData(type);
+  const isValid=data.some(d=>d===val);
+  input.classList.toggle('valid',isValid);
+  input.classList.toggle('invalid',val.length>0&&!isValid);
+  if(icon){
+    icon.textContent=isValid?'✓':val.length>0?'✕':'▼';
+    icon.className='ac-icon '+(isValid?'valid':val.length>0?'invalid':'');
+  }
+  if(msg){
+    const labels={brands:'Marca',models:'Modelo',cats:'Categoria'};
+    if(isValid){msg.textContent='✓ '+labels[type]+' válida';msg.className='ac-msg valid';}
+    else if(val.length>0){msg.textContent='✕ '+labels[type]+' não encontrada na base';msg.className='ac-msg invalid';}
+    else{msg.textContent='';msg.className='ac-msg';}
+  }
+}
+
+function acValidateAll(){
+  const marcaValid=ALL_BRANDS.includes(document.getElementById('ac_marca')?.value.trim()||'');
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))];
+  const modeloValid=allModelos.includes(document.getElementById('ac_modelo')?.value.trim()||'');
+  const catValid=CATEGORIES.includes(document.getElementById('ac_cat')?.value.trim()||'');
+  const btn=document.getElementById('editSaveBtn');
+  if(btn){
+    const allValid=marcaValid&&modeloValid&&catValid;
+    btn.disabled=!allValid;
+    btn.style.opacity=allValid?'1':'.5';
+    btn.textContent=allValid?'✓ Salvar Alteração':'🔒 Salvar Alteração';
+  }
+}
+
+function acCloseAllDropdowns(){
+  document.querySelectorAll('.ac-dropdown.open').forEach(d=>d.classList.remove('open'));
+}
+
+function acCloseAll(e){
+  if(!e.target.closest('.ac-wrap')){acCloseAllDropdowns();}
+}
+
+function saveModelEdit(){
+  const ctx=window._editCtx;
+  if(!ctx) return;
+  const newMarca=document.getElementById('ac_marca').value.trim();
+  const newModelo=document.getElementById('ac_modelo').value.trim();
+  const newCat=document.getElementById('ac_cat').value.trim();
+  const newAno=document.getElementById('edit_ano').value.trim();
+  if(!newMarca||!newModelo||!newCat) return;
+  // Validate against base
+  if(!ALL_BRANDS.includes(newMarca)){showToast('Marca não encontrada na base','error');return;}
+  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))];
+  if(!allModelos.includes(newModelo)){showToast('Modelo não encontrado na base','error');return;}
+  if(!CATEGORIES.includes(newCat)){showToast('Categoria não encontrada na base','error');return;}
+
+  // If category changed, it's a move
+  if(newCat!==ctx.categoria){
+    addToStaging({type:'Movimentação',marca:ctx.marca,modelo:ctx.modelo,catFrom:ctx.categoria,catTo:newCat});
+  }
+  // If marca or modelo changed, remove old + add new
+  if(newMarca!==ctx.marca||newModelo!==ctx.modelo){
+    addToStaging({type:'Remoção',marca:ctx.marca,modelo:ctx.modelo,catFrom:newCat!==ctx.categoria?ctx.categoria:ctx.categoria,catTo:null});
+    addToStaging({type:'Adição',marca:newMarca,modelo:newModelo,catFrom:null,catTo:newCat!==ctx.categoria?newCat:ctx.categoria});
+  }
+  // Update ano
+  if(newAno){
+    const key=(newCat!==ctx.categoria?newCat:ctx.categoria)+'|||'+newMarca+'|||'+newModelo;
+    ANOS_ACEITACAO[key]=newAno;
+  }
+  document.removeEventListener('click',acCloseAll);
+  closeModal();
+  closeDrawer();
+  showToast('Edição adicionada às alterações pendentes','success');
+}
+
+function openModelRemove(marca, modelo){
+  const cats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
+  let body=`<div style="line-height:1.8">
+    <strong>${marca} — ${modelo}</strong><br><br>
+    <span style="font-size:.78rem;color:var(--text2)">Selecione de qual categoria remover:</span><br>`;
+  body+=cats.map(c=>`<label style="display:block;padding:4px 0;font-size:.82rem;cursor:pointer"><input type="checkbox" name="rem_cat" value="${c}"> ${c}</label>`).join('');
+  body+=`<br><span style="font-size:.72rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span></div>`;
+  showModal('🗑️ Remover Modelo',body,function(){
+    const checked=document.querySelectorAll('input[name="rem_cat"]:checked');
+    if(!checked.length) return alert('Selecione pelo menos uma categoria');
+    checked.forEach(cb=>{
+      addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:cb.value,catTo:null});
+    });
+    closeModal();
+    closeDrawer();
+    showToast('Remoção adicionada às alterações pendentes','success');
+  },'red');
+}
+
+function openModelMove(marca, modelo){
+  // Block if model already has a pending change (check without specific category)
+  if(hasPendingChange(marca, modelo, null)){
+    const type = getPendingChangeType(marca, modelo, null);
+    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    return;
+  }
+  const currentCats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
+  const fromOptions=currentCats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const toOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  showModal('↔️ Mover de Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+    <strong>${marca} — ${modelo}</strong>
+    <label style="font-size:.78rem;color:var(--text2)">Categoria de origem:</label>
+    <select id="move_from">${fromOptions}</select>
+    <label style="font-size:.78rem;color:var(--text2)">Categoria de destino:</label>
+    <select id="move_to">${toOptions}</select>
+    <span style="font-size:.72rem;color:var(--text3)">Será adicionado às Alterações Pendentes.</span>
+  </div>`,function(){
+    const from=document.getElementById('move_from').value;
+    const to=document.getElementById('move_to').value;
+    if(!from||!to) return;
+    if(from===to) return alert('Origem e destino devem ser diferentes');
+    addToStaging({type:'Movimentação',marca:marca,modelo:modelo,catFrom:from,catTo:to});
+    closeModal();
+    closeDrawer();
+    showToast('Movimentação adicionada às alterações pendentes','success');
+  },'blue');
+}
+
+function filterDrawerTable(searchId, tableId){
+  const query=norm(document.getElementById(searchId).value);
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  const rows=table.querySelectorAll('tbody tr');
+  let visible=0;
+  rows.forEach(row=>{
+    const text=norm(row.textContent);
+    if(!query||text.includes(query)){row.style.display='';visible++;}
+    else{row.style.display='none';}
+  });
+  const countEl=document.getElementById('count_'+tableId);
+  if(countEl) countEl.textContent=visible+' registros';
+}
+
+function sortDrawerTable(tableId, colIdx){
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  const tbody=table.querySelector('tbody');
+  const rows=Array.from(tbody.querySelectorAll('tr'));
+  const dir=table.dataset.sortDir==='asc'?'desc':'asc';
+  table.dataset.sortDir=dir;
+  rows.sort((a,b)=>{
+    const aVal=a.cells[colIdx]?.textContent||'';
+    const bVal=b.cells[colIdx]?.textContent||'';
+    const aNum=parseFloat(aVal), bNum=parseFloat(bVal);
+    if(!isNaN(aNum)&&!isNaN(bNum)) return dir==='asc'?aNum-bNum:bNum-aNum;
+    return dir==='asc'?aVal.localeCompare(bVal):bVal.localeCompare(aVal);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function exportDrawerTable(tableId, name){
+  const table=document.getElementById(tableId);
+  if(!table) return;
+  if(typeof XLSX==='undefined'){
+    showToast('Biblioteca XLSX não carregada','error');
+    return;
+  }
+  const headers=Array.from(table.querySelectorAll('thead th')).map(th=>th.textContent.replace(' ↕',''));
+  const dataRows=Array.from(table.querySelectorAll('tbody tr')).filter(r=>r.style.display!=='none').map(r=>Array.from(r.cells).map(c=>c.textContent));
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  // Row 1: blank
+  rows.push(headers.map(()=>''));
+  // Row 2: headers
+  rows.push(headers);
+  // Row 3+: data
+  for(const r of dataRows) rows.push(r);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Style row 2 headers - black background, white text
+  const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  // Auto column widths
+  ws['!cols']=headers.map((h,i)=>{
+    let maxLen=h.length;
+    for(const r of dataRows){if(r[i]&&r[i].length>maxLen) maxLen=r[i].length;}
+    return {wch:Math.min(Math.max(maxLen+2,12),50)};
+  });
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+  XLSX.writeFile(wb, name+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Exportado com sucesso!','success');
+}
+
+// ========= DUPLICATES TABLE =========
+function renderDupTable(){
+  const bf = norm(document.getElementById('dupBrandFilter').value);
+  const mf = norm(document.getElementById('dupModelFilter').value);
+  const cf = parseInt(document.getElementById('dupCountFilter').value)||0;
+
+  let filtered = DUPLICATES.filter(d=>{
+    if(bf && !norm(d.marca).includes(bf)) return false;
+    if(mf && !norm(d.modelo).includes(mf)) return false;
+    if(d.count < cf) return false;
+    return true;
+  });
+
+  document.getElementById('dupCount').textContent = filtered.length + ' modelos duplicados encontrados';
+
+  const total = filtered.length;
+  const pages = Math.ceil(total/DUP_PER_PAGE);
+  if(dupPage>pages) dupPage=1;
+  const start = (dupPage-1)*DUP_PER_PAGE;
+  const page = filtered.slice(start, start+DUP_PER_PAGE);
+
+  const tbody = document.getElementById('dupTableBody');
+  tbody.innerHTML = page.map((d,i)=>{
+    const ano = typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'—';
+    const catBadges = d.cats.map(c=>{
+      const canRemove = d.cats.length > 1;
+      const escapedCat = c.replace(/'/g,"\\'");
+      const escapedMarca = d.marca.replace(/'/g,"\\'");
+      const escapedModelo = d.modelo.replace(/'/g,"\\'");
+      const pending = isPendingRemoval(d.marca, d.modelo, c);
+      if(pending){
+        return `<span class="tag tag-amber" title="Remoção pendente">${c} ⏳ <span style="font-size:9px;cursor:pointer;opacity:.7;margin-left:2px;transition:opacity .15s,transform .15s;display:inline-block" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" onmouseover="this.style.opacity='1';this.style.transform='scale(1.3)'" onmouseout="this.style.opacity='.7';this.style.transform='scale(1)'" title="Cancelar remoção">✕</span></span>`;
+      }
+      if(canRemove){
+        return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
+      }
+      return `<span class="tag tag-blue" title="Última categoria - não pode remover">${c}</span>`;
+    }).join(' ');
+    return `<tr>
+      <td style="color:var(--text2)">${start+i+1}</td>
+      <td><strong>${d.marca}</strong></td>
+      <td>${d.modelo}</td>
+      <td><span class="tag tag-gray">${ano}</span></td>
+      <td>${catBadges}</td>
+      <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" class="empty">Nenhum duplicado encontrado</td></tr>';
+
+  renderPagination('dupPagination', pages, dupPage, p=>{dupPage=p;renderDupTable();});
+}
+
+function exportDuplicates(){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const headers=['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias'];
+  const rows = [];
+  // Row 1: blank
+  rows.push(headers.map(()=>''));
+  // Row 2: headers
+  rows.push(headers);
+  // Row 3+: data
+  for(const d of DUPLICATES){
+    rows.push([d.marca, d.modelo, typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'', d.cats.join('; '), d.count]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:50},{wch:16}];
+  // Style row 2 headers - black background, white text
+  const colLetters='ABCDE';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb, ws, 'Duplicados');
+  XLSX.writeFile(wb, 'duplicados_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Duplicados exportados com sucesso!','success');
+}
+
+function confirmRemoveFromCat(marca, modelo, categoria){
+  // Block if model already has a pending change
+  if(hasPendingChange(marca, modelo, categoria)){
+    const type = getPendingChangeType(marca, modelo, categoria);
+    if(type==='Remoção'){
+      showToast('Já existe uma remoção pendente para este registro.','warning');
+    } else {
+      showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
+    }
+    return;
+  }
+  showModal(
+    'Remover modelo da categoria?',
+    `<div style="line-height:1.8">
+      <strong>Modelo:</strong><br>${marca} — ${modelo}<br><br>
+      <strong>Categoria a remover:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
+      <span style="font-size:.78rem;color:var(--text2)">A remoção será adicionada às Alterações Pendentes. Para aplicar, clique em "Salvar Alterações" na aba Manutenção.</span>
+    </div>`,
+    function(){
+      // Add to staging instead of applying immediately
+      addToStaging({
+        type:'Remoção',
+        marca: marca,
+        modelo: modelo,
+        catFrom: categoria,
+        catTo: null
+      }, true);
+      closeModal();
+      // Re-render views to hide the removed model visually
+      renderOverviewTable();
+      renderKPIs();
+      renderDupTable();
+      // Re-open drawer if it was showing this category
+      if(document.getElementById('drawer').classList.contains('open')){
+        const drawerTitle = document.querySelector('.drawer-title');
+        if(drawerTitle && drawerTitle.textContent === categoria){
+          openDrawer(categoria);
+        } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+categoria)){
+          showCatDetail(categoria, 'modelos');
+        }
+      }
+      showToast('Remoção adicionada às alterações pendentes','success');
+    },
+    'red'
+  );
+}
+
+function isPendingRemoval(marca, modelo, categoria){
+  return STAGING.ops.some(op=>op.type==='Remoção'&&op.marca===marca&&op.modelo===modelo&&op.catFrom===categoria);
+}
+
+// Check if a model has ANY pending change (removal, move, edit) in any category
+function hasPendingChange(marca, modelo, categoria){
+  return STAGING.ops.some(op=>{
+    if(op.type.includes('Categoria')) return false;
+    // For Edição type, check oldModelo
+    const opModelo = op.oldModelo || op.modelo;
+    if(categoria){
+      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+    }
+    return op.marca===marca && opModelo===modelo;
+  });
+}
+
+// Get the type of pending change for a model (for informational messages)
+function getPendingChangeType(marca, modelo, categoria){
+  const op = STAGING.ops.find(op=>{
+    if(op.type.includes('Categoria')) return false;
+    const opModelo = op.oldModelo || op.modelo;
+    if(categoria){
+      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+    }
+    return op.marca===marca && opModelo===modelo;
+  });
+  return op ? op.type : null;
+}
+
+// Check if a category has any pending change (rename, removal, creation)
+function hasPendingCategoryChange(cat){
+  return STAGING.ops.some(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
+}
+
+// Get the type of pending category change
+function getPendingCategoryChangeType(cat){
+  const op = STAGING.ops.find(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
+  return op ? op.type : null;
+}
+
+function cancelPendingRemoval(marca, modelo, categoria){
+  const idx = STAGING.ops.findIndex(op=>op.type==='Remoção'&&op.marca===marca&&op.modelo===modelo&&op.catFrom===categoria);
+  if(idx>=0){
+    STAGING.ops.splice(idx,1);
+    STAGING.data=null;
+    renderDupTable();
+    renderStagingBars();
+    renderStagingTable();
+    renderOverviewTable();
+    renderKPIs();
+    // Re-open drawer if showing the affected category
+    if(document.getElementById('drawer').classList.contains('open')){
+      const drawerTitle = document.querySelector('.drawer-title');
+      if(drawerTitle && drawerTitle.textContent === categoria){
+        openDrawer(categoria);
+      } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+categoria)){
+        showCatDetail(categoria, 'modelos');
+      }
+    }
+    showToast('Remoção cancelada','warning');
+  }
+}
+
+// ========= ROW CONTEXT MENU =========
+function toggleRowMenu(btn){
+  closeAllRowMenus();
+  const menu=btn.nextElementSibling;
+  if(menu) menu.classList.add('open');
+}
+
+function closeAllRowMenus(){
+  document.querySelectorAll('.row-menu.open').forEach(m=>m.classList.remove('open'));
+}
+
+// Close menus on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.row-actions')) closeAllRowMenus();
+});
+
+// ========= CATEGORY MANAGEMENT =========
+function openAddCategory(){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  showModal('+ Nova Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
+    <input id="new_cat_name" placeholder="Digite o nome da categoria...">
+    <div id="new_cat_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    const name=document.getElementById('new_cat_name').value.trim();
+    if(!name){showToast('Digite o nome da categoria','error');return;}
+    if(CATEGORIES.includes(name)){showToast('Categoria já existe!','error');return;}
+    addToStaging({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name});
+    closeModal();
+    showToast('Criação de "'+name+'" adicionada às pendentes','success');
+  },'green');
+  setTimeout(()=>{
+    const input=document.getElementById('new_cat_name');
+    if(input) input.oninput=function(){
+      const msg=document.getElementById('new_cat_msg');
+      const val=this.value.trim();
+      if(!val){msg.textContent='';msg.className='ac-msg';return;}
+      if(CATEGORIES.includes(val)){msg.textContent='✕ Categoria já existe';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openRenameCategory(cat){
+  // Block if category already has a pending change
+  if(hasPendingCategoryChange(cat)){
+    showToast('Esta categoria já possui uma alteração pendente.','warning');
+    return;
+  }
+  showModal('✏️ Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+    <label style="font-size:.78rem;color:var(--text2)">Categoria atual:</label>
+    <div style="font-weight:600;font-size:.9rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius)">${cat}</div>
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
+    <input id="rename_cat" value="${cat}">
+    <div id="rename_cat_msg" class="ac-msg"></div>
+    <span style="font-size:.72rem;color:var(--text3)">A renomeação será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    const newName=document.getElementById('rename_cat').value.trim();
+    if(!newName){showToast('Digite o novo nome','error');return;}
+    if(newName===cat){closeModal();return;}
+    if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
+    addToStaging({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName});
+    closeModal();
+    showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
+  },'blue');
+  setTimeout(()=>{
+    const input=document.getElementById('rename_cat');
+    if(input) input.oninput=function(){
+      const msg=document.getElementById('rename_cat_msg');
+      const val=this.value.trim();
+      if(!val||val===cat){msg.textContent='';msg.className='ac-msg';return;}
+      if(CATEGORIES.includes(val)){msg.textContent='✕ Nome já existe';msg.className='ac-msg invalid';}
+      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+    };
+  },50);
+}
+
+function openRemoveCategory(cat){
+  // Block if category already has a pending change
+  if(hasPendingCategoryChange(cat)){
+    showToast('Esta categoria já possui uma alteração pendente.','warning');
+    return;
+  }
+  const total=CAT_TOTALS[cat]||0;
+  if(total>0){
+    showModal('⚠️ Não é possível remover',`<div style="line-height:1.8">
+      <strong>${cat}</strong><br><br>
+      Existem <strong>${total} modelos</strong> vinculados a esta categoria.<br><br>
+      <span style="color:var(--text2)">Remova ou mova os modelos antes de excluir a categoria.</span>
+    </div>`,function(){closeModal();},'blue');
+    return;
+  }
+  showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
+    <strong>${cat}</strong><br><br>
+    Esta categoria está vazia e será removida.<br>
+    <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
+  </div>`,function(){
+    addToStaging({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null});
+    closeModal();
+    showToast('Remoção da categoria "'+cat+'" pendente','success');
+  },'red');
+}
+
+// ========= DIVERGENCES =========
+let currentCompGroup = 0;
+
+function renderDivergences(){
+  const tabsEl = document.getElementById('compTabs');
+  tabsEl.innerHTML = COMP_GROUPS.map((g,i)=>
+    `<button class="comp-tab ${i===currentCompGroup?'active':''}" onclick="currentCompGroup=${i};renderDivergences()">${g.label}</button>`
+  ).join('');
+
+  const g = COMP_GROUPS[currentCompGroup];
+  if(!g){document.getElementById('compContent').innerHTML='<div class="empty">Nenhum grupo de comparação configurado</div>';return;}
+
+  const modelsA = getModelsForCat(g.a);
+  const modelsB = getModelsForCat(g.b);
+  // Use Set for O(1) lookups instead of O(n) .find()
+  const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+  const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+  // Filter out models that have a pending addition to the other category (already "copied")
+  const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.b));
+  const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.a));
+  const inBoth = modelsA.filter(m=>setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
+  // Count pending copies as "in both" for display
+  const pendingCopiesCount = STAGING.ops.filter(op=>op.type==='Adição'&&((op.catTo===g.a)||(op.catTo===g.b))&&op._divCopy).length;
+
+  document.getElementById('compStats').innerHTML = '';
+
+  const eA=g.a.replace(/'/g,"\\'");
+  const eB=g.b.replace(/'/g,"\\'");
+
+  document.getElementById('compContent').innerHTML = `
+    <div class="comp-card" style="border-color:var(--red-light)">
+      <h5><span class="badge badge-red">${onlyA.length}</span> Somente em ${g.a}</h5>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')">➡️ Copiar Todos para ${g.b.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyA')" id="btnCopySelA" style="display:none">📋 Copiar Selecionados</button>
+      </div>
+      <div class="model-list" id="divListA">${onlyA.map((m,i)=>{
+        const em=m.marca.replace(/'/g,"\\'");
+        const emo=m.modelo.replace(/'/g,"\\'");
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <input type="checkbox" class="div-check-a" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('A')">
+          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eA}','${eB}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.b}">➡️</button>
+        </div>`;
+      }).join('')||'<div>Nenhum</div>'}</div>
+    </div>
+    <div class="comp-card" style="border-color:var(--amber-light)">
+      <h5><span class="badge badge-amber">${onlyB.length}</span> Somente em ${g.b}</h5>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')">⬅️ Copiar Todos para ${g.a.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyB')" id="btnCopySelB" style="display:none">📋 Copiar Selecionados</button>
+      </div>
+      <div class="model-list" id="divListB">${onlyB.map((m,i)=>{
+        const em=m.marca.replace(/'/g,"\\'");
+        const emo=m.modelo.replace(/'/g,"\\'");
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <input type="checkbox" class="div-check-b" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('B')">
+          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eB}','${eA}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.a}">⬅️</button>
+        </div>`;
+      }).join('')||'<div>Nenhum</div>'}</div>
+    </div>
+    <div class="comp-card" style="border-color:var(--green-light)">
+      <h5><span class="badge badge-green">${inBoth.length+pendingCopiesCount}</span> Em ambas</h5>
+      <div style="height:38px"></div>
+      <div class="model-list">${(()=>{
+        // Pending copies shown first with highlight
+        const pendingCopies=STAGING.ops.filter(op=>op.type==='Adição'&&op._divCopy&&(op.catTo===g.a||op.catTo===g.b));
+        let html=pendingCopies.map(op=>{
+          const eM=op.marca.replace(/'/g,"\\'");
+          const eMo=op.modelo.replace(/'/g,"\\'");
+          const idx=STAGING.ops.indexOf(op);
+          return '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:var(--green-bg);border:1px solid var(--green-light);display:flex;align-items:center;gap:6px" title="Copiado para '+op.catTo+'. Aguardando Salvar Alterações."><span style="font-size:.7rem">➕</span><span style="flex:1;font-size:.78rem"><strong>'+op.marca+'</strong> — '+op.modelo+' <span class="tag tag-green" style="font-size:.55rem;vertical-align:middle">⏳ Pendente</span></span><span onclick="removeFromStaging('+idx+');renderDivergences()" style="cursor:pointer;font-size:9px;opacity:.6;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=1;this.style.transform=\'scale(1.3)\'" onmouseout="this.style.opacity=.6;this.style.transform=\'scale(1)\'" title="Cancelar cópia">✕</span></div>';
+        }).join('');
+        // Regular "in both" models - show first 100 with "show more" option
+        const maxShow=100;
+        html+=inBoth.slice(0,maxShow).map(m=>'<div><strong>'+m.marca+'</strong> — '+m.modelo+'</div>').join('');
+        if(inBoth.length>maxShow) html+='<div style="color:var(--text3);padding:8px 0;text-align:center;font-size:.75rem">Mostrando '+maxShow+' de '+inBoth.length+' modelos</div>';
+        return html||'<div>Nenhum</div>';
+      })()}</div>
+    </div>
+  `;
+}
+
+// Check if a model has a pending copy to a specific category
+function isPendingCopyTo(marca, modelo, catTo){
+  return STAGING.ops.some(op=>op.type==='Adição'&&op._divCopy&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===catTo);
+}
+
+// Copy a single model to the compared category
+function copyModelToCategory(marca, modelo, catFrom, catTo){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  // Validate: check if already exists in destination
+  const destModels=getModelsForCat(catTo);
+  if(destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
+    showToast('Este modelo já existe na categoria de destino.','warning');
+    return;
+  }
+  // Check if already pending
+  if(isPendingCopyTo(marca,modelo,catTo)){
+    showToast('Já existe uma cópia pendente para este modelo.','warning');
+    return;
+  }
+  addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+  showToast(marca+' — '+modelo+' → copiado para '+catTo,'success');
+  renderDivergences();
+  renderOverviewTable();
+  renderKPIs();
+}
+
+// Copy all divergences from one side to the other
+function copyAllDivergences(catFrom, catTo){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  const modelsFrom=getModelsForCat(catFrom);
+  const modelsTo=getModelsForCat(catTo);
+  const only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
+  if(!only.length){showToast('Nenhum modelo para copiar','warning');return;}
+  showModal('Copiar '+only.length+' modelo(s)?','Deseja copiar todos os modelos exclusivos de <strong>'+catFrom+'</strong> para <strong>'+catTo+'</strong>?<br><br><span style="font-size:.78rem;color:var(--text2)">Serão criadas '+only.length+' alterações pendentes.</span>',function(){
+    let count=0;
+    for(const m of only){
+      if(!isPendingCopyTo(m.marca,m.modelo,catTo)){
+        addToStaging({type:'Adição',marca:m.marca,modelo:m.modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+        count++;
+      }
+    }
+    closeModal();
+    showToast(count+' modelo(s) copiado(s) para '+catTo,'success');
+    renderDivergences();
+    renderOverviewTable();
+    renderKPIs();
+  },'blue');
+}
+
+// Update selection button visibility
+function updateDivSelection(side){
+  const cls=side==='A'?'div-check-a':'div-check-b';
+  const btnId=side==='A'?'btnCopySelA':'btnCopySelB';
+  const checked=document.querySelectorAll('.'+cls+':checked').length;
+  const btn=document.getElementById(btnId);
+  if(btn){
+    btn.style.display=checked>0?'':'none';
+    btn.textContent='📋 Copiar '+checked+' Selecionado(s)';
+  }
+}
+
+// Copy selected divergences
+function copySelectedDivergences(listId){
+  const g=COMP_GROUPS[currentCompGroup];
+  if(!g) return;
+  let catFrom,catTo,cls;
+  if(listId==='onlyA'){catFrom=g.a;catTo=g.b;cls='div-check-a';}
+  else{catFrom=g.b;catTo=g.a;cls='div-check-b';}
+  const checks=document.querySelectorAll('.'+cls+':checked');
+  if(!checks.length){showToast('Nenhum modelo selecionado','warning');return;}
+  let count=0;
+  checks.forEach(cb=>{
+    const marca=cb.dataset.marca;
+    const modelo=cb.dataset.modelo;
+    if(!isPendingCopyTo(marca,modelo,catTo)){
+      const destModels=getModelsForCat(catTo);
+      if(!destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
+        addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+        count++;
+      }
+    }
+  });
+  showToast(count+' modelo(s) copiado(s) para '+catTo,'success');
+  renderDivergences();
+  renderOverviewTable();
+  renderKPIs();
+}
+
+// ========= MANAGEMENT =========
+function getStagingData(){
+  if(STAGING.data) return JSON.parse(JSON.stringify(STAGING.data));
+  const copy = JSON.parse(JSON.stringify(RAW));
+  for(const op of STAGING.ops){
+    if(op.type==='Adição'){
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
+      copy[op.catTo].brands[op.marca].push(op.modelo);
+      copy[op.catTo].total++;
+    } else if(op.type==='Remoção'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const idx = copy[op.catFrom].brands[op.marca].indexOf(op.modelo);
+        if(idx>=0){copy[op.catFrom].brands[op.marca].splice(idx,1);copy[op.catFrom].total--;}
+        if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
+      }
+    } else if(op.type==='Movimentação'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const idx = copy[op.catFrom].brands[op.marca].indexOf(op.modelo);
+        if(idx>=0){copy[op.catFrom].brands[op.marca].splice(idx,1);copy[op.catFrom].total--;}
+        if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
+      }
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
+      copy[op.catTo].brands[op.marca].push(op.modelo);
+      copy[op.catTo].total++;
+    } else if(op.type==='Edição'){
+      // Remove old model name, add new model name in same category
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const idx = copy[op.catFrom].brands[op.marca].indexOf(op.oldModelo);
+        if(idx>=0) copy[op.catFrom].brands[op.marca].splice(idx,1);
+        copy[op.catFrom].brands[op.marca].push(op.newModelo);
+      }
+    } else if(op.type==='Adição de Marca'){
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
+    } else if(op.type==='Remoção de Marca'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        delete copy[op.catFrom].brands[op.marca];
+      }
+    } else if(op.type==='Edição de Marca'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.oldMarca]){
+        copy[op.catFrom].brands[op.newMarca]=copy[op.catFrom].brands[op.oldMarca];
+        delete copy[op.catFrom].brands[op.oldMarca];
+      }
+    }
+  }
+  return copy;
+}
+
+function hasStagingChanges(){return STAGING.ops.length>0;}
+
+function addToStaging(op, silent){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+    showToast('Aguarde o carregamento dos dados antes de realizar alterações','error');
+    return;
+  }
+  op.timestamp = new Date().toLocaleString('pt-BR');
+  STAGING.ops.push(op);
+  STAGING.data = null;
+  markAllDirty();
+  renderStagingBars();
+  renderStagingTable();
+  if(!silent) showToast('Operação adicionada ao staging','success');
+}
+
+function removeFromStaging(idx){
+  const op = STAGING.ops[idx];
+  STAGING.ops.splice(idx,1);
+  STAGING.data = null;
+  markAllDirty();
+  renderStagingBars();
+  renderStagingTable();
+  // If a removal was cancelled, re-render views to restore visually
+  if(op && (op.type==='Remoção'||op.type==='Remoção de Marca'||op.type==='Edição de Marca')){
+    renderOverviewTable();
+    renderKPIs();
+    renderDupTable();
+    // Re-open drawer if showing the affected category
+    if(document.getElementById('drawer').classList.contains('open')){
+      const drawerTitle = document.querySelector('.drawer-title');
+      if(drawerTitle && drawerTitle.textContent === op.catFrom){
+        openDrawer(op.catFrom);
+      } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+op.catFrom)){
+        showCatDetail(op.catFrom, 'modelos');
+      } else if(drawerTitle && drawerTitle.textContent.includes('Marcas - '+op.catFrom)){
+        showCatDetail(op.catFrom, 'marcas');
+      }
+    }
+  }
+}
+
+function clearStaging(){
+  if(!hasStagingChanges()) return;
+  showModal('Descartar Alterações','Tem certeza que deseja descartar todas as alterações pendentes?',()=>{
+    const hadRemovals = STAGING.ops.some(op=>op.type==='Remoção');
+    STAGING.ops=[];STAGING.data=null;
+    renderStagingBars();renderStagingTable();closeModal();
+    // Re-render views to restore any hidden models
+    if(hadRemovals){
+      renderOverviewTable();
+      renderKPIs();
+      renderDupTable();
+    }
+    showToast('Alterações descartadas','warning');
+  },'red');
+}
+
+function commitStaging(){
+  if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
+  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',()=>{
+    const d = getStagingData();
+    for(const[k,v] of Object.entries(d)) RAW[k]=v;
+    for(const op of STAGING.ops){
+      HISTORY.push({...op});
+      mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':op.type==='Edição'?'moved':'moved']++;
+      mgmtStats.session++;
+    }
+    STAGING.ops=[];STAGING.data=null;
+    recomputeAll();
+    renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
+    refreshActiveTab();
+    closeModal();
+    showToast('Alterações salvas com sucesso!','success');
+  },'green');
+}
+
+function renderStagingBars(){
+  const bar = document.getElementById('stagingBar');
+  if(STAGING.ops.length>0){bar.classList.add('visible');document.getElementById('stagingCount').textContent=STAGING.ops.length;}
+  else{bar.classList.remove('visible');}
+}
+
+let stagingPage=1;
+const STAGING_PER_PAGE=10;
+
+function renderStagingTable(){
+  const tbody = document.getElementById('stagingTableBody');
+  const filterRow = document.getElementById('stagingFilterRow');
+  const summaryEl = document.getElementById('stagingSummary');
+
+  // Show filter row and summary only when there are items
+  if(STAGING.ops.length>0){
+    filterRow.style.display='flex';
+  } else {
+    filterRow.style.display='none';
+  }
+
+  // Build summary by type
+  if(STAGING.ops.length>0){
+    const counts={};
+    for(const op of STAGING.ops){
+      const t=op.type;
+      counts[t]=(counts[t]||0)+1;
+    }
+    summaryEl.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:.78rem">'+
+      Object.entries(counts).map(([type,count])=>{
+        const tagClass=type.includes('Adição')||type.includes('Criação')?'tag-green':type.includes('Remoção')?'tag-red':type.includes('Edição')?'tag-amber':'tag-blue';
+        return `<span class="tag ${tagClass}" style="font-size:.72rem">${type}: ${count}</span>`;
+      }).join('')+
+      `<span style="color:var(--text3);margin-left:8px">Total: ${STAGING.ops.length}</span></div>`;
+  } else {
+    summaryEl.innerHTML='';
+  }
+
+  // Apply filters
+  const textFilter=norm((document.getElementById('stagingFilter')||{}).value||'');
+  const typeFilter=(document.getElementById('stagingTypeFilter')||{}).value||'';
+  let filtered=STAGING.ops.map((op,i)=>({...op,_idx:i}));
+  if(textFilter){
+    filtered=filtered.filter(op=>norm(op.marca+' '+op.modelo+(op.catFrom||'')+(op.catTo||'')).includes(textFilter));
+  }
+  if(typeFilter){
+    filtered=filtered.filter(op=>op.type.includes(typeFilter));
+  }
+
+  // Pagination
+  const total=filtered.length;
+  const pages=Math.ceil(total/STAGING_PER_PAGE);
+  if(stagingPage>pages) stagingPage=1;
+  const start=(stagingPage-1)*STAGING_PER_PAGE;
+  const page=filtered.slice(start,start+STAGING_PER_PAGE);
+
+  tbody.innerHTML = page.map((op)=>{
+    const i=op._idx;
+    const isCatOp=op.type.includes('Categoria');
+    const isBrandOp=op.type.includes('Marca');
+    const isEdit=op.type==='Edição';
+    const isEditBrand=op.type==='Edição de Marca';
+    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':(isEdit||isEditBrand)?'tag-amber':'tag-blue';
+    const modeloDisplay = isCatOp||isBrandOp ? '—' : op.modelo;
+    const marcaDisplay = isCatOp ? '—' : (isBrandOp ? op.marca : op.marca);
+    return `<tr>
+    <td>${i+1}</td>
+    <td><span class="tag ${tagClass}">${op.type}</span></td>
+    <td>${marcaDisplay}</td>
+    <td>${modeloDisplay}</td>
+    <td>${op.catFrom||'—'}</td>
+    <td>${op.catTo||'—'}</td>
+    <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})">✕</button></td>
+  </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente'+(textFilter||typeFilter?' (com filtro aplicado)':'')+'</td></tr>';
+
+  // Render pagination
+  const pagEl=document.getElementById('stagingPagination');
+  if(pagEl){
+    if(pages<=1){pagEl.innerHTML='';return;}
+    let html=`<button ${stagingPage===1?'disabled':''} onclick="stagingPage=${stagingPage-1};renderStagingTable()">← Anterior</button>`;
+    const maxVisible=7;
+    let startP=Math.max(1,stagingPage-3), endP=Math.min(pages,startP+maxVisible-1);
+    if(endP-startP<maxVisible-1) startP=Math.max(1,endP-maxVisible+1);
+    for(let p=startP;p<=endP;p++){
+      html+=`<button class="${p===stagingPage?'active':''}" onclick="stagingPage=${p};renderStagingTable()">${p}</button>`;
+    }
+    html+=`<button ${stagingPage===pages?'disabled':''} onclick="stagingPage=${stagingPage+1};renderStagingTable()">Próximo →</button>`;
+    pagEl.innerHTML=html;
+  }
+}
+
+function renderMgmtKpis(){
+  document.getElementById('mgmtKpis').innerHTML = `
+    <div class="kpi-card green"><div class="kpi-label">Adicionados</div><div class="kpi-value">${mgmtStats.added}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Removidos</div><div class="kpi-value">${mgmtStats.removed}</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Movidos</div><div class="kpi-value">${mgmtStats.moved}</div></div>
+    <div class="kpi-card purple"><div class="kpi-label">Total Sessão</div><div class="kpi-value">${mgmtStats.session}</div></div>
+  `;
+}
+
+function showMgmtModal(type){
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  const catOptions = CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const brandOptions = ALL_BRANDS.map(b=>`<option value="${b}">${b}</option>`).join('');
+  let title='', body='', onConfirm=null;
+
+  if(type==='add'){
+    title='➕ Adicionar Modelo';
+    body=`<div style="display:flex;flex-direction:column;gap:10px">
+      <select id="mgmt_cat">${catOptions}</select>
+      <input id="mgmt_brand" placeholder="Marca" list="brandList"><datalist id="brandList">${brandOptions}</datalist>
+      <input id="mgmt_model" placeholder="Modelo">
+    </div>`;
+    onConfirm=()=>{
+      const cat=document.getElementById('mgmt_cat').value;
+      const brand=document.getElementById('mgmt_brand').value.trim();
+      const model=document.getElementById('mgmt_model').value.trim();
+      if(!brand||!model) return alert('Preencha marca e modelo');
+      addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
+      closeModal();
+    };
+  } else if(type==='remove'){
+    title='➖ Remover Modelo';
+    body=`<div style="display:flex;flex-direction:column;gap:10px">
+      <select id="mgmt_cat">${catOptions}</select>
+      <input id="mgmt_brand" placeholder="Marca" list="brandList2"><datalist id="brandList2">${brandOptions}</datalist>
+      <input id="mgmt_model" placeholder="Modelo">
+    </div>`;
+    onConfirm=()=>{
+      const cat=document.getElementById('mgmt_cat').value;
+      const brand=document.getElementById('mgmt_brand').value.trim();
+      const model=document.getElementById('mgmt_model').value.trim();
+      if(!brand||!model) return alert('Preencha marca e modelo');
+      addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
+      closeModal();
+    };
+  } else if(type==='move'){
+    title='↔️ Mover Modelo';
+    body=`<div style="display:flex;flex-direction:column;gap:10px">
+      <label style="font-size:.78rem;color:var(--text2)">Categoria origem:</label>
+      <select id="mgmt_catFrom">${catOptions}</select>
+      <label style="font-size:.78rem;color:var(--text2)">Categoria destino:</label>
+      <select id="mgmt_catTo">${catOptions}</select>
+      <input id="mgmt_brand" placeholder="Marca" list="brandList3"><datalist id="brandList3">${brandOptions}</datalist>
+      <input id="mgmt_model" placeholder="Modelo">
+    </div>`;
+    onConfirm=()=>{
+      const catFrom=document.getElementById('mgmt_catFrom').value;
+      const catTo=document.getElementById('mgmt_catTo').value;
+      const brand=document.getElementById('mgmt_brand').value.trim();
+      const model=document.getElementById('mgmt_model').value.trim();
+      if(!brand||!model) return alert('Preencha marca e modelo');
+      if(catFrom===catTo) return alert('Origem e destino devem ser diferentes');
+      addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom,catTo});
+      closeModal();
+    };
+  } else if(type==='mass'){
+    title='📋 Correção em Massa';
+    body=`<div style="display:flex;flex-direction:column;gap:10px">
+      <label style="font-size:.78rem;color:var(--text2)">Tipo de operação:</label>
+      <select id="mgmt_massType"><option value="add">Adição</option><option value="remove">Remoção</option><option value="move">Movimentação</option></select>
+      <select id="mgmt_cat">${catOptions}</select>
+      <select id="mgmt_catTo" style="display:none">${catOptions}</select>
+      <label style="font-size:.78rem;color:var(--text2)">Lista (uma por linha: Marca | Modelo):</label>
+      <textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea>
+    </div>
+    <script>document.getElementById('mgmt_massType').onchange=function(){document.getElementById('mgmt_catTo').style.display=this.value==='move'?'block':'none'}<\/script>`;
+    onConfirm=()=>{
+      const massType=document.getElementById('mgmt_massType').value;
+      const cat=document.getElementById('mgmt_cat').value;
+      const catTo=document.getElementById('mgmt_catTo').value;
+      const lines=document.getElementById('mgmt_list').value.trim().split('\n').filter(l=>l.trim());
+      if(!lines.length) return alert('Insira pelo menos uma linha');
+      let count=0;
+      for(const line of lines){
+        const parts=line.split('|').map(s=>s.trim());
+        if(parts.length<2) continue;
+        const[brand,model]=parts;
+        if(massType==='add') addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
+        else if(massType==='remove') addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
+        else if(massType==='move') addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:cat,catTo});
+        count++;
+      }
+      closeModal();
+      showToast(count+' operações adicionadas ao staging','success');
+    };
+  }
+  showModal(title,body,onConfirm,'blue');
+}
+
+// ========= HISTORY =========
+function renderHistory(){
+  const filt = norm(document.getElementById('histFilter').value);
+  const typeF = document.getElementById('histType').value;
+  let items = HISTORY.filter(h=>{
+    if(typeF && h.type!==typeF) return false;
+    if(filt){
+      const s = norm(h.marca)+norm(h.modelo)+norm(h.catFrom||'')+norm(h.catTo||'');
+      if(!s.includes(filt)) return false;
+    }
+    return true;
+  });
+  items = items.slice().reverse();
+  const total = items.length;
+  const pages = Math.ceil(total/HIST_PER_PAGE);
+  if(histPage>pages) histPage=1;
+  const start = (histPage-1)*HIST_PER_PAGE;
+  const page = items.slice(start, start+HIST_PER_PAGE);
+
+  document.getElementById('histTableBody').innerHTML = page.map((h,i)=>{
+    const isCatOp=(h.type||'').includes('Categoria');
+    const tagClass=(h.type||'').includes('Adição')||(h.type||'').includes('Criação')?'tag-green':(h.type||'').includes('Remoção')?'tag-red':'tag-blue';
+    return `<tr>
+    <td style="color:var(--text2)">${start+i+1}</td>
+    <td style="font-size:.78rem">${h.timestamp||'—'}</td>
+    <td><span class="tag ${tagClass}">${h.type}</span></td>
+    <td>${isCatOp?'—':h.marca}</td>
+    <td>${isCatOp?'—':h.modelo}</td>
+    <td>${h.catFrom||'—'}</td>
+    <td>${h.catTo||'—'}</td>
+  </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhum registro no histórico</td></tr>';
+
+  renderPagination('histPagination', pages, histPage, p=>{histPage=p;renderHistory();});
+}
+
+// ========= PAGINATION =========
+function renderPagination(containerId, totalPages, current, callback){
+  const el = document.getElementById(containerId);
+  if(totalPages<=1){el.innerHTML='';return;}
+  let html='';
+  html += `<button ${current===1?'disabled':''} onclick="(${callback.toString()})(${current-1})">← Anterior</button>`;
+  const maxVisible = 7;
+  let startP=Math.max(1,current-3), endP=Math.min(totalPages,startP+maxVisible-1);
+  if(endP-startP<maxVisible-1) startP=Math.max(1,endP-maxVisible+1);
+  for(let p=startP;p<=endP;p++){
+    html+=`<button class="${p===current?'active':''}" onclick="(${callback.toString()})(${p})">${p}</button>`;
+  }
+  html += `<button ${current===totalPages?'disabled':''} onclick="(${callback.toString()})(${current+1})">Próximo →</button>`;
+  el.innerHTML = html;
+}
+
+// ========= MODAL SYSTEM =========
+function showModal(title, body, onConfirm, color){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  const actions = document.getElementById('modalActions');
+  actions.innerHTML = `<button class="btn" onclick="closeModal()">Cancelar</button>`;
+  if(onConfirm){
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'btn btn-'+(color||'blue');
+    confirmBtn.textContent = 'Confirmar';
+    confirmBtn.onclick = onConfirm;
+    actions.appendChild(confirmBtn);
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// ========= TOAST =========
+function showToast(msg, type){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast '+type+' show';
+  setTimeout(()=>{toast.classList.remove('show');},3000);
+}
+
+// ========= CSV EXPORT =========
+function toCSV(rows, headers){
+  let csv = headers.join(',')+'\n';
+  for(const row of rows){
+    csv += row.map(v=>'"'+(String(v||'')).replace(/"/g,'""')+'"').join(',')+'\n';
+  }
+  return csv;
+}
+
+function downloadCSV(csv, filename){
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportFullBase(){
+  const rows=[];
+  for(const[cat,catData] of Object.entries(RAW)){
+    for(const[brand,models] of Object.entries(catData.brands||{})){
+      for(const m of models){
+        const ano = typeof getAno==='function'?getAno(cat,brand,m):'';
+        rows.push([cat,brand,m,ano]);
+      }
+    }
+  }
+  downloadCSV(toCSV(rows,['Categoria','Marca','Modelo','Ano de Aceitação']),'base_completa.csv');
+}
+
+function exportChanges(){
+  if(!HISTORY.length) return showToast('Nenhuma alteração registrada','warning');
+  const rows = HISTORY.map(h=>[h.timestamp,h.type,h.marca,h.modelo,h.catFrom||'',h.catTo||'']);
+  downloadCSV(toCSV(rows,['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']),'alteracoes.csv');
+}
+
+function exportDivergences(){
+  const rows=[];
+  for(const g of COMP_GROUPS){
+    const modelsA=getModelsForCat(g.a);
+    const modelsB=getModelsForCat(g.b);
+    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    for(const m of onlyA) rows.push([g.label,'Somente em '+g.a,m.marca,m.modelo]);
+    for(const m of onlyB) rows.push([g.label,'Somente em '+g.b,m.marca,m.modelo]);
+  }
+  downloadCSV(toCSV(rows,['Grupo','Situação','Marca','Modelo']),'divergencias.csv');
+}
+
+function exportHistory(){
+  if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
+  const rows = HISTORY.map(h=>[h.timestamp,h.type,h.marca,h.modelo,h.catFrom||'',h.catTo||'']);
+  downloadCSV(toCSV(rows,['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']),'historico.csv');
+}
+
+// ========= XLSX STYLED EXPORTS =========
+function styledXLSX(headers, dataRows, sheetName, fileName){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  const rows=[];
+  rows.push(headers.map(()=>'')); // Row 1: blank
+  rows.push(headers); // Row 2: headers
+  for(const r of dataRows) rows.push(r); // Row 3+: data
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  ws['!cols']=headers.map((h,i)=>{
+    let maxLen=h.length;
+    for(const r of dataRows){if(r[i]&&String(r[i]).length>maxLen) maxLen=String(r[i]).length;}
+    return {wch:Math.min(Math.max(maxLen+2,12),50)};
+  });
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, fileName);
+  showToast('Exportado com sucesso!','success');
+}
+
+function exportChangesXLSX(){
+  if(!HISTORY.length) return showToast('Nenhuma alteração registrada','warning');
+  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
+  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  styledXLSX(headers, data, 'Alterações', 'alteracoes_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportDivergencesXLSX(){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  let hasData=false;
+  for(const g of COMP_GROUPS){
+    const modelsA=getModelsForCat(g.a);
+    const modelsB=getModelsForCat(g.b);
+    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    if(!onlyA.length&&!onlyB.length) continue;
+    hasData=true;
+    const headers=['Situação','Marca','Modelo'];
+    const rows=[];
+    rows.push(headers.map(()=>'')); // Row 1: blank
+    rows.push(headers); // Row 2: headers
+    for(const m of onlyA) rows.push(['Somente em '+g.a, m.marca, m.modelo]);
+    for(const m of onlyB) rows.push(['Somente em '+g.b, m.marca, m.modelo]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    const colLetters='ABC';
+    for(let i=0;i<headers.length;i++){
+      const cell=colLetters[i]+'2';
+      if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+    }
+    ws['!cols']=[{wch:30},{wch:20},{wch:50}];
+    let safeName=g.label.replace(/[\\\/?*\[\]]/g,'-');
+    if(safeName.length>31) safeName=safeName.substring(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, safeName);
+  }
+  if(!hasData) return showToast('Nenhuma divergência encontrada','warning');
+  XLSX.writeFile(wb, 'divergencias_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Relatório de divergências exportado com sucesso!','success');
+}
+
+function exportHistoryXLSX(){
+  if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
+  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
+  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+// ========= ANO DE ACEITAÇÃO =========
+var ANOS_ACEITACAO = {};
+
+function initAnos(){
+  for(var i=0;i<ALL_RECORDS.length;i++){
+    var r=ALL_RECORDS[i];
+    var key=r.categoria+'|||'+r.marca+'|||'+r.modelo;
+    if(!ANOS_ACEITACAO[key]) ANOS_ACEITACAO[key]='Ano da categoria';
+  }
+}
+
+function getAno(categoria,marca,modelo){
+  var key=categoria+'|||'+marca+'|||'+modelo;
+  return ANOS_ACEITACAO[key]||'Ano da categoria';
+}
+
+// ========= GOOGLE SHEETS INTEGRATION =========
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxANONLwDXpOPxrkVZiUSZ-WUB4uZ60I8hmrpISXBJRj3TWVs-uK_03FxtYvkpd-tJH_Q/exec';
+
+let isConnected = false;
+let isSyncing = false;
+
+async function sheetsLoad(){
+  try{
+    showSyncStatus('loading','Carregando dados do Google Sheets...');
+    const response = await fetch(APPS_SCRIPT_URL+'?action=load');
+    const result = await response.json();
+    if(result.success && result.data && Object.keys(result.data).length>0){
+      for(const key of Object.keys(RAW)) delete RAW[key];
+      for(const[key,val] of Object.entries(result.data)) RAW[key]=val;
+      if(result.anos){for(const[key,val] of Object.entries(result.anos)) ANOS_ACEITACAO[key]=val;}
+      recomputeAll();initAnos();renderKPIs();
+      isConnected=true;
+      dataLoadedFromSheets=true; // Mark as safely loaded
+      showSyncStatus('success','Dados carregados do Google Sheets');
+      return true;
+    } else if(result.success&&(!result.data||Object.keys(result.data).length===0)){
+      showSyncStatus('warning','Planilha vazia. Enviando dados iniciais...');
+      await sheetsInit();
+      dataLoadedFromSheets=true;
+      return true;
+    } else{
+      showSyncStatus('error','Erro: '+(result.error||'Falha ao carregar'));
+      return false;
+    }
+  }catch(err){
+    showSyncStatus('error','Sem conexão com Google Sheets. Usando dados locais.');
+    console.error('Erro ao carregar do Sheets:',err);
+    return false;
+  }
+}
+
+async function sheetsSave(){
+  if(isSyncing) return;
+  isSyncing=true;
+  try{
+    showSyncStatus('loading','Salvando no Google Sheets...');
+    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',payload:JSON.stringify(RAW)})});
+    const result=await response.json();
+    if(result.success){showSyncStatus('success','Salvo no Google Sheets! '+(result.message||''));isConnected=true;}
+    else{showSyncStatus('error','Erro ao salvar: '+(result.error||''));}
+  }catch(err){showSyncStatus('error','Falha ao salvar no Google Sheets');console.error('Erro ao salvar no Sheets:',err);}
+  isSyncing=false;
+}
+
+async function sheetsSaveHistory(entries){
+  try{
+    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveHistory',payload:JSON.stringify(entries)})});
+    const result=await response.json();
+    if(!result.success) console.error('Erro ao salvar histórico:',result.error);
+  }catch(err){console.error('Erro ao salvar histórico no Sheets:',err);}
+}
+
+async function sheetsLoadHistory(){
+  try{
+    const response=await fetch(APPS_SCRIPT_URL+'?action=loadHistory');
+    const result=await response.json();
+    if(result.success&&result.data){HISTORY=result.data;renderHistory();}
+  }catch(err){console.error('Erro ao carregar histórico:',err);}
+}
+
+async function sheetsInit(){
+  try{
+    showSyncStatus('loading','Inicializando planilha com dados...');
+    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'init',payload:JSON.stringify(RAW)})});
+    const result=await response.json();
+    if(result.success){isConnected=true;showSyncStatus('success','Planilha inicializada! '+(result.message||''));}
+    else{showSyncStatus('error','Erro ao inicializar: '+(result.error||''));}
+  }catch(err){showSyncStatus('error','Falha ao inicializar planilha');console.error('Erro ao inicializar:',err);}
+}
+
+function createSyncIndicator(){
+  const indicator=document.createElement('div');
+  indicator.id='syncIndicator';
+  indicator.style.cssText='position:fixed;bottom:20px;left:20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.78rem;color:var(--text2);z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);transition:all .3s;max-width:400px;';
+  indicator.innerHTML='<div class="spinner"></div> <span>Conectando...</span>';
+  document.body.appendChild(indicator);
+}
+
+function showSyncStatus(type,msg){
+  const el=document.getElementById('syncIndicator');
+  if(!el) return;
+  const icons={loading:'<div class="spinner"></div>',success:'🟢',error:'🔴',warning:'🟡'};
+  el.innerHTML=(icons[type]||'')+' <span>'+msg+'</span>';
+  el.style.borderColor=type==='success'?'rgba(22,163,74,.5)':type==='error'?'rgba(220,38,38,.5)':type==='warning'?'rgba(217,119,6,.5)':'var(--border)';
+  if(type==='success'){setTimeout(()=>{el.innerHTML='🟢 <span>Conectado ao Google Sheets</span>';el.style.borderColor='rgba(22,163,74,.3)';},3000);}
+}
+
+// Override commitStaging for Sheets integration
+const _originalCommitStaging = commitStaging;
+commitStaging = function(){
+  if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
+  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+    showToast('Aguarde o carregamento dos dados do Google Sheets antes de salvar','error');
+    return;
+  }
+  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Google Sheets?',
+    async function(){
+      // Apply category operations first
+      for(const op of STAGING.ops){
+        if(op.type==='Criação de Categoria'){
+          const catName=op.catTo;
+          if(!RAW[catName]) RAW[catName]={total:0,brands:{}};
+        } else if(op.type==='Renomeação de Categoria'){
+          const oldName=op.catFrom;
+          const newName=op.catTo;
+          if(RAW[oldName]){
+            RAW[newName]=RAW[oldName];
+            delete RAW[oldName];
+          }
+          // Update ANOS_ACEITACAO keys
+          const keysToUpdate=Object.keys(ANOS_ACEITACAO).filter(k=>k.startsWith(oldName+'|||'));
+          for(const k of keysToUpdate){
+            const newKey=newName+k.substring(oldName.length);
+            ANOS_ACEITACAO[newKey]=ANOS_ACEITACAO[k];
+            delete ANOS_ACEITACAO[k];
+          }
+        } else if(op.type==='Remoção de Categoria'){
+          const catName=op.catFrom;
+          if(RAW[catName]) delete RAW[catName];
+        }
+      }
+      // Apply model operations via getStagingData
+      const modelOps=STAGING.ops.filter(op=>!op.type.includes('Categoria'));
+      if(modelOps.length>0){
+        // Temporarily set staging to only model ops for getStagingData
+        const allOps=STAGING.ops;
+        STAGING.ops=modelOps;
+        const d=getStagingData();
+        STAGING.ops=allOps;
+        for(const[k,v] of Object.entries(d)){
+          if(RAW[k]) RAW[k]=v;
+          else RAW[k]=v;
+        }
+      }
+      const newHistoryEntries=[];
+      for(const op of STAGING.ops){
+        HISTORY.push({...op});
+        newHistoryEntries.push({...op});
+        if(op.type==='Adição') mgmtStats.added++;
+        else if(op.type==='Remoção') mgmtStats.removed++;
+        else mgmtStats.moved++;
+        mgmtStats.session++;
+      }
+      STAGING.ops=[];STAGING.data=null;
+      recomputeAll();initAnos();
+      renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();renderOverviewTable();
+      refreshActiveTab();
+      chartsInitialized=false;
+      closeModal();
+      showToast('Alterações salvas com sucesso!','success');
+      if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+        await sheetsSave();
+        await sheetsSaveHistory(newHistoryEntries);
+      }
+    },'green');
+};
+
+// ========= GLOBAL SEARCH =========
+let searchType = 'modelo';
+
+function openGlobalSearch(){
+  document.getElementById('searchOverlay').classList.add('open');
+  const input=document.getElementById('globalSearchInput');
+  input.value='';
+  input.focus();
+  updateSearchPlaceholder();
+  document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Selecione o tipo e digite para pesquisar</div>';
+}
+
+function closeGlobalSearch(){
+  document.getElementById('searchOverlay').classList.remove('open');
+}
+
+function setSearchType(type){
+  searchType=type;
+  document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  updateSearchPlaceholder();
+  performGlobalSearch();
+}
+
+function updateSearchPlaceholder(){
+  const input=document.getElementById('globalSearchInput');
+  const placeholders={modelo:'Pesquisar modelo...',categoria:'Pesquisar categoria...',marca:'Pesquisar marca...',duplicidade:'Pesquisar modelo duplicado...',divergencia:'Pesquisar modelo divergente...'};
+  input.placeholder=placeholders[searchType]||'Digite sua pesquisa...';
+}
+
+function performGlobalSearch(){
+  const query=norm(document.getElementById('globalSearchInput').value);
+  const container=document.getElementById('globalSearchResults');
+  if(!query||query.length<1){
+    container.innerHTML='<div class="search-empty">Digite para pesquisar</div>';
+    return;
+  }
+  let html='';
+  if(searchType==='modelo'){
+    html=searchModelos(query);
+  } else if(searchType==='categoria'){
+    html=searchCategorias(query);
+  } else if(searchType==='marca'){
+    html=searchMarcas(query);
+  } else if(searchType==='duplicidade'){
+    html=searchDuplicidades(query);
+  } else if(searchType==='divergencia'){
+    html=searchDivergencias(query);
+  }
+  container.innerHTML=html||'<div class="search-empty">Nenhum resultado encontrado</div>';
+}
+
+function searchModelos(query){
+  const results=[];
+  const seen=new Set();
+  for(const r of ALL_RECORDS){
+    if(!norm(r.modelo).includes(query)&&!norm(r.marca).includes(query)) continue;
+    const key=r.marca+'|||'+r.modelo+'|||'+r.categoria;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    results.push(r);
+    if(results.length>=50) break;
+  }
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
+  for(const r of results){
+    html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchCategorias(query){
+  const results=CATEGORIES.filter(c=>norm(c).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th></tr></thead><tbody>';
+  for(const cat of results){
+    const brands=Object.keys(RAW[cat].brands||{});
+    html+=`<tr onclick="closeGlobalSearch();openDrawer('${cat.replace(/'/g,"\\'")}')"><td><strong>${cat}</strong></td><td>${CAT_TOTALS[cat]}</td><td>${brands.length}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchMarcas(query){
+  const results=ALL_BRANDS.filter(b=>norm(b).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Total Modelos</th><th>Categorias</th></tr></thead><tbody>';
+  for(const brand of results){
+    const cats=new Set();let count=0;
+    for(const r of ALL_RECORDS){if(r.marca===brand){cats.add(r.categoria);count++;}}
+    html+=`<tr onclick="closeGlobalSearch();showKpiDetail('marcas');setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value='${brand.replace(/'/g,"\\'")}';filterDrawerTable('drawerSearch_marcas','drawerTableData_marcas');}},200)"><td><strong>${brand}</strong></td><td>${count}</td><td>${cats.size}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchDuplicidades(query){
+  const results=DUPLICATES.filter(d=>norm(d.marca).includes(query)||norm(d.modelo).includes(query));
+  if(!results.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categorias</th></tr></thead><tbody>';
+  for(const d of results.slice(0,40)){
+    html+=`<tr onclick="closeGlobalSearch();openModelDetail('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" ><td><strong>${d.marca}</strong></td><td>${d.modelo}</td><td>${d.cats.map(c=>'<span class=\\"tag tag-blue\\">'+c+'</span>').join(' ')}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+function searchDivergencias(query){
+  const data=[];
+  for(let i=0;i<COMP_GROUPS.length;i++){
+    const g=COMP_GROUPS[i];
+    const modelsA=getModelsForCat(g.a);
+    const modelsB=getModelsForCat(g.b);
+    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    for(const m of onlyA){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.a,groupIdx:i});}
+    for(const m of onlyB){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.b,groupIdx:i});}
+  }
+  if(!data.length) return '';
+  let html='<table class="search-result-table"><thead><tr><th>Modelo</th><th>Marca</th><th>Comparação</th><th>Status</th></tr></thead><tbody>';
+  for(const d of data.slice(0,40)){
+    html+=`<tr onclick="closeGlobalSearch();openModelDetail('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" ><td><strong>${d.modelo}</strong></td><td>${d.marca}</td><td>${d.comp}</td><td><span class="tag tag-amber">${d.status}</span></td></tr>`;
+  }
+  html+='</tbody></table>';
+  return html;
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openGlobalSearch();}
+  if(e.key==='Escape'&&document.getElementById('searchOverlay').classList.contains('open')){closeGlobalSearch();}
+});
+
+// ========= SYNC MANUAL + EXPORT XLSX =========
+let lastSyncInfo = null;
+let dataLoadedFromSheets = false; // Flag to prevent overwriting Sheets with empty data
+
+async function manualSync(){
+  if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
+    showToast('Configure a URL do Apps Script primeiro','warning');
+    return;
+  }
+  // PROTECTION: Never sync if data wasn't loaded from Sheets first
+  if(!dataLoadedFromSheets){
+    showToast('Aguarde o carregamento dos dados do Google Sheets antes de sincronizar','error');
+    return;
+  }
+  // PROTECTION: Never sync empty data
+  if(Object.keys(RAW).length===0){
+    showToast('Base de dados vazia. Não é possível sincronizar dados vazios.','error');
+    return;
+  }
+  const btn = document.getElementById('btnSyncItem');
+  if(btn) btn.style.opacity='.5';
+  try{
+    await sheetsSave();
+    lastSyncInfo = {
+      date: new Date().toLocaleString('pt-BR'),
+      records: ALL_RECORDS.length,
+      status: 'ok'
+    };
+    localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
+    updateSyncInfo();
+    showToast('Dados sincronizados com sucesso! '+ALL_RECORDS.length+' registros enviados.','success');
+  } catch(err){
+    lastSyncInfo = {date: new Date().toLocaleString('pt-BR'), records:0, status:'error', error:err.message};
+    localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
+    updateSyncInfo();
+    showToast('Falha ao sincronizar com o Google Sheets.','error');
+  }
+  if(btn) btn.style.opacity='1';
+}
+
+function updateSyncInfo(){
+  const el = document.getElementById('syncInfo');
+  if(!el) return;
+  if(!lastSyncInfo){
+    const saved = localStorage.getItem('avp-last-sync');
+    if(saved) lastSyncInfo = JSON.parse(saved);
+  }
+  if(lastSyncInfo){
+    const statusClass = lastSyncInfo.status==='ok'?'ok':'error';
+    const statusText = lastSyncInfo.status==='ok'?'Sincronizado':'Falha';
+    el.innerHTML=`<span class="status ${statusClass}">${statusText}</span><br>Última: ${lastSyncInfo.date}<br>${lastSyncInfo.records>0?lastSyncInfo.records+' registros':''}`;
+  } else {
+    el.innerHTML='<span class="status pending">Não sincronizado</span>';
+  }
+}
+
+function exportCategoryXLSX(cat){
+  if(typeof XLSX==='undefined'){
+    showToast('Biblioteca XLSX não carregada','error');
+    return;
+  }
+  if(!RAW[cat]){showToast('Categoria não encontrada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  // Row 1: blank for data cols + "HISTÓRICO DA CATEGORIA" merged in E1:G1
+  rows.push(['','','','','HISTÓRICO DA CATEGORIA','','']);
+  // Row 2: headers
+  rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe']);
+  // Get history entries for this category
+  const catHistory = HISTORY.filter(h=>h.catFrom===cat||h.catTo===cat);
+  // Build data rows
+  const dataRows = [];
+  for(const[brand, models] of Object.entries(RAW[cat].brands||{})){
+    for(const m of models){
+      const ano = typeof getAno==='function'?getAno(cat,brand,m):'Ano da categoria';
+      dataRows.push([brand, m, ano]);
+    }
+  }
+  // Build history rows
+  const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
+  // Merge data + history side by side
+  const maxRows = Math.max(dataRows.length, histRows.length);
+  for(let i=0;i<maxRows;i++){
+    const d = dataRows[i]||['','',''];
+    const h = histRows[i]||['','',''];
+    rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
+  ws['!merges']=[{s:{r:0,c:4},e:{r:0,c:6}}];
+  // Style E1 (HISTÓRICO DA CATEGORIA) - dark blue
+  if(ws['E1']) ws['E1'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+  // Style row 2 headers - black background
+  const headers = ['A2','B2','C2','E2','F2','G2'];
+  for(const c of headers){
+    if(!ws[c]) ws[c]={v:'',t:'s'};
+    ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
+  if(safeName.length>31) safeName=safeName.substring(0,31);
+  XLSX.utils.book_append_sheet(wb, ws, safeName);
+  XLSX.writeFile(wb, safeName+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Categoria "'+cat+'" exportada com sucesso!','success');
+}
+
+function exportFullBaseXLSX(){
+  if(typeof XLSX==='undefined'){
+    showToast('Biblioteca XLSX não carregada','error');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  // Create one sheet per category matching Google Sheets format
+  for(const[cat, catData] of Object.entries(RAW)){
+    const rows = [];
+    // Row 1: blank for data cols + "HISTÓRICO DA CATEGORIA" merged in E1:G1
+    rows.push(['','','','','HISTÓRICO DA CATEGORIA','','']);
+    // Row 2: headers for data (cols A-C) + blank col D + history sub-headers (cols E-G)
+    rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe']);
+    // Get history entries for this category
+    const catHistory = HISTORY.filter(h=>h.catFrom===cat||h.catTo===cat);
+    // Build data rows
+    const dataRows = [];
+    for(const[brand, models] of Object.entries(catData.brands||{})){
+      for(const m of models){
+        const ano = typeof getAno==='function'?getAno(cat,brand,m):'Ano da categoria';
+        dataRows.push([brand, m, ano]);
+      }
+    }
+    // Build history rows
+    const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
+    // Merge data + history side by side starting from row 3
+    const maxRows = Math.max(dataRows.length, histRows.length);
+    for(let i=0;i<maxRows;i++){
+      const d = dataRows[i]||['','',''];
+      const h = histRows[i]||['','',''];
+      rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Set column widths
+    ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
+    // Merge E1:G1 for "HISTÓRICO DA CATEGORIA"
+    ws['!merges']=[{s:{r:0,c:4},e:{r:0,c:6}}];
+    // Style row 1 E1 (HISTÓRICO DA CATEGORIA) - dark blue background
+    if(ws['E1']) ws['E1'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+    // Style row 2 A2:C2 (data headers) - black background
+    const dataHeaders = ['A2','B2','C2'];
+    for(const c of dataHeaders){
+      if(!ws[c]) ws[c]={v:'',t:'s'};
+      ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+    }
+    // Style row 2 E2:G2 (history sub-headers) - black background
+    const histSubHeaders = ['E2','F2','G2'];
+    for(const c of histSubHeaders){
+      if(!ws[c]) ws[c]={v:'',t:'s'};
+      ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+    }
+    // Sanitize sheet name
+    let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
+    if(safeName.length>31) safeName=safeName.substring(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, safeName);
+  }
+  // Also add Historico sheet
+  if(HISTORY && HISTORY.length>0){
+    const histRows = [['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']];
+    for(const h of HISTORY){
+      histRows.push([h.timestamp||'', h.type||'', h.marca||'', h.modelo||'', h.catFrom||'', h.catTo||'']);
+    }
+    const wsHist = XLSX.utils.aoa_to_sheet(histRows);
+    const histHeaders = ['A1','B1','C1','D1','E1','F1'];
+    for(const c of histHeaders){
+      if(!wsHist[c]) wsHist[c]={v:'',t:'s'};
+      wsHist[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
+    }
+    wsHist['!cols']=[{wch:18},{wch:14},{wch:20},{wch:45},{wch:25},{wch:25}];
+    XLSX.utils.book_append_sheet(wb, wsHist, 'Historico');
+  }
+  XLSX.writeFile(wb, 'base_avp_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Base completa exportada com sucesso!','success');
+}
+
+// ========= THEME TOGGLE =========
+function initTheme(){
+  const saved = localStorage.getItem('avp-theme');
+  if(saved==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    updateThemeButton('dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    updateThemeButton('light');
+  }
+}
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  if(current==='dark'){
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('avp-theme','light');
+    updateThemeButton('light');
+  } else {
+    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem('avp-theme','dark');
+    updateThemeButton('dark');
+  }
+}
+
+function updateThemeButton(theme){
+  const btn = document.getElementById('themeToggle');
+  if(btn){
+    if(theme==='dark'){
+      btn.innerHTML='☀️ <span class="label">Claro</span>';
+      btn.title='Alternar para tema claro';
+    } else {
+      btn.innerHTML='🌙 <span class="label">Escuro</span>';
+      btn.title='Alternar para tema escuro';
+    }
+  }
+  // Update settings menu item
+  const menuItem = document.getElementById('themeMenuItem');
+  if(menuItem){
+    if(theme==='dark'){
+      menuItem.innerHTML='<span class="si-icon">☀️</span><span class="si-label">Tema Claro</span>';
+    } else {
+      menuItem.innerHTML='<span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span>';
+    }
+  }
+}
+
+// ========= SETTINGS DROPDOWN =========
+function toggleSettings(){
+  const dd = document.getElementById('settingsDropdown');
+  if(dd) dd.classList.toggle('open');
+}
+
+function closeSettings(){
+  const dd = document.getElementById('settingsDropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+// Close settings on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.settings-wrap')) closeSettings();
+});
+
+// ========= UPLOAD / ATUALIZAR BASE =========
+let baseFileInfo = null;
+
+function showUploadModal(){
+  let body = `<div class="upload-modal-content">
+    <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">📁</div>
+      <p><strong>Clique aqui</strong> ou arraste um arquivo</p>
+      <div class="formats">Formatos aceitos: .xlsx, .xls, .csv</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+    <div id="uploadPreview" style="display:none"></div>
+  </div>`;
+  showModal('📤 Atualizar Base de Dados', body, null);
+  // Setup drag and drop
+  setTimeout(()=>{
+    const dz = document.getElementById('uploadDropzone');
+    if(!dz) return;
+    dz.addEventListener('dragover',(e)=>{e.preventDefault();dz.classList.add('dragover');});
+    dz.addEventListener('dragleave',()=>{dz.classList.remove('dragover');});
+    dz.addEventListener('drop',(e)=>{
+      e.preventDefault();dz.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if(file) processUploadedFile(file);
+    });
+  },100);
+}
+
+function handleFileSelect(event){
+  const file = event.target.files[0];
+  if(file) processUploadedFile(file);
+}
+
+function processUploadedFile(file){
+  const validExts = ['.xlsx','.xls','.csv'];
+  const ext = '.'+file.name.split('.').pop().toLowerCase();
+  if(!validExts.includes(ext)){
+    showToast('Formato inválido. Use .xlsx, .xls ou .csv','error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      let parsedData;
+      if(ext==='.csv'){
+        parsedData = parseCSVFile(e.target.result);
+      } else {
+        parsedData = parseExcelFile(e.target.result);
+      }
+      if(!parsedData){
+        showToast('Erro ao processar arquivo. Verifique a estrutura.','error');
+        return;
+      }
+      showUploadPreview(file, parsedData);
+    } catch(err){
+      console.error('Erro no upload:',err);
+      showToast('Erro ao ler arquivo: '+err.message,'error');
+    }
+  };
+  if(ext==='.csv') reader.readAsText(file,'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseExcelFile(data){
+  const workbook = XLSX.read(data, {type:'array'});
+  const result = {};
+  // Try to detect structure: multiple sheets = categories, or single sheet with Categoria column
+  if(workbook.SheetNames.length > 1){
+    // Multiple sheets: each sheet is a category
+    for(const sheetName of workbook.SheetNames){
+      if(sheetName==='Historico') continue;
+      const ws = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      if(rows.length<2) continue;
+      const header = rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+      let marcaIdx = header.findIndex(h=>h.includes('marca'));
+      let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+      if(marcaIdx===-1) marcaIdx=0;
+      if(modeloIdx===-1) modeloIdx=1;
+      const cat = sheetName;
+      if(!result[cat]) result[cat]={total:0,brands:{}};
+      for(let i=1;i<rows.length;i++){
+        const marca = (rows[i][marcaIdx]||'').toString().trim();
+        const modelo = (rows[i][modeloIdx]||'').toString().trim();
+        if(!marca||!modelo) continue;
+        if(marca==='---'||marca.includes('HISTORICO')) break;
+        if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+        result[cat].brands[marca].push(modelo);
+        result[cat].total++;
+      }
+    }
+  } else {
+    // Single sheet: look for Categoria column
+    const ws = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+    if(rows.length<2) return null;
+    const header = rows[0].map(h=>(h||'').toString().toLowerCase().trim());
+    let catIdx = header.findIndex(h=>h.includes('categoria')||h.includes('category'));
+    let marcaIdx = header.findIndex(h=>h.includes('marca'));
+    let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+    if(catIdx===-1||marcaIdx===-1||modeloIdx===-1){
+      // Try positional: col0=cat, col1=marca, col2=modelo
+      catIdx=0;marcaIdx=1;modeloIdx=2;
+    }
+    for(let i=1;i<rows.length;i++){
+      const cat = (rows[i][catIdx]||'').toString().trim();
+      const marca = (rows[i][marcaIdx]||'').toString().trim();
+      const modelo = (rows[i][modeloIdx]||'').toString().trim();
+      if(!cat||!marca||!modelo) continue;
+      if(!result[cat]) result[cat]={total:0,brands:{}};
+      if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+      result[cat].brands[marca].push(modelo);
+      result[cat].total++;
+    }
+  }
+  if(Object.keys(result).length===0) return null;
+  return result;
+}
+
+function parseCSVFile(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return null;
+  const sep = lines[0].includes(';')?';':',';
+  const header = lines[0].split(sep).map(h=>h.replace(/"/g,'').toLowerCase().trim());
+  let catIdx = header.findIndex(h=>h.includes('categoria'));
+  let marcaIdx = header.findIndex(h=>h.includes('marca'));
+  let modeloIdx = header.findIndex(h=>h.includes('modelo'));
+  if(catIdx===-1||marcaIdx===-1||modeloIdx===-1){
+    catIdx=0;marcaIdx=1;modeloIdx=2;
+  }
+  const result = {};
+  for(let i=1;i<lines.length;i++){
+    const cols = lines[i].split(sep).map(c=>c.replace(/"/g,'').trim());
+    const cat=cols[catIdx],marca=cols[marcaIdx],modelo=cols[modeloIdx];
+    if(!cat||!marca||!modelo) continue;
+    if(!result[cat]) result[cat]={total:0,brands:{}};
+    if(!result[cat].brands[marca]) result[cat].brands[marca]=[];
+    result[cat].brands[marca].push(modelo);
+    result[cat].total++;
+  }
+  if(Object.keys(result).length===0) return null;
+  return result;
+}
+
+function showUploadPreview(file, parsedData){
+  const cats = Object.keys(parsedData);
+  let totalModels=0, brandSet=new Set();
+  for(const cat of cats){
+    for(const[brand,models] of Object.entries(parsedData[cat].brands)){
+      brandSet.add(brand);
+      totalModels+=models.length;
+    }
+  }
+  const preview = document.getElementById('uploadPreview');
+  if(preview){
+    preview.style.display='block';
+    preview.innerHTML=`<div class="upload-preview">
+      <div class="stat"><span>Arquivo:</span><strong>${file.name}</strong></div>
+      <div class="stat"><span>Tamanho:</span><strong>${(file.size/1024).toFixed(1)} KB</strong></div>
+      <div class="stat"><span>Categorias:</span><strong>${cats.length}</strong></div>
+      <div class="stat"><span>Marcas:</span><strong>${brandSet.size}</strong></div>
+      <div class="stat"><span>Modelos:</span><strong>${totalModels.toLocaleString()}</strong></div>
+    </div>`;
+  }
+  // Update modal actions to show confirm
+  const actions = document.getElementById('modalActions');
+  if(actions){
+    actions.innerHTML=`<button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-blue" onclick="confirmUpload()">✓ Confirmar Atualização</button>`;
+  }
+  // Store parsed data temporarily
+  window._pendingUpload = {file, data:parsedData, totalModels, brands:brandSet.size, cats:cats.length};
+}
+
+async function confirmUpload(){
+  const pending = window._pendingUpload;
+  if(!pending) return;
+  // Replace RAW data
+  for(const key of Object.keys(RAW)) delete RAW[key];
+  for(const[key,val] of Object.entries(pending.data)) RAW[key]=val;
+  // Recompute everything
+  recomputeAll();
+  initAnos();
+  renderKPIs();
+  renderOverviewTable();
+  renderDupTable();
+  renderStagingBars();
+  renderStagingTable();
+  renderMgmtKpis();
+  refreshActiveTab();
+  enableExportButtons();
+  dataLoadedFromSheets=true; // Mark as valid data loaded
+  // Save base info
+  baseFileInfo = {
+    name: pending.file.name,
+    date: new Date().toLocaleString('pt-BR'),
+    records: pending.totalModels,
+    categories: pending.cats,
+    brands: pending.brands
+  };
+  localStorage.setItem('avp-base-info', JSON.stringify(baseFileInfo));
+  updateBaseInfo();
+  // Register in history
+  HISTORY.push({
+    timestamp: new Date().toLocaleString('pt-BR'),
+    type: 'Atualização de Base',
+    marca: pending.file.name,
+    modelo: pending.totalModels+' registros',
+    catFrom: pending.cats+' categorias',
+    catTo: pending.brands+' marcas'
+  });
+  // Sync with Google Sheets
+  if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+    await sheetsInit();
+    await sheetsSaveHistory([{
+      timestamp: new Date().toLocaleString('pt-BR'),
+      type:'Atualização de Base',
+      marca:pending.file.name,
+      modelo:pending.totalModels+' registros',
+      catFrom:pending.cats+' categorias',
+      catTo:pending.brands+' marcas'
+    }]);
+  }
+  window._pendingUpload = null;
+  closeModal();
+  showToast('Base atualizada com sucesso! '+pending.totalModels+' registros importados.','success');
+}
+
+function updateBaseInfo(){
+  const el = document.getElementById('baseInfo');
+  if(!el) return;
+  if(!baseFileInfo){
+    const saved = localStorage.getItem('avp-base-info');
+    if(saved) baseFileInfo = JSON.parse(saved);
+  }
+  if(baseFileInfo){
+    el.innerHTML=`<strong>${baseFileInfo.name}</strong><br>${baseFileInfo.date}<br>${baseFileInfo.records} registros`;
+  }
+}
+
+// ========= INITIALIZATION =========
+async function initSheetsIntegration(){
+  createSyncIndicator();
+  // Disable sync item until data is loaded
+  const syncBtn=document.getElementById('btnSyncItem');
+  if(syncBtn){syncBtn.style.opacity='.5';syncBtn.style.pointerEvents='none';}
+  if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
+    showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
+    // Render empty state
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+    enableExportButtons();
+    return;
+  }
+  const loaded=await sheetsLoad();
+  if(loaded){
+    await sheetsLoadHistory();
+    lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
+    localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
+    updateSyncInfo();
+    // NOW render everything with the loaded data
+    renderKPIs();
+    renderOverviewTable();
+    renderMgmtKpis();
+    renderStagingBars();
+    renderStagingTable();
+    renderHistory();
+    refreshActiveTab();
+    // Enable sync item now that data is loaded
+    if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
+    enableExportButtons();
+  } else {
+    // Failed to load - show error state
+    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+    enableExportButtons();
+    showToast('Falha ao carregar dados do Google Sheets. Verifique a conexão.','error');
+  }
+}
+
+function initApp(){
+  initTheme();
+  updateBaseInfo();
+  updateSyncInfo();
+  // Disable export buttons until data is loaded
+  disableExportButtons();
+  // Don't render anything until data loads from Sheets
+  // Show loading state
+  document.getElementById('kpiGrid').innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><div class="spinner" style="margin:0 auto 10px"></div>Carregando dados do Google Sheets...</div>';
+  const exportsLoading=document.getElementById('exportsLoading');
+  if(exportsLoading) exportsLoading.style.display='block';
+  initSheetsIntegration();
+}
+
+function disableExportButtons(){
+  document.querySelectorAll('.export-btn').forEach(btn=>{
+    btn.disabled=true;
+    btn.style.opacity='.4';
+    btn.style.pointerEvents='none';
+  });
+}
+
+function enableExportButtons(){
+  document.querySelectorAll('.export-btn').forEach(btn=>{
+    btn.disabled=false;
+    btn.style.opacity='1';
+    btn.style.pointerEvents='';
+  });
+  const exportsLoading=document.getElementById('exportsLoading');
+  if(exportsLoading) exportsLoading.style.display='none';
+}
+
+// Start the app
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initApp);}
+else{initApp();}
+</script>
+</body>
+</html>
