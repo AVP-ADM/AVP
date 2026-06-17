@@ -524,6 +524,12 @@ tr:hover .row-actions{opacity:1}
         <button class="btn btn-blue export-btn" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
+        <div class="icon">⏳</div>
+        <h4>Alterações Pendentes</h4>
+        <p>Exportar as operações que estão no staging (para revisão antes de salvar)</p>
+        <button class="btn btn-amber export-btn" onclick="exportStagingXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
         <div class="icon">📝</div>
         <h4>Apenas Alterações</h4>
         <p>Exportar somente as modificações realizadas na sessão atual</p>
@@ -546,6 +552,12 @@ tr:hover .row-actions{opacity:1}
         <h4>Duplicidades</h4>
         <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
         <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">🏥</div>
+        <h4>Relatório de Saúde</h4>
+        <p>Resumo da integridade da base: duplicidades, divergências e cobertura</p>
+        <button class="btn btn-purple export-btn" onclick="exportHealthReport()">Exportar XLSX</button>
       </div>
     </div>
   </div>
@@ -2993,6 +3005,112 @@ function exportHistoryXLSX(){
   const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
   styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
+
+function exportStagingXLSX(){
+  if(!STAGING.ops.length) return showToast('Nenhuma alteração pendente','warning');
+  const headers=['#','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino','Data/Hora'];
+  const data=STAGING.ops.map((op,i)=>{
+    const isCatOp=op.type.includes('Categoria');
+    const isBrandOp=op.type.includes('Marca');
+    return [i+1, op.type, isCatOp?'—':(isBrandOp?op.marca:op.marca), isCatOp||isBrandOp?'—':op.modelo, op.catFrom||'—', op.catTo||'—', op.timestamp||''];
+  });
+  styledXLSX(headers, data, 'Pendentes', 'pendentes_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportHealthReport(){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: Resumo Geral
+  const resumo=[
+    [''],
+    ['Indicador','Valor'],
+    ['Total de Categorias',CATEGORIES.length],
+    ['Total de Marcas',ALL_BRANDS.length],
+    ['Total de Modelos',ALL_RECORDS.length],
+    ['Modelos Duplicados',DUPLICATES.length],
+    ['% Duplicidade',(DUPLICATES.length/ALL_RECORDS.length*100).toFixed(1)+'%'],
+    ['Divergências Totais',''],
+    ['Alterações Pendentes',STAGING.ops.length],
+  ];
+  // Calculate divergences
+  let totalDivs=0;
+  for(const g of COMP_GROUPS){
+    const mA=getModelsForCat(g.a),mB=getModelsForCat(g.b);
+    const sA=new Set(mA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const sB=new Set(mB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyA=mA.filter(m=>!sB.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+    const onlyB=mB.filter(m=>!sA.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+    totalDivs+=onlyA+onlyB;
+  }
+  resumo[8][1]=totalDivs;
+  const wsResumo=XLSX.utils.aoa_to_sheet(resumo);
+  wsResumo['!cols']=[{wch:25},{wch:15}];
+  if(wsResumo['A2']) wsResumo['A2'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  if(wsResumo['B2']) wsResumo['B2'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+
+  // Sheet 2: Saúde por Categoria
+  const catHeaders=['Categoria','Modelos','Marcas','Duplicados','% Duplicidade'];
+  const catRows=[catHeaders.map(()=>''),catHeaders];
+  for(const cat of CATEGORIES.sort()){
+    const total=CAT_TOTALS[cat]||0;
+    const brands=Object.keys(RAW[cat].brands||{}).length;
+    const dups=_catDupsCount[cat]||0;
+    const pct=total>0?(dups/total*100).toFixed(1)+'%':'0%';
+    catRows.push([cat,total,brands,dups,pct]);
+  }
+  const wsCat=XLSX.utils.aoa_to_sheet(catRows);
+  wsCat['!cols']=[{wch:30},{wch:10},{wch:10},{wch:12},{wch:14}];
+  'ABCDE'.split('').forEach(c=>{const cell=c+'2';if(wsCat[cell]) wsCat[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};});
+  XLSX.utils.book_append_sheet(wb, wsCat, 'Por Categoria');
+
+  XLSX.writeFile(wb, 'relatorio_saude_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Relatório de saúde exportado com sucesso!','success');
+}
+
+// ========= UNDO/REDO SYSTEM =========
+let _undoStack=[];
+const MAX_UNDO=50;
+
+function undoLastStaging(){
+  if(!STAGING.ops.length) return;
+  const op=STAGING.ops.pop();
+  _undoStack.push(op);
+  if(_undoStack.length>MAX_UNDO) _undoStack.shift();
+  STAGING.data=null;
+  rebuildPendingIndex();
+  markAllDirty();
+  saveStagingToStorage();
+  renderStagingBars();
+  renderStagingTable();
+  refreshActiveTab();
+  showToast('Desfeito: '+op.type+' — '+(op.marca||''),'warning');
+}
+
+function redoStaging(){
+  if(!_undoStack.length) return;
+  const op=_undoStack.pop();
+  op.timestamp=new Date().toLocaleString('pt-BR');
+  STAGING.ops.push(op);
+  STAGING.data=null;
+  rebuildPendingIndex();
+  markAllDirty();
+  saveStagingToStorage();
+  renderStagingBars();
+  renderStagingTable();
+  refreshActiveTab();
+  showToast('Refeito: '+op.type+' — '+(op.marca||''),'success');
+}
+
+// Ctrl+Z / Ctrl+Y keyboard shortcuts for undo/redo
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){
+    e.preventDefault();undoLastStaging();
+  }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){
+    e.preventDefault();redoStaging();
+  }
+});
 
 // ========= ANO DE ACEITAÇÃO =========
 var ANOS_ACEITACAO = {};
