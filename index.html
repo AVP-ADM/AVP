@@ -2768,20 +2768,39 @@ function exportFullBaseXLSX(){
     return;
   }
   const wb = XLSX.utils.book_new();
-  // Create single "Dados" sheet matching Google Sheets format: Categoria | Marca | Modelo | Ano de Aceitação
-  const rows = [['Categoria','Marca','Modelo','Ano de Aceitação']];
+  // Create one sheet per category matching Google Sheets format
   for(const[cat, catData] of Object.entries(RAW)){
+    const rows = [];
+    // Row 1: headers for data (cols A-C) + blank col D + history header (col E)
+    rows.push(['Marca','Modelo','Ano de Aceitação','','HISTÓRICO DA CATEGORIA']);
+    // Get history entries for this category
+    const catHistory = HISTORY.filter(h=>h.catFrom===cat||h.catTo===cat);
+    // Build data rows
+    const dataRows = [];
     for(const[brand, models] of Object.entries(catData.brands||{})){
       for(const m of models){
         const ano = typeof getAno==='function'?getAno(cat,brand,m):'Ano da categoria';
-        rows.push([cat, brand, m, ano]);
+        dataRows.push([brand, m, ano]);
       }
     }
+    // Build history rows
+    const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
+    // Merge data + history side by side
+    const maxRows = Math.max(dataRows.length, histRows.length);
+    for(let i=0;i<maxRows;i++){
+      const d = dataRows[i]||['','',''];
+      const h = histRows[i]||['','',''];
+      rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Set column widths
+    ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
+    // Sanitize sheet name
+    let safeName = cat.replace(/[\\\/?*\[\]]/g,'-');
+    if(safeName.length>31) safeName=safeName.substring(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, safeName);
   }
-  const wsDados = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, wsDados, 'Dados');
-
-  // Create "Historico" sheet matching Google Sheets format
+  // Also add Historico sheet
   if(HISTORY && HISTORY.length>0){
     const histRows = [['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']];
     for(const h of HISTORY){
@@ -2790,7 +2809,6 @@ function exportFullBaseXLSX(){
     const wsHist = XLSX.utils.aoa_to_sheet(histRows);
     XLSX.utils.book_append_sheet(wb, wsHist, 'Historico');
   }
-
   XLSX.writeFile(wb, 'base_avp_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Base completa exportada com sucesso!','success');
 }
