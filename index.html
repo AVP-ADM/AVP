@@ -1436,7 +1436,7 @@ function confirmRemoveFromCat(marca, modelo, categoria){
         modelo: modelo,
         catFrom: categoria,
         catTo: null
-      });
+      }, true);
       closeModal();
       // Re-render views to hide the removed model visually
       renderOverviewTable();
@@ -1650,13 +1650,13 @@ function getStagingData(){
 
 function hasStagingChanges(){return STAGING.ops.length>0;}
 
-function addToStaging(op){
+function addToStaging(op, silent){
   op.timestamp = new Date().toLocaleString('pt-BR');
   STAGING.ops.push(op);
   STAGING.data = null;
   renderStagingBars();
   renderStagingTable();
-  showToast('Operação adicionada ao staging','success');
+  if(!silent) showToast('Operação adicionada ao staging','success');
 }
 
 function removeFromStaging(idx){
