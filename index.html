@@ -755,8 +755,10 @@ function renderKPIs(){
   for(const g of COMP_GROUPS){
     const modelsA = getModelsForCat(g.a);
     const modelsB = getModelsForCat(g.b);
-    const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
     totalDivs += onlyA.length + onlyB.length;
   }
 
@@ -815,7 +817,8 @@ function renderOverviewTable(){
         const other = g.a===cat?g.b:g.a;
         const modelsMe = getModelsForCat(cat);
         const modelsOther = getModelsForCat(other);
-        divs += modelsMe.filter(m=>!modelsOther.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).length;
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
       }
     }
     return `<tr>
@@ -856,8 +859,10 @@ function renderTopDivergences(){
     const g=COMP_GROUPS[i];
     const modelsA = getModelsForCat(g.a);
     const modelsB = getModelsForCat(g.b);
-    const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
+    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
     items.push({label:g.label, count:onlyA.length+onlyB.length, groupIdx:i});
   }
   items.sort((a,b)=>b.count-a.count);
@@ -907,7 +912,8 @@ function renderCategoryTable(){
         const other = g.a===cat?g.b:g.a;
         const modelsMe = getModelsForCat(cat);
         const modelsOther = getModelsForCat(other);
-        divs += modelsMe.filter(m=>!modelsOther.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).length;
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
       }
     }
     return `<tr class="clickable-row" onclick="openDrawer('${cat.replace(/'/g,"\\'")}')">
@@ -1030,7 +1036,8 @@ function showCatDetail(cat, type){
         const other=g.a===cat?g.b:g.a;
         const modelsMe=getModelsForCat(cat);
         const modelsOther=getModelsForCat(other);
-        const onlyMe=modelsMe.filter(m=>!modelsOther.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        const onlyMe=modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo)));
         for(const m of onlyMe) data.push([m.marca, m.modelo, 'Ausente em '+other]);
       }
     }
@@ -2153,10 +2160,13 @@ function renderDivergences(){
 
   const modelsA = getModelsForCat(g.a);
   const modelsB = getModelsForCat(g.b);
+  // Use Set for O(1) lookups instead of O(n) .find()
+  const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+  const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
   // Filter out models that have a pending addition to the other category (already "copied")
-  const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.b));
-  const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.a));
-  const inBoth = modelsA.filter(m=>modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+  const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.b));
+  const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.a));
+  const inBoth = modelsA.filter(m=>setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
   // Count pending copies as "in both" for display
   const pendingCopiesCount = STAGING.ops.filter(op=>op.type==='Adição'&&((op.catTo===g.a)||(op.catTo===g.b))&&op._divCopy).length;
 
