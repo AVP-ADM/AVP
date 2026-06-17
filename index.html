@@ -626,7 +626,14 @@ let STAGING = {ops:[], data:null};
 let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
 // ========= UTILITY FUNCTIONS =========
-function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+const _normCache={};
+function norm(s){
+  if(!s) return '';
+  if(_normCache[s]!==undefined) return _normCache[s];
+  const r=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  _normCache[s]=r;
+  return r;
+}
 
 function recomputeAll(){
   CATEGORIES = Object.keys(RAW);
