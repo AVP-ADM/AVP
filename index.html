@@ -640,7 +640,8 @@ function goTab(tab){
 function renderKPIs(){
   const totalCats = CATEGORIES.length;
   const totalBrands = ALL_BRANDS.length;
-  const totalModels = ALL_RECORDS.length;
+  const pendingRemovals = STAGING.ops.filter(op=>op.type==='Remoção').length;
+  const totalModels = ALL_RECORDS.length - pendingRemovals;
   const totalDups = DUPLICATES.length;
   let totalDivs = 0;
   for(const g of COMP_GROUPS){
@@ -667,6 +668,18 @@ function getModelsForCat(catName){
     for(const m of models) result.push({marca:brand,modelo:m});
   }
   return result;
+}
+
+// Returns models for a category excluding those with pending removal in staging
+function getEffectiveModelsForCat(catName){
+  return getModelsForCat(catName).filter(m=>!isPendingRemoval(m.marca, m.modelo, catName));
+}
+
+// Returns the effective model count for a category (subtracting pending removals)
+function getEffectiveCatTotal(catName){
+  const base = CAT_TOTALS[catName]||0;
+  const pendingRemovals = STAGING.ops.filter(op=>op.type==='Remoção'&&op.catFrom===catName).length;
+  return base - pendingRemovals;
 }
 
 // ========= OVERVIEW TABLE =========
@@ -697,7 +710,7 @@ function renderOverviewTable(){
     }
     return `<tr>
       <td onclick="openDrawer('${cat.replace(/'/g,"\\'")}')"><strong style="cursor:pointer">${cat}</strong></td>
-      <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${CAT_TOTALS[cat]}</span></td>
+      <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
@@ -801,14 +814,18 @@ function renderCategoryTable(){
 function openDrawer(cat){
   const brands = RAW[cat]?RAW[cat].brands||{}:{};
   const brandNames = Object.keys(brands).sort();
+  const effectiveTotal = getEffectiveCatTotal(cat);
   let html = `<div class="drawer-title">${cat}</div>`;
   html += `<div style="display:flex;gap:10px;margin-bottom:20px">
-    <span class="badge badge-blue">${CAT_TOTALS[cat]||0} modelos</span>
+    <span class="badge badge-blue">${effectiveTotal} modelos</span>
     <span class="badge badge-green">${brandNames.length} marcas</span>
   </div>`;
   for(const b of brandNames){
-    html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${b} <span style="color:var(--text3);font-weight:400">(${brands[b].length})</span></div>`;
-    for(const m of brands[b]){
+    // Filter out models with pending removal
+    const visibleModels = brands[b].filter(m=>!isPendingRemoval(b, m, cat));
+    if(visibleModels.length===0) continue;
+    html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${b} <span style="color:var(--text3);font-weight:400">(${visibleModels.length})</span></div>`;
+    for(const m of visibleModels){
       const ano = typeof getAno==='function'?getAno(cat,b,m):'';
       const key = norm(b)+'|||'+norm(m);
       const isDup = modelStatus[key]==='Duplicado';
@@ -852,8 +869,9 @@ function showKpiDetail(type){
     });
     html=buildDrawerTable(['Marca','Modelos','Categorias'],brandData,'marcas');
   } else if(type==='modelos'){
-    title='Todos os Modelos ('+ALL_RECORDS.length.toLocaleString()+')';
-    const data=ALL_RECORDS.map(r=>[r.categoria, r.marca, r.modelo]);
+    const effectiveRecords=ALL_RECORDS.filter(r=>!isPendingRemoval(r.marca, r.modelo, r.categoria));
+    title='Todos os Modelos ('+effectiveRecords.length.toLocaleString()+')';
+    const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo]);
     html=buildDrawerTable(['Categoria','Marca','Modelo'],data,'modelos');
   } else if(type==='duplicados'){
     title='Modelos Duplicados ('+DUPLICATES.length+')';
@@ -879,7 +897,7 @@ function showKpiDetail(type){
 function showCatDetail(cat, type){
   let title='', html='';
   if(type==='modelos'){
-    const models=getModelsForCat(cat);
+    const models=getEffectiveModelsForCat(cat);
     title='Modelos - '+cat+' ('+models.length+')';
     html=buildModelListWithActions(models, cat);
   } else if(type==='marcas'){
@@ -1420,7 +1438,19 @@ function confirmRemoveFromCat(marca, modelo, categoria){
         catTo: null
       });
       closeModal();
+      // Re-render views to hide the removed model visually
+      renderOverviewTable();
+      renderKPIs();
       renderDupTable();
+      // Re-open drawer if it was showing this category
+      if(document.getElementById('drawer').classList.contains('open')){
+        const drawerTitle = document.querySelector('.drawer-title');
+        if(drawerTitle && drawerTitle.textContent === categoria){
+          openDrawer(categoria);
+        } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+categoria)){
+          showCatDetail(categoria, 'modelos');
+        }
+      }
       showToast('Remoção adicionada às alterações pendentes','success');
     },
     'red'
@@ -1439,6 +1469,17 @@ function cancelPendingRemoval(marca, modelo, categoria){
     renderDupTable();
     renderStagingBars();
     renderStagingTable();
+    renderOverviewTable();
+    renderKPIs();
+    // Re-open drawer if showing the affected category
+    if(document.getElementById('drawer').classList.contains('open')){
+      const drawerTitle = document.querySelector('.drawer-title');
+      if(drawerTitle && drawerTitle.textContent === categoria){
+        openDrawer(categoria);
+      } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+categoria)){
+        showCatDetail(categoria, 'modelos');
+      }
+    }
     showToast('Remoção cancelada','warning');
   }
 }
@@ -1619,17 +1660,40 @@ function addToStaging(op){
 }
 
 function removeFromStaging(idx){
+  const op = STAGING.ops[idx];
   STAGING.ops.splice(idx,1);
   STAGING.data = null;
   renderStagingBars();
   renderStagingTable();
+  // If a removal was cancelled, re-render views to restore the model visually
+  if(op && op.type==='Remoção'){
+    renderOverviewTable();
+    renderKPIs();
+    renderDupTable();
+    // Re-open drawer if showing the affected category
+    if(document.getElementById('drawer').classList.contains('open')){
+      const drawerTitle = document.querySelector('.drawer-title');
+      if(drawerTitle && drawerTitle.textContent === op.catFrom){
+        openDrawer(op.catFrom);
+      } else if(drawerTitle && drawerTitle.textContent.includes('Modelos - '+op.catFrom)){
+        showCatDetail(op.catFrom, 'modelos');
+      }
+    }
+  }
 }
 
 function clearStaging(){
   if(!hasStagingChanges()) return;
   showModal('Descartar Alterações','Tem certeza que deseja descartar todas as alterações pendentes?',()=>{
+    const hadRemovals = STAGING.ops.some(op=>op.type==='Remoção');
     STAGING.ops=[];STAGING.data=null;
     renderStagingBars();renderStagingTable();closeModal();
+    // Re-render views to restore any hidden models
+    if(hadRemovals){
+      renderOverviewTable();
+      renderKPIs();
+      renderDupTable();
+    }
     showToast('Alterações descartadas','warning');
   },'red');
 }
