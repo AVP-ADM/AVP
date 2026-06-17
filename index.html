@@ -2144,13 +2144,16 @@ function renderStagingTable(){
   const tbody = document.getElementById('stagingTableBody');
   tbody.innerHTML = STAGING.ops.map((op,i)=>{
     const isCatOp=op.type.includes('Categoria');
+    const isBrandOp=op.type.includes('Marca');
     const isEdit=op.type==='Edição';
-    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':isEdit?'tag-amber':'tag-blue';
+    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':(isEdit||op.type.includes('Edição'))?'tag-amber':'tag-blue';
+    const modeloDisplay = isCatOp ? '—' : (isBrandOp ? '—' : op.modelo);
+    const marcaDisplay = isCatOp ? '—' : op.marca;
     return `<tr>
     <td>${i+1}</td>
     <td><span class="tag ${tagClass}">${op.type}</span></td>
-    <td>${isCatOp?'—':op.marca}</td>
-    <td>${op.modelo}</td>
+    <td>${marcaDisplay}</td>
+    <td>${modeloDisplay}</td>
     <td>${op.catFrom||'—'}</td>
     <td>${op.catTo||'—'}</td>
     <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})">✕</button></td>
