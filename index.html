@@ -997,10 +997,15 @@ function buildModelListWithActions(models, cat){
     const eModelo=m.modelo.replace(/'/g,"\\'");
     const pending = hasPendingChange(m.marca, m.modelo, cat);
     const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
+    const pendingLabel = pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente';
+    let pendingBadge='';
+    if(pending){
+      pendingBadge=` <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle;padding-right:18px;position:relative">⏳ ${pendingLabel}<span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar pendência">✕</span></span>`;
+    }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
         <span class="model-action-brand">${m.marca}</span>
-        <span class="model-action-name">${m.modelo}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span class="model-action-name">${m.modelo}${pendingBadge}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
         <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
@@ -1023,6 +1028,26 @@ function filterModelList(){
   });
   const countEl=document.getElementById('modelListCount');
   if(countEl) countEl.textContent=visible+' modelos';
+}
+
+// Cancel any pending change for a model from the drawer list
+function cancelPendingModelChange(marca, modelo, categoria){
+  const idx = STAGING.ops.findIndex(op=>{
+    if(op.type.includes('Categoria')||op.type.includes('Marca')) return false;
+    const opModelo = op.oldModelo || op.modelo;
+    return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
+  });
+  if(idx>=0){
+    STAGING.ops.splice(idx,1);
+    STAGING.data=null;
+    renderStagingBars();
+    renderStagingTable();
+    renderOverviewTable();
+    renderKPIs();
+    showToast('Alteração pendente cancelada','warning');
+    // Refresh the drawer
+    showCatDetail(categoria,'modelos');
+  }
 }
 
 // ========= ADD MODEL TO CATEGORY =========
