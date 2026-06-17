@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Auditoria de Veículos — AVP</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
 /* ========= RESET & VARIABLES ========= */
@@ -606,6 +605,7 @@ let ALL_RECORDS = [];
 let ALL_BRANDS = [];
 let DUPLICATES = [];
 let modelStatus = {};
+let _catDupsCount = {};
 let chartsInitialized = false;
 
 // ========= COMPARISON GROUPS =========
@@ -637,6 +637,7 @@ function loadStagingFromStorage(){
       if(Array.isArray(ops)&&ops.length>0){
         STAGING.ops=ops;
         STAGING.data=null;
+        rebuildPendingIndex();
         markAllDirty();
       }
     }
@@ -707,6 +708,14 @@ function recomputeAll(){
   for(const d of DUPLICATES){
     const key = norm(d.marca)+'|||'+norm(d.modelo);
     modelStatus[key] = 'Duplicado';
+  }
+
+  // Pre-compute duplicates count per category
+  _catDupsCount={};
+  for(const d of DUPLICATES){
+    for(const c of d.cats){
+      _catDupsCount[c]=(_catDupsCount[c]||0)+1;
+    }
   }
 }
 
@@ -843,7 +852,7 @@ function renderOverviewTable(){
   const tbody = document.getElementById('ovTableBody');
   tbody.innerHTML = cats.map(cat=>{
     const brands = Object.keys(RAW[cat].brands||{});
-    const dups = DUPLICATES.filter(d=>d.cats.includes(cat)).length;
+    const dups = _catDupsCount[cat]||0;
     const catPending = hasPendingCategoryChange(cat);
     const catPendingType = catPending ? getPendingCategoryChangeType(cat) : null;
     let divs = 0;
@@ -2013,45 +2022,74 @@ function confirmRemoveFromCat(marca, modelo, categoria){
   );
 }
 
+// ========= PENDING INDEX (Map-based for O(1) lookups) =========
+let _pendingIndex={removals:{},changes:{},changeTypes:{},catChanges:{},catChangeTypes:{},copies:{}};
+
+function rebuildPendingIndex(){
+  _pendingIndex={removals:{},changes:{},changeTypes:{},catChanges:{},catChangeTypes:{},copies:{}};
+  for(const op of STAGING.ops){
+    if(op.type.includes('Categoria')){
+      if(op.catFrom){_pendingIndex.catChanges[op.catFrom]=true;_pendingIndex.catChangeTypes[op.catFrom]=op.type;}
+      if(op.catTo){_pendingIndex.catChanges[op.catTo]=true;_pendingIndex.catChangeTypes[op.catTo]=op.type;}
+      continue;
+    }
+    if(op.type.includes('Marca')) continue;
+    const opModelo=op.oldModelo||op.modelo;
+    // Removal index
+    if(op.type==='Remoção'&&op.catFrom){
+      _pendingIndex.removals[op.marca+'|||'+op.modelo+'|||'+op.catFrom]=true;
+    }
+    // Copy index
+    if(op.type==='Adição'&&op._divCopy&&op.catTo){
+      _pendingIndex.copies[norm(op.marca)+'|||'+norm(op.modelo)+'|||'+op.catTo]=true;
+    }
+    // General change index (by marca+modelo+cat)
+    if(op.catFrom){
+      const k=op.marca+'|||'+opModelo+'|||'+op.catFrom;
+      _pendingIndex.changes[k]=true;
+      _pendingIndex.changeTypes[k]=op.type;
+    }
+    if(op.catTo){
+      const k=op.marca+'|||'+opModelo+'|||'+op.catTo;
+      _pendingIndex.changes[k]=true;
+      _pendingIndex.changeTypes[k]=op.type;
+    }
+    // Global (without category)
+    const gk=op.marca+'|||'+opModelo;
+    _pendingIndex.changes[gk]=true;
+    _pendingIndex.changeTypes[gk]=op.type;
+  }
+}
+
 function isPendingRemoval(marca, modelo, categoria){
-  return STAGING.ops.some(op=>op.type==='Remoção'&&op.marca===marca&&op.modelo===modelo&&op.catFrom===categoria);
+  return !!_pendingIndex.removals[marca+'|||'+modelo+'|||'+categoria];
 }
 
 // Check if a model has ANY pending change (removal, move, edit) in any category
 function hasPendingChange(marca, modelo, categoria){
-  return STAGING.ops.some(op=>{
-    if(op.type.includes('Categoria')) return false;
-    // For Edição type, check oldModelo
-    const opModelo = op.oldModelo || op.modelo;
-    if(categoria){
-      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
-    }
-    return op.marca===marca && opModelo===modelo;
-  });
+  if(categoria) return !!_pendingIndex.changes[marca+'|||'+modelo+'|||'+categoria];
+  return !!_pendingIndex.changes[marca+'|||'+modelo];
 }
 
 // Get the type of pending change for a model (for informational messages)
 function getPendingChangeType(marca, modelo, categoria){
-  const op = STAGING.ops.find(op=>{
-    if(op.type.includes('Categoria')) return false;
-    const opModelo = op.oldModelo || op.modelo;
-    if(categoria){
-      return op.marca===marca && opModelo===modelo && (op.catFrom===categoria || op.catTo===categoria);
-    }
-    return op.marca===marca && opModelo===modelo;
-  });
-  return op ? op.type : null;
+  if(categoria) return _pendingIndex.changeTypes[marca+'|||'+modelo+'|||'+categoria]||null;
+  return _pendingIndex.changeTypes[marca+'|||'+modelo]||null;
 }
 
 // Check if a category has any pending change (rename, removal, creation)
 function hasPendingCategoryChange(cat){
-  return STAGING.ops.some(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
+  return !!_pendingIndex.catChanges[cat];
 }
 
 // Get the type of pending category change
 function getPendingCategoryChangeType(cat){
-  const op = STAGING.ops.find(op=>op.type.includes('Categoria') && (op.catFrom===cat || op.catTo===cat));
-  return op ? op.type : null;
+  return _pendingIndex.catChangeTypes[cat]||null;
+}
+
+// Check if a model has a pending copy to a specific category
+function isPendingCopyTo(marca, modelo, catTo){
+  return !!_pendingIndex.copies[norm(marca)+'|||'+norm(modelo)+'|||'+catTo];
 }
 
 function cancelPendingRemoval(marca, modelo, categoria){
@@ -2265,11 +2303,6 @@ function renderDivergences(){
   `;
 }
 
-// Check if a model has a pending copy to a specific category
-function isPendingCopyTo(marca, modelo, catTo){
-  return STAGING.ops.some(op=>op.type==='Adição'&&op._divCopy&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===catTo);
-}
-
 // Copy a single model to the compared category
 function copyModelToCategory(marca, modelo, catFrom, catTo){
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
@@ -2413,6 +2446,7 @@ function addToStaging(op, silent){
   op.timestamp = new Date().toLocaleString('pt-BR');
   STAGING.ops.push(op);
   STAGING.data = null;
+  rebuildPendingIndex();
   markAllDirty();
   saveStagingToStorage();
   renderStagingBars();
@@ -2424,6 +2458,7 @@ function removeFromStaging(idx){
   const op = STAGING.ops[idx];
   STAGING.ops.splice(idx,1);
   STAGING.data = null;
+  rebuildPendingIndex();
   markAllDirty();
   saveStagingToStorage();
   renderStagingBars();
