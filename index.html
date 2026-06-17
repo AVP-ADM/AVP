@@ -518,26 +518,32 @@ tr:hover .row-actions{opacity:1}
       <div class="export-card">
         <div class="icon">📦</div>
         <h4>Base Completa</h4>
-        <p>Exportar todos os modelos com categorias, marcas e ano de aceitação</p>
-        <button class="btn btn-blue" onclick="exportFullBase()">Exportar CSV</button>
+        <p>Exportar todos os modelos separados por categoria com histórico ao lado</p>
+        <button class="btn btn-blue" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">📝</div>
         <h4>Apenas Alterações</h4>
-        <p>Exportar somente as modificações realizadas (histórico)</p>
-        <button class="btn btn-green" onclick="exportChanges()">Exportar CSV</button>
+        <p>Exportar somente as modificações realizadas na sessão atual</p>
+        <button class="btn btn-green" onclick="exportChangesXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">⚖️</div>
         <h4>Relatório de Divergências</h4>
         <p>Exportar comparação detalhada entre categorias similares</p>
-        <button class="btn btn-amber" onclick="exportDivergences()">Exportar CSV</button>
+        <button class="btn btn-amber" onclick="exportDivergencesXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">📜</div>
         <h4>Histórico Completo</h4>
         <p>Exportar todo o histórico de alterações registradas</p>
-        <button class="btn btn-blue" onclick="exportHistory()">Exportar CSV</button>
+        <button class="btn btn-blue" onclick="exportHistoryXLSX()">Exportar XLSX</button>
+      </div>
+      <div class="export-card">
+        <div class="icon">🔁</div>
+        <h4>Duplicidades</h4>
+        <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
+        <button class="btn btn-red" onclick="exportDuplicates()">Exportar XLSX</button>
       </div>
     </div>
   </div>
@@ -2693,6 +2699,59 @@ function exportHistory(){
   if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
   const rows = HISTORY.map(h=>[h.timestamp,h.type,h.marca,h.modelo,h.catFrom||'',h.catTo||'']);
   downloadCSV(toCSV(rows,['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']),'historico.csv');
+}
+
+// ========= XLSX STYLED EXPORTS =========
+function styledXLSX(headers, dataRows, sheetName, fileName){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  const rows=[];
+  rows.push(headers.map(()=>'')); // Row 1: blank
+  rows.push(headers); // Row 2: headers
+  for(const r of dataRows) rows.push(r); // Row 3+: data
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  ws['!cols']=headers.map((h,i)=>{
+    let maxLen=h.length;
+    for(const r of dataRows){if(r[i]&&String(r[i]).length>maxLen) maxLen=String(r[i]).length;}
+    return {wch:Math.min(Math.max(maxLen+2,12),50)};
+  });
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, fileName);
+  showToast('Exportado com sucesso!','success');
+}
+
+function exportChangesXLSX(){
+  if(!HISTORY.length) return showToast('Nenhuma alteração registrada','warning');
+  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
+  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  styledXLSX(headers, data, 'Alterações', 'alteracoes_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportDivergencesXLSX(){
+  const headers=['Grupo','Situação','Marca','Modelo'];
+  const data=[];
+  for(const g of COMP_GROUPS){
+    const modelsA=getModelsForCat(g.a);
+    const modelsB=getModelsForCat(g.b);
+    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+    for(const m of onlyA) data.push([g.label,'Somente em '+g.a,m.marca,m.modelo]);
+    for(const m of onlyB) data.push([g.label,'Somente em '+g.b,m.marca,m.modelo]);
+  }
+  if(!data.length) return showToast('Nenhuma divergência encontrada','warning');
+  styledXLSX(headers, data, 'Divergências', 'divergencias_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function exportHistoryXLSX(){
+  if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
+  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
+  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
 // ========= ANO DE ACEITAÇÃO =========
