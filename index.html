@@ -326,6 +326,10 @@ tr:hover .row-actions{opacity:1}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .tabs{flex-wrap:nowrap;overflow-x:auto}
   .drawer{width:100vw}
+  .comp-section{grid-template-columns:1fr!important}
+  .export-grid{grid-template-columns:1fr}
+  .mgmt-grid{grid-template-columns:1fr}
+  .filter-row{flex-direction:column;align-items:stretch}
 }
 </style>
 </head>
@@ -951,39 +955,6 @@ function navigateToDivergence(groupIdx){
   currentCompGroup=groupIdx;
   goTab('divergences');
   setTimeout(()=>{renderDivergences();},100);
-}
-
-// ========= CATEGORIES TABLE =========
-function renderCategoryTable(){
-  const filt = norm(document.getElementById('catFilter').value);
-  const sort = document.getElementById('catSort').value;
-  let cats = CATEGORIES.filter(c=>!filt||norm(c).includes(filt));
-  if(sort==='name') cats.sort((a,b)=>a.localeCompare(b));
-  else if(sort==='models_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
-  else if(sort==='models_asc') cats.sort((a,b)=>CAT_TOTALS[a]-CAT_TOTALS[b]);
-  else if(sort==='brands_desc') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length-Object.keys(RAW[a].brands||{}).length);
-
-  const tbody = document.getElementById('catTableBody');
-  tbody.innerHTML = cats.map(cat=>{
-    const brands = Object.keys(RAW[cat].brands||{});
-    let divs = 0;
-    for(const g of COMP_GROUPS){
-      if(g.a===cat||g.b===cat){
-        const other = g.a===cat?g.b:g.a;
-        const modelsMe = getModelsForCat(cat);
-        const modelsOther = getModelsForCat(other);
-        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
-      }
-    }
-    return `<tr class="clickable-row" onclick="openDrawer('${cat.replace(/'/g,"\\'")}')">
-      <td><strong>${cat}</strong></td>
-      <td>${CAT_TOTALS[cat]}</td>
-      <td>${brands.length}</td>
-      <td>${divs>0?`<span class="badge badge-amber">${divs}</span>`:'—'}</td>
-      <td><button class="btn btn-sm" onclick="event.stopPropagation();openDrawer('${cat.replace(/'/g,"\\'")}')">Detalhes →</button></td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria encontrada</td></tr>';
 }
 
 // ========= DRAWER =========
@@ -2895,44 +2866,6 @@ function downloadCSV(csv, filename){
   const a = document.createElement('a');
   a.href=url;a.download=filename;a.click();
   URL.revokeObjectURL(url);
-}
-
-function exportFullBase(){
-  const rows=[];
-  for(const[cat,catData] of Object.entries(RAW)){
-    for(const[brand,models] of Object.entries(catData.brands||{})){
-      for(const m of models){
-        const ano = typeof getAno==='function'?getAno(cat,brand,m):'';
-        rows.push([cat,brand,m,ano]);
-      }
-    }
-  }
-  downloadCSV(toCSV(rows,['Categoria','Marca','Modelo','Ano de Aceitação']),'base_completa.csv');
-}
-
-function exportChanges(){
-  if(!HISTORY.length) return showToast('Nenhuma alteração registrada','warning');
-  const rows = HISTORY.map(h=>[h.timestamp,h.type,h.marca,h.modelo,h.catFrom||'',h.catTo||'']);
-  downloadCSV(toCSV(rows,['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']),'alteracoes.csv');
-}
-
-function exportDivergences(){
-  const rows=[];
-  for(const g of COMP_GROUPS){
-    const modelsA=getModelsForCat(g.a);
-    const modelsB=getModelsForCat(g.b);
-    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    for(const m of onlyA) rows.push([g.label,'Somente em '+g.a,m.marca,m.modelo]);
-    for(const m of onlyB) rows.push([g.label,'Somente em '+g.b,m.marca,m.modelo]);
-  }
-  downloadCSV(toCSV(rows,['Grupo','Situação','Marca','Modelo']),'divergencias.csv');
-}
-
-function exportHistory(){
-  if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
-  const rows = HISTORY.map(h=>[h.timestamp,h.type,h.marca,h.modelo,h.catFrom||'',h.catTo||'']);
-  downloadCSV(toCSV(rows,['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']),'historico.csv');
 }
 
 // ========= XLSX STYLED EXPORTS =========
