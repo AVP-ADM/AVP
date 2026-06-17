@@ -1699,9 +1699,35 @@ function sortDrawerTable(tableId, colIdx){
 function exportDrawerTable(tableId, name){
   const table=document.getElementById(tableId);
   if(!table) return;
+  if(typeof XLSX==='undefined'){
+    showToast('Biblioteca XLSX não carregada','error');
+    return;
+  }
   const headers=Array.from(table.querySelectorAll('thead th')).map(th=>th.textContent.replace(' ↕',''));
-  const rows=Array.from(table.querySelectorAll('tbody tr')).filter(r=>r.style.display!=='none').map(r=>Array.from(r.cells).map(c=>c.textContent));
-  downloadCSV(toCSV(rows,headers), name+'_export.csv');
+  const dataRows=Array.from(table.querySelectorAll('tbody tr')).filter(r=>r.style.display!=='none').map(r=>Array.from(r.cells).map(c=>c.textContent));
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  // Row 1: blank
+  rows.push(headers.map(()=>''));
+  // Row 2: headers
+  rows.push(headers);
+  // Row 3+: data
+  for(const r of dataRows) rows.push(r);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Style row 2 headers - black background, white text
+  const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  // Auto column widths
+  ws['!cols']=headers.map((h,i)=>{
+    let maxLen=h.length;
+    for(const r of dataRows){if(r[i]&&r[i].length>maxLen) maxLen=r[i].length;}
+    return {wch:Math.min(Math.max(maxLen+2,12),50)};
+  });
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+  XLSX.writeFile(wb, name+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Exportado com sucesso!','success');
 }
 
