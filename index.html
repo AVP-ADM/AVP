@@ -2146,9 +2146,10 @@ function renderStagingTable(){
     const isCatOp=op.type.includes('Categoria');
     const isBrandOp=op.type.includes('Marca');
     const isEdit=op.type==='Edição';
-    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':(isEdit||op.type.includes('Edição'))?'tag-amber':'tag-blue';
-    const modeloDisplay = isCatOp ? '—' : (isBrandOp ? '—' : op.modelo);
-    const marcaDisplay = isCatOp ? '—' : op.marca;
+    const isEditBrand=op.type==='Edição de Marca';
+    const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':(isEdit||isEditBrand)?'tag-amber':'tag-blue';
+    const modeloDisplay = isCatOp||isBrandOp ? '—' : op.modelo;
+    const marcaDisplay = isCatOp ? '—' : (isBrandOp ? op.marca : op.marca);
     return `<tr>
     <td>${i+1}</td>
     <td><span class="tag ${tagClass}">${op.type}</span></td>
