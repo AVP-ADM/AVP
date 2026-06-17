@@ -625,6 +625,36 @@ let HISTORY = [];
 let STAGING = {ops:[], data:null};
 let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
+// ========= STAGING PERSISTENCE (localStorage) =========
+function saveStagingToStorage(){
+  try{localStorage.setItem('avp-staging',JSON.stringify(STAGING.ops));}catch(e){}
+}
+function loadStagingFromStorage(){
+  try{
+    const saved=localStorage.getItem('avp-staging');
+    if(saved){
+      const ops=JSON.parse(saved);
+      if(Array.isArray(ops)&&ops.length>0){
+        STAGING.ops=ops;
+        STAGING.data=null;
+        markAllDirty();
+      }
+    }
+  }catch(e){}
+}
+function clearStagingStorage(){
+  try{localStorage.removeItem('avp-staging');}catch(e){}
+}
+
+// ========= BEFOREUNLOAD WARNING =========
+window.addEventListener('beforeunload',function(e){
+  if(STAGING.ops.length>0){
+    e.preventDefault();
+    e.returnValue='Existem alterações pendentes não salvas. Deseja realmente sair?';
+    return e.returnValue;
+  }
+});
+
 // ========= UTILITY FUNCTIONS =========
 const _normCache={};
 function norm(s){
@@ -2384,6 +2414,7 @@ function addToStaging(op, silent){
   STAGING.ops.push(op);
   STAGING.data = null;
   markAllDirty();
+  saveStagingToStorage();
   renderStagingBars();
   renderStagingTable();
   if(!silent) showToast('Operação adicionada ao staging','success');
@@ -2394,6 +2425,7 @@ function removeFromStaging(idx){
   STAGING.ops.splice(idx,1);
   STAGING.data = null;
   markAllDirty();
+  saveStagingToStorage();
   renderStagingBars();
   renderStagingTable();
   // If a removal was cancelled, re-render views to restore visually
@@ -2420,6 +2452,8 @@ function clearStaging(){
   showModal('Descartar Alterações','Tem certeza que deseja descartar todas as alterações pendentes?',()=>{
     const hadRemovals = STAGING.ops.some(op=>op.type==='Remoção');
     STAGING.ops=[];STAGING.data=null;
+    saveStagingToStorage();
+    clearStagingStorage();
     renderStagingBars();renderStagingTable();closeModal();
     // Re-render views to restore any hidden models
     if(hadRemovals){
@@ -2433,6 +2467,24 @@ function clearStaging(){
 
 function commitStaging(){
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
+  // Validate: check for contradictory operations
+  const conflicts=[];
+  for(let i=0;i<STAGING.ops.length;i++){
+    for(let j=i+1;j<STAGING.ops.length;j++){
+      const a=STAGING.ops[i],b=STAGING.ops[j];
+      if(a.type.includes('Categoria')||b.type.includes('Categoria')) continue;
+      if(a.type.includes('Marca')||b.type.includes('Marca')) continue;
+      const aModel=a.oldModelo||a.modelo, bModel=b.oldModelo||b.modelo;
+      if(a.marca===b.marca&&aModel===bModel&&a.catFrom===b.catFrom){
+        if(a.type==='Remoção'&&b.type==='Adição') conflicts.push(a.marca+' '+aModel+': Remoção + Adição na mesma categoria');
+        if(a.type==='Adição'&&b.type==='Remoção') conflicts.push(a.marca+' '+aModel+': Adição + Remoção na mesma categoria');
+      }
+    }
+  }
+  if(conflicts.length>0){
+    showModal('⚠️ Conflitos Detectados','<div style="line-height:1.8"><strong>Foram encontradas operações contraditórias:</strong><br><br>'+conflicts.slice(0,5).map(c=>'• '+c).join('<br>')+(conflicts.length>5?'<br>...e mais '+(conflicts.length-5):'')+'<br><br><span style="color:var(--text2);font-size:.78rem">Revise as alterações pendentes antes de salvar.</span></div>',()=>{closeModal();},'amber');
+    return;
+  }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',()=>{
     const d = getStagingData();
     for(const[k,v] of Object.entries(d)) RAW[k]=v;
@@ -2442,6 +2494,7 @@ function commitStaging(){
       mgmtStats.session++;
     }
     STAGING.ops=[];STAGING.data=null;
+    clearStagingStorage();
     recomputeAll();
     renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
     refreshActiveTab();
@@ -3012,6 +3065,7 @@ commitStaging = function(){
         mgmtStats.session++;
       }
       STAGING.ops=[];STAGING.data=null;
+      clearStagingStorage();
       recomputeAll();initAnos();
       renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();renderOverviewTable();
       refreshActiveTab();
@@ -3684,6 +3738,12 @@ function initApp(){
   initTheme();
   updateBaseInfo();
   updateSyncInfo();
+  // Restore staging from localStorage
+  loadStagingFromStorage();
+  if(STAGING.ops.length>0){
+    renderStagingBars();
+    showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
+  }
   // Disable export buttons until data is loaded
   disableExportButtons();
   // Don't render anything until data loads from Sheets
