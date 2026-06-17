@@ -924,8 +924,8 @@ function showKpiDetail(type){
 function showCatDetail(cat, type){
   let title='', html='';
   if(type==='modelos'){
-    const models=getEffectiveModelsForCat(cat);
-    title='Modelos - '+cat+' ('+models.length+')';
+    const models=getModelsForCat(cat);
+    title='Modelos - '+cat+' ('+getEffectiveCatTotal(cat)+')';
     html=buildModelListWithActions(models, cat);
   } else if(type==='marcas'){
     const brands=Object.keys(RAW[cat].brands||{}).sort();
