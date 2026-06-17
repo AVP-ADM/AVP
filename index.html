@@ -50,10 +50,11 @@ html{font-size:14px}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5}
 
 /* ========= LAYOUT ========= */
-.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between}
 .app-logo{font-size:1.25rem;font-weight:700;color:var(--blue);letter-spacing:-.5px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.85rem;margin-left:8px}
-.header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.header-actions{display:flex;align-items:center;gap:10px}
+.header-right{display:flex;align-items:center;gap:10px}
 .theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
 .theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
 .theme-toggle .label{font-size:.75rem;font-weight:500;color:var(--text2)}
@@ -66,12 +67,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .btn-sync.syncing{opacity:.7;pointer-events:none}
 .btn-export-xlsx{background:var(--purple);color:#fff}
 .btn-export-xlsx:hover{background:#7c3aed}
-.sync-info{font-size:.68rem;color:var(--text3);text-align:right;line-height:1.4;max-width:220px;border-left:1px solid var(--border);padding-left:10px}
+.sync-info{font-size:.68rem;color:var(--text3);text-align:right;line-height:1.4;max-width:220px}
 .sync-info .status{font-weight:600}
 .sync-info .status.ok{color:var(--green)}
 .sync-info .status.error{color:var(--red)}
 .sync-info .status.pending{color:var(--amber)}
 .base-info{font-size:.7rem;color:var(--text3);text-align:right;line-height:1.4;max-width:200px}
+/* Settings dropdown */
+.settings-wrap{position:relative}
+.settings-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1.1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
+.settings-btn:hover{background:var(--blue-bg);border-color:var(--blue)}
+.settings-dropdown{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:110;display:none;min-width:220px;padding:6px 0}
+.settings-dropdown.open{display:block}
+.settings-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:.82rem;color:var(--text1);cursor:pointer;transition:background .1s;white-space:nowrap}
+.settings-item:hover{background:var(--blue-bg)}
+.settings-item .si-icon{font-size:1rem;width:22px;text-align:center}
+.settings-item .si-label{flex:1}
+.settings-divider{height:1px;background:var(--border);margin:4px 0}
 .upload-modal-content{display:flex;flex-direction:column;gap:14px}
 .upload-dropzone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
 .upload-dropzone:hover,.upload-dropzone.dragover{border-color:var(--blue);background:var(--blue-bg)}
@@ -84,7 +96,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .app-container{max-width:1440px;margin:0 auto;padding:24px 32px 60px}
 
 /* ========= TABS ========= */
-.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:65px;z-index:90;box-shadow:var(--shadow)}
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:57px;z-index:90;box-shadow:var(--shadow);align-items:center}
+.tabs .tabs-spacer{flex:1}
+.tabs .search-trigger{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .2s;margin-right:4px;white-space:nowrap}
+.tabs .search-trigger:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.tabs .search-trigger .shortcut{font-size:.65rem;opacity:.5;background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)}
 .tab{padding:10px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;border:none;background:none}
 .tab:hover{color:var(--text1);background:var(--bg)}
 .tab.active{background:var(--blue);color:#fff;box-shadow:0 2px 4px rgba(37,99,235,.25)}
@@ -319,14 +335,19 @@ tr:hover .row-actions{opacity:1}
 <!-- ========= HEADER ========= -->
 <header class="app-header">
   <div class="app-logo">AVP<span>Dashboard de Auditoria de Veículos</span></div>
-  <div class="header-actions">
+  <div class="header-right">
     <div class="sync-info" id="syncInfo"></div>
     <div class="base-info" id="baseInfo"></div>
-    <button class="header-btn" style="background:var(--bg);color:var(--text2);border:1px solid var(--border)" onclick="openGlobalSearch()" title="Busca global (Ctrl+K)">🔍 <span style="font-size:.7rem;opacity:.6">Ctrl+K</span></button>
-    <button class="header-btn btn-import" onclick="showUploadModal()">📁 Importar Nova Planilha</button>
-    <button class="header-btn btn-sync" onclick="manualSync()" id="btnSync">🔄 Sincronizar com Google Sheets</button>
-    <button class="header-btn btn-export-xlsx" onclick="exportFullBaseXLSX()">📥 Exportar XLSX</button>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="Alternar tema">🌙 <span class="label">Escuro</span></button>
+    <div class="settings-wrap">
+      <button class="settings-btn" onclick="toggleSettings()" title="Configurações">⚙️</button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <div class="settings-item" onclick="showUploadModal();closeSettings()"><span class="si-icon">📁</span><span class="si-label">Importar Nova Planilha</span></div>
+        <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon">🔄</span><span class="si-label">Sincronizar com Google Sheets</span></div>
+        <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar XLSX</span></div>
+        <div class="settings-divider"></div>
+        <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span></div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -341,6 +362,8 @@ tr:hover .row-actions{opacity:1}
     <button class="tab" onclick="goTab('management')">Manutenção</button>
     <button class="tab" onclick="goTab('history')">Histórico</button>
     <button class="tab" onclick="goTab('exports')">Exportações</button>
+    <span class="tabs-spacer"></span>
+    <button class="search-trigger" onclick="openGlobalSearch()" title="Busca global (Ctrl+K)">🔍 Pesquisar <span class="shortcut">Ctrl+K</span></button>
   </div>
 
   <!-- ========= TAB: VISÃO GERAL ========= -->
@@ -2386,9 +2409,8 @@ async function manualSync(){
     showToast('Base de dados vazia. Não é possível sincronizar dados vazios.','error');
     return;
   }
-  const btn = document.getElementById('btnSync');
-  btn.classList.add('syncing');
-  btn.innerHTML='⏳ Sincronizando...';
+  const btn = document.getElementById('btnSyncItem');
+  if(btn) btn.style.opacity='.5';
   try{
     await sheetsSave();
     lastSyncInfo = {
@@ -2405,8 +2427,7 @@ async function manualSync(){
     updateSyncInfo();
     showToast('Falha ao sincronizar com o Google Sheets.','error');
   }
-  btn.classList.remove('syncing');
-  btn.innerHTML='🔄 Sincronizar com Google Sheets';
+  if(btn) btn.style.opacity='1';
 }
 
 function updateSyncInfo(){
@@ -2477,15 +2498,41 @@ function toggleTheme(){
 
 function updateThemeButton(theme){
   const btn = document.getElementById('themeToggle');
-  if(!btn) return;
-  if(theme==='dark'){
-    btn.innerHTML='☀️ <span class="label">Claro</span>';
-    btn.title='Alternar para tema claro';
-  } else {
-    btn.innerHTML='🌙 <span class="label">Escuro</span>';
-    btn.title='Alternar para tema escuro';
+  if(btn){
+    if(theme==='dark'){
+      btn.innerHTML='☀️ <span class="label">Claro</span>';
+      btn.title='Alternar para tema claro';
+    } else {
+      btn.innerHTML='🌙 <span class="label">Escuro</span>';
+      btn.title='Alternar para tema escuro';
+    }
+  }
+  // Update settings menu item
+  const menuItem = document.getElementById('themeMenuItem');
+  if(menuItem){
+    if(theme==='dark'){
+      menuItem.innerHTML='<span class="si-icon">☀️</span><span class="si-label">Tema Claro</span>';
+    } else {
+      menuItem.innerHTML='<span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span>';
+    }
   }
 }
+
+// ========= SETTINGS DROPDOWN =========
+function toggleSettings(){
+  const dd = document.getElementById('settingsDropdown');
+  if(dd) dd.classList.toggle('open');
+}
+
+function closeSettings(){
+  const dd = document.getElementById('settingsDropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+// Close settings on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.settings-wrap')) closeSettings();
+});
 
 // ========= UPLOAD / ATUALIZAR BASE =========
 let baseFileInfo = null;
@@ -2728,9 +2775,9 @@ function updateBaseInfo(){
 // ========= INITIALIZATION =========
 async function initSheetsIntegration(){
   createSyncIndicator();
-  // Disable sync button until data is loaded
-  const syncBtn=document.getElementById('btnSync');
-  if(syncBtn){syncBtn.disabled=true;syncBtn.style.opacity='.5';}
+  // Disable sync item until data is loaded
+  const syncBtn=document.getElementById('btnSyncItem');
+  if(syncBtn){syncBtn.style.opacity='.5';syncBtn.style.pointerEvents='none';}
   if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
     showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
     // Render empty state
@@ -2749,8 +2796,8 @@ async function initSheetsIntegration(){
     renderMgmtKpis();
     renderStagingBars();
     renderStagingTable();
-    // Enable sync button now that data is loaded
-    if(syncBtn){syncBtn.disabled=false;syncBtn.style.opacity='1';}
+    // Enable sync item now that data is loaded
+    if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
   } else {
     // Failed to load - show error state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
