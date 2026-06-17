@@ -663,6 +663,24 @@ function recomputeAll(){
 }
 
 // ========= NAVIGATION =========
+function getActiveTab(){
+  const panels=['overview','duplicates','divergences','management','history','exports'];
+  for(const p of panels){
+    const el=document.getElementById('panel-'+p);
+    if(el&&el.classList.contains('active')) return p;
+  }
+  return 'overview';
+}
+
+function refreshActiveTab(){
+  const tab=getActiveTab();
+  if(tab==='overview'){renderKPIs();renderOverviewTable();}
+  if(tab==='duplicates') renderDupTable();
+  if(tab==='divergences') renderDivergences();
+  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
+  if(tab==='history') renderHistory();
+}
+
 function goTab(tab){
   // Close drawer and modal if open
   closeDrawer();
@@ -2381,6 +2399,7 @@ function commitStaging(){
     STAGING.ops=[];STAGING.data=null;
     recomputeAll();
     renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
+    refreshActiveTab();
     closeModal();
     showToast('Alterações salvas com sucesso!','success');
   },'green');
@@ -2949,6 +2968,7 @@ commitStaging = function(){
       STAGING.ops=[];STAGING.data=null;
       recomputeAll();initAnos();
       renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();renderOverviewTable();
+      refreshActiveTab();
       chartsInitialized=false;
       closeModal();
       showToast('Alterações salvas com sucesso!','success');
@@ -3525,6 +3545,7 @@ async function confirmUpload(){
   renderStagingBars();
   renderStagingTable();
   renderMgmtKpis();
+  refreshActiveTab();
   dataLoadedFromSheets=true; // Mark as valid data loaded
   // Save base info
   baseFileInfo = {
@@ -3598,6 +3619,7 @@ async function initSheetsIntegration(){
     renderMgmtKpis();
     renderStagingBars();
     renderStagingTable();
+    refreshActiveTab();
     // Enable sync item now that data is loaded
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
   } else {
