@@ -372,7 +372,7 @@ tr:hover .row-actions{opacity:1}
     <div class="card">
       <div class="card-title"><span class="icon">📊</span> Resumo por Categorias</div>
       <div class="filter-row">
-        <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="renderOverviewTable()">
+        <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="debouncedRenderOverviewTable()">
         <select id="ovSort" onchange="renderOverviewTable()">
           <option value="name">A-Z</option>
           <option value="count_desc">Mais modelos</option>
@@ -405,8 +405,8 @@ tr:hover .row-actions{opacity:1}
     <div class="card">
       <div class="card-title"><span class="icon">🔁</span> Modelos Duplicados (em múltiplas categorias)</div>
       <div class="filter-row">
-        <input type="text" id="dupBrandFilter" placeholder="Filtrar marca..." oninput="renderDupTable()">
-        <input type="text" id="dupModelFilter" placeholder="Filtrar modelo..." oninput="renderDupTable()">
+        <input type="text" id="dupBrandFilter" placeholder="Filtrar marca..." oninput="debouncedRenderDupTable()">
+        <input type="text" id="dupModelFilter" placeholder="Filtrar modelo..." oninput="debouncedRenderDupTable()">
         <select id="dupCountFilter" onchange="renderDupTable()">
           <option value="0">Todas as qtd.</option>
           <option value="2">≥ 2 categorias</option>
@@ -468,7 +468,7 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title"><span class="icon">📝</span> Alterações Pendentes</div>
       <div id="stagingSummary" style="margin-bottom:12px"></div>
       <div class="filter-row" id="stagingFilterRow" style="display:none">
-        <input type="text" id="stagingFilter" placeholder="Filtrar pendentes..." oninput="renderStagingTable()">
+        <input type="text" id="stagingFilter" placeholder="Filtrar pendentes..." oninput="debouncedRenderStagingTable()">
         <select id="stagingTypeFilter" onchange="renderStagingTable()">
           <option value="">Todos os tipos</option>
           <option value="Adição">Adição</option>
@@ -494,7 +494,7 @@ tr:hover .row-actions{opacity:1}
     <div class="card">
       <div class="card-title"><span class="icon">📜</span> Histórico de Alterações</div>
       <div class="filter-row">
-        <input type="text" id="histFilter" placeholder="Buscar..." oninput="renderHistory()">
+        <input type="text" id="histFilter" placeholder="Buscar..." oninput="debouncedRenderHistory()">
         <select id="histType" onchange="renderHistory()">
           <option value="">Todos os tipos</option>
           <option value="Adição">Adição</option>
@@ -634,6 +634,16 @@ function norm(s){
   _normCache[s]=r;
   return r;
 }
+
+// Debounce utility
+function debounce(fn, delay){
+  let timer;
+  return function(...args){clearTimeout(timer);timer=setTimeout(()=>fn.apply(this,args),delay);}
+}
+const debouncedRenderOverviewTable=debounce(()=>renderOverviewTable(),200);
+const debouncedRenderDupTable=debounce(()=>renderDupTable(),200);
+const debouncedRenderHistory=debounce(()=>renderHistory(),200);
+const debouncedRenderStagingTable=debounce(()=>renderStagingTable(),200);
 
 function recomputeAll(){
   CATEGORIES = Object.keys(RAW);
