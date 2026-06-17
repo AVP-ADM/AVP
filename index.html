@@ -1812,8 +1812,29 @@ function renderDupTable(){
 }
 
 function exportDuplicates(){
-  const rows = DUPLICATES.map(d=>[d.marca,d.modelo,typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'',d.cats.join('; '),d.count]);
-  downloadCSV(toCSV(rows,['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias']),'duplicados.csv');
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const headers=['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias'];
+  const rows = [];
+  // Row 1: blank
+  rows.push(headers.map(()=>''));
+  // Row 2: headers
+  rows.push(headers);
+  // Row 3+: data
+  for(const d of DUPLICATES){
+    rows.push([d.marca, d.modelo, typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'', d.cats.join('; '), d.count]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:50},{wch:16}];
+  // Style row 2 headers - black background, white text
+  const colLetters='ABCDE';
+  for(let i=0;i<headers.length;i++){
+    const cell=colLetters[i]+'2';
+    if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb, ws, 'Duplicados');
+  XLSX.writeFile(wb, 'duplicados_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Duplicados exportados com sucesso!','success');
 }
 
 function confirmRemoveFromCat(marca, modelo, categoria){
