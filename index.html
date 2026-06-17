@@ -2065,30 +2065,146 @@ function renderDivergences(){
 
   const modelsA = getModelsForCat(g.a);
   const modelsB = getModelsForCat(g.b);
-  const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-  const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+  // Filter out models that have a pending addition to the other category (already "copied")
+  const onlyA = modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.b));
+  const onlyB = modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,g.a));
   const inBoth = modelsA.filter(m=>modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
+  // Count pending copies as "in both" for display
+  const pendingCopiesCount = STAGING.ops.filter(op=>op.type==='Adição'&&((op.catTo===g.a)||(op.catTo===g.b))&&op._divCopy).length;
 
   document.getElementById('compStats').innerHTML = `
     <span class="badge badge-red">Somente ${g.a}: ${onlyA.length}</span>
     <span class="badge badge-amber">Somente ${g.b}: ${onlyB.length}</span>
-    <span class="badge badge-green">Em ambas: ${inBoth.length}</span>
+    <span class="badge badge-green">Em ambas: ${inBoth.length+pendingCopiesCount}</span>
   `;
+
+  const eA=g.a.replace(/'/g,"\\'");
+  const eB=g.b.replace(/'/g,"\\'");
 
   document.getElementById('compContent').innerHTML = `
     <div class="comp-card" style="border-color:var(--red-light)">
       <h5><span class="badge badge-red">${onlyA.length}</span> Somente em ${g.a}</h5>
-      <div class="model-list">${onlyA.map(m=>`<div><strong>${m.marca}</strong> — ${m.modelo}</div>`).join('')||'<div>Nenhum</div>'}</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')">➡️ Copiar Todos para ${g.b.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyA')" id="btnCopySelA" style="display:none">📋 Copiar Selecionados</button>
+      </div>
+      <div class="model-list" id="divListA">${onlyA.map((m,i)=>{
+        const em=m.marca.replace(/'/g,"\\'");
+        const emo=m.modelo.replace(/'/g,"\\'");
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <input type="checkbox" class="div-check-a" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('A')">
+          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eA}','${eB}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.b}">➡️</button>
+        </div>`;
+      }).join('')||'<div>Nenhum</div>'}</div>
     </div>
     <div class="comp-card" style="border-color:var(--amber-light)">
       <h5><span class="badge badge-amber">${onlyB.length}</span> Somente em ${g.b}</h5>
-      <div class="model-list">${onlyB.map(m=>`<div><strong>${m.marca}</strong> — ${m.modelo}</div>`).join('')||'<div>Nenhum</div>'}</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')">⬅️ Copiar Todos para ${g.a.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyB')" id="btnCopySelB" style="display:none">📋 Copiar Selecionados</button>
+      </div>
+      <div class="model-list" id="divListB">${onlyB.map((m,i)=>{
+        const em=m.marca.replace(/'/g,"\\'");
+        const emo=m.modelo.replace(/'/g,"\\'");
+        return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
+          <input type="checkbox" class="div-check-b" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('B')">
+          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eB}','${eA}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.a}">⬅️</button>
+        </div>`;
+      }).join('')||'<div>Nenhum</div>'}</div>
     </div>
     <div class="comp-card" style="border-color:var(--green-light)">
-      <h5><span class="badge badge-green">${inBoth.length}</span> Em ambas</h5>
+      <h5><span class="badge badge-green">${inBoth.length+pendingCopiesCount}</span> Em ambas</h5>
       <div class="model-list">${inBoth.slice(0,50).map(m=>`<div><strong>${m.marca}</strong> — ${m.modelo}</div>`).join('')}${inBoth.length>50?'<div style="color:var(--text3)">...e mais '+(inBoth.length-50)+'</div>':''}</div>
     </div>
   `;
+}
+
+// Check if a model has a pending copy to a specific category
+function isPendingCopyTo(marca, modelo, catTo){
+  return STAGING.ops.some(op=>op.type==='Adição'&&op._divCopy&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===catTo);
+}
+
+// Copy a single model to the compared category
+function copyModelToCategory(marca, modelo, catFrom, catTo){
+  // Validate: check if already exists in destination
+  const destModels=getModelsForCat(catTo);
+  if(destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
+    showToast('Este modelo já existe na categoria de destino.','warning');
+    return;
+  }
+  // Check if already pending
+  if(isPendingCopyTo(marca,modelo,catTo)){
+    showToast('Já existe uma cópia pendente para este modelo.','warning');
+    return;
+  }
+  addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+  showToast(marca+' — '+modelo+' → copiado para '+catTo,'success');
+  renderDivergences();
+  renderOverviewTable();
+  renderKPIs();
+}
+
+// Copy all divergences from one side to the other
+function copyAllDivergences(catFrom, catTo){
+  const modelsFrom=getModelsForCat(catFrom);
+  const modelsTo=getModelsForCat(catTo);
+  const only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
+  if(!only.length){showToast('Nenhum modelo para copiar','warning');return;}
+  showModal('Copiar '+only.length+' modelo(s)?','Deseja copiar todos os modelos exclusivos de <strong>'+catFrom+'</strong> para <strong>'+catTo+'</strong>?<br><br><span style="font-size:.78rem;color:var(--text2)">Serão criadas '+only.length+' alterações pendentes.</span>',function(){
+    let count=0;
+    for(const m of only){
+      if(!isPendingCopyTo(m.marca,m.modelo,catTo)){
+        addToStaging({type:'Adição',marca:m.marca,modelo:m.modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+        count++;
+      }
+    }
+    closeModal();
+    showToast(count+' modelo(s) copiado(s) para '+catTo,'success');
+    renderDivergences();
+    renderOverviewTable();
+    renderKPIs();
+  },'blue');
+}
+
+// Update selection button visibility
+function updateDivSelection(side){
+  const cls=side==='A'?'div-check-a':'div-check-b';
+  const btnId=side==='A'?'btnCopySelA':'btnCopySelB';
+  const checked=document.querySelectorAll('.'+cls+':checked').length;
+  const btn=document.getElementById(btnId);
+  if(btn){
+    btn.style.display=checked>0?'':'none';
+    btn.textContent='📋 Copiar '+checked+' Selecionado(s)';
+  }
+}
+
+// Copy selected divergences
+function copySelectedDivergences(listId){
+  const g=COMP_GROUPS[currentCompGroup];
+  if(!g) return;
+  let catFrom,catTo,cls;
+  if(listId==='onlyA'){catFrom=g.a;catTo=g.b;cls='div-check-a';}
+  else{catFrom=g.b;catTo=g.a;cls='div-check-b';}
+  const checks=document.querySelectorAll('.'+cls+':checked');
+  if(!checks.length){showToast('Nenhum modelo selecionado','warning');return;}
+  let count=0;
+  checks.forEach(cb=>{
+    const marca=cb.dataset.marca;
+    const modelo=cb.dataset.modelo;
+    if(!isPendingCopyTo(marca,modelo,catTo)){
+      const destModels=getModelsForCat(catTo);
+      if(!destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
+        addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
+        count++;
+      }
+    }
+  });
+  showToast(count+' modelo(s) copiado(s) para '+catTo,'success');
+  renderDivergences();
+  renderOverviewTable();
+  renderKPIs();
 }
 
 // ========= MANAGEMENT =========
