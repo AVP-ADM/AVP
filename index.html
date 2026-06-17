@@ -413,11 +413,12 @@ tr:hover .row-actions{opacity:1}
           <option value="4">≥ 4 categorias</option>
         </select>
         <button class="btn btn-blue btn-sm" onclick="exportDuplicates()">📥 Exportar</button>
+        <button class="btn btn-red btn-sm" onclick="removeSelectedDuplicates()" id="btnRemoveSelDup" style="display:none">🗑️ Remover Selecionados</button>
       </div>
       <div id="dupCount" style="font-size:.78rem;color:var(--text2);margin-bottom:10px"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Marca</th><th>Modelo</th><th>Ano Aceitação</th><th>Categorias</th><th>Qtd.</th></tr></thead>
+          <thead><tr><th><input type="checkbox" id="dupSelectAll" onchange="toggleDupSelectAll()"></th><th>#</th><th>Marca</th><th>Modelo</th><th>Ano Aceitação</th><th>Categorias</th><th>Qtd.</th></tr></thead>
           <tbody id="dupTableBody"></tbody>
         </table>
       </div>
@@ -430,6 +431,7 @@ tr:hover .row-actions{opacity:1}
     <div class="card">
       <div class="card-title"><span class="icon">⚖️</span> Comparação entre Categorias</div>
       <div class="comp-tabs" id="compTabs"></div>
+      <div class="filter-row"><input type="text" id="divSearchFilter" placeholder="Filtrar modelos nas divergências..." oninput="filterDivergencesList()"></div>
       <div id="compStats" style="display:flex;gap:12px;margin-bottom:16px"></div>
       <div class="comp-section" id="compContent"></div>
     </div>
@@ -748,6 +750,8 @@ function goTab(tab){
   closeDrawer();
   // Reset all filters and state
   resetTabFilters();
+  // Scroll to top
+  window.scrollTo(0,0);
 
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -1937,6 +1941,7 @@ function renderDupTable(){
       return `<span class="tag tag-blue" title="Última categoria - não pode remover">${c}</span>`;
     }).join(' ');
     return `<tr>
+      <td><input type="checkbox" class="dup-check" data-marca="${d.marca}" data-modelo="${d.modelo}" onchange="updateDupSelection()"></td>
       <td style="color:var(--text2)">${start+i+1}</td>
       <td><strong>${d.marca}</strong></td>
       <td>${d.modelo}</td>
@@ -1944,7 +1949,7 @@ function renderDupTable(){
       <td>${catBadges}</td>
       <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="6" class="empty">Nenhum duplicado encontrado</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhum duplicado encontrado</td></tr>';
 
   renderPagination('dupPagination', pages, dupPage, p=>{dupPage=p;renderDupTable();});
 }
@@ -1973,6 +1978,48 @@ function exportDuplicates(){
   XLSX.utils.book_append_sheet(wb, ws, 'Duplicados');
   XLSX.writeFile(wb, 'duplicados_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Duplicados exportados com sucesso!','success');
+}
+
+function toggleDupSelectAll(){
+  const all=document.getElementById('dupSelectAll');
+  document.querySelectorAll('.dup-check').forEach(cb=>cb.checked=all.checked);
+  updateDupSelection();
+}
+
+function updateDupSelection(){
+  const checked=document.querySelectorAll('.dup-check:checked').length;
+  const btn=document.getElementById('btnRemoveSelDup');
+  if(btn) btn.style.display=checked>0?'':'none';
+  if(btn&&checked>0) btn.textContent='🗑️ Remover '+checked+' Selecionado(s)';
+}
+
+function removeSelectedDuplicates(){
+  const checks=document.querySelectorAll('.dup-check:checked');
+  if(!checks.length){showToast('Nenhum modelo selecionado','warning');return;}
+  showModal('Remover '+checks.length+' modelo(s)?','Deseja marcar '+checks.length+' modelo(s) para remoção de TODAS as categorias duplicadas (mantendo apenas a primeira)?<br><br><span style="font-size:.78rem;color:var(--text2)">As remoções serão adicionadas às Alterações Pendentes.</span>',function(){
+    let count=0;
+    checks.forEach(cb=>{
+      const marca=cb.dataset.marca;
+      const modelo=cb.dataset.modelo;
+      const dup=DUPLICATES.find(d=>d.marca===marca&&d.modelo===modelo);
+      if(dup&&dup.cats.length>1){
+        // Remove from all categories except the first one
+        for(let i=1;i<dup.cats.length;i++){
+          if(!isPendingRemoval(marca,modelo,dup.cats[i])){
+            addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:dup.cats[i],catTo:null},true);
+            count++;
+          }
+        }
+      }
+    });
+    closeModal();
+    if(count>0){
+      showToast(count+' remoção(ões) adicionada(s) às pendentes','success');
+      renderDupTable();
+      renderOverviewTable();
+      renderKPIs();
+    }
+  },'red');
 }
 
 function confirmRemoveFromCat(marca, modelo, categoria){
@@ -2386,6 +2433,16 @@ function copySelectedDivergences(listId){
   renderKPIs();
 }
 
+// Filter divergences list by search text
+function filterDivergencesList(){
+  const query=norm(document.getElementById('divSearchFilter').value);
+  document.querySelectorAll('#compContent .comp-card .model-list > div').forEach(div=>{
+    if(!query) {div.style.display='';return;}
+    const text=norm(div.textContent);
+    div.style.display=text.includes(query)?'':'none';
+  });
+}
+
 // ========= MANAGEMENT =========
 function getStagingData(){
   if(STAGING.data) return JSON.parse(JSON.stringify(STAGING.data));
@@ -2542,6 +2599,8 @@ function renderStagingBars(){
   const bar = document.getElementById('stagingBar');
   if(STAGING.ops.length>0){bar.classList.add('visible');document.getElementById('stagingCount').textContent=STAGING.ops.length;}
   else{bar.classList.remove('visible');}
+  // Update page title with pending count
+  document.title=STAGING.ops.length>0?'('+STAGING.ops.length+') Dashboard AVP':'Dashboard de Auditoria de Veículos — AVP';
 }
 
 let stagingPage=1;
