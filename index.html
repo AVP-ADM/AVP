@@ -514,36 +514,37 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: EXPORTAÇÕES ========= -->
   <div class="tab-panel" id="panel-exports">
-    <div class="export-grid">
+    <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="spinner" style="margin:0 auto 10px"></div>Aguardando carregamento dos dados...</div>
+    <div class="export-grid" id="exportsGrid">
       <div class="export-card">
         <div class="icon">📦</div>
         <h4>Base Completa</h4>
         <p>Exportar todos os modelos separados por categoria com histórico ao lado</p>
-        <button class="btn btn-blue" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
+        <button class="btn btn-blue export-btn" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">📝</div>
         <h4>Apenas Alterações</h4>
         <p>Exportar somente as modificações realizadas na sessão atual</p>
-        <button class="btn btn-green" onclick="exportChangesXLSX()">Exportar XLSX</button>
+        <button class="btn btn-green export-btn" onclick="exportChangesXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">⚖️</div>
         <h4>Relatório de Divergências</h4>
         <p>Exportar comparação detalhada entre categorias similares</p>
-        <button class="btn btn-amber" onclick="exportDivergencesXLSX()">Exportar XLSX</button>
+        <button class="btn btn-amber export-btn" onclick="exportDivergencesXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">📜</div>
         <h4>Histórico Completo</h4>
         <p>Exportar todo o histórico de alterações registradas</p>
-        <button class="btn btn-blue" onclick="exportHistoryXLSX()">Exportar XLSX</button>
+        <button class="btn btn-blue export-btn" onclick="exportHistoryXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon">🔁</div>
         <h4>Duplicidades</h4>
         <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
-        <button class="btn btn-red" onclick="exportDuplicates()">Exportar XLSX</button>
+        <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
       </div>
     </div>
   </div>
@@ -3546,6 +3547,7 @@ async function confirmUpload(){
   renderStagingTable();
   renderMgmtKpis();
   refreshActiveTab();
+  enableExportButtons();
   dataLoadedFromSheets=true; // Mark as valid data loaded
   // Save base info
   baseFileInfo = {
@@ -3605,6 +3607,7 @@ async function initSheetsIntegration(){
     showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
     // Render empty state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+    enableExportButtons();
     return;
   }
   const loaded=await sheetsLoad();
@@ -3622,9 +3625,11 @@ async function initSheetsIntegration(){
     refreshActiveTab();
     // Enable sync item now that data is loaded
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
+    enableExportButtons();
   } else {
     // Failed to load - show error state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+    enableExportButtons();
     showToast('Falha ao carregar dados do Google Sheets. Verifique a conexão.','error');
   }
 }
@@ -3633,10 +3638,32 @@ function initApp(){
   initTheme();
   updateBaseInfo();
   updateSyncInfo();
+  // Disable export buttons until data is loaded
+  disableExportButtons();
   // Don't render anything until data loads from Sheets
   // Show loading state
   document.getElementById('kpiGrid').innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><div class="spinner" style="margin:0 auto 10px"></div>Carregando dados do Google Sheets...</div>';
+  const exportsLoading=document.getElementById('exportsLoading');
+  if(exportsLoading) exportsLoading.style.display='block';
   initSheetsIntegration();
+}
+
+function disableExportButtons(){
+  document.querySelectorAll('.export-btn').forEach(btn=>{
+    btn.disabled=true;
+    btn.style.opacity='.4';
+    btn.style.pointerEvents='none';
+  });
+}
+
+function enableExportButtons(){
+  document.querySelectorAll('.export-btn').forEach(btn=>{
+    btn.disabled=false;
+    btn.style.opacity='1';
+    btn.style.pointerEvents='';
+  });
+  const exportsLoading=document.getElementById('exportsLoading');
+  if(exportsLoading) exportsLoading.style.display='none';
 }
 
 // Start the app
