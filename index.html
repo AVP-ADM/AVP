@@ -1166,12 +1166,41 @@ function getPendingBrandChangeType(marca, categoria){
   return op?op.type:null;
 }
 
+function exportBrandsXLSX(cat){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  if(!RAW[cat]){showToast('Categoria não encontrada','error');return;}
+  const wb = XLSX.utils.book_new();
+  const brands=Object.keys(RAW[cat].brands||{}).sort();
+  const rows = [];
+  // Row 1: blank
+  rows.push(['','']);
+  // Row 2: headers
+  rows.push(['Marca','Qtd. Modelos']);
+  // Row 3+: data
+  for(const b of brands){
+    rows.push([b, (RAW[cat].brands[b]||[]).length]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:25},{wch:14}];
+  // Style row 2 headers
+  const headerCells=['A2','B2'];
+  for(const c of headerCells){
+    if(ws[c]) ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  let safeName = ('Marcas_'+cat).replace(/[\\\/?*\[\]]/g,'-');
+  if(safeName.length>31) safeName=safeName.substring(0,31);
+  XLSX.utils.book_append_sheet(wb, ws, safeName);
+  XLSX.writeFile(wb, safeName+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Marcas de "'+cat+'" exportadas com sucesso!','success');
+}
+
 function buildBrandListWithActions(brands, cat){
   const searchId='drawerSearch_catBrands';
   const eCat=cat.replace(/'/g,"\\'");
   let html='<div class="drawer-toolbar">';
   html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar marca..." oninput="filterBrandList()">';
   html+=`<button class="btn btn-sm btn-green" onclick="openAddBrandToCat('${eCat}')">+ Adicionar Marca</button>`;
+  html+=`<button class="btn btn-sm btn-blue" onclick="exportBrandsXLSX('${eCat}')" title="Exportar marcas desta categoria">📥 Exportar</button>`;
   html+='</div>';
   html+='<div class="drawer-count" id="brandListCount">'+brands.length+' marcas</div>';
   html+='<div id="brandListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
