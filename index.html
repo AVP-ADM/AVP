@@ -2121,11 +2121,7 @@ function renderDivergences(){
   // Count pending copies as "in both" for display
   const pendingCopiesCount = STAGING.ops.filter(op=>op.type==='Adição'&&((op.catTo===g.a)||(op.catTo===g.b))&&op._divCopy).length;
 
-  document.getElementById('compStats').innerHTML = `
-    <span class="badge badge-red">Somente ${g.a}: ${onlyA.length}</span>
-    <span class="badge badge-amber">Somente ${g.b}: ${onlyB.length}</span>
-    <span class="badge badge-green">Em ambas: ${inBoth.length+pendingCopiesCount}</span>
-  `;
+  document.getElementById('compStats').innerHTML = '';
 
   const eA=g.a.replace(/'/g,"\\'");
   const eB=g.b.replace(/'/g,"\\'");
