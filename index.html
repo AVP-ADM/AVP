@@ -1329,7 +1329,7 @@ function renderDupTable(){
       const escapedModelo = d.modelo.replace(/'/g,"\\'");
       const pending = isPendingRemoval(d.marca, d.modelo, c);
       if(pending){
-        return `<span class="tag tag-amber" title="Remoção pendente - clique para cancelar" style="cursor:pointer" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')">${c} ⏳ <span style="font-size:9px;opacity:.7">✕</span></span>`;
+        return `<span class="tag tag-amber" title="Remoção pendente">${c} ⏳ <span style="font-size:9px;cursor:pointer;opacity:.7;margin-left:2px" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Cancelar remoção">✕</span></span>`;
       }
       if(canRemove){
         return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
