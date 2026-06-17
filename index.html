@@ -2161,7 +2161,20 @@ function renderDivergences(){
     </div>
     <div class="comp-card" style="border-color:var(--green-light)">
       <h5><span class="badge badge-green">${inBoth.length+pendingCopiesCount}</span> Em ambas</h5>
-      <div class="model-list">${inBoth.slice(0,50).map(m=>`<div><strong>${m.marca}</strong> — ${m.modelo}</div>`).join('')}${inBoth.length>50?'<div style="color:var(--text3)">...e mais '+(inBoth.length-50)+'</div>':''}</div>
+      <div class="model-list">${(()=>{
+        // Pending copies shown first with highlight
+        const pendingCopies=STAGING.ops.filter(op=>op.type==='Adição'&&op._divCopy&&(op.catTo===g.a||op.catTo===g.b));
+        let html=pendingCopies.map(op=>{
+          const eM=op.marca.replace(/'/g,"\\'");
+          const eMo=op.modelo.replace(/'/g,"\\'");
+          const idx=STAGING.ops.indexOf(op);
+          return '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:var(--green-bg);border:1px solid var(--green-light);display:flex;align-items:center;gap:6px" title="Copiado para '+op.catTo+'. Aguardando Salvar Alterações."><span style="font-size:.7rem">➕</span><span style="flex:1;font-size:.78rem"><strong>'+op.marca+'</strong> — '+op.modelo+' <span class="tag tag-green" style="font-size:.55rem;vertical-align:middle">⏳ Pendente</span></span><span onclick="removeFromStaging('+idx+');renderDivergences()" style="cursor:pointer;font-size:9px;opacity:.6;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=1;this.style.transform=\'scale(1.3)\'" onmouseout="this.style.opacity=.6;this.style.transform=\'scale(1)\'" title="Cancelar cópia">✕</span></div>';
+        }).join('');
+        // Regular "in both" models
+        html+=inBoth.slice(0,50).map(m=>'<div><strong>'+m.marca+'</strong> — '+m.modelo+'</div>').join('');
+        if(inBoth.length>50) html+='<div style="color:var(--text3)">...e mais '+(inBoth.length-50)+'</div>';
+        return html||'<div>Nenhum</div>';
+      })()}</div>
     </div>
   `;
 }
