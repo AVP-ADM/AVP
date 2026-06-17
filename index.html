@@ -1744,15 +1744,19 @@ function renderHistory(){
   const start = (histPage-1)*HIST_PER_PAGE;
   const page = items.slice(start, start+HIST_PER_PAGE);
 
-  document.getElementById('histTableBody').innerHTML = page.map((h,i)=>`<tr>
+  document.getElementById('histTableBody').innerHTML = page.map((h,i)=>{
+    const isCatOp=(h.type||'').includes('Categoria');
+    const tagClass=(h.type||'').includes('Adição')||(h.type||'').includes('Criação')?'tag-green':(h.type||'').includes('Remoção')?'tag-red':'tag-blue';
+    return `<tr>
     <td style="color:var(--text2)">${start+i+1}</td>
     <td style="font-size:.78rem">${h.timestamp||'—'}</td>
-    <td><span class="tag ${h.type==='Adição'?'tag-green':h.type==='Remoção'?'tag-red':'tag-blue'}">${h.type}</span></td>
-    <td>${h.marca}</td>
-    <td>${h.modelo}</td>
+    <td><span class="tag ${tagClass}">${h.type}</span></td>
+    <td>${isCatOp?'—':h.marca}</td>
+    <td>${isCatOp?'—':h.modelo}</td>
     <td>${h.catFrom||'—'}</td>
     <td>${h.catTo||'—'}</td>
-  </tr>`).join('')||'<tr><td colspan="7" class="empty">Nenhum registro no histórico</td></tr>';
+  </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhum registro no histórico</td></tr>';
 
   renderPagination('histPagination', pages, histPage, p=>{histPage=p;renderHistory();});
 }
