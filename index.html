@@ -2556,6 +2556,7 @@ function clearStaging(){
     STAGING.ops=[];STAGING.data=null;
     saveStagingToStorage();
     clearStagingStorage();
+    rebuildPendingIndex();
     renderStagingBars();renderStagingTable();closeModal();
     // Re-render views to restore any hidden models
     if(hadRemovals){
@@ -2597,6 +2598,7 @@ function commitStaging(){
     }
     STAGING.ops=[];STAGING.data=null;
     clearStagingStorage();
+    rebuildPendingIndex();
     recomputeAll();
     renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
     refreshActiveTab();
@@ -3325,6 +3327,7 @@ commitStaging = function(){
       }
       STAGING.ops=[];STAGING.data=null;
       clearStagingStorage();
+      rebuildPendingIndex();
       recomputeAll();initAnos();
       renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();renderOverviewTable();
       refreshActiveTab();

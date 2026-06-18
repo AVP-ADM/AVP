@@ -204,6 +204,91 @@ function loadData() {
 
 function saveData(payload) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var rawData = JSON.parse(payload);
+  var cats = Object.keys(rawData);
+  
+  // Check if using category-based sheets (no "Dados" sheet or has category sheets)
+  var hasCategorySheets = false;
+  var excludeNames = ['Historico', 'Usuarios', '_Control', 'Dados'];
+  var sheets = ss.getSheets();
+  for (var s = 0; s < sheets.length; s++) {
+    var name = sheets[s].getName();
+    if (excludeNames.indexOf(name) < 0 && sheets[s].getLastRow() > 2) {
+      var h = sheets[s].getRange(2, 1).getValue();
+      if (h && h.toString().toLowerCase().indexOf('marca') >= 0) {
+        hasCategorySheets = true;
+        break;
+      }
+    }
+  }
+  
+  if (hasCategorySheets) {
+    // Save to category-based sheets (one sheet per category)
+    for (var i = 0; i < cats.length; i++) {
+      var cat = cats[i];
+      var sheet = ss.getSheetByName(cat);
+      if (!sheet) {
+        sheet = ss.insertSheet(cat);
+      } else {
+        // Preserve history columns (E, F, G) if they exist
+        var lastCol = sheet.getLastColumn();
+        var historyData = null;
+        if (lastCol >= 5) {
+          var lastRow = sheet.getLastRow();
+          if (lastRow > 0) {
+            historyData = sheet.getRange(1, 5, lastRow, lastCol - 4).getValues();
+          }
+        }
+        // Clear data columns (A-C) only
+        var lastRow = sheet.getLastRow();
+        if (lastRow > 0) {
+          sheet.getRange(1, 1, lastRow, 4).clear();
+        }
+        // Restore history if it existed
+        if (historyData && historyData.length > 0) {
+          sheet.getRange(1, 5, historyData.length, historyData[0].length).setValues(historyData);
+        }
+      }
+      // Write header on row 2 (row 1 blank)
+      sheet.getRange(2, 1, 1, 3).setValues([['Marca', 'Modelo', 'Ano de Aceitacao']]);
+      // Build rows
+      var rows = [];
+      var brands = Object.keys(rawData[cat].brands || {});
+      for (var j = 0; j < brands.length; j++) {
+        var brand = brands[j];
+        var models = rawData[cat].brands[brand];
+        for (var k = 0; k < models.length; k++) {
+          rows.push([brand, models[k], 'Ano da categoria']);
+        }
+      }
+      if (rows.length > 0) {
+        sheet.getRange(3, 1, rows.length, 3).setValues(rows);
+      }
+      // Format header
+      var header = sheet.getRange(2, 1, 1, 3);
+      header.setFontWeight('bold');
+      header.setBackground('#1a1a2e');
+      header.setFontColor('#ffffff');
+      header.setHorizontalAlignment('center');
+    }
+    // Remove sheets for categories that no longer exist
+    var existingSheets = ss.getSheets();
+    for (var s = 0; s < existingSheets.length; s++) {
+      var name = existingSheets[s].getName();
+      if (excludeNames.indexOf(name) < 0 && cats.indexOf(name) < 0) {
+        // Check if it's a category sheet before deleting
+        if (existingSheets[s].getLastRow() > 1) {
+          var h = existingSheets[s].getRange(2, 1).getValue();
+          if (h && h.toString().toLowerCase().indexOf('marca') >= 0) {
+            ss.deleteSheet(existingSheets[s]);
+          }
+        }
+      }
+    }
+    return { success: true, message: cats.length + ' categorias salvas' };
+  }
+  
+  // Fallback: save to single "Dados" sheet
   var sheet = ss.getSheetByName('Dados');
   if (!sheet) {
     sheet = ss.insertSheet('Dados');
@@ -221,9 +306,7 @@ function saveData(payload) {
   var existingFilter = sheet.getFilter();
   if (existingFilter) existingFilter.remove();
   sheet.getRange(1, 1, 1, 4).setValues([['Categoria', 'Marca', 'Modelo', 'Ano de Aceitacao']]);
-  var rawData = JSON.parse(payload);
   var rows = [];
-  var cats = Object.keys(rawData);
   for (var i = 0; i < cats.length; i++) {
     var cat = cats[i];
     var brands = Object.keys(rawData[cat].brands);
