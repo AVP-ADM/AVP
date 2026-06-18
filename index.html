@@ -344,7 +344,10 @@ tr:hover .row-actions{opacity:1}
       <label style="font-size:.78rem;color:var(--text2);font-weight:600">Usuário</label>
       <input id="loginUser" placeholder="Digite seu nome de usuário..." style="padding:10px 14px;font-size:.88rem">
       <label style="font-size:.78rem;color:var(--text2);font-weight:600">Senha</label>
-      <input id="loginPass" type="password" placeholder="Digite sua senha..." style="padding:10px 14px;font-size:.88rem" onkeydown="if(event.key==='Enter')doLogin()">
+      <div style="position:relative">
+        <input id="loginPass" type="password" placeholder="Digite sua senha..." style="padding:10px 40px 10px 14px;font-size:.88rem;width:100%" onkeydown="if(event.key==='Enter')doLogin()">
+        <span onclick="togglePassVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1rem;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="Mostrar/ocultar senha" id="passToggleIcon">👁️</span>
+      </div>
       <div id="loginError" style="font-size:.78rem;color:var(--red);display:none;margin-top:4px"></div>
       <button onclick="doLogin()" style="margin-top:12px;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--blue)'">Entrar</button>
     </div>
@@ -3982,6 +3985,13 @@ async function initSheetsIntegration(){
 // ========= LOGIN SYSTEM =========
 let currentUser=null;
 const SESSION_HOURS=8;
+
+function togglePassVisibility(){
+  const input=document.getElementById('loginPass');
+  const icon=document.getElementById('passToggleIcon');
+  if(input.type==='password'){input.type='text';icon.textContent='🙈';}
+  else{input.type='password';icon.textContent='👁️';}
+}
 
 function checkSession(){
   try{
