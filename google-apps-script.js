@@ -12,6 +12,8 @@ function doGet(e) {
       result = validateLogin(e.parameter.user, e.parameter.pass);
     } else if (action === 'getTimestamp') {
       result = getLastModifiedTimestamp();
+    } else if (action === 'loadTempReleases') {
+      result = loadTempReleases();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -40,6 +42,8 @@ function doPost(e) {
       result = releaseLock(data.user);
     } else if (action === 'updateTimestamp') {
       result = updateTimestamp(data.user);
+    } else if (action === 'saveTempReleases') {
+      result = saveTempReleases(data.payload);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -473,4 +477,61 @@ function updateTimestamp(user) {
   sheet.getRange(3, 3).setValue(user);
   sheet.getRange(3, 4).setValue(now.toLocaleString('pt-BR'));
   return { success: true };
+}
+
+
+// ========= TEMPORARY RELEASES =========
+function loadTempReleases() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('Liberacoes_Temporarias');
+  if (!sheet) {
+    return { success: true, data: [] };
+  }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { success: true, data: [] };
+  }
+  var values = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+  var releases = [];
+  for (var i = 0; i < values.length; i++) {
+    releases.push({
+      marca: values[i][0],
+      modelo: values[i][1],
+      categoria: values[i][2],
+      motivo: values[i][3],
+      dataCriacao: values[i][4],
+      usuario: values[i][5],
+      status: values[i][6] || 'Ativa',
+      dataFinalizada: values[i][7] || '',
+      usuarioFinalizado: values[i][8] || ''
+    });
+  }
+  return { success: true, data: releases };
+}
+
+function saveTempReleases(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('Liberacoes_Temporarias');
+  if (!sheet) {
+    sheet = ss.insertSheet('Liberacoes_Temporarias');
+  } else {
+    sheet.clear();
+  }
+  sheet.getRange(1, 1, 1, 9).setValues([['Marca', 'Modelo', 'Categoria', 'Motivo', 'Data Criação', 'Usuário', 'Status', 'Data Finalização', 'Usuário Finalização']]);
+  // Format header
+  var header = sheet.getRange(1, 1, 1, 9);
+  header.setFontWeight('bold');
+  header.setBackground('#78350f');
+  header.setFontColor('#ffffff');
+  header.setHorizontalAlignment('center');
+  
+  var entries = JSON.parse(payload);
+  if (entries.length === 0) return { success: true, message: 'Nenhuma liberação' };
+  var rows = [];
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    rows.push([e.marca, e.modelo, e.categoria, e.motivo, e.dataCriacao, e.usuario, e.status, e.dataFinalizada || '', e.usuarioFinalizado || '']);
+  }
+  sheet.getRange(2, 1, rows.length, 9).setValues(rows);
+  return { success: true, message: rows.length + ' liberações salvas' };
 }

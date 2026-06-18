@@ -473,6 +473,9 @@ tr:hover .row-actions{opacity:1}
         <button class="btn btn-red btn-sm" onclick="clearStaging()">✕ Descartar</button>
       </div>
     </div>
+    <div id="tempReleaseAlert" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:10px 18px;margin-bottom:16px;font-size:.82rem;color:var(--amber);font-weight:500;cursor:pointer" onclick="goTab('management');setTimeout(()=>{document.getElementById('tempReleasesCard').scrollIntoView({behavior:'smooth'})},200)">
+      ⚠️ <span id="tempReleaseAlertCount">0</span> Liberação(ões) Temporária(s) ativa(s)
+    </div>
     <div class="kpi-grid" id="mgmtKpis" style="margin-bottom:20px"></div>
     <div class="mgmt-grid">
       <div class="mgmt-card" onclick="showMgmtModal('add')">
@@ -514,6 +517,23 @@ tr:hover .row-actions{opacity:1}
         </table>
       </div>
       <div id="stagingPagination" class="pagination"></div>
+    </div>
+    <!-- TEMP RELEASES PANEL -->
+    <div class="card" id="tempReleasesCard" style="display:none">
+      <div class="card-title"><span class="icon">⚠️</span> Liberações Temporárias</div>
+      <div class="filter-row">
+        <select id="tempReleaseFilter" onchange="renderTempReleases()">
+          <option value="Ativa">Ativas</option>
+          <option value="Finalizada">Finalizadas</option>
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th><th>Motivo</th><th>Data</th><th>Status</th><th></th></tr></thead>
+          <tbody id="tempReleasesBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -667,6 +687,9 @@ let STAGING = {ops:[], data:null};
 let _savingOps = []; // Operations currently being saved to Sheets
 let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
+// ========= TEMPORARY RELEASES =========
+let TEMP_RELEASES = []; // {marca, modelo, categoria, motivo, obs, dataCriacao, usuario, status:'Ativa'|'Finalizada', dataFinalizada, usuarioFinalizado}
+
 // ========= STAGING PERSISTENCE (localStorage) =========
 function saveStagingToStorage(){
   try{localStorage.setItem('avp-staging',JSON.stringify(STAGING.ops));}catch(e){}
@@ -781,7 +804,7 @@ function refreshActiveTab(){
   if(tab==='overview'){renderKPIs();renderOverviewTable();_dirtyTabs.overview=false;}
   if(tab==='duplicates'){renderDupTable();_dirtyTabs.duplicates=false;}
   if(tab==='divergences'){renderDivergences();_dirtyTabs.divergences=false;}
-  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
+  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
   if(tab==='history'){renderHistory();_dirtyTabs.history=false;}
 }
 
@@ -804,7 +827,7 @@ function goTab(tab){
   if(tab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
   if(tab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
   if(tab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
-  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();}
+  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
   if(tab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
 }
 
@@ -1145,6 +1168,7 @@ function buildModelListWithActions(models, cat){
     const eModelo=m.modelo.replace(/'/g,"\\'");
     const pending = hasPendingChange(m.marca, m.modelo, cat);
     const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
+    const isTemp = isTempRelease(m.marca, m.modelo, cat);
     const pendingLabel = pendingType?
       (pendingType.startsWith('Salvando:')?pendingType.replace('Salvando: ','')+'...':
        pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente')
@@ -1159,7 +1183,7 @@ function buildModelListWithActions(models, cat){
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
         <span class="model-action-brand">${m.marca}</span>
-        <span class="model-action-name">${m.modelo}${pendingBadge}</span>
+        <span class="model-action-name">${m.modelo}${isTemp?' <span class="tag tag-amber" style="font-size:.55rem;vertical-align:middle">⚠️ Temporário</span>':''}${pendingBadge}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
         <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px;font-size:.65rem"${pending?' disabled':''}>✏️</button>
@@ -1219,6 +1243,18 @@ function openAddModelToCat(categoria){
     <input id="addModel_modelo" placeholder="Digite o nome do modelo...">
 
     <div id="addModel_msg" class="ac-msg"></div>
+
+    <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius)">
+      <input type="checkbox" id="addModel_temp" onchange="document.getElementById('addModel_tempFields').style.display=this.checked?'flex':'none'">
+      <span>⚠️ Liberação Temporária</span>
+    </label>
+    <div id="addModel_tempFields" style="display:none;flex-direction:column;gap:8px">
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Motivo da liberação:</label>
+      <input id="addModel_tempMotivo" placeholder="Ex: Autorização da diretoria...">
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Observações (opcional):</label>
+      <input id="addModel_tempObs" placeholder="Observações adicionais...">
+    </div>
+
     <span style="font-size:.72rem;color:var(--text3)">A adição será incluída nas Alterações Pendentes.</span>
   </div>`,function(){
     const marca=document.getElementById('addModel_marca').value.trim();
@@ -1231,9 +1267,19 @@ function openAddModelToCat(categoria){
     // Check if there's already a pending addition for the same model
     const pendingAdd=STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
     if(pendingAdd){showToast('Já existe uma adição pendente para este modelo nesta categoria.','warning');return;}
-    addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria},true);
+    // Check if temp release
+    const isTemp=document.getElementById('addModel_temp').checked;
+    if(isTemp){
+      const motivo=document.getElementById('addModel_tempMotivo').value.trim();
+      if(!motivo){showToast('Preencha o motivo da liberação temporária','error');return;}
+      const obs=document.getElementById('addModel_tempObs').value.trim();
+      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria,_temp:true},true);
+      addTempRelease(marca,modelo,categoria,motivo,obs);
+    } else {
+      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria},true);
+    }
     closeModal();
-    showToast('Adição de "'+marca+' '+modelo+'" pendente em '+categoria,'success');
+    showToast('Adição de "'+marca+' '+modelo+'"'+(isTemp?' (Temporário)':'')+' pendente em '+categoria,'success');
     // Refresh the drawer
     showCatDetail(categoria,'modelos');
   },'green');
@@ -2622,6 +2668,10 @@ function commitStaging(){
     try{
       const saved=await safeSave();
       if(saved){
+        // Also save temp releases to Sheets
+        if(TEMP_RELEASES.length>0){
+          try{await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveTempReleases',payload:JSON.stringify(TEMP_RELEASES)})});}catch(e){}
+        }
         // 4. Success: clear saving state
         _savingOps=[];
         rebuildPendingIndex();
@@ -3127,6 +3177,86 @@ function initAnos(){
 function getAno(categoria,marca,modelo){
   var key=categoria+'|||'+marca+'|||'+modelo;
   return ANOS_ACEITACAO[key]||'Ano da categoria';
+}
+
+// ========= TEMPORARY RELEASES =========
+function isTempRelease(marca, modelo, categoria){
+  return TEMP_RELEASES.some(t=>t.marca===marca&&t.modelo===modelo&&t.categoria===categoria&&t.status==='Ativa');
+}
+
+function addTempRelease(marca, modelo, categoria, motivo, obs){
+  TEMP_RELEASES.push({
+    marca:marca,modelo:modelo,categoria:categoria,
+    motivo:motivo,obs:obs||'',
+    dataCriacao:new Date().toLocaleString('pt-BR'),
+    usuario:currentUser||'Desconhecido',
+    status:'Ativa',
+    dataFinalizada:'',usuarioFinalizado:''
+  });
+  saveTempReleasesToStorage();
+  renderTempReleaseAlert();
+  renderTempReleases();
+}
+
+function finalizeTempRelease(idx){
+  const t=TEMP_RELEASES[idx];
+  if(!t||t.status!=='Ativa') return;
+  showModal('Finalizar Liberação Temporária?','<div style="line-height:1.8"><strong>'+t.marca+' — '+t.modelo+'</strong><br>Categoria: '+t.categoria+'<br><br>O modelo será marcado para remoção nas Alterações Pendentes.</div>',function(){
+    t.status='Finalizada';
+    t.dataFinalizada=new Date().toLocaleString('pt-BR');
+    t.usuarioFinalizado=currentUser||'Desconhecido';
+    saveTempReleasesToStorage();
+    // Create removal pending
+    addToStaging({type:'Remoção',marca:t.marca,modelo:t.modelo,catFrom:t.categoria,catTo:null,_tempFinalize:true},true);
+    closeModal();
+    renderTempReleases();
+    renderTempReleaseAlert();
+    showToast('Liberação finalizada. Remoção adicionada às pendentes.','success');
+  },'red');
+}
+
+function renderTempReleases(){
+  const card=document.getElementById('tempReleasesCard');
+  if(!card) return;
+  const activeCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
+  card.style.display=(TEMP_RELEASES.length>0)?'':'none';
+  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'Ativa';
+  const filtered=filter?TEMP_RELEASES.filter(t=>t.status===filter):TEMP_RELEASES;
+  const tbody=document.getElementById('tempReleasesBody');
+  if(!tbody) return;
+  tbody.innerHTML=filtered.map((t,i)=>{
+    const realIdx=TEMP_RELEASES.indexOf(t);
+    const statusTag=t.status==='Ativa'?'<span class="tag tag-amber">⚠️ Ativa</span>':'<span class="tag tag-green">✓ Finalizada</span>';
+    return `<tr>
+      <td><strong>${t.marca}</strong></td>
+      <td>${t.modelo}</td>
+      <td><span class="tag tag-blue">${t.categoria}</span></td>
+      <td style="font-size:.75rem">${t.motivo}</td>
+      <td style="font-size:.75rem">${t.dataCriacao}</td>
+      <td>${statusTag}</td>
+      <td>${t.status==='Ativa'?'<button class="btn btn-red btn-sm" onclick="finalizeTempRelease('+realIdx+')">Finalizar</button>':''}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberação encontrada</td></tr>';
+}
+
+function renderTempReleaseAlert(){
+  const el=document.getElementById('tempReleaseAlert');
+  const countEl=document.getElementById('tempReleaseAlertCount');
+  if(!el||!countEl) return;
+  const activeCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
+  if(activeCount>0){el.style.display='';countEl.textContent=activeCount;}
+  else{el.style.display='none';}
+}
+
+function saveTempReleasesToStorage(){
+  try{localStorage.setItem('avp-temp-releases',JSON.stringify(TEMP_RELEASES));}catch(e){}
+}
+
+function loadTempReleasesFromStorage(){
+  try{
+    const saved=localStorage.getItem('avp-temp-releases');
+    if(saved) TEMP_RELEASES=JSON.parse(saved);
+  }catch(e){}
 }
 
 // ========= GOOGLE SHEETS INTEGRATION =========
@@ -4015,6 +4145,17 @@ async function initSheetsIntegration(){
   const loaded=await sheetsLoad();
   if(loaded){
     await sheetsLoadHistory();
+    // Load temp releases from Sheets
+    try{
+      const trResp=await fetch(APPS_SCRIPT_URL+'?action=loadTempReleases');
+      const trResult=await trResp.json();
+      if(trResult.success&&trResult.data&&trResult.data.length>0){
+        TEMP_RELEASES=trResult.data;
+        saveTempReleasesToStorage();
+      }
+    }catch(e){}
+    renderTempReleaseAlert();
+    renderTempReleases();
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
@@ -4117,9 +4258,16 @@ function initApp(){
   updateSyncInfo();
   // Restore staging from localStorage
   loadStagingFromStorage();
+  loadTempReleasesFromStorage();
   if(STAGING.ops.length>0){
     renderStagingBars();
     showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
+  }
+  renderTempReleaseAlert();
+  // Show startup alert for temp releases
+  const activeTempCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
+  if(activeTempCount>0){
+    setTimeout(()=>showToast('⚠️ Existem '+activeTempCount+' liberação(ões) temporária(s) aguardando finalização.','warning'),2000);
   }
   // Disable export buttons until data is loaded
   disableExportButtons();
