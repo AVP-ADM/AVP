@@ -3095,7 +3095,17 @@ async function sheetsLoad(){
   try{
     showSyncStatus('loading','Carregando dados do Google Sheets...');
     const response = await fetch(APPS_SCRIPT_URL+'?action=load');
-    const result = await response.json();
+    if(!response.ok){
+      showSyncStatus('error','Erro HTTP: '+response.status);
+      return false;
+    }
+    const text = await response.text();
+    let result;
+    try{ result = JSON.parse(text); }catch(parseErr){
+      showSyncStatus('error','Resposta inválida do servidor');
+      console.error('Resposta não-JSON do Sheets:',text.substring(0,200));
+      return false;
+    }
     if(result.success && result.data && Object.keys(result.data).length>0){
       for(const key of Object.keys(RAW)) delete RAW[key];
       for(const[key,val] of Object.entries(result.data)) RAW[key]=val;
@@ -3116,7 +3126,7 @@ async function sheetsLoad(){
       return false;
     }
   }catch(err){
-    showSyncStatus('error','Sem conexão com Google Sheets. Usando dados locais.');
+    showSyncStatus('error','Erro de conexão com Sheets');console.error('sheetsLoad:',err);
     console.error('Erro ao carregar do Sheets:',err);
     return false;
   }
