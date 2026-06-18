@@ -142,7 +142,41 @@ function loadData() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('Dados');
   if (!sheet) {
-    return { success: false, error: 'Aba Dados nao encontrada. Inicialize primeiro.' };
+    // Fallback: read from category sheets (each sheet = one category)
+    var raw = {};
+    var anos = {};
+    var sheets = ss.getSheets();
+    var excludeNames = ['Historico', 'Usuarios', '_Control'];
+    for (var s = 0; s < sheets.length; s++) {
+      var sheetName = sheets[s].getName();
+      if (excludeNames.indexOf(sheetName) >= 0) continue;
+      var catSheet = sheets[s];
+      var lastRow = catSheet.getLastRow();
+      if (lastRow < 2) continue;
+      var header = catSheet.getRange(1, 1, 1, 3).getValues()[0];
+      // Check if it looks like a category sheet (Marca | Modelo | Ano)
+      var h0 = (header[0] || '').toString().toLowerCase();
+      var h1 = (header[1] || '').toString().toLowerCase();
+      if (h0.indexOf('marca') < 0 && h1.indexOf('modelo') < 0) continue;
+      var values = catSheet.getRange(2, 1, lastRow - 1, 3).getValues();
+      var cat = sheetName;
+      if (!raw[cat]) raw[cat] = { total: 0, brands: {} };
+      for (var i = 0; i < values.length; i++) {
+        var brand = values[i][0];
+        var modelo = values[i][1];
+        var ano = values[i][2] || 'Ano da categoria';
+        if (!brand || !modelo) continue;
+        if (!raw[cat].brands[brand]) raw[cat].brands[brand] = [];
+        raw[cat].brands[brand].push(modelo);
+        raw[cat].total++;
+        var key = cat + '|||' + brand + '|||' + modelo;
+        anos[key] = ano;
+      }
+    }
+    if (Object.keys(raw).length > 0) {
+      return { success: true, data: raw, anos: anos };
+    }
+    return { success: true, data: {}, anos: {} };
   }
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) {
