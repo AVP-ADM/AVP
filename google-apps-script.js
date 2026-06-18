@@ -150,7 +150,7 @@ function loadData() {
     var raw = {};
     var anos = {};
     var sheets = ss.getSheets();
-    var excludeNames = ['Historico', 'Usuarios', '_Control'];
+    var excludeNames = ['Historico', 'Usuarios', '_Control', 'Liberacoes_Temporarias'];
     for (var s = 0; s < sheets.length; s++) {
       var sheetName = sheets[s].getName();
       if (excludeNames.indexOf(sheetName) >= 0) continue;
@@ -213,7 +213,7 @@ function saveData(payload) {
   
   // Check if using category-based sheets (no "Dados" sheet or has category sheets)
   var hasCategorySheets = false;
-  var excludeNames = ['Historico', 'Usuarios', '_Control', 'Dados'];
+  var excludeNames = ['Historico', 'Usuarios', '_Control', 'Dados', 'Liberacoes_Temporarias'];
   var sheets = ss.getSheets();
   for (var s = 0; s < sheets.length; s++) {
     var name = sheets[s].getName();
@@ -228,6 +228,9 @@ function saveData(payload) {
   
   if (hasCategorySheets) {
     // Save to category-based sheets (one sheet per category)
+    // Also delete "Dados" sheet if it exists (not needed in category mode)
+    var dadosSheet = ss.getSheetByName('Dados');
+    if (dadosSheet) { try{ ss.deleteSheet(dadosSheet); }catch(e){} }
     for (var i = 0; i < cats.length; i++) {
       var cat = cats[i];
       var sheet = ss.getSheetByName(cat);
@@ -392,6 +395,7 @@ function validateLogin(user, pass) {
     header.setFontWeight('bold');
     header.setBackground('#1a1a2e');
     header.setFontColor('#ffffff');
+    sheet.hideSheet();
   }
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) {
