@@ -2150,6 +2150,9 @@ function cancelPendingRemoval(marca, modelo, categoria){
   if(idx>=0){
     STAGING.ops.splice(idx,1);
     STAGING.data=null;
+    rebuildPendingIndex();
+    saveStagingToStorage();
+    markAllDirty();
     renderDupTable();
     renderStagingBars();
     renderStagingTable();
