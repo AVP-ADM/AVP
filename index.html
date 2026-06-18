@@ -4170,6 +4170,8 @@ async function initSheetsIntegration(){
     // Enable sync item now that data is loaded
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
     enableExportButtons();
+    // Ensure sync indicator shows final state
+    showSyncStatus('success','Conectado ao Google Sheets');
   } else {
     // Failed to load - show error state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
