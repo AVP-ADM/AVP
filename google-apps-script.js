@@ -373,9 +373,47 @@ function saveHistory(payload) {
   for (var i = 0; i < entries.length; i++) {
     rows.push([entries[i].timestamp, entries[i].type, entries[i].marca, entries[i].modelo, entries[i].catFrom || '', entries[i].catTo || '']);
   }
-  var lastRow = sheet.getLastRow();
-  sheet.getRange(lastRow + 1, 1, rows.length, 6).setValues(rows);
+  // Insert at row 2 (after header) so most recent are first
+  sheet.insertRowsAfter(1, rows.length);
+  sheet.getRange(2, 1, rows.length, 6).setValues(rows);
   formatarAbaHistorico(sheet, sheet.getLastRow() - 1);
+  
+  // Also save to category-specific history (columns E, F, G of category sheet)
+  var excludeNames = ['Historico', 'Usuarios', '_Control', 'Dados', 'Liberacoes_Temporarias'];
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    var catNames = [];
+    if (e.catFrom) catNames.push(e.catFrom);
+    if (e.catTo && e.catTo !== e.catFrom) catNames.push(e.catTo);
+    for (var c = 0; c < catNames.length; c++) {
+      var catSheet = ss.getSheetByName(catNames[c]);
+      if (!catSheet) continue;
+      if (excludeNames.indexOf(catNames[c]) >= 0) continue;
+      // Find next empty row in history columns (E, F, G)
+      // Row 1: "HISTÓRICO DA CATEGORIA" header (merged)
+      // Row 2: sub-headers (Data/Hora | Tipo | Detalhe)
+      // Row 3+: history entries
+      var histCol = 5; // Column E
+      var lastHistRow = 2; // Start after sub-headers
+      var histValues = catSheet.getRange(3, histCol, Math.max(1, catSheet.getLastRow() - 2), 1).getValues();
+      for (var h = 0; h < histValues.length; h++) {
+        if (histValues[h][0]) lastHistRow = h + 3;
+      }
+      var newRow = lastHistRow + 1;
+      // Check if header exists
+      var headerCheck = catSheet.getRange(1, 5).getValue();
+      if (!headerCheck) {
+        catSheet.getRange(1, 5).setValue('HISTÓRICO DA CATEGORIA');
+        catSheet.getRange(1, 5).setFontWeight('bold').setBackground('#0d2137').setFontColor('#ffffff').setHorizontalAlignment('center');
+        catSheet.getRange(2, 5, 1, 3).setValues([['Data/Hora', 'Tipo', 'Detalhe']]);
+        catSheet.getRange(2, 5, 1, 3).setFontWeight('bold').setBackground('#1a1a2e').setFontColor('#ffffff').setHorizontalAlignment('center');
+        newRow = 3;
+      }
+      var detalhe = (e.marca || '') + ' | ' + (e.modelo || '') + ' | ' + (e.type || '');
+      catSheet.getRange(newRow, 5, 1, 3).setValues([[e.timestamp || '', e.type || '', detalhe]]);
+    }
+  }
+  
   return { success: true, message: rows.length + ' registros de historico salvos' };
 }
 
