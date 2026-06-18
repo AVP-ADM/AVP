@@ -664,6 +664,7 @@ const HIST_PER_PAGE = 25;
 // ========= HISTORY & STAGING =========
 let HISTORY = [];
 let STAGING = {ops:[], data:null};
+let _savingOps = []; // Operations currently being saved to Sheets
 let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
 // ========= STAGING PERSISTENCE (localStorage) =========
@@ -1144,10 +1145,16 @@ function buildModelListWithActions(models, cat){
     const eModelo=m.modelo.replace(/'/g,"\\'");
     const pending = hasPendingChange(m.marca, m.modelo, cat);
     const pendingType = pending ? getPendingChangeType(m.marca, m.modelo, cat) : null;
-    const pendingLabel = pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente';
+    const pendingLabel = pendingType?
+      (pendingType.startsWith('Salvando:')?pendingType.replace('Salvando: ','')+'...':
+       pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente')
+      :'Pendente';
+    const isSaving = pendingType&&pendingType.startsWith('Salvando:');
+    const badgeClass = isSaving?'tag-blue':'tag-amber';
+    const badgeIcon = isSaving?'⏳':'⏳';
     let pendingBadge='';
     if(pending){
-      pendingBadge=` <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle;padding-right:18px;position:relative">⏳ ${pendingLabel}<span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity='1';this.style.transform='translateY(-50%) scale(1.3)'" onmouseout="this.style.opacity='.7';this.style.transform='translateY(-50%) scale(1)'" title="Cancelar pendência">✕</span></span>`;
+      pendingBadge=` <span class="tag ${badgeClass}" style="font-size:.6rem;vertical-align:middle;padding-right:${isSaving?'8':'18'}px;position:relative">${badgeIcon} ${pendingLabel}${isSaving?'':'<span onclick="event.stopPropagation();cancelPendingModelChange(\''+eMarca+'\',\''+eModelo+'\',\''+eCat+'\')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=\'1\';this.style.transform=\'translateY(-50%) scale(1.3)\'" onmouseout="this.style.opacity=\'.7\';this.style.transform=\'translateY(-50%) scale(1)\'" title="Cancelar pendência">✕</span>'}</span>`;
     }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
@@ -2080,10 +2087,14 @@ let _pendingIndex={removals:{},changes:{},changeTypes:{},catChanges:{},catChange
 
 function rebuildPendingIndex(){
   _pendingIndex={removals:{},changes:{},changeTypes:{},catChanges:{},catChangeTypes:{},copies:{}};
-  for(const op of STAGING.ops){
+  // Index both staging ops AND saving ops (in-transit)
+  const allOps=[...STAGING.ops,..._savingOps];
+  for(const op of allOps){
+    const isSaving=_savingOps.includes(op);
+    const typeLabel=isSaving?'Salvando: '+op.type:op.type;
     if(op.type.includes('Categoria')){
-      if(op.catFrom){_pendingIndex.catChanges[op.catFrom]=true;_pendingIndex.catChangeTypes[op.catFrom]=op.type;}
-      if(op.catTo){_pendingIndex.catChanges[op.catTo]=true;_pendingIndex.catChangeTypes[op.catTo]=op.type;}
+      if(op.catFrom){_pendingIndex.catChanges[op.catFrom]=true;_pendingIndex.catChangeTypes[op.catFrom]=typeLabel;}
+      if(op.catTo){_pendingIndex.catChanges[op.catTo]=true;_pendingIndex.catChangeTypes[op.catTo]=typeLabel;}
       continue;
     }
     if(op.type.includes('Marca')) continue;
@@ -2100,17 +2111,17 @@ function rebuildPendingIndex(){
     if(op.catFrom){
       const k=op.marca+'|||'+opModelo+'|||'+op.catFrom;
       _pendingIndex.changes[k]=true;
-      _pendingIndex.changeTypes[k]=op.type;
+      _pendingIndex.changeTypes[k]=typeLabel;
     }
     if(op.catTo){
       const k=op.marca+'|||'+opModelo+'|||'+op.catTo;
       _pendingIndex.changes[k]=true;
-      _pendingIndex.changeTypes[k]=op.type;
+      _pendingIndex.changeTypes[k]=typeLabel;
     }
     // Global (without category)
     const gk=op.marca+'|||'+opModelo;
     _pendingIndex.changes[gk]=true;
-    _pendingIndex.changeTypes[gk]=op.type;
+    _pendingIndex.changeTypes[gk]=typeLabel;
   }
 }
 
@@ -2588,7 +2599,8 @@ function commitStaging(){
     showModal('⚠️ Conflitos Detectados','<div style="line-height:1.8"><strong>Foram encontradas operações contraditórias:</strong><br><br>'+conflicts.slice(0,5).map(c=>'• '+c).join('<br>')+(conflicts.length>5?'<br>...e mais '+(conflicts.length-5):'')+'<br><br><span style="color:var(--text2);font-size:.78rem">Revise as alterações pendentes antes de salvar.</span></div>',()=>{closeModal();},'amber');
     return;
   }
-  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',()=>{
+  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',async ()=>{
+    // 1. Apply changes to RAW immediately
     const d = getStagingData();
     for(const[k,v] of Object.entries(d)) RAW[k]=v;
     for(const op of STAGING.ops){
@@ -2596,6 +2608,8 @@ function commitStaging(){
       mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':op.type==='Edição'?'moved':'moved']++;
       mgmtStats.session++;
     }
+    // 2. Move ops to "saving" state (in transit)
+    _savingOps=[...STAGING.ops];
     STAGING.ops=[];STAGING.data=null;
     clearStagingStorage();
     rebuildPendingIndex();
@@ -2603,7 +2617,32 @@ function commitStaging(){
     renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
     refreshActiveTab();
     closeModal();
-    showToast('Alterações salvas com sucesso!','success');
+    showToast('Salvando no Google Sheets...','warning');
+    // 3. Save to Sheets in background
+    try{
+      const saved=await safeSave();
+      if(saved){
+        // 4. Success: clear saving state
+        _savingOps=[];
+        rebuildPendingIndex();
+        markAllDirty();
+        refreshActiveTab();
+        showToast('Alterações salvas com sucesso no Google Sheets!','success');
+      } else {
+        // safeSave returned false (conflict detected, user will reload)
+        _savingOps=[];
+        rebuildPendingIndex();
+        markAllDirty();
+        refreshActiveTab();
+      }
+    }catch(err){
+      // 5. Error: notify user but changes are already applied locally
+      _savingOps=[];
+      rebuildPendingIndex();
+      markAllDirty();
+      refreshActiveTab();
+      showToast('Erro ao salvar no Sheets: '+err.message+'. Dados salvos localmente.','error');
+    }
   },'green');
 }
 
