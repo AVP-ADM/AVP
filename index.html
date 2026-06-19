@@ -1645,7 +1645,18 @@ function fipeFilterBrands(){
     html+='<div class="fipe-item" data-value="'+filtered[i].replace(/"/g,'&quot;')+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+filtered[i]+'</div>';
   }
   dd.innerHTML=html;
-  dd.onmousedown=function(e){e.preventDefault();var item=e.target.closest('.fipe-item');if(item)fipeSelectBrand(item.dataset.value);};
+  dd.onmousedown=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var el=e.target;
+    while(el&&el!==dd){
+      if(el.classList&&el.classList.contains('fipe-item')){
+        fipeSelectBrand(el.getAttribute('data-value'));
+        return;
+      }
+      el=el.parentElement;
+    }
+  };
   if(query){
     var exact=brands.find(function(b){return b.toLowerCase()===query});
     if(exact){msg.textContent='Marca valida';msg.className='ac-msg valid';}
@@ -1673,9 +1684,20 @@ function fipeFilterModels(){
   for(var i=0;i<filtered.length;i++){
     html+='<div class="fipe-item" data-value="'+filtered[i].replace(/"/g,'&quot;')+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+filtered[i]+'</div>';
   }
-  if(models.length>30) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+'+models.length+'+'</div>';
+  if(models.length>30) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+models.length+'</div>';
   dd.innerHTML=html;
-  dd.onmousedown=function(e){e.preventDefault();var item=e.target.closest('.fipe-item');if(item)fipeSelectModel(item.dataset.value);};
+  dd.onmousedown=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var el=e.target;
+    while(el&&el!==dd){
+      if(el.classList&&el.classList.contains('fipe-item')){
+        fipeSelectModel(el.getAttribute('data-value'));
+        return;
+      }
+      el=el.parentElement;
+    }
+  };
   if(query){
     var exact=models.find(function(m){return m.toLowerCase()===query});
     if(exact){msg.textContent='Modelo valido';msg.className='ac-msg valid';}
