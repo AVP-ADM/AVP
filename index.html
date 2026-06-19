@@ -642,6 +642,11 @@ tr:hover .row-actions{opacity:1}
       <input type="text" id="globalSearchInput" placeholder="Digite sua pesquisa..." oninput="performGlobalSearch()" autocomplete="off">
       <span class="shortcut">ESC</span>
     </div>
+    <div id="searchFilterToggle" style="display:none;padding:8px 18px;border-bottom:1px solid var(--border);font-size:.75rem">
+      <label style="cursor:pointer;margin-right:14px"><input type="radio" name="searchFilter" value="all" checked onchange="performGlobalSearch()"> Todos</label>
+      <label style="cursor:pointer;margin-right:14px"><input type="radio" name="searchFilter" value="base" onchange="performGlobalSearch()"> Só cadastrados</label>
+      <label style="cursor:pointer"><input type="radio" name="searchFilter" value="fipe" onchange="performGlobalSearch()"> Só FIPE (ausentes)</label>
+    </div>
     <div class="search-results" id="globalSearchResults">
       <div class="search-empty">Selecione o tipo e digite para pesquisar</div>
     </div>
@@ -4330,6 +4335,12 @@ function openGlobalSearch(){
   input.value='';
   input.focus();
   updateSearchPlaceholder();
+  // Show FIPE filter toggle if in modelo mode
+  const toggle=document.getElementById('searchFilterToggle');
+  if(toggle) toggle.style.display=(searchType==='modelo'&&isFipeBaseLoaded())?'':'none';
+  // Reset filter to "all"
+  const allRadio=document.querySelector('input[name="searchFilter"][value="all"]');
+  if(allRadio) allRadio.checked=true;
   document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Selecione o tipo e digite para pesquisar</div>';
 }
 
@@ -4342,6 +4353,9 @@ function setSearchType(type){
   document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
   event.target.classList.add('active');
   updateSearchPlaceholder();
+  // Show/hide FIPE filter toggle (only for modelo search)
+  const toggle=document.getElementById('searchFilterToggle');
+  if(toggle) toggle.style.display=(type==='modelo'&&isFipeBaseLoaded())?'':'none';
   performGlobalSearch();
 }
 
@@ -4374,23 +4388,120 @@ function performGlobalSearch(){
 }
 
 function searchModelos(query){
-  const results=[];
-  const seen=new Set();
-  for(const r of ALL_RECORDS){
-    if(!norm(r.modelo).includes(query)&&!norm(r.marca).includes(query)) continue;
-    const key=r.marca+'|||'+r.modelo+'|||'+r.categoria;
-    if(seen.has(key)) continue;
-    seen.add(key);
-    results.push(r);
-    if(results.length>=50) break;
+  const filter=document.querySelector('input[name="searchFilter"]:checked');
+  const filterVal=filter?filter.value:'all';
+  let html='';
+
+  // === CADASTRADOS ===
+  if(filterVal==='all'||filterVal==='base'){
+    const results=[];
+    const seen=new Set();
+    for(const r of ALL_RECORDS){
+      if(!norm(r.modelo).includes(query)&&!norm(r.marca).includes(query)) continue;
+      const key=r.marca+'|||'+r.modelo+'|||'+r.categoria;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      results.push(r);
+      if(results.length>=50) break;
+    }
+    if(results.length>0){
+      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--green);border-bottom:1px solid var(--border);background:var(--bg)">✅ Cadastrados ('+results.length+')</div>';
+      html+='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
+      for(const r of results){
+        html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
+      }
+      html+='</tbody></table>';
+    } else if(filterVal==='base'){
+      html+='<div class="search-empty">Nenhum modelo cadastrado encontrado</div>';
+    }
   }
-  if(!results.length) return '';
-  let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
-  for(const r of results){
-    html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
+
+  // === NÃO CADASTRADOS (FIPE) ===
+  if(isFipeBaseLoaded()&&(filterVal==='all'||filterVal==='fipe')){
+    const fipeResults=searchFipeNotRegistered(query, filterVal==='fipe'?30:10);
+    if(fipeResults.length>0){
+      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--amber);border-bottom:1px solid var(--border);background:var(--bg)">⚠️ Não cadastrados — disponíveis na FIPE ('+fipeResults.length+(fipeResults._hasMore?'+':'')+')</div>';
+      html+='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo FIPE</th><th style="width:100px">Ação</th></tr></thead><tbody>';
+      for(const item of fipeResults){
+        const marcaEsc=item.marca.replace(/'/g,"\\'");
+        const modeloEsc=item.modelo.replace(/'/g,"\\'");
+        html+=`<tr><td><strong>${item.marca}</strong></td><td>${item.modelo}</td><td><button class="btn btn-sm btn-green" onclick="event.stopPropagation();closeGlobalSearch();openAddModelFromFipe('${marcaEsc}','${modeloEsc}')">+ Adicionar</button></td></tr>`;
+      }
+      html+='</tbody></table>';
+    } else if(filterVal==='fipe'){
+      html+='<div class="search-empty">Todos os modelos FIPE encontrados já estão cadastrados</div>';
+    }
   }
-  html+='</tbody></table>';
+
   return html;
+}
+
+function searchFipeNotRegistered(query, limit){
+  // Build set of all registered models (normalized)
+  const registeredSet=new Set();
+  for(const r of ALL_RECORDS){
+    registeredSet.add(norm(r.marca)+'|||'+norm(r.modelo));
+  }
+  const results=[];
+  let hasMore=false;
+  // Search through FIPE brands and models
+  for(const brand of FIPE_BASE.brands){
+    const brandName=brand.name;
+    const key=brand._type==='moto'?'moto_'+brand.code:brand._type==='truck'?'truck_'+brand.code:brand.code;
+    const models=FIPE_BASE.models[key]||[];
+    const brandMatches=norm(brandName).includes(query);
+    for(const m of models){
+      if(!brandMatches&&!norm(m.name).includes(query)) continue;
+      if(registeredSet.has(norm(brandName)+'|||'+norm(m.name))) continue;
+      if(results.length>=limit){hasMore=true;break;}
+      results.push({marca:brandName,modelo:m.name});
+    }
+    if(hasMore) break;
+  }
+  results._hasMore=hasMore;
+  return results;
+}
+
+function openAddModelFromFipe(marca, modelo){
+  const catOptions=CATEGORIES.sort().map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+  showModal('➕ Adicionar Modelo da FIPE',`<div style="display:flex;flex-direction:column;gap:14px">
+    <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:4px">Modelo selecionado:</div>
+      <div style="font-weight:700;font-size:.95rem">${marca} — ${modelo}</div>
+    </div>
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria de destino:</label>
+    <select id="fipeAddCat" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text1)">${catOptions}</select>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius)">
+      <input type="checkbox" id="fipeAdd_temp" onchange="document.getElementById('fipeAdd_tempFields').style.display=this.checked?'flex':'none'">
+      <span>⚠️ Liberação Temporária</span>
+    </label>
+    <div id="fipeAdd_tempFields" style="display:none;flex-direction:column;gap:8px">
+      <input id="fipeAdd_tempMotivo" placeholder="Motivo da liberação...">
+      <input id="fipeAdd_tempObs" placeholder="Observações (opcional)...">
+    </div>
+  </div>`,function(){
+    const cat=document.getElementById('fipeAddCat').value;
+    if(!cat){showToast('Selecione uma categoria','error');return;}
+    const models=getModelsForCat(cat);
+    if(models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
+      showToast('Este modelo já está cadastrado em "'+cat+'"','error');return;
+    }
+    if(STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===cat)){
+      showToast('Já existe uma adição pendente para este modelo nesta categoria','warning');return;
+    }
+    const isTemp=document.getElementById('fipeAdd_temp').checked;
+    if(isTemp){
+      const motivo=document.getElementById('fipeAdd_tempMotivo').value.trim();
+      if(!motivo){showToast('Preencha o motivo da liberação temporária','error');return;}
+      const obs=document.getElementById('fipeAdd_tempObs').value.trim();
+      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat,_temp:true},true);
+      addTempRelease(marca,modelo,cat,motivo,obs);
+    } else {
+      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat},true);
+    }
+    closeModal();
+    showToast('Adição de "'+marca+' '+modelo+'"'+(isTemp?' (Temporário)':'')+' pendente em '+cat,'success');
+  },'green');
 }
 
 function searchCategorias(query){
