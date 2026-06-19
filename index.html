@@ -1528,12 +1528,25 @@ let FIPE_CATEGORY_TYPE_MAP = {
 
 function saveFipeCategoryMap(){
   try{localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));}catch(e){}
+  // Also save to Sheets for persistence across computers
+  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeCatMap',payload:JSON.stringify(FIPE_CATEGORY_TYPE_MAP)})});}catch(e){}
 }
 
 function loadFipeCategoryMap(){
   try{
     const saved=localStorage.getItem('avp-fipe-cat-map');
     if(saved){const parsed=JSON.parse(saved);Object.assign(FIPE_CATEGORY_TYPE_MAP,parsed);}
+  }catch(e){}
+}
+
+async function loadFipeCategoryMapFromSheets(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeCatMap');
+    const result=await resp.json();
+    if(result.success&&result.data){
+      Object.assign(FIPE_CATEGORY_TYPE_MAP,result.data);
+      localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));
+    }
   }catch(e){}
 }
 
@@ -4680,6 +4693,8 @@ async function initSheetsIntegration(){
     }catch(e){}
     renderTempReleaseAlert();
     renderTempReleases();
+    // Load FIPE category map from Sheets
+    await loadFipeCategoryMapFromSheets();
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();

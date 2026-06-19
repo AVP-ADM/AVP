@@ -16,6 +16,8 @@ function doGet(e) {
       result = loadTempReleases();
     } else if (action === 'loadFipeBase') {
       result = loadFipeBase();
+    } else if (action === 'loadFipeCatMap') {
+      result = loadFipeCatMap();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -48,6 +50,8 @@ function doPost(e) {
       result = saveTempReleases(data.payload);
     } else if (action === 'saveFipeBase') {
       result = saveFipeBase(data.payload);
+    } else if (action === 'saveFipeCatMap') {
+      result = saveFipeCatMap(data.payload);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -640,4 +644,35 @@ function saveFipeBase(payload) {
     sheet.getRange(1, 4).setValue(chunks.length); // Store chunk count
   }
   return { success: true, message: 'Base FIPE salva com ' + (data.totalBrands || 0) + ' marcas' };
+}
+
+
+// ========= FIPE CATEGORY TYPE MAP =========
+function loadFipeCatMap() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) return { success: true, data: null };
+  // Store in row 4 of _Control sheet
+  var val = sheet.getRange(4, 2).getValue();
+  if (!val) return { success: true, data: null };
+  try {
+    return { success: true, data: JSON.parse(val) };
+  } catch (e) {
+    return { success: true, data: null };
+  }
+}
+
+function saveFipeCatMap(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) {
+    sheet = ss.insertSheet('_Control');
+    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
+    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
+    sheet.hideSheet();
+  }
+  sheet.getRange(4, 1).setValue('fipeCatMap');
+  sheet.getRange(4, 2).setValue(payload);
+  sheet.getRange(4, 4).setValue(new Date().toLocaleString('pt-BR'));
+  return { success: true, message: 'Mapa de categorias salvo' };
 }
