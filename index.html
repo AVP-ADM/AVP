@@ -705,6 +705,35 @@ let TEMP_RELEASES = []; // {marca, modelo, categoria, motivo, obs, dataCriacao, 
 const FIPE_API_URL = 'https://fipe.parallelum.com.br/api/v2';
 const FIPE_API_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIwZjI1ZjQ1Yi1mZTkxLTQ0MzYtOTQ5MC0zM2E2OTY2MmFhMDAiLCJlbWFpbCI6Im55Y29sYXNhdXRvdmFsZUBnbWFpbC5jb20iLCJpYXQiOjE3ODE4NzQ2ODB9.kAFJ9fwlAc_dbA2bf4MOygJR0XEBT4-Vk99p7EdcNKc';
 let FIPE_BASE = {brands:[], models:{}, lastUpdate:null, totalBrands:0, totalModels:0};
+let FIPE_REQUESTS = {month:'', count:0}; // Monthly request counter
+
+function loadFipeRequestsFromStorage(){
+  try{
+    const saved=localStorage.getItem('avp-fipe-requests');
+    if(saved) FIPE_REQUESTS=JSON.parse(saved);
+    // Reset if new month
+    const currentMonth=new Date().getFullYear()+'-'+(new Date().getMonth()+1);
+    if(FIPE_REQUESTS.month!==currentMonth){FIPE_REQUESTS={month:currentMonth,count:0};saveFipeRequestsToStorage();}
+  }catch(e){}
+}
+
+function saveFipeRequestsToStorage(){
+  try{localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));}catch(e){}
+}
+
+function trackFipeRequest(qty){
+  const currentMonth=new Date().getFullYear()+'-'+(new Date().getMonth()+1);
+  if(FIPE_REQUESTS.month!==currentMonth){FIPE_REQUESTS={month:currentMonth,count:0};}
+  FIPE_REQUESTS.count+=(qty||1);
+  saveFipeRequestsToStorage();
+}
+
+// Fetch from FIPE API with tracking
+async function fipeFetch(endpoint){
+  const resp=await fetch(FIPE_API_URL+endpoint,{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+  trackFipeRequest(1);
+  return resp;
+}
 
 function saveFipeBaseToStorage(){
   try{localStorage.setItem('avp-fipe-base',JSON.stringify(FIPE_BASE));}catch(e){
@@ -761,7 +790,7 @@ async function updateFipeBase(){
   const delay=ms=>new Promise(r=>setTimeout(r,ms));
   try{
     // 1. Get all car brands
-    const brandsResp=await fetch(FIPE_API_URL+'/cars/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    const brandsResp=await fipeFetch('/cars/brands');
     if(!brandsResp.ok){showToast('Erro ao buscar marcas: HTTP '+brandsResp.status,'error');return;}
     const brands=await brandsResp.json();
     FIPE_BASE.brands=brands;
@@ -774,7 +803,7 @@ async function updateFipeBase(){
       await delay(300);
       progress++;
       try{
-        const modResp=await fetch(FIPE_API_URL+'/cars/brands/'+brand.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+        const modResp=await fipeFetch('/cars/brands/'+brand.code+'/models');
         if(modResp.ok){
           const models=await modResp.json();
           FIPE_BASE.models[brand.code]=models;
@@ -789,7 +818,7 @@ async function updateFipeBase(){
 
     // 3. Also get motorcycle brands
     await delay(300);
-    const motoBrandsResp=await fetch(FIPE_API_URL+'/motorcycles/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    const motoBrandsResp=await fipeFetch('/motorcycles/brands');
     if(motoBrandsResp.ok){
       const motoBrands=await motoBrandsResp.json();
       // Add moto brands with prefix to distinguish
@@ -802,7 +831,7 @@ async function updateFipeBase(){
       for(const mb of motoBrands){
         await delay(300);
         try{
-          const modResp=await fetch(FIPE_API_URL+'/motorcycles/brands/'+mb.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+          const modResp=await fipeFetch('/motorcycles/brands/'+mb.code+'/models');
           if(modResp.ok){
             const models=await modResp.json();
             const key='moto_'+mb.code;
@@ -815,7 +844,7 @@ async function updateFipeBase(){
 
     // 4. Also get truck brands
     await delay(300);
-    const truckBrandsResp=await fetch(FIPE_API_URL+'/trucks/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    const truckBrandsResp=await fipeFetch('/trucks/brands');
     if(truckBrandsResp.ok){
       const truckBrands=await truckBrandsResp.json();
       for(const tb of truckBrands){
@@ -826,7 +855,7 @@ async function updateFipeBase(){
       for(const tb of truckBrands){
         await delay(300);
         try{
-          const modResp=await fetch(FIPE_API_URL+'/trucks/brands/'+tb.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+          const modResp=await fipeFetch('/trucks/brands/'+tb.code+'/models');
           if(modResp.ok){
             const models=await modResp.json();
             const key='truck_'+tb.code;
@@ -859,13 +888,17 @@ async function updateFipeBase(){
 function renderFipeDiagnostics(){
   const el=document.getElementById('fipeDiagnostics');
   if(!el) return;
+  loadFipeRequestsFromStorage();
   if(!FIPE_BASE.lastUpdate){
-    el.innerHTML='<div style="color:var(--text3);font-size:.82rem;padding:12px">Base oficial não carregada. Clique em "Atualizar Base Oficial" para carregar.</div>';
+    el.innerHTML=`<div style="color:var(--text3);font-size:.82rem;padding:12px">Base oficial não carregada. Clique em "Atualizar Base Oficial" para carregar.</div>
+    <div style="margin-top:8px;font-size:.78rem;color:var(--text2)">Requisições este mês: <strong>${FIPE_REQUESTS.count}</strong> / 1.000</div>`;
     return;
   }
   const lastDate=new Date(FIPE_BASE.lastUpdate);
   const daysAgo=Math.floor((Date.now()-lastDate.getTime())/(24*60*60*1000));
   const nextUpdate=new Date(lastDate.getTime()+(30*24*60*60*1000));
+  const pct=Math.min(100,Math.round(FIPE_REQUESTS.count/1000*100));
+  const barColor=pct>80?'var(--red)':pct>50?'var(--amber)':'var(--green)';
   el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem">
     <div><span style="color:var(--text2)">Status:</span> <strong style="color:${daysAgo>30?'var(--amber)':'var(--green)'}">${daysAgo>30?'⚠️ Desatualizada':'✓ Atualizada'}</strong></div>
     <div><span style="color:var(--text2)">Última atualização:</span> <strong>${lastDate.toLocaleString('pt-BR')}</strong></div>
@@ -873,6 +906,13 @@ function renderFipeDiagnostics(){
     <div><span style="color:var(--text2)">Há:</span> <strong>${daysAgo} dia(s)</strong></div>
     <div><span style="color:var(--text2)">Marcas:</span> <strong>${FIPE_BASE.totalBrands}</strong></div>
     <div><span style="color:var(--text2)">Modelos:</span> <strong>${FIPE_BASE.totalModels.toLocaleString()}</strong></div>
+  </div>
+  <div style="margin-top:12px;font-size:.78rem">
+    <span style="color:var(--text2)">Requisições este mês:</span> <strong>${FIPE_REQUESTS.count}</strong> / 1.000
+    <div style="margin-top:4px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .3s"></div>
+    </div>
+    <span style="font-size:.68rem;color:var(--text3)">${pct}% do limite mensal utilizado</span>
   </div>`;
 }
 
@@ -1500,6 +1540,53 @@ function fipeSelectModel(model){
   if(msg){msg.textContent='✓ '+model;msg.className='ac-msg valid';}
 }
 
+// ========= FIPE PRICE LOOKUP (pontual) =========
+async function consultarPrecoFipe(marca, modelo){
+  if(!isFipeBaseLoaded()){showToast('Base FIPE não carregada. Atualize primeiro.','warning');return;}
+  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===marca.toLowerCase());
+  if(!brand){showToast('Marca "'+marca+'" não encontrada na base FIPE.','warning');return;}
+  const brandModels=FIPE_BASE.models[brand.code]||FIPE_BASE.models['moto_'+brand.code]||FIPE_BASE.models['truck_'+brand.code]||[];
+  // Find closest model match
+  const model=brandModels.find(m=>m.name.toLowerCase()===modelo.toLowerCase())||brandModels.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase().split(' ')[0]));
+  if(!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
+  showToast('Consultando preço FIPE...','warning');
+  try{
+    // Get years for this model
+    const vehicleType=brand._type==='moto'?'motorcycles':brand._type==='truck'?'trucks':'cars';
+    const yearsResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years');
+    if(!yearsResp.ok){showToast('Erro ao buscar anos: HTTP '+yearsResp.status,'error');return;}
+    const years=await yearsResp.json();
+    if(!years.length){showToast('Nenhum ano disponível para este modelo.','warning');return;}
+    // Get price for the most recent year
+    const latestYear=years[0];
+    const priceResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years/'+latestYear.code);
+    if(!priceResp.ok){showToast('Erro ao buscar preço: HTTP '+priceResp.status,'error');return;}
+    const priceData=await priceResp.json();
+    // Show result in modal
+    showModal('💰 Preço FIPE — '+marca+' '+modelo,`<div style="line-height:2;font-size:.88rem">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px">
+        <span style="color:var(--text2);font-weight:600">Marca:</span><span>${priceData.brand||marca}</span>
+        <span style="color:var(--text2);font-weight:600">Modelo:</span><span>${priceData.model||modelo}</span>
+        <span style="color:var(--text2);font-weight:600">Ano:</span><span>${priceData.modelYear||latestYear.name}</span>
+        <span style="color:var(--text2);font-weight:600">Combustível:</span><span>${priceData.fuel||'—'}</span>
+        <span style="color:var(--text2);font-weight:600">Código FIPE:</span><span>${priceData.codeFipe||'—'}</span>
+        <span style="color:var(--text2);font-weight:600">Referência:</span><span>${priceData.referenceMonth||'—'}</span>
+      </div>
+      <div style="margin-top:16px;padding:16px;background:var(--green-bg);border:1px solid var(--green-light);border-radius:var(--radius-lg);text-align:center">
+        <div style="font-size:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Valor FIPE</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--green)">${priceData.price||'Indisponível'}</div>
+      </div>
+      ${years.length>1?'<div style="margin-top:12px;font-size:.72rem;color:var(--text3)">Outros anos disponíveis: '+years.slice(1,5).map(y=>y.name).join(', ')+(years.length>5?' ...':'')+'</div>':''}
+    </div>`,()=>{closeModal();},'blue');
+    setTimeout(()=>{
+      const actions=document.getElementById('modalActions');
+      if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Fechar</button>';
+    },50);
+  }catch(err){
+    showToast('Erro ao consultar preço: '+err.message,'error');
+  }
+}
+
 // ========= ADD MODEL TO CATEGORY =========
 function openAddModelToCat(categoria){
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
@@ -1895,6 +1982,7 @@ function openModelDetail(marca, modelo){
     html+=`<button class="btn btn-sm btn-blue" onclick="openModelEdit('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}','${cats[0].replace(/'/g,"\\'")}')">✏️ Editar</button>`;
     html+=`<button class="btn btn-sm btn-red" onclick="openModelRemove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">🗑️ Remover</button>`;
     html+=`<button class="btn btn-sm" style="background:var(--purple);color:#fff;border-color:var(--purple)" onclick="openModelMove('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')" >↔️ Mover Categoria</button>`;
+    html+=`<button class="btn btn-sm" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="consultarPrecoFipe('${marca.replace(/'/g,"\\'")}','${modelo.replace(/'/g,"\\'")}')">💰 Preço FIPE</button>`;
   }
   html+=`</div>`;
 
@@ -4545,6 +4633,7 @@ function initApp(){
   loadStagingFromStorage();
   loadTempReleasesFromStorage();
   loadFipeBaseFromStorage();
+  loadFipeRequestsFromStorage();
   if(STAGING.ops.length>0){
     renderStagingBars();
     showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
