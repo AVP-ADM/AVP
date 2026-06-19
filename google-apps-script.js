@@ -60,6 +60,8 @@ function doPost(e) {
       result = saveFipeRequests(data.payload);
     } else if (action === 'saveFipeRefCode') {
       result = saveFipeRefCode(data.payload);
+    } else if (action === 'migrateControl') {
+      result = migrateControlSheet();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -471,22 +473,16 @@ function getControlSheet() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) {
-    sheet = ss.insertSheet('_Control');
-    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
-    sheet.getRange(2, 1, 2, 4).setValues([
-      ['lock', '', '', ''],
-      ['lastModified', '', '', '']
-    ]);
-    sheet.hideSheet();
+    sheet = getOrCreateControlSheet(ss);
   }
   return sheet;
 }
 
 function acquireLock(user) {
   var sheet = getControlSheet();
-  var lockCell = sheet.getRange(2, 2);
-  var lockUser = sheet.getRange(2, 3);
-  var lockDate = sheet.getRange(2, 4);
+  var lockCell = sheet.getRange(3, 2);
+  var lockUser = sheet.getRange(3, 3);
+  var lockDate = sheet.getRange(3, 4);
   var currentLock = lockCell.getValue();
   var currentUser = lockUser.getValue();
   var currentDate = lockDate.getValue();
@@ -509,17 +505,17 @@ function acquireLock(user) {
 
 function releaseLock(user) {
   var sheet = getControlSheet();
-  sheet.getRange(2, 2).setValue('');
-  sheet.getRange(2, 3).setValue('');
-  sheet.getRange(2, 4).setValue('');
+  sheet.getRange(3, 2).setValue('');
+  sheet.getRange(3, 3).setValue('');
+  sheet.getRange(3, 4).setValue('');
   return { success: true };
 }
 
 function getLastModifiedTimestamp() {
   var sheet = getControlSheet();
-  var ts = sheet.getRange(3, 2).getValue();
-  var user = sheet.getRange(3, 3).getValue();
-  var date = sheet.getRange(3, 4).getValue();
+  var ts = sheet.getRange(4, 2).getValue();
+  var user = sheet.getRange(4, 3).getValue();
+  var date = sheet.getRange(4, 4).getValue();
   return { 
     success: true, 
     timestamp: ts ? new Date(ts).getTime() : 0,
@@ -531,9 +527,9 @@ function getLastModifiedTimestamp() {
 function updateTimestamp(user) {
   var sheet = getControlSheet();
   var now = new Date();
-  sheet.getRange(3, 2).setValue(now.toISOString());
-  sheet.getRange(3, 3).setValue(user);
-  sheet.getRange(3, 4).setValue(now.toLocaleString('pt-BR'));
+  sheet.getRange(4, 2).setValue(now.toISOString());
+  sheet.getRange(4, 3).setValue(user);
+  sheet.getRange(4, 4).setValue(now.toLocaleString('pt-BR'));
   return { success: true };
 }
 
@@ -602,18 +598,29 @@ function loadFipeBase() {
   if (!sheet) {
     return { success: true, data: null };
   }
-  var metaRange = sheet.getRange(1, 1, 1, 4).getValues()[0];
-  // Row 1: lastUpdate | totalBrands | totalModels | (reserved)
+  // Row 1: Headers
+  // Row 2: Metadata values
+  var metaRange = sheet.getRange(2, 1, 1, 4).getValues()[0];
   var lastUpdate = metaRange[0] || null;
   var totalBrands = metaRange[1] || 0;
   var totalModels = metaRange[2] || 0;
-  // Row 2+: brand data stored as JSON in cell A2
-  var dataCell = sheet.getRange(2, 1).getValue();
+  var chunkCount = metaRange[3] || 0;
+  // Row 3: Header for data section
+  // Row 4+: JSON data (brands + models) in chunks
+  var dataCell = sheet.getRange(4, 1).getValue();
   if (!dataCell) {
     return { success: true, data: { lastUpdate: lastUpdate, totalBrands: totalBrands, totalModels: totalModels, brands: [], models: {} } };
   }
   try {
-    var parsed = JSON.parse(dataCell);
+    var jsonStr = dataCell.toString();
+    // If data was chunked, reassemble
+    if (chunkCount > 1) {
+      for (var i = 1; i < chunkCount; i++) {
+        var chunk = sheet.getRange(4 + i, 1).getValue();
+        if (chunk) jsonStr += chunk.toString();
+      }
+    }
+    var parsed = JSON.parse(jsonStr);
     parsed.lastUpdate = lastUpdate;
     parsed.totalBrands = totalBrands;
     parsed.totalModels = totalModels;
@@ -633,23 +640,34 @@ function saveFipeBase(payload) {
     sheet.clear();
   }
   var data = JSON.parse(payload);
-  // Row 1: metadata
-  sheet.getRange(1, 1, 1, 3).setValues([[data.lastUpdate || '', data.totalBrands || 0, data.totalModels || 0]]);
-  // Row 2: full JSON data (brands + models)
+  // Row 1: Headers
+  sheet.getRange(1, 1, 1, 4).setValues([['Ultima Atualizacao', 'Total Marcas', 'Total Modelos', 'Qtd Chunks']]);
+  sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+  // Row 2: Metadata values
+  var chunkCount = 1;
   var jsonStr = JSON.stringify({ brands: data.brands, models: data.models });
-  // Google Sheets cell limit is 50000 chars - if too large, split
+  if (jsonStr.length > 50000) {
+    var chunks = [];
+    for (var i = 0; i < jsonStr.length; i += 50000) {
+      chunks.push(jsonStr.substring(i, i + 50000));
+    }
+    chunkCount = chunks.length;
+  }
+  sheet.getRange(2, 1, 1, 4).setValues([[data.lastUpdate || '', data.totalBrands || 0, data.totalModels || 0, chunkCount]]);
+  // Row 3: Header for data section
+  sheet.getRange(3, 1).setValue('Dados JSON (marcas e modelos)');
+  sheet.getRange(3, 1).setFontWeight('bold').setFontStyle('italic');
+  // Row 4+: JSON data
   if (jsonStr.length <= 50000) {
-    sheet.getRange(2, 1).setValue(jsonStr);
+    sheet.getRange(4, 1).setValue(jsonStr);
   } else {
-    // Split into chunks across multiple cells
     var chunks = [];
     for (var i = 0; i < jsonStr.length; i += 50000) {
       chunks.push(jsonStr.substring(i, i + 50000));
     }
     for (var c = 0; c < chunks.length; c++) {
-      sheet.getRange(2 + c, 1).setValue(chunks[c]);
+      sheet.getRange(4 + c, 1).setValue(chunks[c]);
     }
-    sheet.getRange(1, 4).setValue(chunks.length); // Store chunk count
   }
   return { success: true, message: 'Base FIPE salva com ' + (data.totalBrands || 0) + ' marcas' };
 }
@@ -660,8 +678,7 @@ function loadFipeCatMap() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  // Store in row 4 of _Control sheet
-  var val = sheet.getRange(4, 2).getValue();
+  var val = sheet.getRange(5, 2).getValue();
   if (!val) return { success: true, data: null };
   try {
     return { success: true, data: JSON.parse(val) };
@@ -672,16 +689,11 @@ function loadFipeCatMap() {
 
 function saveFipeCatMap(payload) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName('_Control');
-  if (!sheet) {
-    sheet = ss.insertSheet('_Control');
-    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
-    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
-    sheet.hideSheet();
-  }
-  sheet.getRange(4, 1).setValue('fipeCatMap');
-  sheet.getRange(4, 2).setValue(payload);
-  sheet.getRange(4, 4).setValue(new Date().toLocaleString('pt-BR'));
+  var sheet = getOrCreateControlSheet(ss);
+  sheet.getRange(5, 1).setValue('Mapa Categorias FIPE');
+  sheet.getRange(5, 2).setValue(payload);
+  sheet.getRange(5, 3).setValue('Mapeamento de tipo FIPE por categoria (carros/motos/caminhoes)');
+  sheet.getRange(5, 4).setValue(new Date().toLocaleString('pt-BR'));
   return { success: true, message: 'Mapa de categorias salvo' };
 }
 
@@ -690,8 +702,7 @@ function loadFipeRequests() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  // Store in row 5 of _Control sheet
-  var val = sheet.getRange(5, 2).getValue();
+  var val = sheet.getRange(6, 2).getValue();
   if (!val) return { success: true, data: null };
   try {
     return { success: true, data: JSON.parse(val) };
@@ -702,16 +713,11 @@ function loadFipeRequests() {
 
 function saveFipeRequests(payload) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName('_Control');
-  if (!sheet) {
-    sheet = ss.insertSheet('_Control');
-    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
-    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
-    sheet.hideSheet();
-  }
-  sheet.getRange(5, 1).setValue('fipeRequests');
-  sheet.getRange(5, 2).setValue(payload);
-  sheet.getRange(5, 4).setValue(new Date().toLocaleString('pt-BR'));
+  var sheet = getOrCreateControlSheet(ss);
+  sheet.getRange(6, 1).setValue('Contador Requisicoes FIPE');
+  sheet.getRange(6, 2).setValue(payload);
+  sheet.getRange(6, 3).setValue('Quantidade de requisicoes feitas a API FIPE no mes atual');
+  sheet.getRange(6, 4).setValue(new Date().toLocaleString('pt-BR'));
   return { success: true, message: 'Contador de requisicoes salvo' };
 }
 
@@ -720,23 +726,82 @@ function loadFipeRefCode() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  // Store in row 6 of _Control sheet
-  var val = sheet.getRange(6, 2).getValue();
+  var val = sheet.getRange(7, 2).getValue();
   if (!val) return { success: true, data: null };
   return { success: true, data: val.toString() };
 }
 
 function saveFipeRefCode(payload) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = getOrCreateControlSheet(ss);
+  sheet.getRange(7, 1).setValue('Codigo Referencia FIPE');
+  sheet.getRange(7, 2).setValue(payload);
+  sheet.getRange(7, 3).setValue('Codigo da ultima tabela FIPE conhecida (para detectar nova versao)');
+  sheet.getRange(7, 4).setValue(new Date().toLocaleString('pt-BR'));
+  return { success: true, message: 'Codigo de referencia FIPE salvo' };
+}
+
+// Helper: get or create _Control sheet with proper structure
+function getOrCreateControlSheet(ss) {
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) {
     sheet = ss.insertSheet('_Control');
-    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
-    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
+    // Row 1: Headers
+    sheet.getRange(1, 1, 1, 4).setValues([['Configuracao', 'Valor', 'Descricao', 'Ultima Atualizacao']]);
+    sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+    // Row 2: Section separator - Concurrency
+    sheet.getRange(2, 1).setValue('--- CONTROLE DE CONCORRENCIA ---');
+    sheet.getRange(2, 1).setFontWeight('bold').setFontStyle('italic');
+    // Row 3: Lock
+    sheet.getRange(3, 1, 1, 3).setValues([['Lock Ativo', '', 'Usuario que possui o lock de edicao (expira em 30s)']]);
+    // Row 4: Last Modified
+    sheet.getRange(4, 1, 1, 3).setValues([['Ultima Modificacao', '', 'Timestamp da ultima vez que os dados foram salvos']]);
+    // Row 5+: FIPE section
+    sheet.getRange(5, 1, 1, 3).setValues([['Mapa Categorias FIPE', '', 'Mapeamento de tipo FIPE por categoria (carros/motos/caminhoes)']]);
+    sheet.getRange(6, 1, 1, 3).setValues([['Contador Requisicoes FIPE', '', 'Quantidade de requisicoes feitas a API FIPE no mes atual']]);
+    sheet.getRange(7, 1, 1, 3).setValues([['Codigo Referencia FIPE', '', 'Codigo da ultima tabela FIPE conhecida (para detectar nova versao)']]);
     sheet.hideSheet();
   }
-  sheet.getRange(6, 1).setValue('fipeRefCode');
-  sheet.getRange(6, 2).setValue(payload);
-  sheet.getRange(6, 4).setValue(new Date().toLocaleString('pt-BR'));
-  return { success: true, message: 'Codigo de referencia FIPE salvo' };
+  return sheet;
+}
+
+// Migrate existing _Control sheet to new organized structure
+function migrateControlSheet() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) {
+    getOrCreateControlSheet(ss);
+    return { success: true, message: 'Aba _Control criada com estrutura organizada' };
+  }
+  // Read existing data from old positions
+  var oldLock = sheet.getRange(2, 2).getValue();
+  var oldLockUser = sheet.getRange(2, 3).getValue();
+  var oldLockDate = sheet.getRange(2, 4).getValue();
+  var oldTimestamp = sheet.getRange(3, 2).getValue();
+  var oldTsUser = sheet.getRange(3, 3).getValue();
+  var oldTsDate = sheet.getRange(3, 4).getValue();
+  var oldCatMap = sheet.getRange(4, 2).getValue();
+  var oldRequests = sheet.getRange(5, 2).getValue();
+  var oldRefCode = sheet.getRange(6, 2).getValue();
+  
+  // Clear and rebuild
+  sheet.clear();
+  // Row 1: Headers
+  sheet.getRange(1, 1, 1, 4).setValues([['Configuracao', 'Valor', 'Descricao', 'Ultima Atualizacao']]);
+  sheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+  // Row 2: Section separator
+  sheet.getRange(2, 1).setValue('--- CONTROLE DE CONCORRENCIA ---');
+  sheet.getRange(2, 1).setFontWeight('bold').setFontStyle('italic');
+  // Row 3: Lock (migrate data)
+  sheet.getRange(3, 1, 1, 4).setValues([['Lock Ativo', oldLock || '', oldLockUser || 'Usuario que possui o lock de edicao (expira em 30s)', oldLockDate || '']]);
+  // Row 4: Last Modified (migrate data)
+  sheet.getRange(4, 1, 1, 4).setValues([['Ultima Modificacao', oldTimestamp || '', oldTsUser || 'Timestamp da ultima vez que os dados foram salvos', oldTsDate || '']]);
+  // Row 5: Category Map (migrate data)
+  sheet.getRange(5, 1, 1, 4).setValues([['Mapa Categorias FIPE', oldCatMap || '', 'Mapeamento de tipo FIPE por categoria (carros/motos/caminhoes)', '']]);
+  // Row 6: Request Counter (migrate data)
+  sheet.getRange(6, 1, 1, 4).setValues([['Contador Requisicoes FIPE', oldRequests || '', 'Quantidade de requisicoes feitas a API FIPE no mes atual', '']]);
+  // Row 7: Ref Code (migrate data)
+  sheet.getRange(7, 1, 1, 4).setValues([['Codigo Referencia FIPE', oldRefCode || '', 'Codigo da ultima tabela FIPE conhecida (para detectar nova versao)', '']]);
+  
+  return { success: true, message: 'Aba _Control migrada para estrutura organizada' };
 }
