@@ -1631,9 +1631,26 @@ function fipeFilterBrands(){
   const msg=document.getElementById('addModel_marcaMsg');
   if(!input||!dd) return;
   const query=input.value.trim().toLowerCase();
-  if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
   const brands=isFipeBaseLoaded()?getFipeBrandsForCategory(_fipeCurrentCategory):ALL_BRANDS;
-  const filtered=brands.filter(b=>b.toLowerCase().includes(query)).slice(0,20);
+  // Show all (first 30) if empty, or filter by query
+  const filtered=query?brands.filter(b=>b.toLowerCase().includes(query)).slice(0,30):brands.slice(0,30);
+  if(filtered.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
+    if(query){msg.textContent='✕ Marca não encontrada na base oficial';msg.className='ac-msg invalid';}
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML=filtered.map(b=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
+  // Check exact match
+  if(query){
+    const exact=brands.find(b=>b.toLowerCase()===query);
+    if(exact){msg.textContent='✓ Marca válida';msg.className='ac-msg valid';}
+    else{msg.textContent='Digite ou selecione uma marca da lista';msg.className='ac-msg';}
+  } else {
+    msg.textContent='';msg.className='ac-msg';
+  }
+}
   if(filtered.length===0){
     dd.style.display='block';
     dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
@@ -1667,21 +1684,25 @@ function fipeFilterModels(){
   const msg=document.getElementById('addModel_modeloMsg');
   if(!input||!dd) return;
   const query=input.value.trim().toLowerCase();
-  if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
   const models=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_fipeSelectedBrand,_fipeCurrentCategory):[...new Set(ALL_RECORDS.filter(r=>r.marca===_fipeSelectedBrand).map(r=>r.modelo))];
-  const filtered=models.filter(m=>m.toLowerCase().includes(query)).slice(0,30);
+  // Show first 30 if empty, or filter by query
+  const filtered=query?models.filter(m=>m.toLowerCase().includes(query)).slice(0,30):models.slice(0,30);
   if(filtered.length===0){
     dd.style.display='block';
     dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhum modelo encontrado</div>';
-    msg.textContent='✕ Modelo não encontrado na base oficial';msg.className='ac-msg invalid';
+    if(query){msg.textContent='✕ Modelo não encontrado na base oficial';msg.className='ac-msg invalid';}
     return;
   }
   dd.style.display='block';
-  dd.innerHTML=filtered.map(m=>'<div style="padding:6px 12px;font-size:.82rem;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('');
+  dd.innerHTML=filtered.map(m=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('')+(models.length>30?'<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+models.length+' — digite para filtrar</div>':'');
   // Check exact match
-  const exact=models.find(m=>m.toLowerCase()===query);
-  if(exact){msg.textContent='✓ Modelo válido';msg.className='ac-msg valid';}
-  else{msg.textContent='';msg.className='ac-msg';}
+  if(query){
+    const exact=models.find(m=>m.toLowerCase()===query);
+    if(exact){msg.textContent='✓ Modelo válido';msg.className='ac-msg valid';}
+    else{msg.textContent='Digite ou selecione um modelo da lista';msg.className='ac-msg';}
+  } else {
+    msg.textContent='';msg.className='ac-msg';
+  }
 }
 
 function fipeSelectModel(model){
@@ -1750,13 +1771,17 @@ function openAddModelToCat(categoria){
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
 
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
-    <input id="addModel_marca" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="fipeFilterBrands()">
-    <div id="addModel_marcaDropdown" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;background:var(--surface)"></div>
+    <div style="position:relative">
+      <input id="addModel_marca" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="fipeFilterBrands()" onfocus="fipeFilterBrands()" style="width:100%">
+      <div id="addModel_marcaDropdown" style="position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div>
+    </div>
     <div id="addModel_marcaMsg" class="ac-msg"></div>
 
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
-    <input id="addModel_modelo" placeholder="Selecione uma marca primeiro..." autocomplete="off" oninput="fipeFilterModels()" disabled>
-    <div id="addModel_modeloDropdown" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;background:var(--surface)"></div>
+    <div style="position:relative">
+      <input id="addModel_modelo" placeholder="Selecione uma marca primeiro..." autocomplete="off" oninput="fipeFilterModels()" onfocus="fipeFilterModels()" disabled style="width:100%">
+      <div id="addModel_modeloDropdown" style="position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div>
+    </div>
     <div id="addModel_modeloMsg" class="ac-msg"></div>
 
     <div id="addModel_msg" class="ac-msg"></div>
