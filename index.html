@@ -1220,6 +1220,7 @@ function renderOverviewTable(){
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
           <div class="row-menu">
             <div class="row-menu-item${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')">✏️ Renomear</div>
+            <div class="row-menu-item" onclick="event.stopPropagation();closeAllRowMenus();openEditCategoryType('${cat.replace(/'/g,"\\'")}')">⚙️ Tipo FIPE</div>
             <div class="row-menu-item danger${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')">🗑️ Remover</div>
           </div>
         </div>
@@ -1506,7 +1507,7 @@ function cancelPendingModelChange(marca, modelo, categoria){
 }
 
 // ========= FIPE CATEGORY-TYPE MAPPING =========
-const FIPE_CATEGORY_TYPE_MAP = {
+let FIPE_CATEGORY_TYPE_MAP = {
   'Automóvel Premium': 'cars',
   'Elétrico | Híbrido': 'cars',
   'Passeio - Nacional': 'cars',
@@ -1525,26 +1526,82 @@ const FIPE_CATEGORY_TYPE_MAP = {
   'Truck Pesado (a partir de 14t)': 'trucks'
 };
 
+function saveFipeCategoryMap(){
+  try{localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));}catch(e){}
+}
+
+function loadFipeCategoryMap(){
+  try{
+    const saved=localStorage.getItem('avp-fipe-cat-map');
+    if(saved){const parsed=JSON.parse(saved);Object.assign(FIPE_CATEGORY_TYPE_MAP,parsed);}
+  }catch(e){}
+}
+
+function setCategoryFipeType(categoria, types){
+  // types can be: 'cars', 'motorcycles', 'trucks', or 'cars,motorcycles', etc.
+  FIPE_CATEGORY_TYPE_MAP[categoria]=types;
+  saveFipeCategoryMap();
+}
+
+function getCategoryFipeTypeLabel(categoria){
+  const type=FIPE_CATEGORY_TYPE_MAP[categoria]||'cars';
+  const labels={'cars':'Carros','motorcycles':'Motos','trucks':'Caminhões'};
+  return type.split(',').map(t=>labels[t.trim()]||t).join(' + ');
+}
+
+function openEditCategoryType(cat){
+  const current=FIPE_CATEGORY_TYPE_MAP[cat]||'cars';
+  const hasCars=current.includes('cars');
+  const hasMotos=current.includes('motorcycles');
+  const hasTrucks=current.includes('trucks');
+  showModal('⚙️ Tipo de Veículo — '+cat,`<div style="display:flex;flex-direction:column;gap:12px">
+    <span style="font-size:.78rem;color:var(--text2)">Selecione quais tipos de veículo esta categoria aceita:</span>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
+      <input type="checkbox" id="catType_cars" ${hasCars?'checked':''}> 🚗 Carros
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
+      <input type="checkbox" id="catType_motos" ${hasMotos?'checked':''}> 🏍️ Motos
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
+      <input type="checkbox" id="catType_trucks" ${hasTrucks?'checked':''}> 🚛 Caminhões
+    </label>
+    <span style="font-size:.72rem;color:var(--text3)">Isso define quais marcas/modelos FIPE serão exibidos ao adicionar modelos nesta categoria.</span>
+  </div>`,function(){
+    const types=[];
+    if(document.getElementById('catType_cars').checked) types.push('cars');
+    if(document.getElementById('catType_motos').checked) types.push('motorcycles');
+    if(document.getElementById('catType_trucks').checked) types.push('trucks');
+    if(!types.length){showToast('Selecione pelo menos um tipo','error');return;}
+    setCategoryFipeType(cat, types.join(','));
+    closeModal();
+    showToast('Tipo da categoria "'+cat+'" atualizado para: '+getCategoryFipeTypeLabel(cat),'success');
+    renderOverviewTable();
+  },'blue');
+}
+
 function getFipeTypeForCategory(categoria){
   return FIPE_CATEGORY_TYPE_MAP[categoria] || 'cars'; // default to cars if not mapped
 }
 
 function getFipeBrandsForCategory(categoria){
   if(!isFipeBaseLoaded()) return getFipeBrands();
-  const type=getFipeTypeForCategory(categoria);
+  const types=(getFipeTypeForCategory(categoria)||'cars').split(',').map(t=>t.trim());
   return FIPE_BASE.brands.filter(b=>{
-    if(type==='cars') return !b._type; // cars have no _type
-    if(type==='motorcycles') return b._type==='moto';
-    if(type==='trucks') return b._type==='truck';
-    return true;
+    for(const type of types){
+      if(type==='cars'&&!b._type) return true;
+      if(type==='motorcycles'&&b._type==='moto') return true;
+      if(type==='trucks'&&b._type==='truck') return true;
+    }
+    return false;
   }).map(b=>b.name).sort();
 }
 
 function getFipeModelsForBrandAndCategory(brandName, categoria){
   if(!isFipeBaseLoaded()) return [];
-  const type=getFipeTypeForCategory(categoria);
+  const types=(getFipeTypeForCategory(categoria)||'cars').split(',').map(t=>t.trim());
+  // Find brand matching any of the allowed types
   const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===brandName.toLowerCase()&&(
-    (type==='cars'&&!b._type)||(type==='motorcycles'&&b._type==='moto')||(type==='trucks'&&b._type==='truck')
+    (types.includes('cars')&&!b._type)||(types.includes('motorcycles')&&b._type==='moto')||(types.includes('trucks')&&b._type==='truck')
   ));
   if(!brand) return [];
   const key=brand._type==='moto'?'moto_'+brand.code:brand._type==='truck'?'truck_'+brand.code:brand.code;
@@ -2704,11 +2761,24 @@ function openAddCategory(){
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
     <input id="new_cat_name" placeholder="Digite o nome da categoria...">
     <div id="new_cat_msg" class="ac-msg"></div>
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de veículo aceito:</label>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_cars" checked> 🚗 Carros</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_motos"> 🏍️ Motos</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_trucks"> 🚛 Caminhões</label>
+    </div>
     <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
     const name=document.getElementById('new_cat_name').value.trim();
     if(!name){showToast('Digite o nome da categoria','error');return;}
     if(CATEGORIES.includes(name)){showToast('Categoria já existe!','error');return;}
+    // Save type mapping
+    const types=[];
+    if(document.getElementById('newCat_cars').checked) types.push('cars');
+    if(document.getElementById('newCat_motos').checked) types.push('motorcycles');
+    if(document.getElementById('newCat_trucks').checked) types.push('trucks');
+    if(!types.length){showToast('Selecione pelo menos um tipo de veículo','error');return;}
+    setCategoryFipeType(name, types.join(','));
     addToStaging({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name});
     closeModal();
     showToast('Criação de "'+name+'" adicionada às pendentes','success');
@@ -4720,6 +4790,7 @@ function initApp(){
   loadTempReleasesFromStorage();
   loadFipeBaseFromStorage();
   loadFipeRequestsFromStorage();
+  loadFipeCategoryMap();
   if(STAGING.ops.length>0){
     renderStagingBars();
     showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
