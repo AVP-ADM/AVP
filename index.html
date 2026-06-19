@@ -1539,6 +1539,21 @@ function loadFipeCategoryMap(){
   }catch(e){}
 }
 
+async function loadFipeBaseFromSheets(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeBase');
+    const result=await resp.json();
+    if(result.success&&result.data){
+      const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
+      if(data.brands&&data.brands.length>0){
+        FIPE_BASE=data;
+        saveFipeBaseToStorage();
+        console.log('[FIPE] Base carregada do Sheets: '+data.brands.length+' marcas, '+(data.totalModels||0)+' modelos');
+      }
+    }
+  }catch(e){console.warn('[FIPE] Erro ao carregar base do Sheets:',e);}
+}
+
 async function loadFipeCategoryMapFromSheets(){
   try{
     const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeCatMap');
@@ -4721,6 +4736,15 @@ async function initSheetsIntegration(){
     renderTempReleases();
     // Load FIPE category map from Sheets
     await loadFipeCategoryMapFromSheets();
+    // Load FIPE base from Sheets if localStorage is empty (new computer)
+    if(!isFipeBaseLoaded()){
+      await loadFipeBaseFromSheets();
+      if(isFipeBaseLoaded()){
+        showToast('Base FIPE carregada do servidor ('+FIPE_BASE.brands.length+' marcas)','success');
+        renderFipeOutdatedAlert();
+        renderFipeDiagnostics();
+      }
+    }
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
