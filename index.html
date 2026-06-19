@@ -1773,14 +1773,14 @@ function openAddModelToCat(categoria){
 
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
     <div style="position:relative">
-      <input id="addModel_marca" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="fipeFilterBrands()" onfocus="fipeFilterBrands()" style="width:100%">
+      <input id="addModel_marca" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="clearTimeout(window._fipeBrandTimer);window._fipeBrandTimer=setTimeout(fipeFilterBrands,150)" onfocus="fipeFilterBrands()" style="width:100%">
       <div id="addModel_marcaDropdown" style="position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div>
     </div>
     <div id="addModel_marcaMsg" class="ac-msg"></div>
 
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
     <div style="position:relative">
-      <input id="addModel_modelo" placeholder="Selecione uma marca primeiro..." autocomplete="off" oninput="fipeFilterModels()" onfocus="fipeFilterModels()" disabled style="width:100%">
+      <input id="addModel_modelo" placeholder="Selecione uma marca primeiro..." autocomplete="off" oninput="clearTimeout(window._fipeModelTimer);window._fipeModelTimer=setTimeout(fipeFilterModels,150)" onfocus="fipeFilterModels()" disabled style="width:100%">
       <div id="addModel_modeloDropdown" style="position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div>
     </div>
     <div id="addModel_modeloMsg" class="ac-msg"></div>
