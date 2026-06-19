@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AutoVale — Sistema de Auditoria e Prevenção de Veículos">
+<meta name="theme-color" content="#0F1A3D">
+<meta property="og:title" content="AutoVale — Auditoria de Veículos">
+<meta property="og:description" content="Sistema de auditoria e categorização de veículos para prevenção">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231A2B6B'/%3E%3Cpath d='M8 24L16 8L24 24' stroke='%2334D058' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M11 18h10' stroke='%2334D058' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>AutoVale — Auditoria de Veículos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,15 +58,50 @@
 [data-theme="dark"] .badge-green{background:#052E16;color:#6EE7B7}
 [data-theme="dark"] .badge-amber,.badge-orange{background:#451A03;color:#FCD34D}
 [data-theme="dark"] .badge-red{background:#450A0A;color:#FCA5A5}
+[data-theme="dark"] .app-sidebar{background:var(--surface);border-right-color:var(--border)}
+[data-theme="dark"] .sidebar-item.active{background:rgba(52,208,88,.08);color:var(--accent)}
+[data-theme="dark"] .sidebar-item:hover{background:var(--surface-2)}
+[data-theme="dark"] .skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,#1E2D4A 50%,var(--surface-2) 75%);background-size:200% 100%}
 html{font-size:13px}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5;font-feature-settings:'cv02','cv03','cv04','cv11'}
 
 /* ========= LAYOUT ========= */
-.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between;height:48px}
+.app-layout{display:flex;height:calc(100vh - 48px);overflow:hidden}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between;height:48px}
 .app-logo{font-size:1.1rem;font-weight:700;color:var(--primary);letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.78rem;margin-left:4px}
 .header-actions{display:flex;align-items:center;gap:10px}
 .header-right{display:flex;align-items:center;gap:10px}
+
+/* ========= SIDEBAR ========= */
+.app-sidebar{width:240px;min-width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s cubic-bezier(.4,0,.2,1),min-width .25s cubic-bezier(.4,0,.2,1);overflow:hidden;position:relative;z-index:90}
+.app-sidebar.collapsed{width:64px;min-width:64px}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:2px;border-radius:var(--radius);cursor:pointer;transition:all .15s;position:relative;white-space:nowrap;color:var(--text2);font-size:.84rem;font-weight:500;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.sidebar-item:hover{background:var(--surface-2);color:var(--text1)}
+.sidebar-item.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.sidebar-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);transition:all .25s cubic-bezier(.4,0,.2,1)}
+.sidebar-item .si-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-item .si-icon svg{width:18px;height:18px}
+.sidebar-item .si-text{opacity:1;transition:opacity .2s .05s;overflow:hidden}
+.app-sidebar.collapsed .si-text{opacity:0;transition:opacity .1s}
+.sidebar-item .si-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;min-width:18px;text-align:center;transition:all .2s}
+.app-sidebar.collapsed .si-badge{right:6px;top:6px;transform:none;font-size:.55rem;padding:1px 4px;min-width:14px}
+.sidebar-collapse{padding:8px;border-top:1px solid var(--border);display:flex;justify-content:center}
+.sidebar-collapse-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text3);transition:all .2s;display:flex;align-items:center;gap:6px;font-size:.72rem;width:100%;justify-content:center}
+.sidebar-collapse-btn:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.sidebar-collapse-btn .collapse-text{transition:opacity .2s}
+.app-sidebar.collapsed .sidebar-collapse-btn .collapse-text{opacity:0;width:0;overflow:hidden}
+.sidebar-collapse-btn svg{transition:transform .25s}
+.app-sidebar.collapsed .sidebar-collapse-btn svg{transform:rotate(180deg)}
+/* Tooltip for collapsed sidebar */
+.app-sidebar.collapsed .sidebar-item{justify-content:center;padding:10px}
+.app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none;animation:tooltipIn .15s}
+@keyframes tooltipIn{from{opacity:0;transform:translateY(-50%) translateX(-4px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
+
+/* ========= MAIN CONTENT AREA ========= */
+.app-main{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 32px 60px;max-width:100%}
+.app-main-inner{max-width:1440px;margin:0 auto}
 .theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
 .theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
 .theme-toggle .label{font-size:.75rem;font-weight:500;color:var(--text2)}
@@ -99,17 +140,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .upload-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:.82rem}
 .upload-preview .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)}
 .upload-preview .stat:last-child{border-bottom:none}
-.app-container{max-width:1440px;margin:0 auto;padding:24px 32px 60px}
+.app-container{display:none;margin-top:48px;height:calc(100vh - 48px)}
 
-/* ========= TABS ========= */
-.tabs{display:flex;gap:4px;background:var(--surface);border-radius:var(--radius-lg);padding:4px;border:1px solid var(--border);margin-bottom:24px;overflow-x:auto;position:sticky;top:61px;z-index:90;box-shadow:var(--shadow);align-items:center}
-.tabs .tabs-spacer{flex:1}
-.tabs .search-trigger{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;cursor:pointer;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .2s;margin-right:4px;white-space:nowrap}
-.tabs .search-trigger:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.tabs .search-trigger .shortcut{font-size:.65rem;opacity:.5;background:var(--surface);padding:1px 5px;border-radius:3px;border:1px solid var(--border)}
-.tab{padding:10px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;border:none;background:none}
-.tab:hover{color:var(--text1);background:var(--bg)}
-.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 4px rgba(27,122,61,.25)}
+/* ========= TABS (hidden - replaced by sidebar) ========= */
+.tabs{display:none}
+.tab{display:none}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 
@@ -338,16 +373,60 @@ tr:hover .row-actions{opacity:1}
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty .empty-icon{font-size:2.5rem;margin-bottom:10px}
 
+/* ========= MICROINTERACTIONS ========= */
+.fade-in{animation:fadeIn .2s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.kpi-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.kpi-card:active{transform:scale(.98)}
+.mgmt-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.mgmt-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--accent)}
+.export-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.export-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.modal-overlay.show .modal{animation:modalIn .2s cubic-bezier(.4,0,.2,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.toast{transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s}
+.toast.show{transform:translateX(0)}
+.btn{transition:all .15s cubic-bezier(.4,0,.2,1)}
+.btn:active{transform:scale(.97)}
+.badge-pulse{animation:badgePulse .4s ease-out}
+@keyframes badgePulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* ========= EMPTY STATES ========= */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-state .empty-icon{width:64px;height:64px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.empty-state .empty-icon svg{width:28px;height:28px;color:var(--text3);stroke:var(--text3)}
+.empty-state h4{font-size:.95rem;font-weight:600;color:var(--text1);margin-bottom:6px}
+.empty-state p{font-size:.82rem;color:var(--text3);max-width:320px;margin-bottom:16px}
+.empty-state .btn{margin-top:4px}
+
+/* ========= LOADING SKELETON ========= */
+.skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,var(--border-light) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:skeleton 1.5s infinite;border-radius:var(--radius)}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-row{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border-light)}
+.skeleton-row .sk-cell{height:14px;border-radius:4px}
+.skeleton-kpi{height:100px;border-radius:var(--radius-lg)}
+.loading-overlay{display:flex;align-items:center;justify-content:center;padding:40px;flex-direction:column;gap:12px}
+.loading-overlay .spinner{width:24px;height:24px}
+.loading-overlay span{font-size:.82rem;color:var(--text2)}
+
 /* ========= RESPONSIVE ========= */
 @media(max-width:768px){
-  .app-container{padding:16px}
+  .app-sidebar{position:fixed;left:-240px;top:48px;height:calc(100vh - 48px);z-index:150;box-shadow:var(--shadow-lg)}
+  .app-sidebar.mobile-open{left:0}
+  .app-sidebar.collapsed{left:-64px}
+  .app-main{padding:16px}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .tabs{flex-wrap:nowrap;overflow-x:auto}
   .drawer{width:100vw}
   .comp-section{grid-template-columns:1fr!important}
   .export-grid{grid-template-columns:1fr}
   .mgmt-grid{grid-template-columns:1fr}
   .filter-row{flex-direction:column;align-items:stretch}
+  .mobile-menu-btn{display:flex!important}
+}
+@media(min-width:769px){
+  .mobile-menu-btn{display:none!important}
+  .sidebar-mobile-overlay{display:none!important}
 }
 </style>
 </head>
@@ -375,7 +454,10 @@ tr:hover .row-actions{opacity:1}
 
 <!-- ========= HEADER ========= -->
 <header class="app-header" id="appHeader" style="display:none">
-  <div class="app-logo">AutoVale<span>Auditoria de Veículos</span></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <div class="app-logo">AutoVale<span>Auditoria de Veículos</span></div>
+  </div>
   <div class="header-right">
     <div class="sync-info" id="syncInfo"></div>
     <div class="base-info" id="baseInfo"></div>
@@ -397,8 +479,56 @@ tr:hover .row-actions{opacity:1}
 
 <!-- ========= MAIN CONTAINER ========= -->
 <div class="app-container" id="appContainer" style="display:none">
+  <div class="app-layout">
+    <!-- ========= SIDEBAR ========= -->
+    <aside class="app-sidebar" id="appSidebar">
+      <nav class="sidebar-nav">
+        <button class="sidebar-item active" data-tab="overview" data-tooltip="Visão Geral" onclick="goTab('overview')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+          <span class="si-text">Visão Geral</span>
+        </button>
+        <button class="sidebar-item" data-tab="duplicates" data-tooltip="Duplicidades" onclick="goTab('duplicates')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+          <span class="si-text">Duplicidades</span>
+          <span class="si-badge" id="badgeDuplicates" style="display:none"></span>
+        </button>
+        <button class="sidebar-item" data-tab="divergences" data-tooltip="Divergências" onclick="goTab('divergences')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></span>
+          <span class="si-text">Divergências</span>
+          <span class="si-badge" id="badgeDivergences" style="display:none"></span>
+        </button>
+        <button class="sidebar-item" data-tab="management" data-tooltip="Manutenção" onclick="goTab('management')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+          <span class="si-text">Manutenção</span>
+          <span class="si-badge" id="badgeStaging" style="display:none"></span>
+        </button>
+        <button class="sidebar-item" data-tab="history" data-tooltip="Histórico" onclick="goTab('history')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          <span class="si-text">Histórico</span>
+        </button>
+        <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+          <span class="si-text">Exportações</span>
+        </button>
+        <div style="margin:12px 14px;height:1px;background:var(--border)"></div>
+        <button class="sidebar-item" data-tooltip="Pesquisar" onclick="openGlobalSearch()">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <span class="si-text" style="display:flex;align-items:center;gap:8px">Pesquisar <span style="font-size:.6rem;opacity:.5;background:var(--bg);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</span></span>
+        </button>
+      </nav>
+      <div class="sidebar-collapse">
+        <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+          <span class="collapse-text">Colapsar</span>
+        </button>
+      </div>
+    </aside>
 
-  <!-- ========= NAVIGATION TABS ========= -->
+    <!-- ========= CONTENT AREA ========= -->
+    <main class="app-main" id="appMain">
+      <div class="app-main-inner">
+
+  <!-- ========= NAVIGATION TABS (hidden, kept for compat) ========= -->
   <div class="tabs" id="mainTabs">
     <button class="tab active" onclick="goTab('overview')">Visão Geral</button>
     <button class="tab" onclick="goTab('duplicates')">Duplicidades</button>
@@ -595,7 +725,7 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: EXPORTAÇÕES ========= -->
   <div class="tab-panel" id="panel-exports">
-    <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="spinner" style="margin:0 auto 10px"></div>Aguardando carregamento dos dados...</div>
+    <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="loading-overlay"><div class="spinner"></div><span>Carregando dados...</span></div></div>
     <div class="export-grid" id="exportsGrid">
       <div class="export-card">
         <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
@@ -642,7 +772,13 @@ tr:hover .row-actions{opacity:1}
     </div>
   </div>
 
+      </div><!-- end app-main-inner -->
+    </main>
+  </div><!-- end app-layout -->
 </div><!-- end app-container -->
+
+<!-- ========= SIDEBAR MOBILE OVERLAY ========= -->
+<div class="sidebar-mobile-overlay" id="sidebarMobileOverlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;inset:0;top:48px;background:rgba(0,0,0,.4);z-index:140"></div>
 
 <!-- ========= GLOBAL SEARCH ========= -->
 <div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeGlobalSearch()">
@@ -1178,6 +1314,8 @@ function recomputeAll(){
       _catDupsCount[c]=(_catDupsCount[c]||0)+1;
     }
   }
+  // Update sidebar badges
+  if(typeof updateSidebarBadges==='function') updateSidebarBadges();
 }
 
 // ========= NAVIGATION =========
@@ -1207,10 +1345,13 @@ function refreshActiveTab(){
 function goTab(tab){
   // Close drawer and modal if open
   closeDrawer();
+  // Close mobile sidebar if open
+  closeMobileSidebar();
   // Reset all filters and state
   resetTabFilters();
-  // Scroll to top
-  window.scrollTo(0,0);
+  // Scroll content to top
+  const mainEl = document.getElementById('appMain');
+  if(mainEl) mainEl.scrollTo(0,0);
 
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -1219,6 +1360,15 @@ function goTab(tab){
   const tabMap = ['overview','duplicates','divergences','management','history','exports'];
   const idx = tabMap.indexOf(tab);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
+
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-item[data-tab]').forEach(item=>{
+    item.classList.toggle('active', item.dataset.tab===tab);
+  });
+
+  // Fade-in animation for content
+  const panel = document.getElementById('panel-'+tab);
+  if(panel){panel.classList.remove('fade-in');void panel.offsetWidth;panel.classList.add('fade-in');}
 
   if(tab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
   if(tab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
@@ -1353,7 +1503,7 @@ function renderOverviewTable(){
         </div>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="5" class="empty">Nenhuma categoria</td></tr>';
+  }).join('')||'<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><h4>Nenhuma categoria encontrada</h4><p>Importe uma planilha ou crie categorias para começar.</p><button class="btn btn-green btn-sm" onclick="openAddCategory()">+ Nova Categoria</button></div></td></tr>';
 
   renderTopDuplicates();
   renderTopDivergences();
@@ -1366,7 +1516,7 @@ function renderTopDuplicates(){
       <span style="font-size:.82rem"><strong>${d.marca}</strong> — ${d.modelo}</span>
       <span class="badge badge-red">${d.count} cat.</span>
     </div>
-  `).join(''):'<div class="empty">Nenhum duplicado</div>';
+  `).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado</h4><p>Todos os modelos estão em categorias únicas.</p></div>';
 }
 
 function renderTopDivergences(){
@@ -1387,7 +1537,7 @@ function renderTopDivergences(){
       <span style="font-size:.82rem">${it.label}</span>
       <span class="badge badge-amber">${it.count} dif.</span>
     </div>
-  `).join(''):'<div class="empty">Nenhuma divergência</div>';
+  `).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></div><h4>Nenhuma divergência</h4><p>Categorias comparáveis estão alinhadas.</p></div>';
 }
 
 function navigateToDuplicate(marca, modelo){
@@ -2874,7 +3024,7 @@ function renderDupTable(){
       <td>${catBadges}</td>
       <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhum duplicado encontrado</td></tr>';
+  }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado encontrado</h4><p>Todos os modelos estão em categorias únicas ou o filtro não retornou resultados.</p></div></td></tr>';
 
   renderPagination('dupPagination', pages, dupPage, p=>{dupPage=p;renderDupTable();});
 }
@@ -3221,7 +3371,7 @@ function renderDivergences(){
   ).join('');
 
   const g = COMP_GROUPS[currentCompGroup];
-  if(!g){document.getElementById('compContent').innerHTML='<div class="empty">Nenhum grupo de comparação configurado</div>';return;}
+  if(!g){document.getElementById('compContent').innerHTML='<div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></div><h4>Nenhum grupo de comparação</h4><p>Não há categorias configuradas para comparação.</p></div>';return;}
 
   const modelsA = getModelsForCat(g.a);
   const modelsB = getModelsForCat(g.b);
@@ -3580,7 +3730,9 @@ function renderStagingBars(){
   if(STAGING.ops.length>0){bar.classList.add('visible');document.getElementById('stagingCount').textContent=STAGING.ops.length;}
   else{bar.classList.remove('visible');}
   // Update page title with pending count
-  document.title=STAGING.ops.length>0?'('+STAGING.ops.length+') Dashboard AVP':'Dashboard de Auditoria de Veículos — AVP';
+  document.title=STAGING.ops.length>0?'('+STAGING.ops.length+') Dashboard AVP':'AutoVale — Auditoria de Veículos';
+  // Update sidebar badge
+  if(typeof updateSidebarBadges==='function') updateSidebarBadges();
 }
 
 let stagingPage=1;
@@ -3651,7 +3803,7 @@ function renderStagingTable(){
     <td>${op.catTo||'—'}</td>
     <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})">✕</button></td>
   </tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma alteração pendente'+(textFilter||typeFilter?' (com filtro aplicado)':'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="7"><div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div><h4>Nenhuma alteração pendente</h4><p>'+(textFilter||typeFilter?'Nenhum resultado com os filtros aplicados.':'Realize operações de manutenção para ver pendências aqui.')+'</p></div></td></tr>';
 
   // Render pagination
   const pagEl=document.getElementById('stagingPagination');
@@ -3799,7 +3951,7 @@ function renderHistory(){
     <td>${h.catFrom||'—'}</td>
     <td>${h.catTo||'—'}</td>
   </tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhum registro no histórico</td></tr>';
+  }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
   renderPagination('histPagination', pages, histPage, p=>{histPage=p;renderHistory();});
 }
@@ -4908,6 +5060,67 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('.settings-wrap')) closeSettings();
 });
 
+// ========= SIDEBAR =========
+function toggleSidebar(){
+  const sidebar = document.getElementById('appSidebar');
+  if(sidebar){
+    sidebar.classList.toggle('collapsed');
+    localStorage.setItem('avp-sidebar-collapsed', sidebar.classList.contains('collapsed')?'1':'0');
+  }
+}
+
+function initSidebar(){
+  const sidebar = document.getElementById('appSidebar');
+  if(sidebar && localStorage.getItem('avp-sidebar-collapsed')==='1'){
+    sidebar.classList.add('collapsed');
+  }
+}
+
+function toggleMobileSidebar(){
+  const sidebar = document.getElementById('appSidebar');
+  const overlay = document.getElementById('sidebarMobileOverlay');
+  if(sidebar){
+    sidebar.classList.toggle('mobile-open');
+    if(overlay) overlay.style.display = sidebar.classList.contains('mobile-open')?'block':'none';
+  }
+}
+
+function closeMobileSidebar(){
+  const sidebar = document.getElementById('appSidebar');
+  const overlay = document.getElementById('sidebarMobileOverlay');
+  if(sidebar) sidebar.classList.remove('mobile-open');
+  if(overlay) overlay.style.display='none';
+}
+
+function updateSidebarBadges(){
+  // Duplicates badge
+  const dupBadge = document.getElementById('badgeDuplicates');
+  if(dupBadge){
+    const count = DUPLICATES?DUPLICATES.length:0;
+    if(count>0){
+      dupBadge.textContent = count>999?'999+':count;
+      dupBadge.style.display='';
+      dupBadge.classList.add('badge-pulse');
+      setTimeout(()=>dupBadge.classList.remove('badge-pulse'),500);
+    } else {
+      dupBadge.style.display='none';
+    }
+  }
+  // Staging badge
+  const stagBadge = document.getElementById('badgeStaging');
+  if(stagBadge){
+    const count = STAGING&&STAGING.ops?STAGING.ops.length:0;
+    if(count>0){
+      stagBadge.textContent = count;
+      stagBadge.style.display='';
+      stagBadge.classList.add('badge-pulse');
+      setTimeout(()=>stagBadge.classList.remove('badge-pulse'),500);
+    } else {
+      stagBadge.style.display='none';
+    }
+  }
+}
+
 // ========= UPLOAD / ATUALIZAR BASE =========
 let baseFileInfo = null;
 
@@ -5253,6 +5466,7 @@ function showApp(){
   document.getElementById('appHeader').style.display='';
   document.getElementById('appContainer').style.display='';
   document.getElementById('userName').textContent=currentUser;
+  initSidebar();
 }
 
 async function doLogin(){
@@ -5318,8 +5532,8 @@ function initApp(){
   // Disable export buttons until data is loaded
   disableExportButtons();
   // Don't render anything until data loads from Sheets
-  // Show loading state
-  document.getElementById('kpiGrid').innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><div class="spinner" style="margin:0 auto 10px"></div>Carregando dados do Google Sheets...</div>';
+  // Show loading state with skeletons
+  document.getElementById('kpiGrid').innerHTML='<div class="skeleton skeleton-kpi"></div><div class="skeleton skeleton-kpi"></div><div class="skeleton skeleton-kpi"></div><div class="skeleton skeleton-kpi"></div><div class="skeleton skeleton-kpi"></div>';
   const exportsLoading=document.getElementById('exportsLoading');
   if(exportsLoading) exportsLoading.style.display='block';
   initSheetsIntegration();
