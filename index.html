@@ -4170,8 +4170,9 @@ async function initSheetsIntegration(){
     // Enable sync item now that data is loaded
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
     enableExportButtons();
-    // Ensure sync indicator shows final state
-    showSyncStatus('success','Conectado ao Google Sheets');
+    // Force sync indicator to final state (fixes first-session-of-day issue)
+    setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},500);
+    setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},4000);
   } else {
     // Failed to load - show error state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
