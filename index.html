@@ -1423,10 +1423,10 @@ function showKpiDetail(type){
     for(const g of COMP_GROUPS){
       const modelsA=getModelsForCat(g.a);
       const modelsB=getModelsForCat(g.b);
-      const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-      const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-      for(const m of onlyA) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.a]);
-      for(const m of onlyB) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.b]);
+      const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+      const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+      for(const m of modelsA){if(!setB.has(norm(m.marca)+'|||'+norm(m.modelo))) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.a]);}
+      for(const m of modelsB){if(!setA.has(norm(m.marca)+'|||'+norm(m.modelo))) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.b]);}
     }
     title+=' ('+data.length+')';
     html=buildDrawerTable(['Comparação','Marca','Modelo','Situação'],data,'divergencias');
@@ -1472,20 +1472,120 @@ function showCatDetail(cat, type){
 function buildDrawerTable(headers, data, id){
   const searchId='drawerSearch_'+id;
   const tableId='drawerTableData_'+id;
+  const PAGE_SIZE=100;
+  // Store data globally for lazy rendering
+  window['_drawerData_'+id]={headers:headers,allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
   let html='<div class="drawer-toolbar">';
-  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTable(\''+searchId+'\',\''+tableId+'\')">';
-  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTable(\''+tableId+'\',\''+id+'\')">📥 Exportar</button>';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTableLazy(\''+id+'\')">';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')">📥 Exportar</button>';
   html+='</div>';
   html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
-  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto">';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
   html+='<table class="drawer-table" id="'+tableId+'">';
-  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTable(\''+tableId+'\','+i+')">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTableLazy(\''+id+'\','+i+')" style="cursor:pointer">'+h+' ↕</th>').join('')+'</tr></thead>';
   html+='<tbody>';
-  for(const row of data){
-    html+='<tr>'+row.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>';
+  const slice=data.slice(0,PAGE_SIZE);
+  for(const row of slice){
+    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
   }
-  html+='</tbody></table></div>';
+  html+='</tbody></table>';
+  if(data.length>PAGE_SIZE){
+    html+='<div id="loadMore_'+id+'" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(PAGE_SIZE,data.length)+' de '+data.length+')</button></div>';
+  }
+  html+='</div>';
   return html;
+}
+
+function loadMoreDrawer(id){
+  const state=window['_drawerData_'+id];
+  if(!state) return;
+  state.page++;
+  const start=(state.page-1)*state.pageSize;
+  const slice=state.filtered.slice(start,start+state.pageSize);
+  if(slice.length===0) return;
+  const tableId='drawerTableData_'+id;
+  const tbody=document.getElementById(tableId).querySelector('tbody');
+  let html='';
+  for(const row of slice){
+    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+  }
+  tbody.insertAdjacentHTML('beforeend',html);
+  const shown=Math.min(state.page*state.pageSize,state.filtered.length);
+  const btn=document.getElementById('loadMore_'+id);
+  if(shown>=state.filtered.length){
+    if(btn) btn.style.display='none';
+  } else {
+    if(btn) btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+shown+' de '+state.filtered.length+')</button>';
+  }
+}
+
+function filterDrawerTableLazy(id){
+  const state=window['_drawerData_'+id];
+  if(!state) return;
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  const query=norm(document.getElementById(searchId).value);
+  state.filtered=query?state.allData.filter(row=>row.some(cell=>cell!=null&&norm(String(cell)).includes(query))):state.allData;
+  state.page=1;
+  // Re-render first page
+  const tbody=document.getElementById(tableId).querySelector('tbody');
+  const slice=state.filtered.slice(0,state.pageSize);
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  document.getElementById('count_'+tableId).textContent=state.filtered.length+' registros';
+  const btn=document.getElementById('loadMore_'+id);
+  if(btn){
+    if(state.filtered.length>state.pageSize){
+      btn.style.display='';
+      btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(state.pageSize,state.filtered.length)+' de '+state.filtered.length+')</button>';
+    } else {
+      btn.style.display='none';
+    }
+  }
+}
+
+function sortDrawerTableLazy(id,colIdx){
+  const state=window['_drawerData_'+id];
+  if(!state) return;
+  // Toggle sort direction
+  state._sortCol=state._sortCol===colIdx?-1:colIdx;
+  state._sortAsc=state._sortCol===colIdx?!state._sortAsc:true;
+  const asc=state._sortAsc;
+  const col=colIdx;
+  state.filtered.sort((a,b)=>{
+    const va=a[col]!=null?String(a[col]):'';
+    const vb=b[col]!=null?String(b[col]):'';
+    const na=parseFloat(va),nb=parseFloat(vb);
+    if(!isNaN(na)&&!isNaN(nb)) return asc?na-nb:nb-na;
+    return asc?va.localeCompare(vb):vb.localeCompare(va);
+  });
+  state.page=1;
+  const tableId='drawerTableData_'+id;
+  const tbody=document.getElementById(tableId).querySelector('tbody');
+  const slice=state.filtered.slice(0,state.pageSize);
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  const btn=document.getElementById('loadMore_'+id);
+  if(btn){
+    if(state.filtered.length>state.pageSize){
+      btn.style.display='';
+      btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(state.pageSize,state.filtered.length)+' de '+state.filtered.length+')</button>';
+    } else {
+      btn.style.display='none';
+    }
+  }
+}
+
+function exportDrawerTableLazy(id){
+  const state=window['_drawerData_'+id];
+  if(!state) return;
+  // Export all filtered data
+  const headers=state.headers;
+  const data=state.filtered;
+  const rows=[headers,...data];
+  let csv=rows.map(r=>r.map(c=>'"'+(c!=null?String(c).replace(/"/g,'""'):'') +'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=id+'.csv';a.click();
+  URL.revokeObjectURL(url);
 }
 
 function openDetailDrawer(title, content){
@@ -4312,7 +4412,7 @@ function searchMarcas(query){
   for(const brand of results){
     const cats=new Set();let count=0;
     for(const r of ALL_RECORDS){if(r.marca===brand){cats.add(r.categoria);count++;}}
-    html+=`<tr onclick="closeGlobalSearch();showKpiDetail('marcas');setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value='${brand.replace(/'/g,"\\'")}';filterDrawerTable('drawerSearch_marcas','drawerTableData_marcas');}},200)"><td><strong>${brand}</strong></td><td>${count}</td><td>${cats.size}</td></tr>`;
+    html+=`<tr onclick="closeGlobalSearch();showKpiDetail('marcas');setTimeout(()=>{const el=document.getElementById('drawerSearch_marcas');if(el){el.value='${brand.replace(/'/g,"\\'")}';filterDrawerTableLazy('marcas');}},200)"><td><strong>${brand}</strong></td><td>${count}</td><td>${cats.size}</td></tr>`;
   }
   html+='</tbody></table>';
   return html;
