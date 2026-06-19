@@ -1505,8 +1505,55 @@ function cancelPendingModelChange(marca, modelo, categoria){
   }
 }
 
+// ========= FIPE CATEGORY-TYPE MAPPING =========
+const FIPE_CATEGORY_TYPE_MAP = {
+  'Automóvel Premium': 'cars',
+  'Elétrico | Híbrido': 'cars',
+  'Passeio - Nacional': 'cars',
+  'Passeio - Importado': 'cars',
+  'SUV|Caminhonete|Utilitário': 'cars',
+  'SUV|Caminhonete|Utilitário - I': 'cars',
+  'Start': 'cars',
+  'ELITE 125 | FLUO 125 | NEO': 'motorcycles',
+  'Motocicletas - Avelloz | Shiner': 'motorcycles',
+  'Motocicletas - Honda': 'motorcycles',
+  'Motocicletas - Yamaha': 'motorcycles',
+  'Motocicletas Especiais': 'motorcycles',
+  'PCX 150 | NMAX 160 | ADV 150': 'motorcycles',
+  'PCX 160 | XMAX 250 | ADV 160': 'motorcycles',
+  'Truck Leve (até 14t)': 'trucks',
+  'Truck Pesado (a partir de 14t)': 'trucks'
+};
+
+function getFipeTypeForCategory(categoria){
+  return FIPE_CATEGORY_TYPE_MAP[categoria] || 'cars'; // default to cars if not mapped
+}
+
+function getFipeBrandsForCategory(categoria){
+  if(!isFipeBaseLoaded()) return getFipeBrands();
+  const type=getFipeTypeForCategory(categoria);
+  return FIPE_BASE.brands.filter(b=>{
+    if(type==='cars') return !b._type; // cars have no _type
+    if(type==='motorcycles') return b._type==='moto';
+    if(type==='trucks') return b._type==='truck';
+    return true;
+  }).map(b=>b.name).sort();
+}
+
+function getFipeModelsForBrandAndCategory(brandName, categoria){
+  if(!isFipeBaseLoaded()) return [];
+  const type=getFipeTypeForCategory(categoria);
+  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===brandName.toLowerCase()&&(
+    (type==='cars'&&!b._type)||(type==='motorcycles'&&b._type==='moto')||(type==='trucks'&&b._type==='truck')
+  ));
+  if(!brand) return [];
+  const key=brand._type==='moto'?'moto_'+brand.code:brand._type==='truck'?'truck_'+brand.code:brand.code;
+  return (FIPE_BASE.models[key]||[]).map(m=>m.name).sort();
+}
+
 // ========= FIPE AUTOCOMPLETE HELPERS =========
 let _fipeSelectedBrand='';
+let _fipeCurrentCategory='';
 
 function fipeFilterBrands(){
   const input=document.getElementById('addModel_marca');
@@ -1515,7 +1562,7 @@ function fipeFilterBrands(){
   if(!input||!dd) return;
   const query=input.value.trim().toLowerCase();
   if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
-  const brands=isFipeBaseLoaded()?getFipeBrands():ALL_BRANDS;
+  const brands=isFipeBaseLoaded()?getFipeBrandsForCategory(_fipeCurrentCategory):ALL_BRANDS;
   const filtered=brands.filter(b=>b.toLowerCase().includes(query)).slice(0,20);
   if(filtered.length===0){
     dd.style.display='block';
@@ -1551,7 +1598,7 @@ function fipeFilterModels(){
   if(!input||!dd) return;
   const query=input.value.trim().toLowerCase();
   if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
-  const models=isFipeBaseLoaded()?getFipeModelsForBrand(_fipeSelectedBrand):[...new Set(ALL_RECORDS.filter(r=>r.marca===_fipeSelectedBrand).map(r=>r.modelo))];
+  const models=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_fipeSelectedBrand,_fipeCurrentCategory):[...new Set(ALL_RECORDS.filter(r=>r.marca===_fipeSelectedBrand).map(r=>r.modelo))];
   const filtered=models.filter(m=>m.toLowerCase().includes(query)).slice(0,30);
   if(filtered.length===0){
     dd.style.display='block';
@@ -1626,7 +1673,8 @@ async function consultarPrecoFipe(marca, modelo){
 // ========= ADD MODEL TO CATEGORY =========
 function openAddModelToCat(categoria){
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
-  const fipeBrands=isFipeBaseLoaded()?getFipeBrands():ALL_BRANDS;
+  _fipeCurrentCategory=categoria;
+  const fipeBrands=isFipeBaseLoaded()?getFipeBrandsForCategory(categoria):ALL_BRANDS;
   showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
@@ -1661,8 +1709,8 @@ function openAddModelToCat(categoria){
     if(!marca||!modelo){showToast('Preencha Marca e Modelo','error');return;}
     // FIPE validation
     if(isFipeBaseLoaded()){
-      if(!isFipeValidBrand(marca)){showToast('Marca não encontrada na base oficial FIPE.','error');return;}
-      if(!isFipeValidModel(marca,modelo)){showToast('Modelo não encontrado na base oficial FIPE para esta marca.','error');return;}
+      if(!getFipeBrandsForCategory(categoria).some(b=>b.toLowerCase()===marca.toLowerCase())){showToast('Marca não encontrada na base oficial FIPE para esta categoria.','error');return;}
+      if(!getFipeModelsForBrandAndCategory(marca,categoria).some(m=>m.toLowerCase()===modelo.toLowerCase())){showToast('Modelo não encontrado na base oficial FIPE para esta marca.','error');return;}
     }
     // Validate: check if already exists in this category
     const models=getModelsForCat(categoria);
