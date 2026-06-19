@@ -14,6 +14,8 @@ function doGet(e) {
       result = getLastModifiedTimestamp();
     } else if (action === 'loadTempReleases') {
       result = loadTempReleases();
+    } else if (action === 'loadFipeBase') {
+      result = loadFipeBase();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -44,6 +46,8 @@ function doPost(e) {
       result = updateTimestamp(data.user);
     } else if (action === 'saveTempReleases') {
       result = saveTempReleases(data.payload);
+    } else if (action === 'saveFipeBase') {
+      result = saveFipeBase(data.payload);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -576,4 +580,64 @@ function saveTempReleases(payload) {
   }
   sheet.getRange(2, 1, rows.length, 9).setValues(rows);
   return { success: true, message: rows.length + ' liberações salvas' };
+}
+
+
+// ========= FIPE OFFICIAL BASE =========
+function loadFipeBase() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('Base_Oficial_FIPE');
+  if (!sheet) {
+    return { success: true, data: null };
+  }
+  var metaRange = sheet.getRange(1, 1, 1, 4).getValues()[0];
+  // Row 1: lastUpdate | totalBrands | totalModels | (reserved)
+  var lastUpdate = metaRange[0] || null;
+  var totalBrands = metaRange[1] || 0;
+  var totalModels = metaRange[2] || 0;
+  // Row 2+: brand data stored as JSON in cell A2
+  var dataCell = sheet.getRange(2, 1).getValue();
+  if (!dataCell) {
+    return { success: true, data: { lastUpdate: lastUpdate, totalBrands: totalBrands, totalModels: totalModels, brands: [], models: {} } };
+  }
+  try {
+    var parsed = JSON.parse(dataCell);
+    parsed.lastUpdate = lastUpdate;
+    parsed.totalBrands = totalBrands;
+    parsed.totalModels = totalModels;
+    return { success: true, data: parsed };
+  } catch (e) {
+    return { success: true, data: null };
+  }
+}
+
+function saveFipeBase(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('Base_Oficial_FIPE');
+  if (!sheet) {
+    sheet = ss.insertSheet('Base_Oficial_FIPE');
+    sheet.hideSheet();
+  } else {
+    sheet.clear();
+  }
+  var data = JSON.parse(payload);
+  // Row 1: metadata
+  sheet.getRange(1, 1, 1, 3).setValues([[data.lastUpdate || '', data.totalBrands || 0, data.totalModels || 0]]);
+  // Row 2: full JSON data (brands + models)
+  var jsonStr = JSON.stringify({ brands: data.brands, models: data.models });
+  // Google Sheets cell limit is 50000 chars - if too large, split
+  if (jsonStr.length <= 50000) {
+    sheet.getRange(2, 1).setValue(jsonStr);
+  } else {
+    // Split into chunks across multiple cells
+    var chunks = [];
+    for (var i = 0; i < jsonStr.length; i += 50000) {
+      chunks.push(jsonStr.substring(i, i + 50000));
+    }
+    for (var c = 0; c < chunks.length; c++) {
+      sheet.getRange(2 + c, 1).setValue(chunks[c]);
+    }
+    sheet.getRange(1, 4).setValue(chunks.length); // Store chunk count
+  }
+  return { success: true, message: 'Base FIPE salva com ' + (data.totalBrands || 0) + ' marcas' };
 }

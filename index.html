@@ -369,6 +369,8 @@ tr:hover .row-actions{opacity:1}
         <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon">🔄</span><span class="si-label">Sincronizar com Google Sheets</span></div>
         <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon">📥</span><span class="si-label">Exportar Base Completa</span></div>
         <div class="settings-divider"></div>
+        <div class="settings-item" onclick="closeSettings();updateFipeBase()"><span class="si-icon">🔄</span><span class="si-label">Atualizar Base Oficial (FIPE)</span></div>
+        <div class="settings-divider"></div>
         <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon">🌙</span><span class="si-label">Tema Escuro</span></div>
         <div class="settings-divider"></div>
         <div class="settings-item" onclick="doLogout()" style="color:var(--red)"><span class="si-icon">🚪</span><span class="si-label">Sair</span></div>
@@ -476,6 +478,7 @@ tr:hover .row-actions{opacity:1}
     <div id="tempReleaseAlert" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:10px 18px;margin-bottom:16px;font-size:.82rem;color:var(--amber);font-weight:500;cursor:pointer" onclick="goTab('management');setTimeout(()=>{document.getElementById('tempReleasesCard').scrollIntoView({behavior:'smooth'})},200)">
       ⚠️ <span id="tempReleaseAlertCount">0</span> Liberação(ões) Temporária(s) ativa(s)
     </div>
+    <div id="fipeOutdatedAlert" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:10px 18px;margin-bottom:16px;font-size:.82rem;color:var(--amber);font-weight:500"></div>
     <div class="kpi-grid" id="mgmtKpis" style="margin-bottom:20px"></div>
     <div class="mgmt-grid">
       <div class="mgmt-card" onclick="showMgmtModal('add')">
@@ -533,6 +536,14 @@ tr:hover .row-actions{opacity:1}
           <thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th><th>Motivo</th><th>Data</th><th>Status</th><th></th></tr></thead>
           <tbody id="tempReleasesBody"></tbody>
         </table>
+      </div>
+    </div>
+    <!-- FIPE DIAGNOSTICS PANEL -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> Base Oficial FIPE</div>
+      <div id="fipeDiagnostics"></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-blue btn-sm" onclick="updateFipeBase()">🔄 Atualizar Base Oficial</button>
       </div>
     </div>
   </div>
@@ -689,6 +700,196 @@ let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
 // ========= TEMPORARY RELEASES =========
 let TEMP_RELEASES = []; // {marca, modelo, categoria, motivo, obs, dataCriacao, usuario, status:'Ativa'|'Finalizada', dataFinalizada, usuarioFinalizado}
+
+// ========= FIPE OFFICIAL BASE (Reference only - never modifies operational data) =========
+const FIPE_API_URL = 'https://fipe.parallelum.com.br/api/v2';
+const FIPE_API_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIwZjI1ZjQ1Yi1mZTkxLTQ0MzYtOTQ5MC0zM2E2OTY2MmFhMDAiLCJlbWFpbCI6Im55Y29sYXNhdXRvdmFsZUBnbWFpbC5jb20iLCJpYXQiOjE3ODE4NzQ2ODB9.kAFJ9fwlAc_dbA2bf4MOygJR0XEBT4-Vk99p7EdcNKc';
+let FIPE_BASE = {brands:[], models:{}, lastUpdate:null, totalBrands:0, totalModels:0};
+
+function saveFipeBaseToStorage(){
+  try{localStorage.setItem('avp-fipe-base',JSON.stringify(FIPE_BASE));}catch(e){
+    // If too large for localStorage, save only metadata + trim
+    try{
+      const lite={brands:FIPE_BASE.brands,models:FIPE_BASE.models,lastUpdate:FIPE_BASE.lastUpdate,totalBrands:FIPE_BASE.totalBrands,totalModels:FIPE_BASE.totalModels};
+      localStorage.setItem('avp-fipe-base',JSON.stringify(lite));
+    }catch(e2){}
+  }
+}
+
+function loadFipeBaseFromStorage(){
+  try{
+    const saved=localStorage.getItem('avp-fipe-base');
+    if(saved){FIPE_BASE=JSON.parse(saved);}
+  }catch(e){}
+}
+
+function isFipeBaseLoaded(){
+  return FIPE_BASE.brands.length>0;
+}
+
+function isFipeBaseOutdated(){
+  if(!FIPE_BASE.lastUpdate) return true;
+  const diff=Date.now()-new Date(FIPE_BASE.lastUpdate).getTime();
+  return diff>(30*24*60*60*1000); // 30 days
+}
+
+function getFipeBrands(){
+  return FIPE_BASE.brands.map(b=>b.name).sort();
+}
+
+function getFipeModelsForBrand(brandName){
+  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===brandName.toLowerCase());
+  if(!brand||!FIPE_BASE.models[brand.code]) return [];
+  return FIPE_BASE.models[brand.code].map(m=>m.name).sort();
+}
+
+function isFipeValidBrand(brandName){
+  if(!isFipeBaseLoaded()) return true; // If base not loaded, allow anything
+  return FIPE_BASE.brands.some(b=>b.name.toLowerCase()===brandName.toLowerCase());
+}
+
+function isFipeValidModel(brandName, modelName){
+  if(!isFipeBaseLoaded()) return true; // If base not loaded, allow anything
+  const models=getFipeModelsForBrand(brandName);
+  return models.some(m=>m.toLowerCase()===modelName.toLowerCase());
+}
+
+// Update FIPE base from API (with rate limiting)
+async function updateFipeBase(){
+  if(!FIPE_API_TOKEN){showToast('Token da API FIPE não configurado','error');return;}
+  showToast('Atualizando base oficial... Isso pode levar alguns minutos.','warning');
+  const delay=ms=>new Promise(r=>setTimeout(r,ms));
+  try{
+    // 1. Get all car brands
+    const brandsResp=await fetch(FIPE_API_URL+'/cars/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    if(!brandsResp.ok){showToast('Erro ao buscar marcas: HTTP '+brandsResp.status,'error');return;}
+    const brands=await brandsResp.json();
+    FIPE_BASE.brands=brands;
+    FIPE_BASE.models={};
+    let totalModels=0;
+    let progress=0;
+
+    // 2. Get models for each brand (with 300ms delay between calls)
+    for(const brand of brands){
+      await delay(300);
+      progress++;
+      try{
+        const modResp=await fetch(FIPE_API_URL+'/cars/brands/'+brand.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+        if(modResp.ok){
+          const models=await modResp.json();
+          FIPE_BASE.models[brand.code]=models;
+          totalModels+=models.length;
+        }
+      }catch(e){/* skip failed brand */}
+      // Update progress every 10 brands
+      if(progress%10===0){
+        showToast('Carregando marcas... '+progress+'/'+brands.length,'warning');
+      }
+    }
+
+    // 3. Also get motorcycle brands
+    await delay(300);
+    const motoBrandsResp=await fetch(FIPE_API_URL+'/motorcycles/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    if(motoBrandsResp.ok){
+      const motoBrands=await motoBrandsResp.json();
+      // Add moto brands with prefix to distinguish
+      for(const mb of motoBrands){
+        if(!brands.find(b=>b.name.toLowerCase()===mb.name.toLowerCase())){
+          FIPE_BASE.brands.push({...mb, _type:'moto'});
+        }
+      }
+      // Get moto models
+      for(const mb of motoBrands){
+        await delay(300);
+        try{
+          const modResp=await fetch(FIPE_API_URL+'/motorcycles/brands/'+mb.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+          if(modResp.ok){
+            const models=await modResp.json();
+            const key='moto_'+mb.code;
+            FIPE_BASE.models[key]=models;
+            totalModels+=models.length;
+          }
+        }catch(e){}
+      }
+    }
+
+    // 4. Also get truck brands
+    await delay(300);
+    const truckBrandsResp=await fetch(FIPE_API_URL+'/trucks/brands',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+    if(truckBrandsResp.ok){
+      const truckBrands=await truckBrandsResp.json();
+      for(const tb of truckBrands){
+        if(!FIPE_BASE.brands.find(b=>b.name.toLowerCase()===tb.name.toLowerCase())){
+          FIPE_BASE.brands.push({...tb, _type:'truck'});
+        }
+      }
+      for(const tb of truckBrands){
+        await delay(300);
+        try{
+          const modResp=await fetch(FIPE_API_URL+'/trucks/brands/'+tb.code+'/models',{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+          if(modResp.ok){
+            const models=await modResp.json();
+            const key='truck_'+tb.code;
+            FIPE_BASE.models[key]=models;
+            totalModels+=models.length;
+          }
+        }catch(e){}
+      }
+    }
+
+    // 5. Save metadata
+    FIPE_BASE.lastUpdate=new Date().toISOString();
+    FIPE_BASE.totalBrands=FIPE_BASE.brands.length;
+    FIPE_BASE.totalModels=totalModels;
+    saveFipeBaseToStorage();
+
+    // 6. Also save to Sheets for persistence
+    try{
+      await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeBase',payload:JSON.stringify({lastUpdate:FIPE_BASE.lastUpdate,totalBrands:FIPE_BASE.totalBrands,totalModels:FIPE_BASE.totalModels,brands:FIPE_BASE.brands,models:FIPE_BASE.models})})});
+    }catch(e){}
+
+    showToast('Base oficial atualizada! '+FIPE_BASE.totalBrands+' marcas, '+totalModels+' modelos.','success');
+    renderFipeDiagnostics();
+    renderFipeOutdatedAlert();
+  }catch(err){
+    showToast('Erro ao atualizar base FIPE: '+err.message,'error');
+  }
+}
+
+function renderFipeDiagnostics(){
+  const el=document.getElementById('fipeDiagnostics');
+  if(!el) return;
+  if(!FIPE_BASE.lastUpdate){
+    el.innerHTML='<div style="color:var(--text3);font-size:.82rem;padding:12px">Base oficial não carregada. Clique em "Atualizar Base Oficial" para carregar.</div>';
+    return;
+  }
+  const lastDate=new Date(FIPE_BASE.lastUpdate);
+  const daysAgo=Math.floor((Date.now()-lastDate.getTime())/(24*60*60*1000));
+  const nextUpdate=new Date(lastDate.getTime()+(30*24*60*60*1000));
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem">
+    <div><span style="color:var(--text2)">Status:</span> <strong style="color:${daysAgo>30?'var(--amber)':'var(--green)'}">${daysAgo>30?'⚠️ Desatualizada':'✓ Atualizada'}</strong></div>
+    <div><span style="color:var(--text2)">Última atualização:</span> <strong>${lastDate.toLocaleString('pt-BR')}</strong></div>
+    <div><span style="color:var(--text2)">Próxima recomendada:</span> <strong>${nextUpdate.toLocaleDateString('pt-BR')}</strong></div>
+    <div><span style="color:var(--text2)">Há:</span> <strong>${daysAgo} dia(s)</strong></div>
+    <div><span style="color:var(--text2)">Marcas:</span> <strong>${FIPE_BASE.totalBrands}</strong></div>
+    <div><span style="color:var(--text2)">Modelos:</span> <strong>${FIPE_BASE.totalModels.toLocaleString()}</strong></div>
+  </div>`;
+}
+
+function renderFipeOutdatedAlert(){
+  const el=document.getElementById('fipeOutdatedAlert');
+  if(!el) return;
+  if(isFipeBaseOutdated()&&isFipeBaseLoaded()){
+    const daysAgo=Math.floor((Date.now()-new Date(FIPE_BASE.lastUpdate).getTime())/(24*60*60*1000));
+    el.style.display='';
+    el.innerHTML='⚠️ Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Atualizar agora</span>';
+  } else if(!isFipeBaseLoaded()){
+    el.style.display='';
+    el.innerHTML='⚠️ Base Oficial não carregada. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Carregar base FIPE</span>';
+  } else {
+    el.style.display='none';
+  }
+}
 
 // ========= STAGING PERSISTENCE (localStorage) =========
 function saveStagingToStorage(){
@@ -1228,19 +1429,94 @@ function cancelPendingModelChange(marca, modelo, categoria){
   }
 }
 
+// ========= FIPE AUTOCOMPLETE HELPERS =========
+let _fipeSelectedBrand='';
+
+function fipeFilterBrands(){
+  const input=document.getElementById('addModel_marca');
+  const dd=document.getElementById('addModel_marcaDropdown');
+  const msg=document.getElementById('addModel_marcaMsg');
+  if(!input||!dd) return;
+  const query=input.value.trim().toLowerCase();
+  if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
+  const brands=isFipeBaseLoaded()?getFipeBrands():ALL_BRANDS;
+  const filtered=brands.filter(b=>b.toLowerCase().includes(query)).slice(0,20);
+  if(filtered.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
+    msg.textContent='✕ Marca não encontrada na base oficial';msg.className='ac-msg invalid';
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML=filtered.map(b=>'<div style="padding:6px 12px;font-size:.82rem;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
+  // Check exact match
+  const exact=brands.find(b=>b.toLowerCase()===query);
+  if(exact){msg.textContent='✓ Marca válida';msg.className='ac-msg valid';}
+  else{msg.textContent='';msg.className='ac-msg';}
+}
+
+function fipeSelectBrand(brand){
+  const input=document.getElementById('addModel_marca');
+  const dd=document.getElementById('addModel_marcaDropdown');
+  const msg=document.getElementById('addModel_marcaMsg');
+  const modelInput=document.getElementById('addModel_modelo');
+  if(input) input.value=brand;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent='✓ '+brand;msg.className='ac-msg valid';}
+  _fipeSelectedBrand=brand;
+  // Enable model field
+  if(modelInput){modelInput.disabled=false;modelInput.placeholder='Digite para pesquisar modelo...';modelInput.value='';modelInput.focus();}
+}
+
+function fipeFilterModels(){
+  const input=document.getElementById('addModel_modelo');
+  const dd=document.getElementById('addModel_modeloDropdown');
+  const msg=document.getElementById('addModel_modeloMsg');
+  if(!input||!dd) return;
+  const query=input.value.trim().toLowerCase();
+  if(!query){dd.style.display='none';msg.textContent='';msg.className='ac-msg';return;}
+  const models=isFipeBaseLoaded()?getFipeModelsForBrand(_fipeSelectedBrand):[...new Set(ALL_RECORDS.filter(r=>r.marca===_fipeSelectedBrand).map(r=>r.modelo))];
+  const filtered=models.filter(m=>m.toLowerCase().includes(query)).slice(0,30);
+  if(filtered.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhum modelo encontrado</div>';
+    msg.textContent='✕ Modelo não encontrado na base oficial';msg.className='ac-msg invalid';
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML=filtered.map(m=>'<div style="padding:6px 12px;font-size:.82rem;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('');
+  // Check exact match
+  const exact=models.find(m=>m.toLowerCase()===query);
+  if(exact){msg.textContent='✓ Modelo válido';msg.className='ac-msg valid';}
+  else{msg.textContent='';msg.className='ac-msg';}
+}
+
+function fipeSelectModel(model){
+  const input=document.getElementById('addModel_modelo');
+  const dd=document.getElementById('addModel_modeloDropdown');
+  const msg=document.getElementById('addModel_modeloMsg');
+  if(input) input.value=model;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent='✓ '+model;msg.className='ac-msg valid';}
+}
+
 // ========= ADD MODEL TO CATEGORY =========
 function openAddModelToCat(categoria){
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  const fipeBrands=isFipeBaseLoaded()?getFipeBrands():ALL_BRANDS;
   showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
 
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
-    <input id="addModel_marca" placeholder="Digite a marca..." list="addModelBrandList">
-    <datalist id="addModelBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
+    <input id="addModel_marca" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="fipeFilterBrands()">
+    <div id="addModel_marcaDropdown" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;background:var(--surface)"></div>
+    <div id="addModel_marcaMsg" class="ac-msg"></div>
 
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
-    <input id="addModel_modelo" placeholder="Digite o nome do modelo...">
+    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:${isFipeBaseLoaded()?' <span style="font-size:.65rem;color:var(--green)">✓ Base FIPE</span>':''}</label>
+    <input id="addModel_modelo" placeholder="Selecione uma marca primeiro..." autocomplete="off" oninput="fipeFilterModels()" disabled>
+    <div id="addModel_modeloDropdown" style="max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);display:none;background:var(--surface)"></div>
+    <div id="addModel_modeloMsg" class="ac-msg"></div>
 
     <div id="addModel_msg" class="ac-msg"></div>
 
@@ -1255,11 +1531,16 @@ function openAddModelToCat(categoria){
       <input id="addModel_tempObs" placeholder="Observações adicionais...">
     </div>
 
-    <span style="font-size:.72rem;color:var(--text3)">A adição será incluída nas Alterações Pendentes.</span>
+    <span style="font-size:.72rem;color:var(--text3)">${isFipeBaseLoaded()?'Selecione apenas marcas e modelos da base oficial FIPE.':'Base FIPE não carregada — campo livre habilitado.'}</span>
   </div>`,function(){
     const marca=document.getElementById('addModel_marca').value.trim();
     const modelo=document.getElementById('addModel_modelo').value.trim();
     if(!marca||!modelo){showToast('Preencha Marca e Modelo','error');return;}
+    // FIPE validation
+    if(isFipeBaseLoaded()){
+      if(!isFipeValidBrand(marca)){showToast('Marca não encontrada na base oficial FIPE.','error');return;}
+      if(!isFipeValidModel(marca,modelo)){showToast('Modelo não encontrado na base oficial FIPE para esta marca.','error');return;}
+    }
     // Validate: check if already exists in this category
     const models=getModelsForCat(categoria);
     const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo));
@@ -4263,11 +4544,14 @@ function initApp(){
   // Restore staging from localStorage
   loadStagingFromStorage();
   loadTempReleasesFromStorage();
+  loadFipeBaseFromStorage();
   if(STAGING.ops.length>0){
     renderStagingBars();
     showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
   }
   renderTempReleaseAlert();
+  renderFipeOutdatedAlert();
+  renderFipeDiagnostics();
   // Show startup alert for temp releases
   const activeTempCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
   if(activeTempCount>0){
