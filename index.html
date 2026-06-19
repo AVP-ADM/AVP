@@ -982,14 +982,14 @@ function renderFipeOutdatedAlert(){
   if(!el) return;
   if(_fipeNewTableAvailable){
     el.style.display='';
-    el.innerHTML='🆕 Nova tabela FIPE disponível: <strong>'+_fipeNewTableMonth+'</strong>. Base atual: '+(FIPE_BASE.lastUpdate?new Date(FIPE_BASE.lastUpdate).toLocaleDateString('pt-BR'):'nunca carregada')+'. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Atualizar Agora</span>';
+    el.innerHTML='🆕 Nova tabela FIPE disponível: <strong>'+_fipeNewTableMonth+'</strong>. Base atual: '+(FIPE_BASE.lastUpdate?new Date(FIPE_BASE.lastUpdate).toLocaleDateString('pt-BR'):'nunca carregada')+'. Atualize na aba Manutenção.';
   } else if(isFipeBaseOutdated()&&isFipeBaseLoaded()){
     const daysAgo=Math.floor((Date.now()-new Date(FIPE_BASE.lastUpdate).getTime())/(24*60*60*1000));
     el.style.display='';
-    el.innerHTML='⚠️ Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Atualizar agora</span>';
+    el.innerHTML='⚠️ Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. Atualize na aba Manutenção.';
   } else if(!isFipeBaseLoaded()){
     el.style.display='';
-    el.innerHTML='⚠️ Base Oficial não carregada. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Carregar base FIPE</span>';
+    el.innerHTML='⚠️ Base Oficial não carregada. Atualize na aba Manutenção.';
   } else {
     el.style.display='none';
   }

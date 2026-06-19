@@ -480,9 +480,11 @@ function getControlSheet() {
 
 function acquireLock(user) {
   var sheet = getControlSheet();
-  var lockCell = sheet.getRange(3, 2);
-  var lockUser = sheet.getRange(3, 3);
-  var lockDate = sheet.getRange(3, 4);
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var lockRow = (firstCell === 'Configuracao') ? 3 : 2; // new=3, old=2
+  var lockCell = sheet.getRange(lockRow, 2);
+  var lockUser = sheet.getRange(lockRow, 3);
+  var lockDate = sheet.getRange(lockRow, 4);
   var currentLock = lockCell.getValue();
   var currentUser = lockUser.getValue();
   var currentDate = lockDate.getValue();
@@ -505,17 +507,21 @@ function acquireLock(user) {
 
 function releaseLock(user) {
   var sheet = getControlSheet();
-  sheet.getRange(3, 2).setValue('');
-  sheet.getRange(3, 3).setValue('');
-  sheet.getRange(3, 4).setValue('');
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var lockRow = (firstCell === 'Configuracao') ? 3 : 2;
+  sheet.getRange(lockRow, 2).setValue('');
+  sheet.getRange(lockRow, 3).setValue('');
+  sheet.getRange(lockRow, 4).setValue('');
   return { success: true };
 }
 
 function getLastModifiedTimestamp() {
   var sheet = getControlSheet();
-  var ts = sheet.getRange(4, 2).getValue();
-  var user = sheet.getRange(4, 3).getValue();
-  var date = sheet.getRange(4, 4).getValue();
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var tsRow = (firstCell === 'Configuracao') ? 4 : 3; // new=4, old=3
+  var ts = sheet.getRange(tsRow, 2).getValue();
+  var user = sheet.getRange(tsRow, 3).getValue();
+  var date = sheet.getRange(tsRow, 4).getValue();
   return { 
     success: true, 
     timestamp: ts ? new Date(ts).getTime() : 0,
@@ -526,10 +532,12 @@ function getLastModifiedTimestamp() {
 
 function updateTimestamp(user) {
   var sheet = getControlSheet();
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var tsRow = (firstCell === 'Configuracao') ? 4 : 3;
   var now = new Date();
-  sheet.getRange(4, 2).setValue(now.toISOString());
-  sheet.getRange(4, 3).setValue(user);
-  sheet.getRange(4, 4).setValue(now.toLocaleString('pt-BR'));
+  sheet.getRange(tsRow, 2).setValue(now.toISOString());
+  sheet.getRange(tsRow, 3).setValue(user);
+  sheet.getRange(tsRow, 4).setValue(now.toLocaleString('pt-BR'));
   return { success: true };
 }
 
@@ -598,35 +606,64 @@ function loadFipeBase() {
   if (!sheet) {
     return { success: true, data: null };
   }
-  // Row 1: Headers
-  // Row 2: Metadata values
-  var metaRange = sheet.getRange(2, 1, 1, 4).getValues()[0];
-  var lastUpdate = metaRange[0] || null;
-  var totalBrands = metaRange[1] || 0;
-  var totalModels = metaRange[2] || 0;
-  var chunkCount = metaRange[3] || 0;
-  // Row 3: Header for data section
-  // Row 4+: JSON data (brands + models) in chunks
-  var dataCell = sheet.getRange(4, 1).getValue();
-  if (!dataCell) {
-    return { success: true, data: { lastUpdate: lastUpdate, totalBrands: totalBrands, totalModels: totalModels, brands: [], models: {} } };
-  }
-  try {
-    var jsonStr = dataCell.toString();
-    // If data was chunked, reassemble
-    if (chunkCount > 1) {
-      for (var i = 1; i < chunkCount; i++) {
-        var chunk = sheet.getRange(4 + i, 1).getValue();
-        if (chunk) jsonStr += chunk.toString();
-      }
+  // Detect format: new format has headers in row 1 ("Ultima Atualizacao")
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var isNewFormat = (firstCell === 'Ultima Atualizacao');
+  
+  if (isNewFormat) {
+    // NEW FORMAT: Row 1=Headers, Row 2=Metadata, Row 3=Title, Row 4+=Data
+    var metaRange = sheet.getRange(2, 1, 1, 4).getValues()[0];
+    var lastUpdate = metaRange[0] || null;
+    var totalBrands = metaRange[1] || 0;
+    var totalModels = metaRange[2] || 0;
+    var chunkCount = metaRange[3] || 1;
+    var dataCell = sheet.getRange(4, 1).getValue();
+    if (!dataCell) {
+      return { success: true, data: { lastUpdate: lastUpdate, totalBrands: totalBrands, totalModels: totalModels, brands: [], models: {} } };
     }
-    var parsed = JSON.parse(jsonStr);
-    parsed.lastUpdate = lastUpdate;
-    parsed.totalBrands = totalBrands;
-    parsed.totalModels = totalModels;
-    return { success: true, data: parsed };
-  } catch (e) {
-    return { success: true, data: null };
+    try {
+      var jsonStr = dataCell.toString();
+      if (chunkCount > 1) {
+        for (var i = 1; i < chunkCount; i++) {
+          var chunk = sheet.getRange(4 + i, 1).getValue();
+          if (chunk) jsonStr += chunk.toString();
+        }
+      }
+      var parsed = JSON.parse(jsonStr);
+      parsed.lastUpdate = lastUpdate;
+      parsed.totalBrands = totalBrands;
+      parsed.totalModels = totalModels;
+      return { success: true, data: parsed };
+    } catch (e) {
+      return { success: true, data: null };
+    }
+  } else {
+    // OLD FORMAT: Row 1=Metadata, Row 2+=Data
+    var metaRange = sheet.getRange(1, 1, 1, 4).getValues()[0];
+    var lastUpdate = metaRange[0] || null;
+    var totalBrands = metaRange[1] || 0;
+    var totalModels = metaRange[2] || 0;
+    var chunkCount = metaRange[3] || 0;
+    var dataCell = sheet.getRange(2, 1).getValue();
+    if (!dataCell) {
+      return { success: true, data: { lastUpdate: lastUpdate, totalBrands: totalBrands, totalModels: totalModels, brands: [], models: {} } };
+    }
+    try {
+      var jsonStr = dataCell.toString();
+      if (chunkCount > 1) {
+        for (var i = 1; i < chunkCount; i++) {
+          var chunk = sheet.getRange(2 + i, 1).getValue();
+          if (chunk) jsonStr += chunk.toString();
+        }
+      }
+      var parsed = JSON.parse(jsonStr);
+      parsed.lastUpdate = lastUpdate;
+      parsed.totalBrands = totalBrands;
+      parsed.totalModels = totalModels;
+      return { success: true, data: parsed };
+    } catch (e) {
+      return { success: true, data: null };
+    }
   }
 }
 
@@ -678,7 +715,10 @@ function loadFipeCatMap() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  var val = sheet.getRange(5, 2).getValue();
+  // Detect format: new format has "Configuracao" header in row 1
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var row = (firstCell === 'Configuracao') ? 5 : 4; // new=5, old=4
+  var val = sheet.getRange(row, 2).getValue();
   if (!val) return { success: true, data: null };
   try {
     return { success: true, data: JSON.parse(val) };
@@ -702,7 +742,9 @@ function loadFipeRequests() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  var val = sheet.getRange(6, 2).getValue();
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var row = (firstCell === 'Configuracao') ? 6 : 5; // new=6, old=5
+  var val = sheet.getRange(row, 2).getValue();
   if (!val) return { success: true, data: null };
   try {
     return { success: true, data: JSON.parse(val) };
@@ -726,7 +768,9 @@ function loadFipeRefCode() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName('_Control');
   if (!sheet) return { success: true, data: null };
-  var val = sheet.getRange(7, 2).getValue();
+  var firstCell = sheet.getRange(1, 1).getValue();
+  var row = (firstCell === 'Configuracao') ? 7 : 6; // new=7, old=6
+  var val = sheet.getRange(row, 2).getValue();
   if (!val) return { success: true, data: null };
   return { success: true, data: val.toString() };
 }
