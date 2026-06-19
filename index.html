@@ -1641,7 +1641,7 @@ function fipeFilterBrands(){
     return;
   }
   dd.style.display='block';
-  dd.innerHTML=filtered.map(b=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
+  dd.innerHTML=filtered.map(b=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onmousedown="event.preventDefault();fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
   // Check exact match
   if(query){
     const exact=brands.find(b=>b.toLowerCase()===query);
@@ -1668,7 +1668,7 @@ function fipeFilterModels(){
     return;
   }
   dd.style.display='block';
-  dd.innerHTML=filtered.map(m=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('')+(models.length>30?'<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+models.length+' — digite para filtrar</div>':'');
+  dd.innerHTML=filtered.map(m=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onmousedown="event.preventDefault();fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('')+(models.length>30?'<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+models.length+' — digite para filtrar</div>':'');
   // Check exact match
   if(query){
     const exact=models.find(m=>m.toLowerCase()===query);
