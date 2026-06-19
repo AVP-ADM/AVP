@@ -271,6 +271,10 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
 .search-result-item .result-badge{font-size:.68rem}
 .search-empty{padding:30px;text-align:center;color:var(--text3);font-size:.85rem}
 .search-footer{padding:8px 18px;border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;justify-content:space-between}
+.sf-pill{padding:6px 14px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .2s}
+.sf-pill:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.sf-pill.active-base{border-color:var(--green);background:var(--green);color:#fff}
+.sf-pill.active-fipe{border-color:var(--amber);background:var(--amber);color:#fff}
 .search-result-table{width:100%;border-collapse:collapse;font-size:.78rem;margin:0}
 .search-result-table th{padding:8px 18px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.3px;background:var(--bg)}
 .search-result-table td{padding:7px 18px;border-bottom:1px solid var(--border-light);color:var(--text1)}
@@ -642,10 +646,11 @@ tr:hover .row-actions{opacity:1}
       <input type="text" id="globalSearchInput" placeholder="Digite sua pesquisa..." oninput="performGlobalSearch()" autocomplete="off">
       <span class="shortcut">ESC</span>
     </div>
-    <div id="searchFilterToggle" style="display:none;padding:8px 18px;border-bottom:1px solid var(--border);font-size:.75rem">
-      <label style="cursor:pointer;margin-right:14px"><input type="radio" name="searchFilter" value="all" checked onchange="performGlobalSearch()"> Todos</label>
-      <label style="cursor:pointer;margin-right:14px"><input type="radio" name="searchFilter" value="base" onchange="performGlobalSearch()"> Só cadastrados</label>
-      <label style="cursor:pointer"><input type="radio" name="searchFilter" value="fipe" onchange="performGlobalSearch()"> Só FIPE (ausentes)</label>
+    <div id="searchFilterToggle" style="display:none;padding:8px 18px;border-bottom:1px solid var(--border);display:none">
+      <div style="display:flex;gap:8px">
+        <button id="sfBtn_base" class="sf-pill" onclick="toggleSearchFilter('base')">📋 Só Cadastrados</button>
+        <button id="sfBtn_fipe" class="sf-pill" onclick="toggleSearchFilter('fipe')">🔍 Só FIPE (ausentes)</button>
+      </div>
     </div>
     <div class="search-results" id="globalSearchResults">
       <div class="search-empty">Selecione o tipo e digite para pesquisar</div>
@@ -4328,6 +4333,7 @@ commitStaging = function(){
 
 // ========= GLOBAL SEARCH =========
 let searchType = 'modelo';
+let _searchFilterMode = 'all'; // 'all', 'base', 'fipe'
 
 function openGlobalSearch(){
   document.getElementById('searchOverlay').classList.add('open');
@@ -4335,12 +4341,11 @@ function openGlobalSearch(){
   input.value='';
   input.focus();
   updateSearchPlaceholder();
-  // Show FIPE filter toggle if in modelo mode
+  // Reset filter
+  _searchFilterMode='all';
   const toggle=document.getElementById('searchFilterToggle');
-  if(toggle) toggle.style.display=(searchType==='modelo'&&isFipeBaseLoaded())?'':'none';
-  // Reset filter to "all"
-  const allRadio=document.querySelector('input[name="searchFilter"][value="all"]');
-  if(allRadio) allRadio.checked=true;
+  if(toggle) toggle.style.display='none';
+  updateSearchFilterButtons();
   document.getElementById('globalSearchResults').innerHTML='<div class="search-empty">Selecione o tipo e digite para pesquisar</div>';
 }
 
@@ -4353,9 +4358,11 @@ function setSearchType(type){
   document.querySelectorAll('.search-tab').forEach(t=>t.classList.remove('active'));
   event.target.classList.add('active');
   updateSearchPlaceholder();
-  // Show/hide FIPE filter toggle (only for modelo search)
+  // Reset and hide filter toggle when changing type
+  _searchFilterMode='all';
   const toggle=document.getElementById('searchFilterToggle');
-  if(toggle) toggle.style.display=(type==='modelo'&&isFipeBaseLoaded())?'':'none';
+  if(toggle) toggle.style.display='none';
+  updateSearchFilterButtons();
   performGlobalSearch();
 }
 
@@ -4365,31 +4372,62 @@ function updateSearchPlaceholder(){
   input.placeholder=placeholders[searchType]||'Digite sua pesquisa...';
 }
 
+function toggleSearchFilter(mode){
+  // Toggle: if already active, go back to 'all'
+  _searchFilterMode=(_searchFilterMode===mode)?'all':mode;
+  updateSearchFilterButtons();
+  performGlobalSearch();
+}
+
+function updateSearchFilterButtons(){
+  const btnBase=document.getElementById('sfBtn_base');
+  const btnFipe=document.getElementById('sfBtn_fipe');
+  if(btnBase){
+    btnBase.className='sf-pill'+(_searchFilterMode==='base'?' active-base':'');
+  }
+  if(btnFipe){
+    btnFipe.className='sf-pill'+(_searchFilterMode==='fipe'?' active-fipe':'');
+  }
+}
+
 function performGlobalSearch(){
   const query=norm(document.getElementById('globalSearchInput').value);
   const container=document.getElementById('globalSearchResults');
   if(!query||query.length<1){
     container.innerHTML='<div class="search-empty">Digite para pesquisar</div>';
+    // Hide filter toggle when no query
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display='none';
     return;
   }
   let html='';
   if(searchType==='modelo'){
     html=searchModelos(query);
+    // Show filter toggle if FIPE base loaded and there are results
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display=(isFipeBaseLoaded()&&html)?'':'none';
   } else if(searchType==='categoria'){
     html=searchCategorias(query);
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display='none';
   } else if(searchType==='marca'){
     html=searchMarcas(query);
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display='none';
   } else if(searchType==='duplicidade'){
     html=searchDuplicidades(query);
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display='none';
   } else if(searchType==='divergencia'){
     html=searchDivergencias(query);
+    const toggle=document.getElementById('searchFilterToggle');
+    if(toggle) toggle.style.display='none';
   }
   container.innerHTML=html||'<div class="search-empty">Nenhum resultado encontrado</div>';
 }
 
 function searchModelos(query){
-  const filter=document.querySelector('input[name="searchFilter"]:checked');
-  const filterVal=filter?filter.value:'all';
+  const filterVal=_searchFilterMode;
   let html='';
 
   // === CADASTRADOS ===
