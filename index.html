@@ -1651,32 +1651,6 @@ function fipeFilterBrands(){
     msg.textContent='';msg.className='ac-msg';
   }
 }
-  if(filtered.length===0){
-    dd.style.display='block';
-    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
-    msg.textContent='✕ Marca não encontrada na base oficial';msg.className='ac-msg invalid';
-    return;
-  }
-  dd.style.display='block';
-  dd.innerHTML=filtered.map(b=>'<div style="padding:6px 12px;font-size:.82rem;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onclick="fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
-  // Check exact match
-  const exact=brands.find(b=>b.toLowerCase()===query);
-  if(exact){msg.textContent='✓ Marca válida';msg.className='ac-msg valid';}
-  else{msg.textContent='';msg.className='ac-msg';}
-}
-
-function fipeSelectBrand(brand){
-  const input=document.getElementById('addModel_marca');
-  const dd=document.getElementById('addModel_marcaDropdown');
-  const msg=document.getElementById('addModel_marcaMsg');
-  const modelInput=document.getElementById('addModel_modelo');
-  if(input) input.value=brand;
-  if(dd) dd.style.display='none';
-  if(msg){msg.textContent='✓ '+brand;msg.className='ac-msg valid';}
-  _fipeSelectedBrand=brand;
-  // Enable model field
-  if(modelInput){modelInput.disabled=false;modelInput.placeholder='Digite para pesquisar modelo...';modelInput.value='';modelInput.focus();}
-}
 
 function fipeFilterModels(){
   const input=document.getElementById('addModel_modelo');
