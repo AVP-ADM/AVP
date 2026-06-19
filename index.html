@@ -871,6 +871,13 @@ async function updateFipeBase(){
     FIPE_BASE.totalBrands=FIPE_BASE.brands.length;
     FIPE_BASE.totalModels=totalModels;
     saveFipeBaseToStorage();
+    // Save current reference code
+    try{
+      const refResp=await fipeFetch('/references');
+      if(refResp.ok){const refs=await refResp.json();if(refs&&refs[0])localStorage.setItem('avp-fipe-last-ref-code',refs[0].code);}
+    }catch(e){}
+    _fipeNewTableAvailable=false;
+    _fipeNewTableMonth='';
 
     // 6. Also save to Sheets for persistence
     try{
@@ -919,7 +926,10 @@ function renderFipeDiagnostics(){
 function renderFipeOutdatedAlert(){
   const el=document.getElementById('fipeOutdatedAlert');
   if(!el) return;
-  if(isFipeBaseOutdated()&&isFipeBaseLoaded()){
+  if(_fipeNewTableAvailable){
+    el.style.display='';
+    el.innerHTML='🆕 Nova tabela FIPE disponível: <strong>'+_fipeNewTableMonth+'</strong>. Base atual: '+(FIPE_BASE.lastUpdate?new Date(FIPE_BASE.lastUpdate).toLocaleDateString('pt-BR'):'nunca carregada')+'. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Atualizar Agora</span>';
+  } else if(isFipeBaseOutdated()&&isFipeBaseLoaded()){
     const daysAgo=Math.floor((Date.now()-new Date(FIPE_BASE.lastUpdate).getTime())/(24*60*60*1000));
     el.style.display='';
     el.innerHTML='⚠️ Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. <span style="text-decoration:underline;cursor:pointer" onclick="updateFipeBase()">Atualizar agora</span>';
@@ -929,6 +939,32 @@ function renderFipeOutdatedAlert(){
   } else {
     el.style.display='none';
   }
+}
+
+// ========= FIPE AUTO-CHECK (detect new reference table) =========
+let _fipeNewTableAvailable=false;
+let _fipeNewTableMonth='';
+
+async function checkFipeNewTable(){
+  // Only costs 1 request - checks if FIPE released a new monthly table
+  try{
+    const resp=await fipeFetch('/references');
+    if(!resp.ok) return;
+    const refs=await resp.json();
+    if(!refs||!refs.length) return;
+    const latestRef=refs[0]; // Most recent reference
+    const savedRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
+    if(savedRef&&latestRef.code!==savedRef){
+      // New table available!
+      _fipeNewTableAvailable=true;
+      _fipeNewTableMonth=latestRef.month;
+      renderFipeOutdatedAlert();
+      showToast('🆕 Nova tabela FIPE disponível: '+latestRef.month,'warning');
+    } else if(!savedRef){
+      // First time - just save current ref
+      localStorage.setItem('avp-fipe-last-ref-code',latestRef.code);
+    }
+  }catch(e){/* silent fail - don't block app */}
 }
 
 // ========= STAGING PERSISTENCE (localStorage) =========
@@ -4543,6 +4579,8 @@ async function initSheetsIntegration(){
     // Force sync indicator to final state (fixes first-session-of-day issue)
     setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},500);
     setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},4000);
+    // Check if FIPE has a new reference table (1 request, non-blocking)
+    if(isFipeBaseLoaded()){setTimeout(()=>{checkFipeNewTable();},3000);}
   } else {
     // Failed to load - show error state
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
