@@ -878,7 +878,7 @@ async function updateFipeBase(){
     // Save current reference code
     try{
       const refResp=await fipeFetch('/references');
-      if(refResp.ok){const refs=await refResp.json();if(refs&&refs[0])localStorage.setItem('avp-fipe-last-ref-code',refs[0].code);}
+      if(refResp.ok){const refs=await refResp.json();if(refs&&refs[0]){localStorage.setItem('avp-fipe-last-ref-code',refs[0].code);saveFipeRefCodeToSheets(refs[0].code);}}
     }catch(e){}
     _fipeNewTableAvailable=false;
     _fipeNewTableMonth='';
@@ -990,16 +990,30 @@ async function checkFipeNewTable(){
     const refs=await resp.json();
     if(!refs||!refs.length) return;
     const latestRef=refs[0]; // Most recent reference
-    const savedRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
+    let savedRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
+    // If no local ref, try loading from Sheets (new computer)
+    if(!savedRef){
+      try{
+        const shResp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeRefCode');
+        const shResult=await shResp.json();
+        if(shResult.success&&shResult.data){
+          savedRef=shResult.data;
+          localStorage.setItem('avp-fipe-last-ref-code',savedRef);
+        }
+      }catch(e){}
+    }
     if(savedRef&&latestRef.code!==savedRef){
       // New table available!
       _fipeNewTableAvailable=true;
       _fipeNewTableMonth=latestRef.month;
       renderFipeOutdatedAlert();
+      renderFipeDiagnostics();
+      updateFipeUpdateButton();
       showToast('🆕 Nova tabela FIPE disponível: '+latestRef.month,'warning');
     } else if(!savedRef){
       // First time - just save current ref
       localStorage.setItem('avp-fipe-last-ref-code',latestRef.code);
+      saveFipeRefCodeToSheets(latestRef.code);
     }
   }catch(e){/* silent fail - don't block app */}
 }
@@ -1608,6 +1622,10 @@ async function loadFipeRequestsFromSheets(){
       }
     }
   }catch(e){console.warn('[FIPE] Erro ao carregar contador do Sheets:',e);}
+}
+
+function saveFipeRefCodeToSheets(code){
+  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeRefCode',payload:code})});}catch(e){}
 }
 
 async function loadFipeCategoryMapFromSheets(){

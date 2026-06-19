@@ -20,6 +20,8 @@ function doGet(e) {
       result = loadFipeCatMap();
     } else if (action === 'loadFipeRequests') {
       result = loadFipeRequests();
+    } else if (action === 'loadFipeRefCode') {
+      result = loadFipeRefCode();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -56,6 +58,8 @@ function doPost(e) {
       result = saveFipeCatMap(data.payload);
     } else if (action === 'saveFipeRequests') {
       result = saveFipeRequests(data.payload);
+    } else if (action === 'saveFipeRefCode') {
+      result = saveFipeRefCode(data.payload);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -709,4 +713,30 @@ function saveFipeRequests(payload) {
   sheet.getRange(5, 2).setValue(payload);
   sheet.getRange(5, 4).setValue(new Date().toLocaleString('pt-BR'));
   return { success: true, message: 'Contador de requisicoes salvo' };
+}
+
+// ========= FIPE REFERENCE CODE =========
+function loadFipeRefCode() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) return { success: true, data: null };
+  // Store in row 6 of _Control sheet
+  var val = sheet.getRange(6, 2).getValue();
+  if (!val) return { success: true, data: null };
+  return { success: true, data: val.toString() };
+}
+
+function saveFipeRefCode(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) {
+    sheet = ss.insertSheet('_Control');
+    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
+    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
+    sheet.hideSheet();
+  }
+  sheet.getRange(6, 1).setValue('fipeRefCode');
+  sheet.getRange(6, 2).setValue(payload);
+  sheet.getRange(6, 4).setValue(new Date().toLocaleString('pt-BR'));
+  return { success: true, message: 'Codigo de referencia FIPE salvo' };
 }
