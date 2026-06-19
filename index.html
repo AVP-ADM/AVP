@@ -400,6 +400,12 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title"><span class="icon">📊</span> Resumo por Categorias</div>
       <div class="filter-row">
         <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="debouncedRenderOverviewTable()">
+        <select id="ovTypeFilter" onchange="renderOverviewTable()">
+          <option value="">Todos os tipos</option>
+          <option value="cars">🚗 Carros</option>
+          <option value="motorcycles">🏍️ Motos</option>
+          <option value="trucks">🚛 Caminhões</option>
+        </select>
         <select id="ovSort" onchange="renderOverviewTable()">
           <option value="name">A-Z</option>
           <option value="count_desc">Mais modelos</option>
@@ -1166,6 +1172,8 @@ function resetTabFilters(){
   if(ovFilter) ovFilter.value='';
   const ovSort=document.getElementById('ovSort');
   if(ovSort) ovSort.value='name';
+  const ovTypeFilter=document.getElementById('ovTypeFilter');
+  if(ovTypeFilter) ovTypeFilter.value='';
   // Duplicates filters
   const dupBrand=document.getElementById('dupBrandFilter');
   if(dupBrand) dupBrand.value='';
@@ -1236,9 +1244,15 @@ function getEffectiveCatTotal(catName){
 function renderOverviewTable(){
   const filt = norm(document.getElementById('ovFilter').value);
   const sort = document.getElementById('ovSort').value;
+  const typeFilter = document.getElementById('ovTypeFilter')?document.getElementById('ovTypeFilter').value:'';
   let cats = CATEGORIES.filter(c=>{
-    if(!filt) return true;
-    return norm(c).includes(filt);
+    if(filt && !norm(c).includes(filt)) return false;
+    if(typeFilter){
+      const catType = getFipeTypeForCategory(c) || 'cars';
+      // catType can be "cars", "motorcycles", "trucks", or "cars,motorcycles" etc
+      if(!catType.split(',').map(t=>t.trim()).includes(typeFilter)) return false;
+    }
+    return true;
   });
   if(sort==='name') cats.sort((a,b)=>a.localeCompare(b));
   else if(sort==='count_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
