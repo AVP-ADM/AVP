@@ -1014,8 +1014,12 @@ async function checkFipeNewTable(){
         const shResp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeRefCode');
         const shResult=await shResp.json();
         if(shResult.success&&shResult.data){
-          savedRef=shResult.data;
-          localStorage.setItem('avp-fipe-last-ref-code',savedRef);
+          // Validate: ref code should be a short numeric string (e.g. "313")
+          const refData=shResult.data.toString();
+          if(refData.length<10&&/^\d+$/.test(refData)){
+            savedRef=refData;
+            localStorage.setItem('avp-fipe-last-ref-code',savedRef);
+          }
         }
       }catch(e){}
     }
@@ -1028,7 +1032,8 @@ async function checkFipeNewTable(){
       updateFipeUpdateButton();
       showToast('🆕 Nova tabela FIPE disponível: '+latestRef.month,'warning');
     } else if(!savedRef){
-      // First time - just save current ref
+      // No saved ref code - save current one without alerting
+      // (base was loaded from Sheets and ref code wasn't persisted yet)
       localStorage.setItem('avp-fipe-last-ref-code',latestRef.code);
       saveFipeRefCodeToSheets(latestRef.code);
     }

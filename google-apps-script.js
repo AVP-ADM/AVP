@@ -772,7 +772,13 @@ function loadFipeRefCode() {
   var row = (firstCell === 'Configuracao') ? 7 : 6; // new=7, old=6
   var val = sheet.getRange(row, 2).getValue();
   if (!val) return { success: true, data: null };
-  return { success: true, data: val.toString() };
+  // Validate: ref code should be a short numeric value
+  var strVal = val.toString().trim();
+  if (strVal.length > 10 || strVal.charAt(0) === '{') {
+    // Not a valid ref code (probably wrong data from misaligned rows)
+    return { success: true, data: null };
+  }
+  return { success: true, data: strVal };
 }
 
 function saveFipeRefCode(payload) {
