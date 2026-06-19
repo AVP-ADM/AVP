@@ -1717,17 +1717,25 @@ function loadFipeCategoryMap(){
 
 async function loadFipeBaseFromSheets(){
   try{
+    console.log('[FIPE] Tentando carregar base do Sheets...');
     const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeBase');
-    const result=await resp.json();
+    if(!resp.ok){console.warn('[FIPE] Resposta HTTP não-OK:',resp.status);return;}
+    const text=await resp.text();
+    console.log('[FIPE] Resposta recebida:',text.length,'bytes');
+    const result=JSON.parse(text);
     if(result.success&&result.data){
       const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
       if(data.brands&&data.brands.length>0){
         FIPE_BASE=data;
         saveFipeBaseToStorage();
         console.log('[FIPE] Base carregada do Sheets: '+data.brands.length+' marcas, '+(data.totalModels||0)+' modelos');
+      } else {
+        console.warn('[FIPE] Dados recebidos mas sem marcas');
       }
+    } else {
+      console.warn('[FIPE] Resposta sem dados:',result);
     }
-  }catch(e){console.warn('[FIPE] Erro ao carregar base do Sheets:',e);}
+  }catch(e){console.warn('[FIPE] Erro ao carregar base do Sheets:',e.message||e);}
 }
 
 async function loadFipeRequestsFromSheets(){
@@ -5140,6 +5148,10 @@ async function initSheetsIntegration(){
     renderStagingTable();
     renderHistory();
     refreshActiveTab();
+    // Re-render FIPE state after all data is loaded
+    renderFipeOutdatedAlert();
+    renderFipeDiagnostics();
+    updateFipeUpdateButton();
     // Enable sync item now that data is loaded
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
     enableExportButtons();
