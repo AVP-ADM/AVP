@@ -18,6 +18,8 @@ function doGet(e) {
       result = loadFipeBase();
     } else if (action === 'loadFipeCatMap') {
       result = loadFipeCatMap();
+    } else if (action === 'loadFipeRequests') {
+      result = loadFipeRequests();
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -52,6 +54,8 @@ function doPost(e) {
       result = saveFipeBase(data.payload);
     } else if (action === 'saveFipeCatMap') {
       result = saveFipeCatMap(data.payload);
+    } else if (action === 'saveFipeRequests') {
+      result = saveFipeRequests(data.payload);
     } else {
       result = { success: false, error: 'Acao nao reconhecida' };
     }
@@ -675,4 +679,34 @@ function saveFipeCatMap(payload) {
   sheet.getRange(4, 2).setValue(payload);
   sheet.getRange(4, 4).setValue(new Date().toLocaleString('pt-BR'));
   return { success: true, message: 'Mapa de categorias salvo' };
+}
+
+// ========= FIPE REQUEST COUNTER =========
+function loadFipeRequests() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) return { success: true, data: null };
+  // Store in row 5 of _Control sheet
+  var val = sheet.getRange(5, 2).getValue();
+  if (!val) return { success: true, data: null };
+  try {
+    return { success: true, data: JSON.parse(val) };
+  } catch (e) {
+    return { success: true, data: null };
+  }
+}
+
+function saveFipeRequests(payload) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('_Control');
+  if (!sheet) {
+    sheet = ss.insertSheet('_Control');
+    sheet.getRange(1, 1, 1, 4).setValues([['Key', 'Value', 'User', 'Date']]);
+    sheet.getRange(2, 1, 2, 4).setValues([['lock', '', '', ''], ['lastModified', '', '', '']]);
+    sheet.hideSheet();
+  }
+  sheet.getRange(5, 1).setValue('fipeRequests');
+  sheet.getRange(5, 2).setValue(payload);
+  sheet.getRange(5, 4).setValue(new Date().toLocaleString('pt-BR'));
+  return { success: true, message: 'Contador de requisicoes salvo' };
 }

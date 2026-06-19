@@ -719,6 +719,8 @@ function loadFipeRequestsFromStorage(){
 
 function saveFipeRequestsToStorage(){
   try{localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));}catch(e){}
+  // Also save to Sheets for persistence across computers
+  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeRequests',payload:JSON.stringify(FIPE_REQUESTS)})});}catch(e){}
 }
 
 function trackFipeRequest(qty){
@@ -1552,6 +1554,25 @@ async function loadFipeBaseFromSheets(){
       }
     }
   }catch(e){console.warn('[FIPE] Erro ao carregar base do Sheets:',e);}
+}
+
+async function loadFipeRequestsFromSheets(){
+  try{
+    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeRequests');
+    const result=await resp.json();
+    if(result.success&&result.data){
+      const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
+      if(data.month&&data.count>0){
+        // Only use Sheets data if it's for the current month and count is higher than local
+        const currentMonth=new Date().getFullYear()+'-'+(new Date().getMonth()+1);
+        if(data.month===currentMonth&&data.count>FIPE_REQUESTS.count){
+          FIPE_REQUESTS=data;
+          localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));
+          console.log('[FIPE] Contador de requisições carregado do Sheets: '+data.count);
+        }
+      }
+    }
+  }catch(e){console.warn('[FIPE] Erro ao carregar contador do Sheets:',e);}
 }
 
 async function loadFipeCategoryMapFromSheets(){
@@ -4745,6 +4766,8 @@ async function initSheetsIntegration(){
         renderFipeDiagnostics();
       }
     }
+    // Load FIPE request counter from Sheets (sync across computers)
+    await loadFipeRequestsFromSheets();
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
