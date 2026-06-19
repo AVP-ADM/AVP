@@ -1973,8 +1973,14 @@ function openAddModelToCat(categoria){
       if(exists){msg.textContent='✕ Este modelo já existe nesta categoria';msg.className='ac-msg invalid';}
       else{msg.textContent='✓ Modelo disponível para inclusão';msg.className='ac-msg valid';}
     }
-    if(marcaInput) marcaInput.oninput=validate;
-    if(modeloInput) modeloInput.oninput=validate;
+    if(marcaInput){
+      marcaInput.addEventListener('input',function(){fipeFilterBrands();validate();});
+      marcaInput.addEventListener('focus',fipeFilterBrands);
+    }
+    if(modeloInput){
+      modeloInput.addEventListener('input',function(){fipeFilterModels();validate();});
+      modeloInput.addEventListener('focus',fipeFilterModels);
+    }
   },50);
 }
 
