@@ -1626,58 +1626,63 @@ let _fipeSelectedBrand='';
 let _fipeCurrentCategory='';
 
 function fipeFilterBrands(){
-  const input=document.getElementById('addModel_marca');
-  const dd=document.getElementById('addModel_marcaDropdown');
-  const msg=document.getElementById('addModel_marcaMsg');
+  var input=document.getElementById('addModel_marca');
+  var dd=document.getElementById('addModel_marcaDropdown');
+  var msg=document.getElementById('addModel_marcaMsg');
   if(!input||!dd) return;
-  const query=input.value.trim().toLowerCase();
-  const brands=isFipeBaseLoaded()?getFipeBrandsForCategory(_fipeCurrentCategory):ALL_BRANDS;
-  // Show all (first 30) if empty, or filter by query
-  const filtered=query?brands.filter(b=>b.toLowerCase().includes(query)).slice(0,30):brands.slice(0,30);
+  var query=input.value.trim().toLowerCase();
+  var brands=isFipeBaseLoaded()?getFipeBrandsForCategory(_fipeCurrentCategory):ALL_BRANDS;
+  var filtered=query?brands.filter(function(b){return b.toLowerCase().includes(query)}).slice(0,30):brands.slice(0,30);
   if(filtered.length===0){
     dd.style.display='block';
     dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
-    if(query){msg.textContent='✕ Marca não encontrada na base oficial';msg.className='ac-msg invalid';}
+    if(query){msg.textContent='Marca nao encontrada';msg.className='ac-msg invalid';}
     return;
   }
   dd.style.display='block';
-  dd.innerHTML=filtered.map(b=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onmousedown="event.preventDefault();fipeSelectBrand(\''+b.replace(/'/g,"\\'")+'\')">'+b+'</div>').join('');
-  // Check exact match
-  if(query){
-    const exact=brands.find(b=>b.toLowerCase()===query);
-    if(exact){msg.textContent='✓ Marca válida';msg.className='ac-msg valid';}
-    else{msg.textContent='Digite ou selecione uma marca da lista';msg.className='ac-msg';}
-  } else {
-    msg.textContent='';msg.className='ac-msg';
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    html+='<div class="fipe-item" data-value="'+filtered[i].replace(/"/g,'&quot;')+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+filtered[i]+'</div>';
   }
+  dd.innerHTML=html;
+  dd.onmousedown=function(e){e.preventDefault();var item=e.target.closest('.fipe-item');if(item)fipeSelectBrand(item.dataset.value);};
+  if(query){
+    var exact=brands.find(function(b){return b.toLowerCase()===query});
+    if(exact){msg.textContent='Marca valida';msg.className='ac-msg valid';}
+    else{msg.textContent='Selecione uma marca da lista';msg.className='ac-msg';}
+  }else{msg.textContent='';msg.className='ac-msg';}
 }
 
+
 function fipeFilterModels(){
-  const input=document.getElementById('addModel_modelo');
-  const dd=document.getElementById('addModel_modeloDropdown');
-  const msg=document.getElementById('addModel_modeloMsg');
+  var input=document.getElementById('addModel_modelo');
+  var dd=document.getElementById('addModel_modeloDropdown');
+  var msg=document.getElementById('addModel_modeloMsg');
   if(!input||!dd) return;
-  const query=input.value.trim().toLowerCase();
-  const models=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_fipeSelectedBrand,_fipeCurrentCategory):[...new Set(ALL_RECORDS.filter(r=>r.marca===_fipeSelectedBrand).map(r=>r.modelo))];
-  // Show first 30 if empty, or filter by query
-  const filtered=query?models.filter(m=>m.toLowerCase().includes(query)).slice(0,30):models.slice(0,30);
+  var query=input.value.trim().toLowerCase();
+  var models=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_fipeSelectedBrand,_fipeCurrentCategory):[...new Set(ALL_RECORDS.filter(function(r){return r.marca===_fipeSelectedBrand}).map(function(r){return r.modelo}))];
+  var filtered=query?models.filter(function(m){return m.toLowerCase().includes(query)}).slice(0,30):models.slice(0,30);
   if(filtered.length===0){
     dd.style.display='block';
     dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhum modelo encontrado</div>';
-    if(query){msg.textContent='✕ Modelo não encontrado na base oficial';msg.className='ac-msg invalid';}
+    if(query){msg.textContent='Modelo nao encontrado';msg.className='ac-msg invalid';}
     return;
   }
   dd.style.display='block';
-  dd.innerHTML=filtered.map(m=>'<div style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background .1s" onmouseover="this.style.background=\'var(--blue-bg)\'" onmouseout="this.style.background=\'\'" onmousedown="event.preventDefault();fipeSelectModel(\''+m.replace(/'/g,"\\'")+'\')">'+m+'</div>').join('')+(models.length>30?'<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+models.length+' — digite para filtrar</div>':'');
-  // Check exact match
-  if(query){
-    const exact=models.find(m=>m.toLowerCase()===query);
-    if(exact){msg.textContent='✓ Modelo válido';msg.className='ac-msg valid';}
-    else{msg.textContent='Digite ou selecione um modelo da lista';msg.className='ac-msg';}
-  } else {
-    msg.textContent='';msg.className='ac-msg';
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    html+='<div class="fipe-item" data-value="'+filtered[i].replace(/"/g,'&quot;')+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+filtered[i]+'</div>';
   }
+  if(models.length>30) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando 30 de '+'+models.length+'+'</div>';
+  dd.innerHTML=html;
+  dd.onmousedown=function(e){e.preventDefault();var item=e.target.closest('.fipe-item');if(item)fipeSelectModel(item.dataset.value);};
+  if(query){
+    var exact=models.find(function(m){return m.toLowerCase()===query});
+    if(exact){msg.textContent='Modelo valido';msg.className='ac-msg valid';}
+    else{msg.textContent='Selecione um modelo da lista';msg.className='ac-msg';}
+  }else{msg.textContent='';msg.className='ac-msg';}
 }
+
 
 function fipeSelectModel(model){
   const input=document.getElementById('addModel_modelo');
