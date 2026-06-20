@@ -2284,15 +2284,66 @@ function sortDrawerTableLazy(id,colIdx){
 function exportDrawerTableLazy(id){
   const state=window['_drawerData_'+id];
   if(!state) return;
-  // Export all filtered data
   const headers=state.headers;
   const data=state.filtered;
-  const rows=[headers,...data];
-  let csv=rows.map(r=>r.map(c=>'"'+(c!=null?String(c).replace(/"/g,'""'):'') +'"').join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=id+'.csv';a.click();
-  URL.revokeObjectURL(url);
+
+  // Build worksheet data
+  const wsData=[headers,...data];
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+
+  // Style header row (dark background, white text)
+  const headerStyle={
+    font:{bold:true,color:{rgb:'FFFFFF'},sz:11},
+    fill:{fgColor:{rgb:'1A1A2E'}},
+    alignment:{horizontal:'center',vertical:'center'},
+    border:{
+      top:{style:'thin',color:{rgb:'333333'}},
+      bottom:{style:'thin',color:{rgb:'333333'}},
+      left:{style:'thin',color:{rgb:'333333'}},
+      right:{style:'thin',color:{rgb:'333333'}}
+    }
+  };
+  const cellStyle={
+    font:{sz:10},
+    alignment:{vertical:'center'},
+    border:{
+      bottom:{style:'thin',color:{rgb:'E0E0E0'}}
+    }
+  };
+
+  // Apply styles to header
+  for(let c=0;c<headers.length;c++){
+    const addr=XLSX.utils.encode_cell({r:0,c:c});
+    if(!ws[addr]) ws[addr]={v:headers[c],t:'s'};
+    ws[addr].s=headerStyle;
+  }
+
+  // Apply styles to data rows
+  for(let r=1;r<=data.length;r++){
+    for(let c=0;c<headers.length;c++){
+      const addr=XLSX.utils.encode_cell({r:r,c:c});
+      if(ws[addr]) ws[addr].s=cellStyle;
+    }
+  }
+
+  // Auto-fit column widths
+  const colWidths=headers.map((h,i)=>{
+    let max=h.length;
+    for(const row of data){
+      const val=row[i]!=null?String(row[i]):'';
+      if(val.length>max) max=val.length;
+    }
+    return {wch:Math.min(max+2,50)};
+  });
+  ws['!cols']=colWidths;
+
+  // Row height for header
+  ws['!rows']=[{hpt:22}];
+
+  // Create workbook and export
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,id.charAt(0).toUpperCase()+id.slice(1));
+  XLSX.writeFile(wb,id+'.xlsx');
 }
 
 function openDetailDrawer(title, content){
