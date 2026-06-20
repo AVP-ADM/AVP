@@ -2030,9 +2030,16 @@ function showKpiDetail(type){
   let title='', html='';
   if(type==='categorias'){
     title='Todas as Categorias ('+CATEGORIES.length+')';
+    const sortedCats = CATEGORIES.slice().sort((a,b)=>{
+      const typeOrder = {'cars':0,'motorcycles':1,'trucks':2};
+      const typeA = typeOrder[FIPE_CATEGORY_TYPE_MAP[a]||'cars'] ?? 0;
+      const typeB = typeOrder[FIPE_CATEGORY_TYPE_MAP[b]||'cars'] ?? 0;
+      if(typeA !== typeB) return typeA - typeB;
+      return a.localeCompare(b);
+    });
     html=buildDrawerTableWithTypeFilter(
       ['Categoria','Modelos','Marcas'],
-      CATEGORIES.sort().map(c=>[c, CAT_TOTALS[c], Object.keys(RAW[c].brands||{}).length]),
+      sortedCats.map(c=>[c, CAT_TOTALS[c], Object.keys(RAW[c].brands||{}).length]),
       'categorias'
     );
   } else if(type==='marcas'){
