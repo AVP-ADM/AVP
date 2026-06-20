@@ -2053,8 +2053,8 @@ function showKpiDetail(type){
   } else if(type==='modelos'){
     const effectiveRecords=ALL_RECORDS.filter(r=>!isPendingRemoval(r.marca, r.modelo, r.categoria));
     title='Todos os Modelos ('+effectiveRecords.length.toLocaleString()+')';
-    const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo]);
-    html=buildDrawerTableModelos(['Categoria','Marca','Modelo'],data,'modelos');
+    const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo, typeof getAno==='function'?getAno(r.categoria,r.marca,r.modelo):'']);
+    html=buildDrawerTableModelos(['Categoria','Marca','Modelo','Ano Aceitação'],data,'modelos');
   } else if(type==='duplicados'){
     title='Duplicados Reais ('+DUPLICATES_REAL.length+')';
     const data=DUPLICATES_REAL.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
@@ -2271,9 +2271,9 @@ function exportModelosByCategory(){
     const models=getModelsForCat(cat).filter(m=>!isPendingRemoval(m.marca,m.modelo,cat));
     if(models.length===0) continue;
 
-    const headers=['Marca','Modelo'];
+    const headers=['Marca','Modelo','Ano Aceitação'];
     const data=models.sort((a,b)=>a.marca.localeCompare(b.marca)||a.modelo.localeCompare(b.modelo));
-    const wsData=[headers,...data.map(m=>[m.marca,m.modelo])];
+    const wsData=[headers,...data.map(m=>[m.marca,m.modelo,typeof getAno==='function'?getAno(cat,m.marca,m.modelo):''])];
     const ws=XLSX.utils.aoa_to_sheet(wsData);
 
     // Apply header styles
@@ -2289,7 +2289,7 @@ function exportModelosByCategory(){
       }
     }
     // Column widths
-    ws['!cols']=[{wch:22},{wch:50}];
+    ws['!cols']=[{wch:22},{wch:50},{wch:18}];
     ws['!rows']=[{hpt:22}];
 
     // Sheet name (max 31 chars, no special chars)
