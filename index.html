@@ -411,6 +411,75 @@ tr:hover .row-actions{opacity:1}
 .loading-overlay .spinner{width:24px;height:24px}
 .loading-overlay span{font-size:.82rem;color:var(--text2)}
 
+/* ========= DASHBOARD EXECUTIVE ========= */
+.dashboard-top{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:20px}
+.integrity-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.integrity-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--radius-lg) 0 0 var(--radius-lg)}
+.integrity-card.status-excellent::before{background:var(--green)}
+.integrity-card.status-good::before{background:var(--blue)}
+.integrity-card.status-warning::before{background:var(--amber)}
+.integrity-card.status-critical::before{background:var(--red)}
+.integrity-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px}
+.integrity-value{font-size:2.4rem;font-weight:700;line-height:1.1}
+.integrity-value.excellent{color:var(--green)}
+.integrity-value.good{color:var(--blue)}
+.integrity-value.warning{color:var(--amber)}
+.integrity-value.critical{color:var(--red)}
+.integrity-status{font-size:.78rem;font-weight:600;margin-top:6px;padding:3px 10px;border-radius:12px}
+.integrity-status.excellent{background:var(--green-bg);color:var(--green)}
+.integrity-status.good{background:var(--blue-bg);color:var(--blue)}
+.integrity-status.warning{background:var(--amber-bg);color:var(--amber)}
+.integrity-status.critical{background:var(--red-bg);color:var(--red)}
+.integrity-bar{width:100%;height:6px;background:var(--surface-2);border-radius:3px;margin-top:12px;overflow:hidden}
+.integrity-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* Health Card */
+.health-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+.health-row:last-child{border-bottom:none}
+.health-label{font-size:.78rem;color:var(--text2);min-width:120px;font-weight:500}
+.health-bar{flex:1;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.health-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.health-bar-fill.green{background:var(--green)}
+.health-bar-fill.red{background:var(--red)}
+.health-bar-fill.amber{background:var(--amber)}
+.health-bar-fill.blue{background:var(--blue)}
+.health-value{font-size:.75rem;font-weight:600;min-width:50px;text-align:right}
+
+/* Activity Timeline */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-light)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem}
+.activity-icon.add{background:var(--green-bg);color:var(--green)}
+.activity-icon.remove{background:var(--red-bg);color:var(--red)}
+.activity-icon.move{background:var(--blue-bg);color:var(--blue)}
+.activity-icon.edit{background:var(--amber-bg);color:var(--amber)}
+.activity-info{flex:1;min-width:0}
+.activity-text{font-size:.78rem;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-meta{font-size:.68rem;color:var(--text3);margin-top:2px}
+
+/* Ranking items */
+.rank-item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--border-light);border-radius:4px;cursor:pointer;transition:background .15s}
+.rank-item:last-child{border-bottom:none}
+.rank-item:hover{background:var(--surface-2)}
+.rank-num{width:22px;height:22px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:var(--text3);flex-shrink:0}
+.rank-item.critical .rank-num{background:var(--red-bg);color:var(--red)}
+.rank-item.warning .rank-num{background:var(--amber-bg);color:var(--amber)}
+.rank-info{flex:1;min-width:0}
+.rank-title{font-size:.8rem;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-sub{font-size:.7rem;color:var(--text3);margin-top:1px}
+.rank-badge{flex-shrink:0}
+
+/* KPI cards with icons */
+.kpi-card .kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.kpi-card.blue .kpi-icon{background:var(--blue-bg);color:var(--blue)}
+.kpi-card.green .kpi-icon{background:var(--green-bg);color:var(--green)}
+.kpi-card.purple .kpi-icon{background:var(--purple-light);color:var(--purple)}
+.kpi-card.red .kpi-icon{background:var(--red-bg);color:var(--red)}
+.kpi-card.amber .kpi-icon{background:var(--amber-bg);color:var(--amber)}
+.kpi-trend{font-size:.68rem;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:3px}
+
+@media(max-width:900px){.dashboard-top{grid-template-columns:1fr}}
+
 /* ========= RESPONSIVE ========= */
 @media(max-width:768px){
   .app-sidebar{position:fixed;left:-240px;top:48px;height:calc(100vh - 48px);z-index:150;box-shadow:var(--shadow-lg)}
@@ -567,7 +636,25 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: VISÃO GERAL ========= -->
   <div class="tab-panel active" id="panel-overview">
-    <div class="kpi-grid" id="kpiGrid"></div>
+    <!-- INTEGRITY + KPIs ROW -->
+    <div class="dashboard-top">
+      <div class="integrity-card" id="integrityCard"></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </div>
+
+    <!-- HEALTH + RECENT ACTIVITY ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="card" id="healthCard">
+        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span> Saúde da Base</div>
+        <div id="healthContent"></div>
+      </div>
+      <div class="card" id="activityCard">
+        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Últimas Alterações</div>
+        <div id="activityContent"></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES TABLE -->
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Resumo por Categorias</div>
       <div class="filter-row">
@@ -588,18 +675,20 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados Reais</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="ovTableBody"></tbody>
         </table>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+    <!-- TOP DUPLICATES + DIVERGENCES ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
-        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Top 10 Duplicados</div>
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Top 5 Duplicados Problemáticos</span><a href="#" onclick="goTab('duplicates');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></div>
         <div id="topDuplicates"></div>
       </div>
       <div class="card">
-        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Top Divergências por Categoria</div>
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Divergências</span><a href="#" onclick="goTab('divergences');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></div>
         <div id="topDivergences"></div>
       </div>
     </div>
@@ -898,9 +987,104 @@ let CAT_TOTALS = {};
 let ALL_RECORDS = [];
 let ALL_BRANDS = [];
 let DUPLICATES = [];
+let DUPLICATES_REAL = []; // Apenas duplicados problemáticos (categorias incompatíveis)
+let DUPLICATES_VALID = []; // Duplicados válidos (categorias compatíveis)
+let DIVERGENCES_ERRORS = []; // Nacional sem Importado (erro obrigatório)
+let DIVERGENCES_REVIEW = []; // Apenas no Importado sem Nacional (para revisão)
 let modelStatus = {};
 let _catDupsCount = {};
 let chartsInitialized = false;
+
+// ========= CATEGORY COMPATIBILITY RULES =========
+const CAT_COMPAT_MAP = {
+  'Passeio - Nacional': ['Passeio - Importado', 'Start'],
+  'Passeio - Importado': ['Passeio - Nacional', 'Start'],
+  'SUV|Caminhonete|Utilitário': ['SUV|Caminhonete|Utilitário - I', 'Start'],
+  'SUV|Caminhonete|Utilitário - I': ['SUV|Caminhonete|Utilitário', 'Start'],
+  'Automóvel Premium': ['Start'],
+  'Elétrico | Híbrido': [],
+  'Start': ['Passeio - Nacional', 'Passeio - Importado', 'SUV|Caminhonete|Utilitário', 'SUV|Caminhonete|Utilitário - I', 'Automóvel Premium', 'Truck Leve (até 14t)', 'Truck Pesado (a partir de 14t)'],
+  'Truck Leve (até 14t)': ['Start'],
+  'Truck Pesado (a partir de 14t)': ['Start'],
+  'ELITE 125 | FLUO 125 | NEO': [],
+  'Motocicletas - Avelloz | Shiner': [],
+  'Motocicletas - Honda': [],
+  'Motocicletas - Yamaha': [],
+  'Motocicletas Especiais': [],
+  'PCX 150 | NMAX 160 | ADV 150': [],
+  'PCX 160 | XMAX 250 | ADV 160': []
+};
+
+// Regras de inclusão obrigatória: se está em A, DEVE estar em B
+const CAT_MANDATORY_INCLUSION = [
+  {from: 'Passeio - Nacional', mustBeIn: 'Passeio - Importado'},
+  {from: 'SUV|Caminhonete|Utilitário', mustBeIn: 'SUV|Caminhonete|Utilitário - I'}
+];
+
+// Regras de revisão: se está APENAS em B sem A, mostrar para conferência
+const CAT_REVIEW_RULES = [
+  {onlyIn: 'Passeio - Importado', notIn: 'Passeio - Nacional', label: 'Apenas em Passeio Importado'},
+  {onlyIn: 'SUV|Caminhonete|Utilitário - I', notIn: 'SUV|Caminhonete|Utilitário', label: 'Apenas em SUV Importado'}
+];
+
+// Função para verificar se um duplicado é problemático
+function isDuplicateProblematic(categories){
+  // categories = array de nomes de categorias onde o modelo está
+  for(let i=0; i<categories.length; i++){
+    for(let j=i+1; j<categories.length; j++){
+      const catA = categories[i];
+      const catB = categories[j];
+      const compatA = CAT_COMPAT_MAP[catA];
+      if(!compatA || !compatA.includes(catB)){
+        return true; // Par incompatível encontrado
+      }
+    }
+  }
+  return false; // Todos os pares são compatíveis
+}
+
+// Função para calcular divergências inteligentes
+function computeSmartDivergences(){
+  DIVERGENCES_ERRORS = [];
+  DIVERGENCES_REVIEW = [];
+
+  // Erros obrigatórios: modelo em Nacional mas NÃO no Importado
+  for(const rule of CAT_MANDATORY_INCLUSION){
+    const modelsFrom = getModelsForCat(rule.from);
+    const modelsTarget = getModelsForCat(rule.mustBeIn);
+    const targetSet = new Set(modelsTarget.map(m => norm(m.marca)+'|||'+norm(m.modelo)));
+    for(const m of modelsFrom){
+      if(!targetSet.has(norm(m.marca)+'|||'+norm(m.modelo))){
+        DIVERGENCES_ERRORS.push({marca: m.marca, modelo: m.modelo, from: rule.from, missing: rule.mustBeIn, type:'error'});
+      }
+    }
+  }
+
+  // Para revisão: modelo APENAS no Importado sem estar no Nacional
+  for(const rule of CAT_REVIEW_RULES){
+    const modelsOnly = getModelsForCat(rule.onlyIn);
+    const modelsOther = getModelsForCat(rule.notIn);
+    const otherSet = new Set(modelsOther.map(m => norm(m.marca)+'|||'+norm(m.modelo)));
+    for(const m of modelsOnly){
+      if(!otherSet.has(norm(m.marca)+'|||'+norm(m.modelo))){
+        DIVERGENCES_REVIEW.push({marca: m.marca, modelo: m.modelo, onlyIn: rule.onlyIn, notIn: rule.notIn, label: rule.label, type:'review'});
+      }
+    }
+  }
+}
+
+// Função para classificar duplicados
+function classifyDuplicates(){
+  DUPLICATES_REAL = [];
+  DUPLICATES_VALID = [];
+  for(const dup of DUPLICATES){
+    if(isDuplicateProblematic(dup.categories || dup.cats || [])){
+      DUPLICATES_REAL.push(dup);
+    } else {
+      DUPLICATES_VALID.push(dup);
+    }
+  }
+}
 
 // ========= COMPARISON GROUPS =========
 const COMP_GROUPS = [
@@ -1326,6 +1510,11 @@ function recomputeAll(){
   DUPLICATES = Object.values(modelMap).filter(m=>m.cats.length>1).map(m=>({...m, count:m.cats.length}));
   DUPLICATES.sort((a,b)=>b.count-a.count);
 
+  // Classificar duplicados em problemáticos vs válidos
+  classifyDuplicates();
+  // Calcular divergências inteligentes
+  computeSmartDivergences();
+
   modelStatus = {};
   for(const d of DUPLICATES){
     const key = norm(d.marca)+'|||'+norm(d.modelo);
@@ -1434,25 +1623,149 @@ function renderKPIs(){
   const totalBrands = ALL_BRANDS.length;
   const pendingRemovals = STAGING.ops.filter(op=>op.type==='Remoção').length;
   const totalModels = ALL_RECORDS.length - pendingRemovals;
-  const totalDups = DUPLICATES.length;
-  let totalDivs = 0;
-  for(const g of COMP_GROUPS){
-    const modelsA = getModelsForCat(g.a);
-    const modelsB = getModelsForCat(g.b);
-    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
-    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
-    totalDivs += onlyA.length + onlyB.length;
+  const totalDupsReal = DUPLICATES_REAL.length;
+  const totalDivsErrors = DIVERGENCES_ERRORS.length;
+  const totalDivsReview = DIVERGENCES_REVIEW.length;
+  const totalProblems = totalDupsReal + totalDivsErrors;
+
+  // Integrity calculation
+  const uniqueModels = new Set(ALL_RECORDS.map(r=>norm(r.marca)+'|||'+norm(r.modelo))).size;
+  const integrityPct = uniqueModels > 0 ? Math.round(((uniqueModels - totalProblems) / uniqueModels) * 100) : 100;
+  const integrityPctClamped = Math.max(0, Math.min(100, integrityPct));
+
+  let statusClass, statusLabel;
+  if(integrityPctClamped >= 90){ statusClass='excellent'; statusLabel='Excelente'; }
+  else if(integrityPctClamped >= 70){ statusClass='good'; statusLabel='Bom'; }
+  else if(integrityPctClamped >= 50){ statusClass='warning'; statusLabel='Necessita Revisão'; }
+  else { statusClass='critical'; statusLabel='Crítico'; }
+
+  // Render Integrity Card
+  const integrityEl = document.getElementById('integrityCard');
+  if(integrityEl){
+    integrityEl.className = 'integrity-card status-'+statusClass;
+    integrityEl.innerHTML = `
+      <div class="integrity-label">Integridade da Base</div>
+      <div class="integrity-value ${statusClass}">${integrityPctClamped}%</div>
+      <div class="integrity-status ${statusClass}">${statusLabel}</div>
+      <div class="integrity-bar"><div class="integrity-bar-fill" style="width:${integrityPctClamped}%;background:var(--${statusClass==='excellent'?'green':statusClass==='good'?'blue':statusClass==='warning'?'amber':'red'})"></div></div>
+    `;
   }
 
+  // Render KPI Grid with icons
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card blue" onclick="showKpiDetail('categorias')"><div class="kpi-label">Total Categorias</div><div class="kpi-value">${totalCats}</div></div>
-    <div class="kpi-card green" onclick="showKpiDetail('marcas')"><div class="kpi-label">Total Marcas</div><div class="kpi-value">${totalBrands}</div></div>
-    <div class="kpi-card purple" onclick="showKpiDetail('modelos')"><div class="kpi-label">Total Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div></div>
-    <div class="kpi-card red" onclick="showKpiDetail('duplicados')"><div class="kpi-label">Duplicados</div><div class="kpi-value">${totalDups}</div></div>
-    <div class="kpi-card amber" onclick="showKpiDetail('divergencias')"><div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivs}</div></div>
+    <div class="kpi-card blue" onclick="showKpiDetail('categorias')">
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="kpi-label">Categorias</div><div class="kpi-value">${totalCats}</div>
+      <div class="kpi-trend">—</div>
+    </div>
+    <div class="kpi-card green" onclick="showKpiDetail('marcas')">
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div class="kpi-label">Marcas</div><div class="kpi-value">${totalBrands}</div>
+      <div class="kpi-trend">—</div>
+    </div>
+    <div class="kpi-card purple" onclick="showKpiDetail('modelos')">
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+      <div class="kpi-label">Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div>
+      <div class="kpi-trend">—</div>
+    </div>
+    <div class="kpi-card red" onclick="showKpiDetail('duplicados')">
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div class="kpi-label">Duplicados Reais</div><div class="kpi-value">${totalDupsReal}</div>
+      <div class="kpi-trend">${DUPLICATES_VALID.length} válidos ignorados</div>
+    </div>
+    <div class="kpi-card amber" onclick="showKpiDetail('divergencias')">
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+      <div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivsErrors + totalDivsReview}</div>
+      <div class="kpi-trend">${totalDivsErrors} erros · ${totalDivsReview} para revisão</div>
+    </div>
   `;
+
+  // Render health card and activity
+  renderHealthCard(totalModels, totalDupsReal, totalDivsErrors, totalDivsReview, uniqueModels);
+  renderRecentActivity();
+}
+
+function renderHealthCard(totalModels, totalDupsReal, totalDivsErrors, totalDivsReview, uniqueModels){
+  const problems = totalDupsReal + totalDivsErrors;
+  const validPct = uniqueModels > 0 ? Math.round(((uniqueModels - problems) / uniqueModels) * 100) : 100;
+  const dupPct = uniqueModels > 0 ? Math.round((totalDupsReal / uniqueModels) * 100) : 0;
+  const divErrPct = uniqueModels > 0 ? Math.round((totalDivsErrors / uniqueModels) * 100) : 0;
+  const divRevPct = uniqueModels > 0 ? Math.round((totalDivsReview / uniqueModels) * 100) : 0;
+
+  const el = document.getElementById('healthContent');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="health-row">
+      <span class="health-label">Válidos</span>
+      <div class="health-bar"><div class="health-bar-fill green" style="width:${validPct}%"></div></div>
+      <span class="health-value" style="color:var(--green)">${validPct}%</span>
+    </div>
+    <div class="health-row">
+      <span class="health-label">Duplicados Reais</span>
+      <div class="health-bar"><div class="health-bar-fill red" style="width:${Math.min(dupPct*3,100)}%"></div></div>
+      <span class="health-value" style="color:var(--red)">${totalDupsReal}</span>
+    </div>
+    <div class="health-row">
+      <span class="health-label">Diverg. Críticas</span>
+      <div class="health-bar"><div class="health-bar-fill amber" style="width:${Math.min(divErrPct*3,100)}%"></div></div>
+      <span class="health-value" style="color:var(--amber)">${totalDivsErrors}</span>
+    </div>
+    <div class="health-row">
+      <span class="health-label">Para Revisão</span>
+      <div class="health-bar"><div class="health-bar-fill blue" style="width:${Math.min(divRevPct*3,100)}%"></div></div>
+      <span class="health-value" style="color:var(--blue)">${totalDivsReview}</span>
+    </div>
+  `;
+}
+
+function renderRecentActivity(){
+  const el = document.getElementById('activityContent');
+  if(!el) return;
+
+  // Get recent operations from STAGING and HISTORY
+  let activities = [];
+
+  // From staging (pending)
+  if(STAGING && STAGING.ops){
+    for(const op of STAGING.ops.slice(-5)){
+      let icon='edit', iconClass='edit';
+      if(op.type==='Adição'){ icon='+'; iconClass='add'; }
+      else if(op.type==='Remoção'){ icon='−'; iconClass='remove'; }
+      else if(op.type==='Mover'){ icon='↔'; iconClass='move'; }
+      activities.push({icon, iconClass, text:`${op.type}: ${op.marca} ${op.modelo}`, meta: op.catTo ? `→ ${op.catTo}` : (op.catFrom||''), time:'Pendente'});
+    }
+  }
+
+  // From history
+  if(HISTORY && HISTORY.length){
+    for(const h of HISTORY.slice(-10)){
+      let icon='•', iconClass='edit';
+      if(h.type==='Adição'||h.action==='add'){ icon='+'; iconClass='add'; }
+      else if(h.type==='Remoção'||h.action==='remove'){ icon='−'; iconClass='remove'; }
+      else if(h.type==='Mover'||h.action==='move'){ icon='↔'; iconClass='move'; }
+      const text = h.description || h.details || `${h.type||h.action||'Ação'}: ${h.marca||''} ${h.modelo||''}`;
+      const time = h.date || h.timestamp || '';
+      activities.push({icon, iconClass, text, meta: h.user||'', time});
+    }
+  }
+
+  // Show last 5
+  activities = activities.slice(-5).reverse();
+
+  if(activities.length === 0){
+    el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteração recente</h4><p style="font-size:.75rem">As atividades aparecerão aqui conforme o sistema for utilizado.</p></div>';
+    return;
+  }
+
+  el.innerHTML = activities.map(a=>`
+    <div class="activity-item">
+      <div class="activity-icon ${a.iconClass}">${a.icon}</div>
+      <div class="activity-info">
+        <div class="activity-text">${a.text}</div>
+        <div class="activity-meta">${a.meta}${a.time?' · '+a.time:''}</div>
+      </div>
+    </div>
+  `).join('') + `<div style="text-align:center;padding:8px"><a href="#" onclick="goTab('history');return false" style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:500">Ver histórico completo →</a></div>`;
 }
 
 function getModelsForCat(catName){
@@ -1535,34 +1848,68 @@ function renderOverviewTable(){
 }
 
 function renderTopDuplicates(){
-  const top = DUPLICATES.slice(0,10);
-  document.getElementById('topDuplicates').innerHTML = top.length?top.map((d,i)=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')" onmouseover="this.style.background='var(--blue-bg)'" onmouseout="this.style.background=''">
-      <span style="font-size:.82rem"><strong>${d.marca}</strong> — ${d.modelo}</span>
-      <span class="badge badge-red">${d.count} cat.</span>
-    </div>
-  `).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado</h4><p>Todos os modelos estão em categorias únicas.</p></div>';
+  const top = DUPLICATES_REAL.slice(0,5);
+  document.getElementById('topDuplicates').innerHTML = top.length?top.map((d,i)=>{
+    const severity = d.count >= 4 ? 'critical' : d.count >= 3 ? 'warning' : '';
+    const incompatCats = d.cats.filter((c,idx)=>{
+      for(let j=idx+1;j<d.cats.length;j++){
+        const compat = CAT_COMPAT_MAP[c];
+        if(!compat || !compat.includes(d.cats[j])) return true;
+      }
+      return false;
+    });
+    return `<div class="rank-item ${severity}" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-info">
+        <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
+        <div class="rank-sub">${d.cats.join(', ')}</div>
+      </div>
+      <div class="rank-badge"><span class="badge badge-red">${d.count} cat.</span></div>
+    </div>`;
+  }).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado problemático</h4><p>Todos os modelos estão em categorias compatíveis.</p></div>';
 }
 
 function renderTopDivergences(){
-  let items=[];
-  for(let i=0;i<COMP_GROUPS.length;i++){
-    const g=COMP_GROUPS[i];
-    const modelsA = getModelsForCat(g.a);
-    const modelsB = getModelsForCat(g.b);
-    const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-    const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-    const onlyA = modelsA.filter(m=>!setB.has(norm(m.marca)+'|||'+norm(m.modelo)));
-    const onlyB = modelsB.filter(m=>!setA.has(norm(m.marca)+'|||'+norm(m.modelo)));
-    items.push({label:g.label, count:onlyA.length+onlyB.length, groupIdx:i});
+  const el = document.getElementById('topDivergences');
+  if(!el) return;
+
+  let html = '';
+
+  // Errors section (Nacional sem Importado)
+  if(DIVERGENCES_ERRORS.length > 0){
+    const topErrors = DIVERGENCES_ERRORS.slice(0,3);
+    html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${DIVERGENCES_ERRORS.length})</span></div>`;
+    html += topErrors.map((d,i)=>`
+      <div class="rank-item critical" onclick="goTab('divergences')">
+        <div class="rank-num">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
+          <div class="rank-sub">Em ${d.from} · Falta em ${d.missing}</div>
+        </div>
+      </div>
+    `).join('');
   }
-  items.sort((a,b)=>b.count-a.count);
-  document.getElementById('topDivergences').innerHTML = items.length?items.map(it=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border-light);cursor:pointer;border-radius:4px" onclick="navigateToDivergence(${it.groupIdx})" onmouseover="this.style.background='var(--amber-bg)'" onmouseout="this.style.background=''">
-      <span style="font-size:.82rem">${it.label}</span>
-      <span class="badge badge-amber">${it.count} dif.</span>
-    </div>
-  `).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></div><h4>Nenhuma divergência</h4><p>Categorias comparáveis estão alinhadas.</p></div>';
+
+  // Review section (Apenas no Importado)
+  if(DIVERGENCES_REVIEW.length > 0){
+    const topReview = DIVERGENCES_REVIEW.slice(0,3);
+    html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${DIVERGENCES_REVIEW.length})</span></div>`;
+    html += topReview.map((d,i)=>`
+      <div class="rank-item warning" onclick="goTab('divergences')">
+        <div class="rank-num">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
+          <div class="rank-sub">${d.label} · Não está em ${d.notIn}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if(!html){
+    html = '<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhuma divergência</h4><p>Base de dados consistente.</p></div>';
+  }
+
+  el.innerHTML = html;
 }
 
 function navigateToDuplicate(marca, modelo){
@@ -5118,17 +5465,30 @@ function closeMobileSidebar(){
 }
 
 function updateSidebarBadges(){
-  // Duplicates badge
+  // Duplicates badge - show only REAL problematic duplicates
   const dupBadge = document.getElementById('badgeDuplicates');
   if(dupBadge){
-    const count = DUPLICATES?DUPLICATES.length:0;
+    const count = DUPLICATES_REAL?DUPLICATES_REAL.length:0;
     if(count>0){
-      dupBadge.textContent = count>999?'999+':count;
+      dupBadge.textContent = count>999?'999+':count.toLocaleString();
       dupBadge.style.display='';
       dupBadge.classList.add('badge-pulse');
       setTimeout(()=>dupBadge.classList.remove('badge-pulse'),500);
     } else {
       dupBadge.style.display='none';
+    }
+  }
+  // Divergences badge - show errors + review
+  const divBadge = document.getElementById('badgeDivergences');
+  if(divBadge){
+    const count = (DIVERGENCES_ERRORS?DIVERGENCES_ERRORS.length:0) + (DIVERGENCES_REVIEW?DIVERGENCES_REVIEW.length:0);
+    if(count>0){
+      divBadge.textContent = count>999?'999+':count.toLocaleString();
+      divBadge.style.display='';
+      divBadge.classList.add('badge-pulse');
+      setTimeout(()=>divBadge.classList.remove('badge-pulse'),500);
+    } else {
+      divBadge.style.display='none';
     }
   }
   // Staging badge
