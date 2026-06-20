@@ -693,7 +693,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Duplicados Reais</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Conflitos</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="ovTableBody"></tbody>
         </table>
       </div>
@@ -702,7 +702,7 @@ tr:hover .row-actions{opacity:1}
     <!-- TOP DUPLICATES + DIVERGENCES ROW -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
-        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Top 5 Duplicados Problemáticos</span><a href="#" onclick="goTab('duplicates');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></div>
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span> Top 5 Conflitos</span><a href="#" onclick="goTab('duplicates');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></div>
         <div id="topDuplicates"></div>
       </div>
       <div class="card">
@@ -1686,7 +1686,7 @@ function renderKPIs(){
           <span class="health-value" style="color:var(--green)">${validPct}%</span>
         </div>
         <div class="health-row">
-          <span class="health-label">Dupl. Reais</span>
+          <span class="health-label">Conflitos</span>
           <div class="health-bar"><div class="health-bar-fill red" style="width:${Math.min(dupBarPct,100)}%"></div></div>
           <span class="health-value" style="color:var(--red)">${totalDupsReal}</span>
         </div>
@@ -1720,8 +1720,7 @@ function renderKPIs(){
     </div>
     <div class="kpi-card red" onclick="showKpiDetail('duplicados')">
       <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-      <div class="kpi-label">Duplicados Reais</div><div class="kpi-value">${totalDupsReal}</div>
-      <div class="kpi-trend">${DUPLICATES_VALID.length} válidos ignorados</div>
+      <div class="kpi-label">Conflitos</div><div class="kpi-value">${totalDupsReal}</div>
     </div>
     <div class="kpi-card amber" onclick="showKpiDetail('divergencias')">
       <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
@@ -1897,7 +1896,7 @@ function renderTopDuplicates(){
       </div>
       <div class="rank-badge"><span class="badge badge-red">${d.count} cat.</span></div>
     </div>`;
-  }).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado problemático</h4><p>Todos os modelos estão em categorias compatíveis.</p></div>';
+  }).join(''):'<div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum conflito</h4><p>Todos os modelos estão em categorias compatíveis.</p></div>';
 }
 
 function renderTopDivergences(){
@@ -2056,7 +2055,7 @@ function showKpiDetail(type){
     const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo, typeof getAno==='function'?getAno(r.categoria,r.marca,r.modelo):'']);
     html=buildDrawerTableModelos(['Categoria','Marca','Modelo','Ano Aceitação'],data,'modelos');
   } else if(type==='duplicados'){
-    title='Duplicados Reais ('+DUPLICATES_REAL.length+')';
+    title='Conflitos ('+DUPLICATES_REAL.length+')';
     const data=DUPLICATES_REAL.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
     html=buildDrawerTable(['Marca','Modelo','Qtd.','Categorias'],data,'duplicados');
   } else if(type==='divergencias'){
