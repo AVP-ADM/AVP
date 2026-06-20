@@ -574,6 +574,11 @@ tr:hover .row-actions{opacity:1}
     <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
     <div class="app-logo">AutoVale<span>Auditoria de Veículos</span></div>
   </div>
+  <div class="header-search" onclick="openGlobalSearch()" style="flex:1;max-width:400px;margin:0 24px;cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;transition:all .2s" onmouseover="this.style.borderColor='var(--border-strong)'" onmouseout="this.style.borderColor='var(--border)'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span style="font-size:.78rem;color:var(--text3);flex:1">Pesquisar modelos, marcas...</span>
+    <span style="font-size:.62rem;color:var(--text3);background:var(--surface-2);padding:2px 6px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</span>
+  </div>
   <div class="header-right">
     <div class="sync-info" id="syncInfo"></div>
     <div class="base-info" id="baseInfo"></div>
@@ -625,11 +630,6 @@ tr:hover .row-actions{opacity:1}
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
-        </button>
-        <div style="margin:12px 14px;height:1px;background:var(--border)"></div>
-        <button class="sidebar-item" data-tooltip="Pesquisar" onclick="openGlobalSearch()">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-          <span class="si-text" style="display:flex;align-items:center;gap:8px">Pesquisar <span style="font-size:.6rem;opacity:.5;background:var(--bg);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</span></span>
         </button>
       </nav>
       <div class="sidebar-collapse">
