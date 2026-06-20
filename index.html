@@ -478,6 +478,15 @@ tr:hover .row-actions{opacity:1}
 .kpi-card.amber .kpi-icon{background:var(--amber-bg);color:var(--amber)}
 .kpi-trend{font-size:.68rem;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:3px}
 
+/* Divergence toggle switch */
+.div-toggle-wrap{display:flex;align-items:center;gap:6px}
+.div-toggle-label{font-size:.68rem;font-weight:500;color:var(--text3);transition:color .2s}
+.div-toggle-label.active{color:var(--accent)}
+.div-toggle-btn{position:relative;width:34px;height:18px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border-strong);cursor:pointer;transition:background .2s;padding:0}
+.div-toggle-btn.active{background:var(--accent-light);border-color:var(--accent)}
+.div-toggle-knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--accent);transition:transform .2s ease}
+.div-toggle-btn.active .div-toggle-knob{transform:translateX(16px)}
+
 @media(max-width:900px){.dashboard-top{grid-template-columns:1fr}}
 
 /* ========= RESPONSIVE ========= */
@@ -688,7 +697,7 @@ tr:hover .row-actions{opacity:1}
         <div id="topDuplicates"></div>
       </div>
       <div class="card">
-        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Divergências</span><a href="#" onclick="goTab('divergences');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></div>
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Divergências</span><span style="display:flex;align-items:center;gap:8px"><span class="div-toggle-wrap"><span class="div-toggle-label" id="divToggleLabelLeft">Passeio</span><button class="div-toggle-btn" id="divToggleBtn" onclick="toggleDivergenceType()" title="Alternar entre Passeio e SUV"><span class="div-toggle-knob" id="divToggleKnob"></span></button><span class="div-toggle-label" id="divToggleLabelRight">SUV</span></span><a href="#" onclick="goTab('divergences');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></span></div>
         <div id="topDivergences"></div>
       </div>
     </div>
@@ -1873,12 +1882,21 @@ function renderTopDivergences(){
   const el = document.getElementById('topDivergences');
   if(!el) return;
 
+  const mode = _divToggleMode || 'passeio'; // 'passeio' or 'suv'
+  const filterFrom = mode === 'passeio' ? 'Passeio - Nacional' : 'SUV|Caminhonete|Utilitário';
+  const filterMissing = mode === 'passeio' ? 'Passeio - Importado' : 'SUV|Caminhonete|Utilitário - I';
+  const filterOnlyIn = mode === 'passeio' ? 'Passeio - Importado' : 'SUV|Caminhonete|Utilitário - I';
+  const filterNotIn = mode === 'passeio' ? 'Passeio - Nacional' : 'SUV|Caminhonete|Utilitário';
+
+  const errors = DIVERGENCES_ERRORS.filter(d => d.from === filterFrom && d.missing === filterMissing);
+  const reviews = DIVERGENCES_REVIEW.filter(d => d.onlyIn === filterOnlyIn && d.notIn === filterNotIn);
+
   let html = '';
 
-  // Errors section (Nacional sem Importado)
-  if(DIVERGENCES_ERRORS.length > 0){
-    const topErrors = DIVERGENCES_ERRORS.slice(0,3);
-    html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${DIVERGENCES_ERRORS.length})</span></div>`;
+  // Errors section
+  if(errors.length > 0){
+    const topErrors = errors.slice(0,3);
+    html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${errors.length})</span></div>`;
     html += topErrors.map((d,i)=>`
       <div class="rank-item critical" onclick="goTab('divergences')">
         <div class="rank-num">${i+1}</div>
@@ -1890,10 +1908,10 @@ function renderTopDivergences(){
     `).join('');
   }
 
-  // Review section (Apenas no Importado)
-  if(DIVERGENCES_REVIEW.length > 0){
-    const topReview = DIVERGENCES_REVIEW.slice(0,3);
-    html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${DIVERGENCES_REVIEW.length})</span></div>`;
+  // Review section
+  if(reviews.length > 0){
+    const topReview = reviews.slice(0,3);
+    html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${reviews.length})</span></div>`;
     html += topReview.map((d,i)=>`
       <div class="rank-item warning" onclick="goTab('divergences')">
         <div class="rank-num">${i+1}</div>
@@ -1910,6 +1928,18 @@ function renderTopDivergences(){
   }
 
   el.innerHTML = html;
+}
+
+let _divToggleMode = 'passeio';
+function toggleDivergenceType(){
+  _divToggleMode = _divToggleMode === 'passeio' ? 'suv' : 'passeio';
+  const btn = document.getElementById('divToggleBtn');
+  const labelLeft = document.getElementById('divToggleLabelLeft');
+  const labelRight = document.getElementById('divToggleLabelRight');
+  if(btn) btn.classList.toggle('active', _divToggleMode === 'suv');
+  if(labelLeft) labelLeft.classList.toggle('active', _divToggleMode === 'passeio');
+  if(labelRight) labelRight.classList.toggle('active', _divToggleMode === 'suv');
+  renderTopDivergences();
 }
 
 function navigateToDuplicate(marca, modelo){
