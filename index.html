@@ -2030,7 +2030,7 @@ function showKpiDetail(type){
   let title='', html='';
   if(type==='categorias'){
     title='Todas as Categorias ('+CATEGORIES.length+')';
-    html=buildDrawerTable(
+    html=buildDrawerTableWithTypeFilter(
       ['Categoria','Modelos','Marcas'],
       CATEGORIES.sort().map(c=>[c, CAT_TOTALS[c], Object.keys(RAW[c].brands||{}).length]),
       'categorias'
@@ -2151,6 +2151,71 @@ function loadMoreDrawer(id){
     if(btn) btn.style.display='none';
   } else {
     if(btn) btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+shown+' de '+state.filtered.length+')</button>';
+  }
+}
+
+function buildDrawerTableWithTypeFilter(headers, data, id){
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  const PAGE_SIZE=100;
+  window['_drawerData_'+id]={headers:headers,allData:data,filtered:data,page:1,pageSize:PAGE_SIZE,baseData:data};
+  let html='<div class="drawer-toolbar" style="flex-wrap:wrap">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerCategorias()">';
+  html+='<select id="drawerTypeFilter" onchange="filterDrawerCategorias()" style="min-width:100px;height:40px;padding:8px 10px;font-size:.78rem;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--surface);color:var(--text1)">';
+  html+='<option value="">Todos</option><option value="cars">🚗 Carros</option><option value="motorcycles">🏍️ Motos</option><option value="trucks">🚛 Caminhões</option>';
+  html+='</select>';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')">📥 Exportar</button>';
+  html+='</div>';
+  html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
+  html+='<table class="drawer-table" id="'+tableId+'">';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTableLazy(\''+id+'\','+i+')" style="cursor:pointer">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<tbody>';
+  const slice=data.slice(0,PAGE_SIZE);
+  for(const row of slice){
+    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+  }
+  html+='</tbody></table>';
+  if(data.length>PAGE_SIZE){
+    html+='<div id="loadMore_'+id+'" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(PAGE_SIZE,data.length)+' de '+data.length+')</button></div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function filterDrawerCategorias(){
+  const id='categorias';
+  const state=window['_drawerData_'+id];
+  if(!state) return;
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  const query=norm(document.getElementById(searchId).value);
+  const typeFilter=document.getElementById('drawerTypeFilter').value;
+
+  state.filtered=state.baseData.filter(row=>{
+    const catName=row[0];
+    // Text filter
+    if(query && !row.some(cell=>cell!=null&&norm(String(cell)).includes(query))) return false;
+    // Type filter
+    if(typeFilter){
+      const catType=FIPE_CATEGORY_TYPE_MAP[catName]||'cars';
+      if(!catType.split(',').map(t=>t.trim()).includes(typeFilter)) return false;
+    }
+    return true;
+  });
+  state.page=1;
+  const tbody=document.getElementById(tableId).querySelector('tbody');
+  const slice=state.filtered.slice(0,state.pageSize);
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  document.getElementById('count_'+tableId).textContent=state.filtered.length+' registros';
+  const btn=document.getElementById('loadMore_'+id);
+  if(btn){
+    if(state.filtered.length>state.pageSize){
+      btn.style.display='';
+      btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(state.pageSize,state.filtered.length)+' de '+state.filtered.length+')</button>';
+    } else {
+      btn.style.display='none';
+    }
   }
 }
 
