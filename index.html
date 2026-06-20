@@ -2056,19 +2056,19 @@ function showKpiDetail(type){
     const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo]);
     html=buildDrawerTableModelos(['Categoria','Marca','Modelo'],data,'modelos');
   } else if(type==='duplicados'){
-    title='Modelos Duplicados ('+DUPLICATES.length+')';
-    const data=DUPLICATES.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
+    title='Duplicados Reais ('+DUPLICATES_REAL.length+')';
+    const data=DUPLICATES_REAL.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
     html=buildDrawerTable(['Marca','Modelo','Qtd.','Categorias'],data,'duplicados');
   } else if(type==='divergencias'){
     title='Divergências';
     const data=[];
-    for(const g of COMP_GROUPS){
-      const modelsA=getModelsForCat(g.a);
-      const modelsB=getModelsForCat(g.b);
-      const setB=new Set(modelsB.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-      const setA=new Set(modelsA.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-      for(const m of modelsA){if(!setB.has(norm(m.marca)+'|||'+norm(m.modelo))) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.a]);}
-      for(const m of modelsB){if(!setA.has(norm(m.marca)+'|||'+norm(m.modelo))) data.push([g.label, m.marca, m.modelo, 'Somente em '+g.b]);}
+    // Erros obrigatórios
+    for(const d of DIVERGENCES_ERRORS){
+      data.push(['❌ Erro', d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
+    }
+    // Para revisão
+    for(const d of DIVERGENCES_REVIEW){
+      data.push(['⚠️ Revisão', d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
     }
     title+=' ('+data.length+')';
     html=buildDrawerTable(['Comparação','Marca','Modelo','Situação'],data,'divergencias');
