@@ -4963,9 +4963,12 @@ async function sheetsLoad(){
       for(const key of Object.keys(RAW)) delete RAW[key];
       for(const[key,val] of Object.entries(result.data)) RAW[key]=val;
       if(result.anos){for(const[key,val] of Object.entries(result.anos)) ANOS_ACEITACAO[key]=val;}
-      recomputeAll();initAnos();renderKPIs();
+      recomputeAll();initAnos();
+      // Cache data locally for instant load next time
+      try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
+      try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
       isConnected=true;
-      dataLoadedFromSheets=true; // Mark as safely loaded
+      dataLoadedFromSheets=true;
       _dataLoadTimestamp=Date.now();
       showSyncStatus('success','Dados carregados do Google Sheets');
       return true;
@@ -5086,7 +5089,11 @@ async function sheetsLoadHistory(){
   try{
     const response=await fetch(APPS_SCRIPT_URL+'?action=loadHistory');
     const result=await response.json();
-    if(result.success&&result.data){HISTORY=result.data;renderHistory();}
+    if(result.success&&result.data){
+      HISTORY=result.data;
+      try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
+      renderHistory();
+    }
   }catch(err){console.error('Erro ao carregar histórico:',err);}
 }
 
@@ -6178,6 +6185,38 @@ function initApp(){
   loadFipeBaseFromStorage();
   loadFipeRequestsFromStorage();
   loadFipeCategoryMap();
+  // Load cached history from localStorage for instant render
+  try{
+    const cachedHistory=localStorage.getItem('avp-history-cache');
+    if(cachedHistory) HISTORY=JSON.parse(cachedHistory);
+  }catch(e){}
+  // Load cached RAW data from localStorage for instant render
+  let hasCachedData=false;
+  try{
+    const cachedRaw=localStorage.getItem('avp-raw-cache');
+    const cachedAnos=localStorage.getItem('avp-anos-cache');
+    if(cachedRaw){
+      const parsed=JSON.parse(cachedRaw);
+      if(Object.keys(parsed).length>0){
+        for(const key of Object.keys(RAW)) delete RAW[key];
+        for(const[key,val] of Object.entries(parsed)) RAW[key]=val;
+        if(cachedAnos){const anosP=JSON.parse(cachedAnos);for(const[key,val] of Object.entries(anosP)) ANOS_ACEITACAO[key]=val;}
+        recomputeAll();initAnos();
+        hasCachedData=true;
+      }
+    }
+  }catch(e){}
+  // If we have cached data, render everything immediately
+  if(hasCachedData){
+    renderKPIs();
+    renderOverviewTable();
+    renderMgmtKpis();
+    renderStagingBars();
+    renderStagingTable();
+    renderHistory();
+    renderTempReleaseAlert();
+    renderTempReleases();
+  }
   if(STAGING.ops.length>0){
     renderStagingBars();
     showToast('Recuperadas '+STAGING.ops.length+' alteração(ões) pendente(s) da sessão anterior','warning');
