@@ -414,7 +414,8 @@ tr:hover .row-actions{opacity:1}
 /* ========= DASHBOARD EXECUTIVE ========= */
 .dashboard-top{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
 .dashboard-top .kpi-grid{display:contents}
-.integrity-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow),0 0 12px rgba(27,122,61,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.integrity-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow),0 0 12px rgba(27,122,61,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;z-index:1;transition:all .2s ease}
+.integrity-card.expanded{grid-row:1/3;z-index:2}
 .integrity-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--radius-lg) 0 0 var(--radius-lg)}
 .integrity-card.status-excellent::before{background:var(--green)}
 .integrity-card.status-good::before{background:var(--blue)}
@@ -1732,16 +1733,19 @@ function renderKPIs(){
 }
 
 function toggleIntegrityDetails(btn){
+  const card = document.getElementById('integrityCard');
   const summary = document.getElementById('integritySummary');
   const details = document.getElementById('integrityDetails');
-  if(!summary || !details) return;
+  if(!summary || !details || !card) return;
   const isOpen = details.classList.contains('open');
   if(isOpen){
     details.classList.remove('open');
     summary.classList.remove('hidden');
+    card.classList.remove('expanded');
   } else {
     summary.classList.add('hidden');
     details.classList.add('open');
+    card.classList.add('expanded');
   }
   if(btn) btn.classList.toggle('active');
 }
