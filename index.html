@@ -2064,14 +2064,14 @@ function showKpiDetail(type){
     const data=[];
     // Erros obrigatórios
     for(const d of DIVERGENCES_ERRORS){
-      data.push(['❌ Erro', d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
+      data.push([d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
     }
     // Para revisão
     for(const d of DIVERGENCES_REVIEW){
-      data.push(['⚠️ Revisão', d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
+      data.push([d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
     }
     title+=' ('+data.length+')';
-    html=buildDrawerTable(['Comparação','Marca','Modelo','Situação'],data,'divergencias');
+    html=buildDrawerTable(['Marca','Modelo','Situação'],data,'divergencias');
   }
   openDetailDrawer(title, html);
 }
