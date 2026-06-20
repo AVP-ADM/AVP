@@ -2054,7 +2054,7 @@ function showKpiDetail(type){
     const effectiveRecords=ALL_RECORDS.filter(r=>!isPendingRemoval(r.marca, r.modelo, r.categoria));
     title='Todos os Modelos ('+effectiveRecords.length.toLocaleString()+')';
     const data=effectiveRecords.map(r=>[r.categoria, r.marca, r.modelo]);
-    html=buildDrawerTable(['Categoria','Marca','Modelo'],data,'modelos');
+    html=buildDrawerTableModelos(['Categoria','Marca','Modelo'],data,'modelos');
   } else if(type==='duplicados'){
     title='Modelos Duplicados ('+DUPLICATES.length+')';
     const data=DUPLICATES.map(d=>[d.marca, d.modelo, d.count, d.cats.join(', ')]);
@@ -2224,6 +2224,81 @@ function filterDrawerCategorias(){
       btn.style.display='none';
     }
   }
+}
+
+function buildDrawerTableModelos(headers, data, id){
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  const PAGE_SIZE=100;
+  window['_drawerData_'+id]={headers:headers,allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTableLazy(\''+id+'\')">';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportModelosByCategory()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+  html+='</div>';
+  html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
+  html+='<table class="drawer-table" id="'+tableId+'">';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTableLazy(\''+id+'\','+i+')" style="cursor:pointer">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<tbody>';
+  const slice=data.slice(0,PAGE_SIZE);
+  for(const row of slice){
+    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+  }
+  html+='</tbody></table>';
+  if(data.length>PAGE_SIZE){
+    html+='<div id="loadMore_'+id+'" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(PAGE_SIZE,data.length)+' de '+data.length+')</button></div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function exportModelosByCategory(){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const wb=XLSX.utils.book_new();
+  const headerStyle={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'thin',color:{rgb:'333333'}},bottom:{style:'thin',color:{rgb:'333333'}},left:{style:'thin',color:{rgb:'333333'}},right:{style:'thin',color:{rgb:'333333'}}}};
+  const cellStyle={font:{sz:10},alignment:{vertical:'center'},border:{bottom:{style:'thin',color:{rgb:'E0E0E0'}}}};
+
+  // Sort categories: cars first, then motos, then trucks
+  const sortedCats=CATEGORIES.slice().sort((a,b)=>{
+    const typeOrder={'cars':0,'motorcycles':1,'trucks':2};
+    const typeA=typeOrder[FIPE_CATEGORY_TYPE_MAP[a]||'cars']??0;
+    const typeB=typeOrder[FIPE_CATEGORY_TYPE_MAP[b]||'cars']??0;
+    if(typeA!==typeB) return typeA-typeB;
+    return a.localeCompare(b);
+  });
+
+  for(const cat of sortedCats){
+    const models=getModelsForCat(cat).filter(m=>!isPendingRemoval(m.marca,m.modelo,cat));
+    if(models.length===0) continue;
+
+    const headers=['Marca','Modelo'];
+    const data=models.sort((a,b)=>a.marca.localeCompare(b.marca)||a.modelo.localeCompare(b.modelo));
+    const wsData=[headers,...data.map(m=>[m.marca,m.modelo])];
+    const ws=XLSX.utils.aoa_to_sheet(wsData);
+
+    // Apply header styles
+    for(let c=0;c<headers.length;c++){
+      const addr=XLSX.utils.encode_cell({r:0,c:c});
+      if(ws[addr]) ws[addr].s=headerStyle;
+    }
+    // Apply data styles
+    for(let r=1;r<=data.length;r++){
+      for(let c=0;c<headers.length;c++){
+        const addr=XLSX.utils.encode_cell({r:r,c:c});
+        if(ws[addr]) ws[addr].s=cellStyle;
+      }
+    }
+    // Column widths
+    ws['!cols']=[{wch:22},{wch:50}];
+    ws['!rows']=[{hpt:22}];
+
+    // Sheet name (max 31 chars, no special chars)
+    let sheetName=cat.replace(/[\\\/\*\?\[\]:]/g,'-').substring(0,31);
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  }
+
+  XLSX.writeFile(wb,'modelos_por_categoria_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Modelos exportados por categoria com sucesso!','success');
 }
 
 function filterDrawerTableLazy(id){
