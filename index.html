@@ -434,21 +434,46 @@ tr:hover .row-actions{opacity:1}
 <body>
 
 <!-- ========= LOGIN SCREEN ========= -->
-<div id="loginScreen" style="position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 32px;width:320px;max-width:90vw;box-shadow:var(--shadow-lg);text-align:center">
-    <div style="margin-bottom:18px"><img src="logo.png" alt="AutoVale" style="height:100px;width:100px;object-fit:contain"></div>
-    <div style="display:flex;flex-direction:column;gap:12px;text-align:left">
-      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Usuário</label>
-      <input id="loginUser" placeholder="Digite seu nome de usuário..." style="padding:10px 14px;font-size:.88rem">
-      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Senha</label>
-      <div style="position:relative">
-        <input id="loginPass" type="password" placeholder="Digite sua senha..." style="padding:10px 40px 10px 14px;font-size:.88rem;width:100%" onkeydown="if(event.key==='Enter')doLogin()">
-        <span onclick="togglePassVisibility()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.6;transition:opacity .15s;display:flex" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="Mostrar/ocultar senha" id="passToggleIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+<style>
+.login-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:#050d1a;background-image:radial-gradient(ellipse at 70% 20%,rgba(27,122,61,.06) 0%,transparent 50%),radial-gradient(ellipse at 20% 80%,rgba(26,43,107,.1) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,#0a1628 0%,#050d1a 100%)}
+.login-screen::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5L55 20V40L30 55L5 40V20L30 5Z' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.03'/%3E%3C/svg%3E");background-size:60px 60px;pointer-events:none}
+.login-card{position:relative;background:rgba(12,20,42,.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:36px 40px;width:380px;max-width:90vw;box-shadow:0 25px 50px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.03) inset;text-align:center}
+.login-logo{margin-bottom:10px}
+.login-logo img{height:120px;width:120px;object-fit:contain}
+.login-title{font-size:.95rem;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:4px;letter-spacing:-.2px}
+.login-subtitle{font-size:.72rem;font-weight:400;color:rgba(255,255,255,.4);letter-spacing:.5px;margin-bottom:28px}
+.login-form{display:flex;flex-direction:column;gap:14px;text-align:left}
+.login-form label{font-size:.75rem;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.login-form input{width:100%;padding:12px 14px;font-size:.88rem;font-family:var(--font);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:rgba(255,255,255,.9);height:44px;transition:all .2s ease;outline:none}
+.login-form input::placeholder{color:rgba(255,255,255,.3)}
+.login-form input:hover{border-color:rgba(255,255,255,.18)}
+.login-form input:focus{border-color:rgba(52,208,88,.5);box-shadow:0 0 0 3px rgba(27,122,61,.12);background:rgba(255,255,255,.06)}
+.login-btn{margin-top:16px;padding:13px;background:linear-gradient(135deg,#1B7A3D,#22944A);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s ease;box-shadow:0 4px 15px rgba(27,122,61,.25);letter-spacing:.2px}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(27,122,61,.35);background:linear-gradient(135deg,#1f8a45,#28a552)}
+.login-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(27,122,61,.2)}
+.login-error{font-size:.78rem;color:#F87171;display:none;margin-top:2px;padding:6px 10px;background:rgba(248,113,113,.08);border-radius:6px;border:1px solid rgba(248,113,113,.15)}
+.login-pass-wrap{position:relative}
+.login-pass-wrap input{padding-right:42px}
+.login-pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.4;transition:opacity .2s;display:flex;color:rgba(255,255,255,.7)}
+.login-pass-toggle:hover{opacity:.8}
+@media(max-width:480px){.login-card{padding:28px 24px;width:100%;max-width:340px;border-radius:12px}.login-logo img{height:90px;width:90px}}
+</style>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><img src="logo.png" alt="AutoVale"></div>
+    <div class="login-title">Auditoria de Modelos Veiculares</div>
+    <div class="login-subtitle">Sistema Interno Autovale Prevenções</div>
+    <div class="login-form">
+      <label>Usuário</label>
+      <input id="loginUser" placeholder="Digite seu nome de usuário..." autocomplete="username">
+      <label>Senha</label>
+      <div class="login-pass-wrap">
+        <input id="loginPass" type="password" placeholder="Digite sua senha..." autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="login-pass-toggle" onclick="togglePassVisibility()" title="Mostrar/ocultar senha" id="passToggleIcon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
       </div>
-      <div id="loginError" style="font-size:.78rem;color:var(--red);display:none;margin-top:4px"></div>
-      <button onclick="doLogin()" style="margin-top:12px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='var(--accent-hover)'" onmouseout="this.style.background='var(--accent)'">Entrar</button>
+      <div id="loginError" class="login-error"></div>
+      <button class="login-btn" onclick="doLogin()">Entrar</button>
     </div>
-
   </div>
 </div>
 
