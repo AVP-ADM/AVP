@@ -4818,17 +4818,44 @@ document.addEventListener('keydown',function(e){
 // ========= ANO DE ACEITAÇÃO =========
 var ANOS_ACEITACAO = {};
 
+// Regra padrão de ano mínimo por categoria
+const CAT_ANO_MINIMO = {
+  'Passeio - Nacional': 2006,
+  'Passeio - Importado': 2006,
+  'SUV|Caminhonete|Utilitário': 2006,
+  'SUV|Caminhonete|Utilitário - I': 2006,
+  'Automóvel Premium': 2016,
+  'Elétrico | Híbrido': 2016,
+  'Start': 1996,
+  'ELITE 125 | FLUO 125 | NEO': 2006,
+  'Motocicletas - Avelloz | Shiner': 2006,
+  'Motocicletas - Honda': 2006,
+  'Motocicletas - Yamaha': 2006,
+  'Motocicletas Especiais': 2006,
+  'PCX 150 | NMAX 160 | ADV 150': 2006,
+  'PCX 160 | XMAX 250 | ADV 160': 2006,
+  'Truck Leve (até 14t)': 1996,
+  'Truck Pesado (a partir de 14t)': 1996
+};
+
+function getAnoMinimoCat(categoria){
+  return CAT_ANO_MINIMO[categoria] || 2006;
+}
+
 function initAnos(){
   for(var i=0;i<ALL_RECORDS.length;i++){
     var r=ALL_RECORDS[i];
     var key=r.categoria+'|||'+r.marca+'|||'+r.modelo;
-    if(!ANOS_ACEITACAO[key]) ANOS_ACEITACAO[key]='Ano da categoria';
+    if(!ANOS_ACEITACAO[key]) ANOS_ACEITACAO[key]='';
   }
 }
 
 function getAno(categoria,marca,modelo){
   var key=categoria+'|||'+marca+'|||'+modelo;
-  return ANOS_ACEITACAO[key]||'Ano da categoria';
+  var val=ANOS_ACEITACAO[key];
+  if(val && val!=='Ano da categoria' && val!=='') return val;
+  var anoMin=getAnoMinimoCat(categoria);
+  return 'A partir de '+anoMin;
 }
 
 // ========= TEMPORARY RELEASES =========
