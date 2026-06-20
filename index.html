@@ -412,26 +412,33 @@ tr:hover .row-actions{opacity:1}
 .loading-overlay span{font-size:.82rem;color:var(--text2)}
 
 /* ========= DASHBOARD EXECUTIVE ========= */
-.dashboard-top{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:20px}
-.integrity-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.dashboard-top{display:grid;grid-template-columns:260px 1fr;gap:16px;margin-bottom:20px}
+.integrity-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
 .integrity-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--radius-lg) 0 0 var(--radius-lg)}
 .integrity-card.status-excellent::before{background:var(--green)}
 .integrity-card.status-good::before{background:var(--blue)}
 .integrity-card.status-warning::before{background:var(--amber)}
 .integrity-card.status-critical::before{background:var(--red)}
-.integrity-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px}
-.integrity-value{font-size:2.4rem;font-weight:700;line-height:1.1}
+.integrity-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px}
+.integrity-value{font-size:2rem;font-weight:700;line-height:1.1}
 .integrity-value.excellent{color:var(--green)}
 .integrity-value.good{color:var(--blue)}
 .integrity-value.warning{color:var(--amber)}
 .integrity-value.critical{color:var(--red)}
-.integrity-status{font-size:.78rem;font-weight:600;margin-top:6px;padding:3px 10px;border-radius:12px}
+.integrity-status{font-size:.72rem;font-weight:600;margin-top:4px;padding:2px 9px;border-radius:12px}
 .integrity-status.excellent{background:var(--green-bg);color:var(--green)}
 .integrity-status.good{background:var(--blue-bg);color:var(--blue)}
 .integrity-status.warning{background:var(--amber-bg);color:var(--amber)}
 .integrity-status.critical{background:var(--red-bg);color:var(--red)}
-.integrity-bar{width:100%;height:6px;background:var(--surface-2);border-radius:3px;margin-top:12px;overflow:hidden}
+.integrity-bar{width:100%;height:5px;background:var(--surface-2);border-radius:3px;margin-top:10px;overflow:hidden}
 .integrity-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.integrity-header{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:2px}
+.integrity-info-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;border-radius:50%;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.integrity-info-btn:hover{color:var(--blue);background:var(--blue-bg)}
+.integrity-info-btn.active{color:var(--blue);background:var(--blue-bg)}
+.integrity-details{width:100%;overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease,margin .2s ease;margin-top:0}
+.integrity-details.open{max-height:200px;opacity:1;margin-top:12px}
+.integrity-divider{width:100%;height:1px;background:var(--border);margin-bottom:10px}
 
 /* Health Card */
 .health-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light)}
@@ -651,12 +658,8 @@ tr:hover .row-actions{opacity:1}
       <div class="kpi-grid" id="kpiGrid"></div>
     </div>
 
-    <!-- HEALTH + RECENT ACTIVITY ROW -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div class="card" id="healthCard">
-        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span> Saúde da Base</div>
-        <div id="healthContent"></div>
-      </div>
+    <!-- RECENT ACTIVITY ROW -->
+    <div style="margin-bottom:20px">
       <div class="card" id="activityCard">
         <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Últimas Alterações</div>
         <div id="activityContent"></div>
@@ -1648,15 +1651,49 @@ function renderKPIs(){
   else if(integrityPctClamped >= 50){ statusClass='warning'; statusLabel='Necessita Revisão'; }
   else { statusClass='critical'; statusLabel='Crítico'; }
 
+  // Health percentages for bars
+  const validPct = uniqueModels > 0 ? Math.round(((uniqueModels - totalProblems) / uniqueModels) * 100) : 100;
+  const dupBarPct = uniqueModels > 0 ? Math.max(3, (totalDupsReal / uniqueModels) * 300) : 0;
+  const divErrBarPct = uniqueModels > 0 ? Math.max(3, (totalDivsErrors / uniqueModels) * 300) : 0;
+  const divRevBarPct = uniqueModels > 0 ? Math.max(3, (totalDivsReview / uniqueModels) * 300) : 0;
+
   // Render Integrity Card
   const integrityEl = document.getElementById('integrityCard');
   if(integrityEl){
     integrityEl.className = 'integrity-card status-'+statusClass;
     integrityEl.innerHTML = `
-      <div class="integrity-label">Integridade da Base</div>
+      <div class="integrity-header">
+        <span class="integrity-label">Integridade da Base</span>
+        <button class="integrity-info-btn" onclick="toggleIntegrityDetails(this)" title="Ver composição">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+      </div>
       <div class="integrity-value ${statusClass}">${integrityPctClamped}%</div>
       <div class="integrity-status ${statusClass}">${statusLabel}</div>
       <div class="integrity-bar"><div class="integrity-bar-fill" style="width:${integrityPctClamped}%;background:var(--${statusClass==='excellent'?'green':statusClass==='good'?'blue':statusClass==='warning'?'amber':'red'})"></div></div>
+      <div class="integrity-details" id="integrityDetails">
+        <div class="integrity-divider"></div>
+        <div class="health-row">
+          <span class="health-label">Válidos</span>
+          <div class="health-bar"><div class="health-bar-fill green" style="width:${validPct}%"></div></div>
+          <span class="health-value" style="color:var(--green)">${validPct}%</span>
+        </div>
+        <div class="health-row">
+          <span class="health-label">Dupl. Reais</span>
+          <div class="health-bar"><div class="health-bar-fill red" style="width:${Math.min(dupBarPct,100)}%"></div></div>
+          <span class="health-value" style="color:var(--red)">${totalDupsReal}</span>
+        </div>
+        <div class="health-row">
+          <span class="health-label">Diverg. Críticas</span>
+          <div class="health-bar"><div class="health-bar-fill amber" style="width:${Math.min(divErrBarPct,100)}%"></div></div>
+          <span class="health-value" style="color:var(--amber)">${totalDivsErrors}</span>
+        </div>
+        <div class="health-row">
+          <span class="health-label">Para Revisão</span>
+          <div class="health-bar"><div class="health-bar-fill blue" style="width:${Math.min(divRevBarPct,100)}%"></div></div>
+          <span class="health-value" style="color:var(--blue)">${totalDivsReview}</span>
+        </div>
+      </div>
     `;
   }
 
@@ -1689,42 +1726,15 @@ function renderKPIs(){
     </div>
   `;
 
-  // Render health card and activity
-  renderHealthCard(totalModels, totalDupsReal, totalDivsErrors, totalDivsReview, uniqueModels);
+  // Render activity
   renderRecentActivity();
 }
 
-function renderHealthCard(totalModels, totalDupsReal, totalDivsErrors, totalDivsReview, uniqueModels){
-  const problems = totalDupsReal + totalDivsErrors;
-  const validPct = uniqueModels > 0 ? Math.round(((uniqueModels - problems) / uniqueModels) * 100) : 100;
-  const dupPct = uniqueModels > 0 ? Math.round((totalDupsReal / uniqueModels) * 100) : 0;
-  const divErrPct = uniqueModels > 0 ? Math.round((totalDivsErrors / uniqueModels) * 100) : 0;
-  const divRevPct = uniqueModels > 0 ? Math.round((totalDivsReview / uniqueModels) * 100) : 0;
-
-  const el = document.getElementById('healthContent');
-  if(!el) return;
-  el.innerHTML = `
-    <div class="health-row">
-      <span class="health-label">Válidos</span>
-      <div class="health-bar"><div class="health-bar-fill green" style="width:${validPct}%"></div></div>
-      <span class="health-value" style="color:var(--green)">${validPct}%</span>
-    </div>
-    <div class="health-row">
-      <span class="health-label">Duplicados Reais</span>
-      <div class="health-bar"><div class="health-bar-fill red" style="width:${Math.min(dupPct*3,100)}%"></div></div>
-      <span class="health-value" style="color:var(--red)">${totalDupsReal}</span>
-    </div>
-    <div class="health-row">
-      <span class="health-label">Diverg. Críticas</span>
-      <div class="health-bar"><div class="health-bar-fill amber" style="width:${Math.min(divErrPct*3,100)}%"></div></div>
-      <span class="health-value" style="color:var(--amber)">${totalDivsErrors}</span>
-    </div>
-    <div class="health-row">
-      <span class="health-label">Para Revisão</span>
-      <div class="health-bar"><div class="health-bar-fill blue" style="width:${Math.min(divRevPct*3,100)}%"></div></div>
-      <span class="health-value" style="color:var(--blue)">${totalDivsReview}</span>
-    </div>
-  `;
+function toggleIntegrityDetails(btn){
+  const details = document.getElementById('integrityDetails');
+  if(!details) return;
+  details.classList.toggle('open');
+  if(btn) btn.classList.toggle('active');
 }
 
 function renderRecentActivity(){
