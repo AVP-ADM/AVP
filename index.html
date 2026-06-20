@@ -679,9 +679,9 @@ tr:hover .row-actions{opacity:1}
         <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="debouncedRenderOverviewTable()">
         <select id="ovTypeFilter" onchange="renderOverviewTable()">
           <option value="">Todos os tipos</option>
-          <option value="cars">🚗 Carros</option>
-          <option value="motorcycles">🏍️ Motos</option>
-          <option value="trucks">🚛 Caminhões</option>
+          <option value="cars">Carros</option>
+          <option value="motorcycles">Motos</option>
+          <option value="trucks">Caminhões</option>
         </select>
         <select id="ovSort" onchange="renderOverviewTable()">
           <option value="name">A-Z</option>
@@ -2169,7 +2169,7 @@ function buildDrawerTableWithTypeFilter(headers, data, id){
   let html='<div class="drawer-toolbar" style="flex-wrap:wrap">';
   html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerCategorias()">';
   html+='<select id="drawerTypeFilter" onchange="filterDrawerCategorias()" style="min-width:100px;height:40px;padding:8px 10px;font-size:.78rem;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--surface);color:var(--text1)">';
-  html+='<option value="">Todos</option><option value="cars">🚗 Carros</option><option value="motorcycles">🏍️ Motos</option><option value="trucks">🚛 Caminhões</option>';
+  html+='<option value="">Todos</option><option value="cars">Carros</option><option value="motorcycles">Motos</option><option value="trucks">Caminhões</option>';
   html+='</select>';
   html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
   html+='</div>';
@@ -2540,13 +2540,13 @@ function openEditCategoryType(cat){
   showModal('⚙️ Tipo de Veículo — '+cat,`<div style="display:flex;flex-direction:column;gap:12px">
     <span style="font-size:.78rem;color:var(--text2)">Selecione quais tipos de veículo esta categoria aceita:</span>
     <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
-      <input type="checkbox" id="catType_cars" ${hasCars?'checked':''}> 🚗 Carros
+      <input type="checkbox" id="catType_cars" ${hasCars?'checked':''}> <svg width="14" height="14" viewBox="0 0 24 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M2 14h20v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2z"/><path d="M4 14l2-5a2 2 0 0 1 2-1h8a2 2 0 0 1 2 1l2 5"/><circle cx="6.5" cy="16.5" r="1.5"/><circle cx="17.5" cy="16.5" r="1.5"/><path d="M5 9h14"/></svg> Carros
     </label>
     <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
-      <input type="checkbox" id="catType_motos" ${hasMotos?'checked':''}> 🏍️ Motos
+      <input type="checkbox" id="catType_motos" ${hasMotos?'checked':''}> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M12 17h-7m14 0h-4.5M5 14l3-8h4l3 4h4"/></svg> Motos
     </label>
     <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
-      <input type="checkbox" id="catType_trucks" ${hasTrucks?'checked':''}> 🚛 Caminhões
+      <input type="checkbox" id="catType_trucks" ${hasTrucks?'checked':''}> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M1 13h15v7H4a2 2 0 0 1-2-2v-3H1z"/><path d="M16 8h4l3 5v5h-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M1 13V6a1 1 0 0 1 1-1h13v8"/></svg> Caminhões
     </label>
     <span style="font-size:.72rem;color:var(--text3)">Isso define quais marcas/modelos FIPE serão exibidos ao adicionar modelos nesta categoria.</span>
   </div>`,function(){
@@ -3816,9 +3816,9 @@ function openAddCategory(){
     <div id="new_cat_msg" class="ac-msg"></div>
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de veículo aceito:</label>
     <div style="display:flex;flex-direction:column;gap:6px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_cars" checked> 🚗 Carros</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_motos"> 🏍️ Motos</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_trucks"> 🚛 Caminhões</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_cars" checked> <svg width="14" height="14" viewBox="0 0 24 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M2 14h20v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2z"/><path d="M4 14l2-5a2 2 0 0 1 2-1h8a2 2 0 0 1 2 1l2 5"/><circle cx="6.5" cy="16.5" r="1.5"/><circle cx="17.5" cy="16.5" r="1.5"/><path d="M5 9h14"/></svg> Carros</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_motos"> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M12 17h-7m14 0h-4.5M5 14l3-8h4l3 4h4"/></svg> Motos</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="newCat_trucks"> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M1 13h15v7H4a2 2 0 0 1-2-2v-3H1z"/><path d="M16 8h4l3 5v5h-2"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M1 13V6a1 1 0 0 1 1-1h13v8"/></svg> Caminhões</label>
     </div>
     <span style="font-size:.72rem;color:var(--text3)">A criação será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
