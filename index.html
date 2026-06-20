@@ -437,9 +437,10 @@ tr:hover .row-actions{opacity:1}
 .integrity-info-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;border-radius:50%;transition:all .15s;display:flex;align-items:center;justify-content:center}
 .integrity-info-btn:hover{color:var(--blue);background:var(--blue-bg)}
 .integrity-info-btn.active{color:var(--blue);background:var(--blue-bg)}
-.integrity-details{width:100%;overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease,margin .2s ease;margin-top:0}
-.integrity-details.open{max-height:200px;opacity:1;margin-top:12px}
-.integrity-divider{width:100%;height:1px;background:var(--border);margin-bottom:10px}
+.integrity-details{width:100%;display:none;flex-direction:column;gap:2px}
+.integrity-details.open{display:flex}
+.integrity-summary{display:flex;flex-direction:column;align-items:center;width:100%}
+.integrity-summary.hidden{display:none}
 
 /* Health Card */
 .health-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-light)}
@@ -1670,11 +1671,12 @@ function renderKPIs(){
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         </button>
       </div>
-      <div class="integrity-value ${statusClass}">${integrityPctClamped}%</div>
-      <div class="integrity-status ${statusClass}">${statusLabel}</div>
-      <div class="integrity-bar"><div class="integrity-bar-fill" style="width:${integrityPctClamped}%;background:var(--${statusClass==='excellent'?'green':statusClass==='good'?'blue':statusClass==='warning'?'amber':'red'})"></div></div>
+      <div class="integrity-summary" id="integritySummary">
+        <div class="integrity-value ${statusClass}">${integrityPctClamped}%</div>
+        <div class="integrity-status ${statusClass}">${statusLabel}</div>
+        <div class="integrity-bar"><div class="integrity-bar-fill" style="width:${integrityPctClamped}%;background:var(--${statusClass==='excellent'?'green':statusClass==='good'?'blue':statusClass==='warning'?'amber':'red'})"></div></div>
+      </div>
       <div class="integrity-details" id="integrityDetails">
-        <div class="integrity-divider"></div>
         <div class="health-row">
           <span class="health-label">Válidos</span>
           <div class="health-bar"><div class="health-bar-fill green" style="width:${validPct}%"></div></div>
@@ -1733,9 +1735,17 @@ function renderKPIs(){
 }
 
 function toggleIntegrityDetails(btn){
+  const summary = document.getElementById('integritySummary');
   const details = document.getElementById('integrityDetails');
-  if(!details) return;
-  details.classList.toggle('open');
+  if(!summary || !details) return;
+  const isOpen = details.classList.contains('open');
+  if(isOpen){
+    details.classList.remove('open');
+    summary.classList.remove('hidden');
+  } else {
+    summary.classList.add('hidden');
+    details.classList.add('open');
+  }
   if(btn) btn.classList.toggle('active');
 }
 
