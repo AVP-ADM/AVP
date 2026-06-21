@@ -2796,6 +2796,32 @@ function fipeSelectModel(model){
 }
 
 // ========= FIPE PRICE LOOKUP (pontual) =========
+// Cache de anos já consultados (válido por mês de referência)
+function getFipeYearsCache(){
+  try{
+    const saved=localStorage.getItem('avp-fipe-years-cache');
+    if(!saved) return {ref:'',data:{}};
+    return JSON.parse(saved);
+  }catch(e){return {ref:'',data:{}};}
+}
+function saveFipeYearsCache(cache){
+  try{localStorage.setItem('avp-fipe-years-cache',JSON.stringify(cache));}catch(e){}
+}
+function getCachedYears(brandCode, modelCode){
+  const cache=getFipeYearsCache();
+  const currentRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
+  if(cache.ref!==currentRef) return null; // Cache invalidado (nova tabela)
+  const key=brandCode+'_'+modelCode;
+  return cache.data[key]||null;
+}
+function setCachedYears(brandCode, modelCode, years){
+  const cache=getFipeYearsCache();
+  const currentRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
+  if(cache.ref!==currentRef){cache.ref=currentRef;cache.data={};} // Reset se mudou
+  cache.data[brandCode+'_'+modelCode]=years;
+  saveFipeYearsCache(cache);
+}
+
 async function consultarPrecoFipeComAno(marca, modelo){
   if(!isFipeBaseLoaded()){showToast('Base FIPE não carregada. Atualize primeiro.','warning');return;}
   const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===marca.toLowerCase());
@@ -2805,9 +2831,15 @@ async function consultarPrecoFipeComAno(marca, modelo){
   if(!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
   try{
     const vehicleType=brand._type==='moto'?'motorcycles':brand._type==='truck'?'trucks':'cars';
-    const yearsResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years');
-    if(!yearsResp.ok){showToast('Erro ao buscar anos: HTTP '+yearsResp.status,'error');return;}
-    const years=await yearsResp.json();
+    // Check cache first
+    let years=getCachedYears(brand.code, model.code);
+    if(!years){
+      const yearsResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years');
+      if(!yearsResp.ok){showToast('Erro ao buscar anos: HTTP '+yearsResp.status,'error');return;}
+      years=await yearsResp.json();
+      if(years.length) setCachedYears(brand.code, model.code, years);
+      trackFipeRequest(1);
+    }
     if(!years.length){showToast('Nenhum ano disponível para este modelo.','warning');return;}
     // Show modal with year selection
     const options=years.map(y=>'<option value="'+y.code+'">'+y.name+'</option>').join('');
