@@ -92,13 +92,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .sidebar-collapse{display:none}
 .sidebar-collapse-btn{display:none}
 /* Sidebar pin button */
-.sidebar-pin{padding:8px 10px;display:flex;justify-content:flex-end;border-top:1px solid var(--border)}
+.sidebar-pin{padding:8px 10px;display:flex;justify-content:flex-end;border-top:1px solid var(--border);margin-top:auto}
 .sidebar-pin-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;cursor:pointer;color:var(--text3);transition:all .2s;display:flex;align-items:center;gap:5px;font-size:.68rem;white-space:nowrap}
 .sidebar-pin-btn:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
 .sidebar-pin-btn .pin-text{transition:opacity .2s}
 .sidebar-pin-btn .pin-icon{transition:transform .2s}
-.app-sidebar.collapsed .sidebar-pin{display:none}
-.app-sidebar.collapsed:hover .sidebar-pin{display:flex;justify-content:flex-end}
+.app-sidebar.collapsed .sidebar-pin{opacity:0;pointer-events:none;height:0;padding:0;overflow:hidden;border:none}
+.app-sidebar.collapsed:hover .sidebar-pin{opacity:1;pointer-events:auto;height:auto;padding:8px 10px;border-top:1px solid var(--border);justify-content:flex-end}
 /* When sidebar is pinned (not collapsed) */
 .app-sidebar:not(.collapsed) .sidebar-pin-btn{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
 .app-sidebar:not(.collapsed) .sidebar-pin-btn .pin-icon{transform:rotate(45deg)}
