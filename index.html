@@ -5545,7 +5545,7 @@ function searchCategorias(query){
   let html='<table class="search-result-table"><thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th></tr></thead><tbody>';
   for(const cat of results){
     const brands=Object.keys(RAW[cat].brands||{});
-    html+=`<tr onclick="closeGlobalSearch();openDrawer('${cat.replace(/'/g,"\\'")}')"><td><strong>${cat}</strong></td><td>${CAT_TOTALS[cat]}</td><td>${brands.length}</td></tr>`;
+    html+=`<tr onclick="closeGlobalSearch();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')"><td><strong>${cat}</strong></td><td>${CAT_TOTALS[cat]}</td><td>${brands.length}</td></tr>`;
   }
   html+='</tbody></table>';
   return html;
