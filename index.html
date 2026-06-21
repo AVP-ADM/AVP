@@ -68,7 +68,7 @@ html{font-size:13px}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5;font-feature-settings:'cv02','cv03','cv04','cv11'}
 
 /* ========= LAYOUT ========= */
-.app-layout{display:flex;height:calc(100vh - 48px);overflow:hidden;margin-top:48px}
+.app-layout{display:flex;height:100%;overflow:hidden}
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between;height:48px}
 .app-logo{font-size:1.1rem;font-weight:700;color:var(--primary);letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.78rem;margin-left:4px}
@@ -76,7 +76,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .header-right{display:flex;align-items:center;gap:10px}
 
 /* ========= SIDEBAR ========= */
-.app-sidebar{width:240px;min-width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s cubic-bezier(.4,0,.2,1) .3s,min-width .25s cubic-bezier(.4,0,.2,1) .3s;overflow:hidden;position:relative;z-index:90}
+.app-sidebar{width:240px;min-width:240px;height:100%;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .25s cubic-bezier(.4,0,.2,1) .3s,min-width .25s cubic-bezier(.4,0,.2,1) .3s;overflow:hidden;position:relative;z-index:90}
 .app-sidebar.collapsed{width:64px;min-width:64px}
 .sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
 .sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:2px;border-radius:var(--radius);cursor:pointer;transition:all .15s;position:relative;white-space:nowrap;color:var(--text2);font-size:.84rem;font-weight:500;text-decoration:none;border:none;background:none;width:100%;text-align:left}
@@ -146,7 +146,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .upload-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:.82rem}
 .upload-preview .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)}
 .upload-preview .stat:last-child{border-bottom:none}
-.app-container{margin-top:48px;height:calc(100vh - 48px)}
+.app-container{margin-top:48px;height:calc(100vh - 48px);display:flex;flex-direction:column}
 
 /* ========= TABS (hidden - replaced by sidebar) ========= */
 .tabs{display:none}
