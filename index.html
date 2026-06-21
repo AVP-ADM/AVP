@@ -96,7 +96,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .app-sidebar.collapsed .sidebar-collapse-btn .collapse-text{opacity:0;width:0;overflow:hidden}
 .sidebar-collapse-btn svg{transition:transform .25s}
 .app-sidebar.collapsed .sidebar-collapse-btn svg{transform:rotate(180deg)}
-/* Tooltip for collapsed sidebar */
+/* Sidebar expand on hover */
+.app-sidebar.collapsed:hover{width:240px;min-width:240px}
+.app-sidebar.collapsed:hover .si-text{opacity:1;transition:opacity .2s .1s}
+.app-sidebar.collapsed:hover .si-badge{right:12px;top:50%;transform:translateY(-50%);font-size:.6rem;padding:2px 6px;min-width:18px}
+.app-sidebar.collapsed:hover .sidebar-item{justify-content:flex-start;padding:10px 14px}
+.app-sidebar.collapsed:hover .sidebar-collapse-btn .collapse-text{opacity:1;width:auto}
+.app-sidebar.collapsed:hover .sidebar-collapse-btn svg{transform:rotate(0deg)}
 .app-sidebar.collapsed .sidebar-item{justify-content:center;padding:10px}
 .app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none;animation:tooltipIn .15s}
 @keyframes tooltipIn{from{opacity:0;transform:translateY(-50%) translateX(-4px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
@@ -5695,8 +5701,14 @@ function toggleSidebar(){
 
 function initSidebar(){
   const sidebar = document.getElementById('appSidebar');
-  if(sidebar && localStorage.getItem('avp-sidebar-collapsed')==='1'){
-    sidebar.classList.add('collapsed');
+  // Default: collapsed with expand-on-hover
+  if(sidebar){
+    const saved = localStorage.getItem('avp-sidebar-collapsed');
+    if(saved === '0'){
+      sidebar.classList.remove('collapsed');
+    } else {
+      sidebar.classList.add('collapsed');
+    }
   }
 }
 
