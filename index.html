@@ -1120,7 +1120,7 @@ const HIST_PER_PAGE = 25;
 // ========= HISTORY & STAGING =========
 let HISTORY = [];
 let STAGING = {ops:[], data:null};
-let _savingOps = []; // Operations currently being saved to Sheets
+let _savingOps = []; // Operations currently being saved
 let mgmtStats = {added:0, removed:0, moved:0, session:0};
 
 // ========= TEMPORARY RELEASES =========
@@ -1144,7 +1144,7 @@ function loadFipeRequestsFromStorage(){
 
 function saveFipeRequestsToStorage(){
   try{localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));}catch(e){}
-  // Also save to Sheets for persistence across computers
+  // Saved locally (Supabase handles persistence)
   // Supabase: FIPE requests saved locally only
 }
 
@@ -1305,7 +1305,7 @@ async function updateFipeBase(){
     // Save current reference code
     try{
       const refResp=await fipeFetch('/references');
-      if(refResp.ok){const refs=await refResp.json();if(refs&&refs[0]){localStorage.setItem('avp-fipe-last-ref-code',refs[0].code);saveFipeRefCodeToSheets(refs[0].code);}}
+      if(refResp.ok){const refs=await refResp.json();if(refs&&refs[0]){localStorage.setItem('avp-fipe-last-ref-code',refs[0].code);saveFipeRefCodeRemote(refs[0].code);}}
     }catch(e){}
     _fipeNewTableAvailable=false;
     _fipeNewTableMonth='';
@@ -1415,7 +1415,7 @@ async function checkFipeNewTable(){
     if(!refs||!refs.length) return;
     const latestRef=refs[0]; // Most recent reference
     let savedRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
-    // If no local ref, try loading from Sheets (new computer)
+    // If no local ref, use default
     if(!savedRef){
       // Supabase migration: ref code from localStorage only
       if(false){
@@ -1437,9 +1437,9 @@ async function checkFipeNewTable(){
       showToast('🆕 Nova tabela FIPE disponível: '+latestRef.month,'warning');
     } else if(!savedRef){
       // No saved ref code - save current one without alerting
-      // (base was loaded from Sheets and ref code wasn't persisted yet)
+      // (ref code wasn't persisted yet)
       localStorage.setItem('avp-fipe-last-ref-code',latestRef.code);
-      saveFipeRefCodeToSheets(latestRef.code);
+      saveFipeRefCodeRemote(latestRef.code);
     }
   }catch(e){/* silent fail - don't block app */}
 }
@@ -2521,7 +2521,7 @@ let FIPE_CATEGORY_TYPE_MAP = {
 
 function saveFipeCategoryMap(){
   try{localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));}catch(e){}
-  // Also save to Sheets for persistence across computers
+  // Saved locally (Supabase handles persistence)
   // Supabase: FIPE cat map saved locally only
 }
 
@@ -2532,12 +2532,12 @@ function loadFipeCategoryMap(){
   }catch(e){}
 }
 
-async function loadFipeBaseFromSheets(){
+async function loadFipeBaseRemote(){
   // Legacy: FIPE base is now stored only in localStorage
   console.log('[FIPE] Base loaded from localStorage only (Supabase migration)');
 }
 
-async function loadFipeRequestsFromSheets(){
+async function loadFipeRequestsRemote(){
   // Legacy: FIPE requests counter stored in localStorage only
   console.log('[FIPE] Requests loaded from localStorage only (Supabase migration)');
 }
@@ -2547,23 +2547,23 @@ async function loadFipeRequestsFromSheets(){
     if(false){
       const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
       if(data.month&&data.count>0){
-        // Only use Sheets data if it's for the current month and count is higher than local
+        // Use stored data if current month
         const currentMonth=new Date().getFullYear()+'-'+(new Date().getMonth()+1);
         if(data.month===currentMonth&&data.count>FIPE_REQUESTS.count){
           FIPE_REQUESTS=data;
           localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));
-          console.log('[FIPE] Contador de requisições carregado do Sheets: '+data.count);
+          console.log('[FIPE] Contador de requisições carregado: '+data.count);
         }
       }
     }
-  }catch(e){console.warn('[FIPE] Erro ao carregar contador do Sheets:',e);}
+  }catch(e){console.warn('[FIPE] Erro ao carregar contador:',e);}
 }
 
-function saveFipeRefCodeToSheets(code){
+function saveFipeRefCodeRemote(code){
   // Supabase migration: ref code saved to localStorage only
 }
 
-async function loadFipeCategoryMapFromSheets(){
+async function loadFipeCategoryMapRemote(){
   // Supabase migration: category map loaded from localStorage and Supabase categorias table
   try{
     if(false){
@@ -2826,7 +2826,7 @@ async function consultarPrecoFipe(marca, modelo){
 
 // ========= ADD MODEL TO CATEGORY =========
 function openAddModelToCat(categoria){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   _fipeCurrentCategory=categoria;
   const fipeBrands=isFipeBaseLoaded()?getFipeBrandsForCategory(categoria):ALL_BRANDS;
   showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
@@ -3053,7 +3053,7 @@ function filterBrandList(){
 }
 
 function openAddBrandToCat(categoria){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('➕ Adicionar Marca em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
@@ -3863,7 +3863,7 @@ document.addEventListener('click',function(e){
 
 // ========= CATEGORY MANAGEMENT =========
 function openAddCategory(){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('+ Nova Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Nome da nova categoria:</label>
     <input id="new_cat_name" placeholder="Digite o nome da categoria...">
@@ -4048,7 +4048,7 @@ function renderDivergences(){
 
 // Copy a single model to the compared category
 function copyModelToCategory(marca, modelo, catFrom, catTo){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   // Validate: check if already exists in destination
   const destModels=getModelsForCat(catTo);
   if(destModels.find(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo))){
@@ -4069,7 +4069,7 @@ function copyModelToCategory(marca, modelo, catFrom, catTo){
 
 // Copy all divergences from one side to the other
 function copyAllDivergences(catFrom, catTo){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   const modelsFrom=getModelsForCat(catFrom);
   const modelsTo=getModelsForCat(catTo);
   const only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
@@ -4192,7 +4192,7 @@ function getStagingData(){
 function hasStagingChanges(){return STAGING.ops.length>0;}
 
 function addToStaging(op, silent){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+  if(!dataLoaded && Object.keys(RAW).length===0){
     showToast('Aguarde o carregamento dos dados antes de realizar alterações','error');
     return;
   }
@@ -4294,11 +4294,11 @@ function commitStaging(){
     refreshActiveTab();
     closeModal();
     showToast('Salvando no Supabase...','warning');
-    // 3. Save to Sheets in background
+    // 3. Save to database in background
     try{
       const saved=await safeSave();
       if(saved){
-        // Also save temp releases to Sheets
+        // Also save temp releases to database
         if(TEMP_RELEASES.length>0){
           // Supabase: temp releases saved via supabase client
           try{await supabase.insert('liberacoes_temporarias',TEMP_RELEASES.map(t=>({marca:t.marca,modelo:t.modelo,categoria:t.categoria,motivo:t.motivo,observacao:t.obs||'',status:t.status,usuario_criacao:t.usuario||currentUser||''})));}catch(e){}
@@ -4433,7 +4433,7 @@ function renderMgmtKpis(){
 }
 
 function showMgmtModal(type){
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
+  if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   const catOptions = CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
   const brandOptions = ALL_BRANDS.map(b=>`<option value="${b}">${b}</option>`).join('');
   let title='', body='', onConfirm=null;
@@ -4924,8 +4924,8 @@ const APPS_SCRIPT_URL = ''; // Legacy - kept for any remaining references
 let isConnected = false;
 let isSyncing = false;
 
-async function sheetsLoad(){
-  // Legacy function - now data loads via initSheetsIntegration using Supabase
+async function loadFromDatabase(){
+  // Legacy function - now data loads via initDataConnection using Supabase
   // Kept for compatibility with manual sync button
   try{
     showSyncStatus('loading','Recarregando dados do Supabase...');
@@ -4953,19 +4953,19 @@ async function sheetsLoad(){
     try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
     try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
     isConnected=true;
-    dataLoadedFromSheets=true;
+    dataLoaded=true;
     _dataLoadTimestamp=Date.now();
     showSyncStatus('success','Dados recarregados do Supabase');
     return true;
   }catch(err){
     showSyncStatus('error','Erro ao recarregar dados');
-    console.error('sheetsLoad error:',err);
+    console.error('loadFromDatabase error:',err);
     return false;
   }
 }
 
 // ========= CONCURRENCY CONTROL =========
-let _dataLoadTimestamp=null; // When data was last loaded from Sheets
+let _dataLoadTimestamp=null; // When data was last loaded
 
 async function acquireLock(){
   try{
@@ -5012,8 +5012,8 @@ async function safeSave(){
         async function(){
           closeModal();
           showToast('Recarregando dados...','warning');
-          await sheetsLoad();
-          await sheetsLoadHistory();
+          await loadFromDatabase();
+          await loadFromDatabaseHistory();
           recomputeAll();initAnos();
           refreshActiveTab();
           renderKPIs();renderOverviewTable();
@@ -5022,14 +5022,14 @@ async function safeSave(){
       // Change button text
       setTimeout(()=>{
         const actions=document.getElementById('modalActions');
-        if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-blue" onclick="closeModal();sheetsLoad().then(()=>{sheetsLoadHistory();recomputeAll();initAnos();refreshActiveTab();renderKPIs();renderOverviewTable();showToast(\'Dados recarregados\',\'success\');})">🔄 Recarregar</button>';
+        if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-blue" onclick="closeModal();loadFromDatabase().then(()=>{loadFromDatabaseHistory();recomputeAll();initAnos();refreshActiveTab();renderKPIs();renderOverviewTable();showToast(\'Dados recarregados\',\'success\');})">🔄 Recarregar</button>';
       },50);
       return false;
     }
   }
   // 3. Save
   try{
-    await sheetsSave();
+    await saveToDatabase();
     // 4. Update timestamp
     // Supabase migration: timestamp handled by database
     _dataLoadTimestamp=Date.now();
@@ -5042,7 +5042,7 @@ async function safeSave(){
   return true;
 }
 
-async function sheetsSave(){
+async function saveToDatabase(){
   if(isSyncing) return;
   isSyncing=true;
   try{
@@ -5068,7 +5068,7 @@ async function sheetsSave(){
   isSyncing=false;
 }
 
-async function sheetsSaveHistory(entries){
+async function saveToDatabaseHistory(entries){
   try{
     const histEntries = Array.isArray(entries) ? entries : [entries];
     for(const entry of histEntries){
@@ -5089,7 +5089,7 @@ async function sheetsSaveHistory(entries){
   }catch(err){console.error('Erro ao salvar histórico:',err);}
 }
 
-async function sheetsLoadHistory(){
+async function loadFromDatabaseHistory(){
   try{
     HISTORY = await supabase.loadHistory();
     try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
@@ -5097,7 +5097,7 @@ async function sheetsLoadHistory(){
   }catch(err){console.error('Erro ao carregar histórico:',err);}
 }
 
-async function sheetsInit(){
+async function initDatabase(){
   try{
     showSyncStatus('loading','Inicializando banco com dados...');
     // Supabase migration: init not needed (data already in Supabase)
@@ -5126,11 +5126,11 @@ function showSyncStatus(type,msg){
   if(type==='success'){setTimeout(()=>{el.innerHTML='🟢 <span>Conectado ao Supabase</span>';el.style.borderColor='rgba(22,163,74,.3)';},3000);}
 }
 
-// Override commitStaging for Sheets integration
+// Override commitStaging for database integration
 const _originalCommitStaging = commitStaging;
 commitStaging = function(){
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
-  if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
+  if(!dataLoaded && Object.keys(RAW).length===0){
     showToast('Aguarde o carregamento dos dados antes de salvar','error');
     return;
   }
@@ -5192,8 +5192,8 @@ commitStaging = function(){
       closeModal();
       showToast('Alterações salvas com sucesso!','success');
       if(true){
-        await sheetsSave();
-        await sheetsSaveHistory(newHistoryEntries);
+        await saveToDatabase();
+        await saveToDatabaseHistory(newHistoryEntries);
       }
     },'green');
 };
@@ -5473,15 +5473,15 @@ document.addEventListener('keydown',function(e){
 
 // ========= SYNC MANUAL + EXPORT XLSX =========
 let lastSyncInfo = null;
-let dataLoadedFromSheets = false; // Flag to prevent overwriting Sheets with empty data
+let dataLoaded = false; // Flag to prevent overwriting database with empty data
 
 async function manualSync(){
   if(false){
     // Supabase migration: no URL check needed
     return;
   }
-  // PROTECTION: Never sync if data wasn't loaded from Sheets first
-  if(!dataLoadedFromSheets){
+  // PROTECTION: Never sync if data wasn't loaded first
+  if(!dataLoaded){
     showToast('Aguarde o carregamento dos dados antes de sincronizar','error');
     return;
   }
@@ -5981,7 +5981,7 @@ async function confirmUpload(){
   renderMgmtKpis();
   refreshActiveTab();
   enableExportButtons();
-  dataLoadedFromSheets=true; // Mark as valid data loaded
+  dataLoaded=true; // Mark as valid data loaded
   // Save base info
   baseFileInfo = {
     name: pending.file.name,
@@ -6003,8 +6003,8 @@ async function confirmUpload(){
   });
   // Sync with Supabase
   if(true){
-    await sheetsInit();
-    await sheetsSaveHistory([{
+    await initDatabase();
+    await saveToDatabaseHistory([{
       timestamp: new Date().toLocaleString('pt-BR'),
       type:'Atualização de Base',
       marca:pending.file.name,
@@ -6031,7 +6031,7 @@ function updateBaseInfo(){
 }
 
 // ========= INITIALIZATION =========
-async function initSheetsIntegration(){
+async function initDataConnection(){
   createSyncIndicator();
   const syncBtn=document.getElementById('btnSyncItem');
   if(syncBtn){syncBtn.style.opacity='.5';syncBtn.style.pointerEvents='none';}
@@ -6100,7 +6100,7 @@ async function initSheetsIntegration(){
     }catch(e){}
 
     isConnected=true;
-    dataLoadedFromSheets=true;
+    dataLoaded=true;
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
@@ -6329,7 +6329,7 @@ function initApp(){
   }
   const exportsLoading=document.getElementById('exportsLoading');
   if(exportsLoading) exportsLoading.style.display='block';
-  initSheetsIntegration();
+  initDataConnection();
 }
 
 function disableExportButtons(){
