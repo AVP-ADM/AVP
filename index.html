@@ -1870,7 +1870,7 @@ function renderOverviewTable(){
       </tr>`;
     }
     return `<tr>
-      <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
+      <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem;position:relative;padding-right:18px" title="'+catPendingType+'">⏳ '+(catPendingType||'Pendente')+'<span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendência cancelada\',\'success\')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar">✕</span></span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
@@ -2472,6 +2472,19 @@ function buildModelListWithActions(models, cat){
   html+='</div>';
   html+='<div class="drawer-count" id="modelListCount">'+models.length+' modelos</div>';
   html+='<div id="modelListContainer" style="max-height:calc(100vh - 220px);overflow-y:auto">';
+  // Show pending additions first
+  const pendingAdds = STAGING.ops.filter(op=>op.type==='Adição'&&op.catTo===cat&&!models.some(m=>norm(m.marca)===norm(op.marca)&&norm(m.modelo)===norm(op.modelo)));
+  for(const op of pendingAdds){
+    const eMarca=op.marca.replace(/'/g,"\\'");
+    const eModelo=op.modelo.replace(/'/g,"\\'");
+    html+=`<div class="model-action-row" data-search="${norm(op.marca+' '+op.modelo)}" style="opacity:.6">
+      <div class="model-action-info">
+        <span class="model-action-brand">${op.marca}</span>
+        <span class="model-action-name">${op.modelo} <span class="tag tag-green" style="font-size:.6rem;vertical-align:middle;position:relative;padding-right:18px">+ Adição pendente<span onclick="event.stopPropagation();cancelPendingOp('${eMarca}','${eModelo}','${eCat}');showToast('Adição cancelada','success');showCatDetail('${eCat}','modelos')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar">✕</span></span></span>
+      </div>
+      <div class="model-action-btns" style="opacity:.3;pointer-events:none"></div>
+    </div>`;
+  }
   for(const m of models){
     const eMarca=m.marca.replace(/'/g,"\\'");
     const eModelo=m.modelo.replace(/'/g,"\\'");
@@ -3812,6 +3825,54 @@ function rebuildPendingIndex(){
 
 function isPendingRemoval(marca, modelo, categoria){
   return !!_pendingIndex.removals[marca+'|||'+modelo+'|||'+categoria];
+}
+
+function isPendingAddition(marca, modelo, categoria){
+  return STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
+}
+
+function getPendingStagingOp(marca, modelo, categoria){
+  return STAGING.ops.find(op=>{
+    if(op.marca&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)){
+      if(categoria && (op.catFrom===categoria||op.catTo===categoria)) return true;
+      if(!categoria) return true;
+    }
+    return false;
+  });
+}
+
+function cancelPendingOp(marca, modelo, categoria){
+  const idx = STAGING.ops.findIndex(op=>{
+    if(op.marca&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)){
+      if(categoria && (op.catFrom===categoria||op.catTo===categoria)) return true;
+      if(!categoria) return true;
+    }
+    return false;
+  });
+  if(idx===-1) return false;
+  STAGING.ops.splice(idx, 1);
+  saveStagingToStorage();
+  rebuildPendingIndex();
+  renderOverviewTable();
+  renderKPIs();
+  renderStagingBars();
+  renderStagingTable();
+  updateSidebarBadges();
+  return true;
+}
+
+function cancelPendingCatOp(catName){
+  const idx = STAGING.ops.findIndex(op=>(op.type.includes('Categoria')||op.type.includes('Tipo FIPE'))&&(op.modelo===catName||op.catFrom===catName||op.catTo===catName));
+  if(idx===-1) return false;
+  STAGING.ops.splice(idx, 1);
+  saveStagingToStorage();
+  rebuildPendingIndex();
+  renderOverviewTable();
+  renderKPIs();
+  renderStagingBars();
+  renderStagingTable();
+  updateSidebarBadges();
+  return true;
 }
 
 // Check if a model has ANY pending change (removal, move, edit) in any category
