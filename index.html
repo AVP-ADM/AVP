@@ -5751,7 +5751,7 @@ function exportFullBaseXLSX(){
     // Row 2: headers for data (cols A-C) + blank col D + history sub-headers (cols E-G)
     rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe']);
     // Get history entries for this category
-    const catHistory = HISTORY.filter(h=>h.catFrom===cat||h.catTo===cat);
+    const catHistory = HISTORY.filter(h=>(h.catFrom||h.categoria)===cat||(h.catTo)===cat);
     // Build data rows
     const dataRows = [];
     for(const[brand, models] of Object.entries(catData.brands||{})){
@@ -5761,7 +5761,12 @@ function exportFullBaseXLSX(){
       }
     }
     // Build history rows
-    const histRows = catHistory.map(h=>[h.timestamp||'', h.type||'', (h.marca||'')+' | '+(h.modelo||'')+' | '+(h.type||'')]);
+    const histRows = catHistory.map(h=>{
+      const htime = h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'';
+      const htype = h.type||h.tipo||'';
+      const hdetail = (h.marca||'')+' '+(h.modelo||'')+' | '+(htype);
+      return [htime, htype, hdetail];
+    });
     // Merge data + history side by side starting from row 3
     const maxRows = Math.max(dataRows.length, histRows.length);
     for(let i=0;i<maxRows;i++){
@@ -5793,11 +5798,18 @@ function exportFullBaseXLSX(){
     if(safeName.length>31) safeName=safeName.substring(0,31);
     XLSX.utils.book_append_sheet(wb, ws, safeName);
   }
-  // Also add Historico sheet
+  // Also add Historico Geral sheet
   if(HISTORY && HISTORY.length>0){
     const histRows = [['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino']];
     for(const h of HISTORY){
-      histRows.push([h.timestamp||'', h.type||'', h.marca||'', h.modelo||'', h.catFrom||'', h.catTo||'']);
+      histRows.push([
+        h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',
+        h.type||h.tipo||'',
+        h.marca||'',
+        h.modelo||'',
+        h.catFrom||h.categoria||'',
+        h.catTo||''
+      ]);
     }
     const wsHist = XLSX.utils.aoa_to_sheet(histRows);
     const histHeaders = ['A1','B1','C1','D1','E1','F1'];
