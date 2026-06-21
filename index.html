@@ -2137,9 +2137,12 @@ function showCatDetail(cat, type){
     html=buildBrandListWithActions(effectiveBrands, cat);
   } else if(type==='duplicados'){
     const dups=DUPLICATES.filter(d=>d.cats.includes(cat));
-    title='Duplicados - '+cat+' ('+dups.length+')';
+    title='Conflitos - '+cat+' ('+dups.length+')';
     const data=dups.map(d=>[d.marca, d.modelo, d.cats.filter(c=>c!==cat).join(', ')]);
-    html=buildDrawerTable(['Marca','Modelo','Também em'],data,'cat-dups');
+    html=buildDrawerTableClickable(['Marca','Modelo','Também em'],data,'cat-dups',function(row){
+      closeDrawer();
+      navigateToDuplicate(row[0], row[1]);
+    });
   } else if(type==='divergencias'){
     const data=[];
     for(const g of COMP_GROUPS){
@@ -2153,7 +2156,10 @@ function showCatDetail(cat, type){
       }
     }
     title='Divergências - '+cat+' ('+data.length+')';
-    html=buildDrawerTable(['Marca','Modelo','Situação'],data,'cat-diverg');
+    html=buildDrawerTableClickable(['Marca','Modelo','Situação'],data,'cat-diverg',function(row){
+      closeDrawer();
+      goTab('divergences');
+    });
   }
   openDetailDrawer(title, html);
 }
@@ -2206,6 +2212,42 @@ function loadMoreDrawer(id){
   } else {
     if(btn) btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+shown+' de '+state.filtered.length+')</button>';
   }
+}
+
+function buildDrawerTableClickable(headers, data, id, onClickFn){
+  const searchId='drawerSearch_'+id;
+  const tableId='drawerTableData_'+id;
+  const PAGE_SIZE=100;
+  window['_drawerData_'+id]={headers:headers,allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
+  window['_drawerClickFn_'+id]=onClickFn;
+  let html='<div class="drawer-toolbar">';
+  html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerTableLazy(\''+id+'\')">';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+  html+='</div>';
+  html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+  html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
+  html+='<table class="drawer-table" id="'+tableId+'">';
+  html+='<thead><tr>'+headers.map((h,i)=>'<th onclick="sortDrawerTableLazy(\''+id+'\','+i+')" style="cursor:pointer">'+h+' ↕</th>').join('')+'</tr></thead>';
+  html+='<tbody>';
+  const slice=data.slice(0,PAGE_SIZE);
+  for(let r=0;r<slice.length;r++){
+    const row=slice[r];
+    html+='<tr style="cursor:pointer" onclick="drawerRowClick(\''+id+'\','+r+')">'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+  }
+  html+='</tbody></table>';
+  if(data.length>PAGE_SIZE){
+    html+='<div id="loadMore_'+id+'" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreDrawer(\''+id+'\')">Carregar mais (mostrando '+Math.min(PAGE_SIZE,data.length)+' de '+data.length+')</button></div>';
+  }
+  html+='</div>';
+  return html;
+}
+
+function drawerRowClick(id, rowIdx){
+  const state=window['_drawerData_'+id];
+  const fn=window['_drawerClickFn_'+id];
+  if(!state||!fn) return;
+  const row=state.filtered[rowIdx];
+  if(row) fn(row);
 }
 
 function buildDrawerTableWithTypeFilter(headers, data, id){
