@@ -2540,11 +2540,14 @@ function cancelPendingModelChange(marca, modelo, categoria){
   if(idx>=0){
     STAGING.ops.splice(idx,1);
     STAGING.data=null;
+    saveStagingToStorage();
+    rebuildPendingIndex();
     renderStagingBars();
     renderStagingTable();
     renderOverviewTable();
     renderKPIs();
-    showToast('Alteração pendente cancelada','warning');
+    updateSidebarBadges();
+    showToast('Alteração pendente cancelada','success');
     // Refresh the drawer
     showCatDetail(categoria,'modelos');
   }
@@ -3950,6 +3953,7 @@ function cancelPendingCategory(catName){
   if(idx===-1){showToast('Pendência não encontrada','error');return;}
   STAGING.ops.splice(idx, 1);
   saveStagingToStorage();
+  rebuildPendingIndex();
   renderOverviewTable();
   renderStagingBars();
   renderStagingTable();
