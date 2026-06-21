@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="supabase-client.js"></script>
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -587,7 +588,7 @@ tr:hover .row-actions{opacity:1}
       <button class="settings-btn" onclick="toggleSettings()" title="Configurações"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="settings-dropdown" id="settingsDropdown">
         <div class="settings-item" onclick="showUploadModal();closeSettings()"><span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span><span class="si-label">Importar Nova Planilha</span></div>
-        <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span><span class="si-label">Sincronizar com Google Sheets</span></div>
+        <div class="settings-item" onclick="manualSync();closeSettings()" id="btnSyncItem"><span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span><span class="si-label">Sincronizar com Supabase</span></div>
         <div class="settings-item" onclick="exportFullBaseXLSX();closeSettings()"><span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span class="si-label">Exportar Base Completa</span></div>
         <div class="settings-divider"></div>
         <div class="settings-item" onclick="toggleTheme();closeSettings()" id="themeMenuItem"><span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span><span class="si-label">Tema Escuro</span></div>
@@ -997,7 +998,7 @@ const ICONS = {
 function icon(name,size){const s=size||16;return ICONS[name]?ICONS[name].replace(/width="\d+"/,'width="'+s+'"').replace(/height="\d+"/,'height="'+s+'"'):'';}
 
 // ========= RAW DATA =========
-const RAW = {}; // Os dados serão carregados automaticamente do Google Sheets
+const RAW = {}; // Os dados serão carregados automaticamente do Supabase
 
 // ========= DERIVED DATA =========
 let CATEGORIES = [];
@@ -4313,7 +4314,7 @@ function commitStaging(){
     renderStagingBars();renderStagingTable();renderMgmtKpis();renderHistory();renderKPIs();
     refreshActiveTab();
     closeModal();
-    showToast('Salvando no Google Sheets...','warning');
+    showToast('Salvando no Supabase...','warning');
     // 3. Save to Sheets in background
     try{
       const saved=await safeSave();
@@ -4327,7 +4328,7 @@ function commitStaging(){
         rebuildPendingIndex();
         markAllDirty();
         refreshActiveTab();
-        showToast('Alterações salvas com sucesso no Google Sheets!','success');
+        showToast('Alterações salvas com sucesso no Supabase!','success');
       } else {
         // safeSave returned false (conflict detected, user will reload)
         _savingOps=[];
@@ -4938,52 +4939,47 @@ function loadTempReleasesFromStorage(){
   }catch(e){}
 }
 
-// ========= GOOGLE SHEETS INTEGRATION =========
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXkTXkQ_RLdAtMgr0F5xSbsRIxDdvC4KQv2l_t70FYToyzXAEUCSTJ9jyvlKDQEy9VQw/exec';
-
+// ========= SUPABASE INTEGRATION =========
+const APPS_SCRIPT_URL = ''; // Legacy - kept for any remaining references
 let isConnected = false;
 let isSyncing = false;
 
 async function sheetsLoad(){
+  // Legacy function - now data loads via initSheetsIntegration using Supabase
+  // Kept for compatibility with manual sync button
   try{
-    showSyncStatus('loading','Carregando dados do Google Sheets...');
-    const response = await fetch(APPS_SCRIPT_URL+'?action=load');
-    if(!response.ok){
-      showSyncStatus('error','Erro HTTP: '+response.status);
-      return false;
+    showSyncStatus('loading','Recarregando dados do Supabase...');
+    const {categorias, modelos} = await supabase.loadAllData();
+    for(const key of Object.keys(RAW)) delete RAW[key];
+    const catIdMap = {};
+    for(const cat of categorias){
+      catIdMap[cat.nome] = cat.id;
+      RAW[cat.nome] = {total:0, brands:{}};
+      FIPE_CATEGORY_TYPE_MAP[cat.nome] = cat.tipo_fipe || 'cars';
+      CAT_ANO_MINIMO[cat.nome] = cat.ano_minimo || 2006;
     }
-    const text = await response.text();
-    let result;
-    try{ result = JSON.parse(text); }catch(parseErr){
-      showSyncStatus('error','Resposta inválida do servidor');
-      console.error('Resposta não-JSON do Sheets:',text.substring(0,200));
-      return false;
+    window._catIdMap = catIdMap;
+    for(const m of modelos){
+      const catName = m.categorias?.nome;
+      if(!catName || !RAW[catName]) continue;
+      if(!RAW[catName].brands[m.marca]) RAW[catName].brands[m.marca] = [];
+      RAW[catName].brands[m.marca].push(m.modelo);
+      RAW[catName].total++;
+      if(m.ano_aceitacao){
+        ANOS_ACEITACAO[catName+'|||'+m.marca+'|||'+m.modelo] = m.ano_aceitacao;
+      }
     }
-    if(result.success && result.data && Object.keys(result.data).length>0){
-      for(const key of Object.keys(RAW)) delete RAW[key];
-      for(const[key,val] of Object.entries(result.data)) RAW[key]=val;
-      if(result.anos){for(const[key,val] of Object.entries(result.anos)) ANOS_ACEITACAO[key]=val;}
-      recomputeAll();initAnos();
-      // Cache data locally for instant load next time
-      try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
-      try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
-      isConnected=true;
-      dataLoadedFromSheets=true;
-      _dataLoadTimestamp=Date.now();
-      showSyncStatus('success','Dados carregados do Google Sheets');
-      return true;
-    } else if(result.success&&(!result.data||Object.keys(result.data).length===0)){
-      showSyncStatus('warning','Planilha vazia. Enviando dados iniciais...');
-      await sheetsInit();
-      dataLoadedFromSheets=true;
-      return true;
-    } else{
-      showSyncStatus('error','Erro: '+(result.error||'Falha ao carregar'));
-      return false;
-    }
+    recomputeAll();initAnos();
+    try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
+    try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
+    isConnected=true;
+    dataLoadedFromSheets=true;
+    _dataLoadTimestamp=Date.now();
+    showSyncStatus('success','Dados recarregados do Supabase');
+    return true;
   }catch(err){
-    showSyncStatus('error','Erro de conexão com Sheets');console.error('sheetsLoad:',err);
-    console.error('Erro ao carregar do Sheets:',err);
+    showSyncStatus('error','Erro ao recarregar dados');
+    console.error('sheetsLoad error:',err);
     return false;
   }
 }
@@ -5068,32 +5064,54 @@ async function sheetsSave(){
   if(isSyncing) return;
   isSyncing=true;
   try{
-    showSyncStatus('loading','Salvando no Google Sheets...');
-    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',payload:JSON.stringify(RAW)})});
-    const result=await response.json();
-    if(result.success){showSyncStatus('success','Salvo no Google Sheets! '+(result.message||''));isConnected=true;}
-    else{showSyncStatus('error','Erro ao salvar: '+(result.error||''));}
-  }catch(err){showSyncStatus('error','Falha ao salvar no Google Sheets');console.error('Erro ao salvar no Sheets:',err);}
+    showSyncStatus('loading','Salvando no Supabase...');
+    // Save all models to Supabase
+    const catIdMap = window._catIdMap || {};
+    if(Object.keys(catIdMap).length === 0){
+      // Reload categories to get IDs
+      const cats = await supabase.select('categorias');
+      for(const c of cats) catIdMap[c.nome] = c.id;
+      window._catIdMap = catIdMap;
+    }
+    await supabase.saveFullBase(RAW, catIdMap);
+    // Update cache
+    try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
+    try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
+    showSyncStatus('success','Salvo no Supabase!');
+    isConnected=true;
+  }catch(err){
+    showSyncStatus('error','Falha ao salvar no Supabase');
+    console.error('Erro ao salvar:',err);
+  }
   isSyncing=false;
 }
 
 async function sheetsSaveHistory(entries){
   try{
-    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveHistory',payload:JSON.stringify(entries)})});
-    const result=await response.json();
-    if(!result.success) console.error('Erro ao salvar histórico:',result.error);
-  }catch(err){console.error('Erro ao salvar histórico no Sheets:',err);}
+    const histEntries = Array.isArray(entries) ? entries : [entries];
+    for(const entry of histEntries){
+      const user = supabase.getUser();
+      await supabase.saveHistory({
+        usuario_id: user?.id || null,
+        usuario_nome: currentUser || entry.user || '',
+        tipo: entry.type || entry.action || 'Ação',
+        marca: entry.marca || entry.brand || '',
+        modelo: entry.modelo || entry.model || '',
+        categoria: entry.categoria || entry.category || '',
+        detalhes: entry.details || entry.description || JSON.stringify(entry)
+      });
+    }
+    // Reload history
+    HISTORY = await supabase.loadHistory();
+    try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
+  }catch(err){console.error('Erro ao salvar histórico:',err);}
 }
 
 async function sheetsLoadHistory(){
   try{
-    const response=await fetch(APPS_SCRIPT_URL+'?action=loadHistory');
-    const result=await response.json();
-    if(result.success&&result.data){
-      HISTORY=result.data;
-      try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
-      renderHistory();
-    }
+    HISTORY = await supabase.loadHistory();
+    try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
+    renderHistory();
   }catch(err){console.error('Erro ao carregar histórico:',err);}
 }
 
@@ -5122,7 +5140,7 @@ function showSyncStatus(type,msg){
   const icons={loading:'<div class="spinner"></div>',success:'🟢',error:'🔴',warning:'🟡'};
   el.innerHTML=(icons[type]||'')+' <span>'+msg+'</span>';
   el.style.borderColor=type==='success'?'rgba(22,163,74,.5)':type==='error'?'rgba(220,38,38,.5)':type==='warning'?'rgba(217,119,6,.5)':'var(--border)';
-  if(type==='success'){setTimeout(()=>{el.innerHTML='🟢 <span>Conectado ao Google Sheets</span>';el.style.borderColor='rgba(22,163,74,.3)';},3000);}
+  if(type==='success'){setTimeout(()=>{el.innerHTML='🟢 <span>Conectado ao Supabase</span>';el.style.borderColor='rgba(22,163,74,.3)';},3000);}
 }
 
 // Override commitStaging for Sheets integration
@@ -5130,10 +5148,10 @@ const _originalCommitStaging = commitStaging;
 commitStaging = function(){
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
-    showToast('Aguarde o carregamento dos dados do Google Sheets antes de salvar','error');
+    showToast('Aguarde o carregamento dos dados do Supabase antes de salvar','error');
     return;
   }
-  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Google Sheets?',
+  showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Supabase?',
     async function(){
       // Apply category operations first
       for(const op of STAGING.ops){
@@ -5481,7 +5499,7 @@ async function manualSync(){
   }
   // PROTECTION: Never sync if data wasn't loaded from Sheets first
   if(!dataLoadedFromSheets){
-    showToast('Aguarde o carregamento dos dados do Google Sheets antes de sincronizar','error');
+    showToast('Aguarde o carregamento dos dados do Supabase antes de sincronizar','error');
     return;
   }
   // PROTECTION: Never sync empty data
@@ -5507,7 +5525,7 @@ async function manualSync(){
     lastSyncInfo = {date: new Date().toLocaleString('pt-BR'), records:0, status:'error', error:err.message};
     localStorage.setItem('avp-last-sync', JSON.stringify(lastSyncInfo));
     updateSyncInfo();
-    showToast('Falha ao sincronizar com o Google Sheets.','error');
+    showToast('Falha ao sincronizar com o Supabase.','error');
   }
   if(btn) btn.style.opacity='1';
 }
@@ -5583,7 +5601,7 @@ function exportFullBaseXLSX(){
     return;
   }
   const wb = XLSX.utils.book_new();
-  // Create one sheet per category matching Google Sheets format
+  // Create one sheet per category matching Supabase format
   for(const[cat, catData] of Object.entries(RAW)){
     const rows = [];
     // Row 1: blank for data cols + "HISTÓRICO DA CATEGORIA" merged in E1:G1
@@ -6000,7 +6018,7 @@ async function confirmUpload(){
     catFrom: pending.cats+' categorias',
     catTo: pending.brands+' marcas'
   });
-  // Sync with Google Sheets
+  // Sync with Supabase
   if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
     await sheetsInit();
     await sheetsSaveHistory([{
@@ -6032,77 +6050,112 @@ function updateBaseInfo(){
 // ========= INITIALIZATION =========
 async function initSheetsIntegration(){
   createSyncIndicator();
-  // Disable sync item until data is loaded
   const syncBtn=document.getElementById('btnSyncItem');
   if(syncBtn){syncBtn.style.opacity='.5';syncBtn.style.pointerEvents='none';}
-  if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
-    showSyncStatus('warning','Configure a URL do Apps Script para sincronizar');
-    // Render empty state
-    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
-    enableExportButtons();
-    return;
-  }
-  const loaded=await sheetsLoad();
-  if(loaded){
-    await sheetsLoadHistory();
-    // Load temp releases from Sheets
+
+  try{
+    showSyncStatus('loading','Carregando dados do Supabase...');
+
+    // Load all data from Supabase
+    const {categorias, modelos} = await supabase.loadAllData();
+
+    // Convert Supabase data to RAW format (same structure the app expects)
+    for(const key of Object.keys(RAW)) delete RAW[key];
+    const catIdMap = {}; // name -> id mapping
+    for(const cat of categorias){
+      catIdMap[cat.nome] = cat.id;
+      RAW[cat.nome] = {total:0, brands:{}};
+      // Update FIPE_CATEGORY_TYPE_MAP
+      FIPE_CATEGORY_TYPE_MAP[cat.nome] = cat.tipo_fipe || 'cars';
+      // Update CAT_ANO_MINIMO
+      CAT_ANO_MINIMO[cat.nome] = cat.ano_minimo || 2006;
+    }
+    // Store catIdMap globally for save operations
+    window._catIdMap = catIdMap;
+
+    for(const m of modelos){
+      const catName = m.categorias?.nome;
+      if(!catName || !RAW[catName]) continue;
+      if(!RAW[catName].brands[m.marca]) RAW[catName].brands[m.marca] = [];
+      RAW[catName].brands[m.marca].push(m.modelo);
+      RAW[catName].total++;
+      // Store ano_aceitacao if set
+      if(m.ano_aceitacao){
+        const key = catName+'|||'+m.marca+'|||'+m.modelo;
+        ANOS_ACEITACAO[key] = m.ano_aceitacao;
+      }
+    }
+
+    recomputeAll();
+    initAnos();
+
+    // Cache locally for instant load next time
+    try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
+    try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
+
+    // Load history
     try{
-      const trResp=await fetch(APPS_SCRIPT_URL+'?action=loadTempReleases');
-      const trResult=await trResp.json();
-      if(trResult.success&&trResult.data&&trResult.data.length>0){
-        TEMP_RELEASES=trResult.data;
+      HISTORY = await supabase.loadHistory();
+      try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
+    }catch(e){ console.warn('History load error:',e); }
+
+    // Load temp releases
+    try{
+      const tempRel = await supabase.loadTempReleases();
+      if(tempRel && tempRel.length > 0){
+        TEMP_RELEASES = tempRel;
         saveTempReleasesToStorage();
       }
     }catch(e){}
-    renderTempReleaseAlert();
-    renderTempReleases();
-    // Load FIPE category map from Sheets
-    await loadFipeCategoryMapFromSheets();
-    // Load FIPE base from Sheets if localStorage is empty (new computer)
-    if(!isFipeBaseLoaded()){
-      await loadFipeBaseFromSheets();
-      if(isFipeBaseLoaded()){
-        showToast('Base FIPE carregada do servidor ('+FIPE_BASE.brands.length+' marcas)','success');
-        renderFipeOutdatedAlert();
-        renderFipeDiagnostics();
+
+    // Load pending changes
+    try{
+      const pending = await supabase.loadPendingChanges();
+      if(pending && pending.length > 0){
+        STAGING.ops = pending.map(p=>({type:p.tipo, marca:p.marca, modelo:p.modelo, catFrom:p.categoria_origem, catTo:p.categoria_destino, details:p.detalhes, id:p.id}));
       }
-    }
-    // Load FIPE request counter from Sheets (sync across computers)
-    await loadFipeRequestsFromSheets();
+    }catch(e){}
+
+    isConnected=true;
+    dataLoadedFromSheets=true;
     lastSyncInfo={date:new Date().toLocaleString('pt-BR'),records:ALL_RECORDS.length,status:'ok'};
     localStorage.setItem('avp-last-sync',JSON.stringify(lastSyncInfo));
     updateSyncInfo();
-    // NOW render everything with the loaded data
+
+    // Render everything at once
     renderKPIs();
     renderOverviewTable();
     renderMgmtKpis();
     renderStagingBars();
     renderStagingTable();
     renderHistory();
+    renderTempReleaseAlert();
+    renderTempReleases();
     refreshActiveTab();
-    // Re-render FIPE state after all data is loaded
     renderFipeOutdatedAlert();
     renderFipeDiagnostics();
     updateFipeUpdateButton();
-    // Enable sync item now that data is loaded
+
     if(syncBtn){syncBtn.style.opacity='1';syncBtn.style.pointerEvents='';}
     enableExportButtons();
-    // Force sync indicator to final state (fixes first-session-of-day issue)
-    setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},500);
-    setTimeout(()=>{showSyncStatus('success','Conectado ao Google Sheets');},4000);
-    // Check if FIPE has a new reference table (1 request, non-blocking)
-    if(isFipeBaseLoaded()){setTimeout(()=>{checkFipeNewTable();},3000);}
-  } else {
-    // Failed to load - show error state
+    showSyncStatus('success','Conectado ao Supabase');
+    setTimeout(()=>{showSyncStatus('success','Conectado ao Supabase');},2000);
+
+  } catch(err){
+    console.error('Erro ao carregar do Supabase:',err);
+    // Fallback - try to render from cache
     recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
     enableExportButtons();
-    showToast('Falha ao carregar dados do Google Sheets. Verifique a conexão.','error');
+    showSyncStatus('error','Falha ao conectar com Supabase');
+    showToast('Falha ao carregar dados. Usando cache local.','error');
   }
 }
 
-// ========= LOGIN SYSTEM =========
+// ========= LOGIN SYSTEM (SUPABASE AUTH) =========
 let currentUser=null;
-const SESSION_HOURS=8;
+let currentProfile=null;
+let _sessionToken=null;
+let _sessionCheckInterval=null;
 
 function togglePassVisibility(){
   const input=document.getElementById('loginPass');
@@ -6113,9 +6166,10 @@ function togglePassVisibility(){
 
 function checkSession(){
   try{
-    const session=JSON.parse(localStorage.getItem('avp-session')||'null');
-    if(session&&session.user&&session.expires>Date.now()){
-      currentUser=session.user;
+    const session=JSON.parse(localStorage.getItem('avp-supabase-session')||'null');
+    if(session&&session.access_token&&session.user){
+      currentUser=session.user.user_metadata?.nome || session.user.email;
+      _sessionToken=localStorage.getItem('avp-session-token')||null;
       showApp();
       return true;
     }
@@ -6123,17 +6177,19 @@ function checkSession(){
   return false;
 }
 
-function saveSession(user){
-  currentUser=user;
-  const expires=Date.now()+(SESSION_HOURS*60*60*1000);
-  localStorage.setItem('avp-session',JSON.stringify({user:user,expires:expires}));
+function saveSession(userData){
+  currentUser=userData.user.user_metadata?.nome || userData.user.email;
+  supabase.saveSession(userData);
+  // Generate unique session token for single-session control
+  _sessionToken=crypto.randomUUID?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
+  localStorage.setItem('avp-session-token',_sessionToken);
 }
 
 function showApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appHeader').style.display='';
   document.getElementById('appContainer').style.display='';
-  document.getElementById('userName').textContent=currentUser;
+  document.getElementById('userName').textContent=currentUser||'';
   initSidebar();
 }
 
@@ -6143,36 +6199,79 @@ async function doLogin(){
   const errEl=document.getElementById('loginError');
   if(!user||!pass){errEl.textContent='Preencha usuário e senha';errEl.style.display='block';return;}
   errEl.style.display='none';
-  // Validate against Sheets
+
   try{
-    const url=APPS_SCRIPT_URL+'?action=validateLogin&user='+encodeURIComponent(user)+'&pass='+encodeURIComponent(pass);
-    const resp=await fetch(url);
-    const result=await resp.json();
-    if(result.success&&result.valid){
-      saveSession(user);
+    // Supabase Auth - email/password sign in
+    const email=user.includes('@')?user:user+'@avpbase.local';
+    const result=await supabase.signIn(email, pass);
+
+    if(result.access_token&&result.user){
+      saveSession(result);
+      // Register session for single-session control
+      try{ await supabase.createSession(result.user.id, _sessionToken); }catch(e){ console.warn('Session control:',e); }
+      // Load profile
+      try{
+        currentProfile=await supabase.getProfile(result.user.id);
+      }catch(e){ currentProfile=null; }
       showApp();
       initApp();
+      // Start session verification
+      startSessionCheck();
     } else {
-      errEl.textContent='Usuário ou senha incorretos';
+      const msg=result.error_description||result.msg||result.error?.message||'Usuário ou senha incorretos';
+      errEl.textContent=msg;
       errEl.style.display='block';
     }
   }catch(e){
-    // Fallback: if can't reach Apps Script, allow with simple local validation
-    // This allows offline usage with stored credentials
     errEl.textContent='Erro de conexão. Verifique sua internet.';
     errEl.style.display='block';
+    console.error('Login error:',e);
   }
 }
 
-function doLogout(){
+async function doLogout(){
   closeSettings();
+  // Stop session check
+  if(_sessionCheckInterval){clearInterval(_sessionCheckInterval);_sessionCheckInterval=null;}
+  // Invalidate session in DB
+  try{
+    const user=supabase.getUser();
+    if(user&&_sessionToken){
+      await supabase.update('sessoes',{ativo:false},`usuario_id=eq.${user.id}&token=eq.${_sessionToken}`);
+    }
+  }catch(e){}
+  // Sign out from Supabase
+  try{ await supabase.signOut(); }catch(e){}
   currentUser=null;
-  localStorage.removeItem('avp-session');
+  currentProfile=null;
+  _sessionToken=null;
+  localStorage.removeItem('avp-supabase-session');
+  localStorage.removeItem('avp-session-token');
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appHeader').style.display='none';
   document.getElementById('appContainer').style.display='none';
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
+}
+
+// ========= SESSION SINGLE-DEVICE CHECK =========
+function startSessionCheck(){
+  if(_sessionCheckInterval) clearInterval(_sessionCheckInterval);
+  _sessionCheckInterval=setInterval(async()=>{
+    try{
+      const user=supabase.getUser();
+      if(!user||!_sessionToken) return;
+      const valid=await supabase.verifySession(user.id, _sessionToken);
+      if(!valid){
+        // Session invalidated (someone logged in elsewhere)
+        clearInterval(_sessionCheckInterval);
+        showToast('Sua sessão foi encerrada. Outro dispositivo fez login.','error');
+        setTimeout(()=>{
+          doLogout();
+        },3000);
+      }
+    }catch(e){ console.warn('Session check error:',e); }
+  },30000); // Check every 30 seconds
 }
 
 function initApp(){
