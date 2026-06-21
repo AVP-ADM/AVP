@@ -3341,9 +3341,6 @@ function openModelEdit(marca, modelo, categoria){
     const currentAno=ano.replace('A partir de ','');
     if(newAno===currentAno){closeModal();return;}
     addToStaging({type:'Alterar Ano',marca:marca,modelo:modelo,catFrom:categoria,catTo:categoria,details:'Ano: '+(currentAno||'padrão')+' → '+(newAno||'padrão')});
-    // Update ANOS_ACEITACAO locally (will be saved when staging is applied)
-    const key=categoria+'|||'+marca+'|||'+modelo;
-    ANOS_ACEITACAO[key]=newAno||'';
     closeModal();
     showToast('Alteração de ano adicionada às pendentes','success');
     // Refresh if detail panel is open
@@ -3486,39 +3483,7 @@ function acCloseAll(e){
   if(!e.target.closest('.ac-wrap')){acCloseAllDropdowns();}
 }
 
-function saveModelEdit(){
-  const ctx=window._editCtx;
-  if(!ctx) return;
-  const newMarca=document.getElementById('ac_marca').value.trim();
-  const newModelo=document.getElementById('ac_modelo').value.trim();
-  const newCat=document.getElementById('ac_cat').value.trim();
-  const newAno=document.getElementById('edit_ano').value.trim();
-  if(!newMarca||!newModelo||!newCat) return;
-  // Validate against base
-  if(!ALL_BRANDS.includes(newMarca)){showToast('Marca não encontrada na base','error');return;}
-  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))];
-  if(!allModelos.includes(newModelo)){showToast('Modelo não encontrado na base','error');return;}
-  if(!CATEGORIES.includes(newCat)){showToast('Categoria não encontrada na base','error');return;}
-
-  // If category changed, it's a move
-  if(newCat!==ctx.categoria){
-    addToStaging({type:'Movimentação',marca:ctx.marca,modelo:ctx.modelo,catFrom:ctx.categoria,catTo:newCat});
-  }
-  // If marca or modelo changed, remove old + add new
-  if(newMarca!==ctx.marca||newModelo!==ctx.modelo){
-    addToStaging({type:'Remoção',marca:ctx.marca,modelo:ctx.modelo,catFrom:newCat!==ctx.categoria?ctx.categoria:ctx.categoria,catTo:null});
-    addToStaging({type:'Adição',marca:newMarca,modelo:newModelo,catFrom:null,catTo:newCat!==ctx.categoria?newCat:ctx.categoria});
-  }
-  // Update ano
-  if(newAno){
-    const key=(newCat!==ctx.categoria?newCat:ctx.categoria)+'|||'+newMarca+'|||'+newModelo;
-    ANOS_ACEITACAO[key]=newAno;
-  }
-  document.removeEventListener('click',acCloseAll);
-  closeModal();
-  closeDrawer();
-  showToast('Edição adicionada às alterações pendentes','success');
-}
+// saveModelEdit - removed (legacy, replaced by openModelEdit with ano-only editing)
 
 function openModelRemove(marca, modelo){
   const cats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
