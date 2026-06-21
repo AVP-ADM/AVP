@@ -97,10 +97,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .sidebar-pin-btn:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
 .sidebar-pin-btn .pin-text{transition:opacity .2s}
 .sidebar-pin-btn .pin-icon{transition:transform .2s}
-.app-sidebar.collapsed .sidebar-pin{justify-content:center}
-.app-sidebar.collapsed .sidebar-pin-btn .pin-text{opacity:0;width:0;overflow:hidden}
-.app-sidebar.collapsed:hover .sidebar-pin-btn .pin-text{opacity:1;width:auto}
-.app-sidebar.collapsed:hover .sidebar-pin{justify-content:flex-end}
+.app-sidebar.collapsed .sidebar-pin{display:none}
+.app-sidebar.collapsed:hover .sidebar-pin{display:flex;justify-content:flex-end}
 /* When sidebar is pinned (not collapsed) */
 .app-sidebar:not(.collapsed) .sidebar-pin-btn{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
 .app-sidebar:not(.collapsed) .sidebar-pin-btn .pin-icon{transform:rotate(45deg)}
