@@ -2803,7 +2803,6 @@ async function consultarPrecoFipeComAno(marca, modelo){
   const brandModels=FIPE_BASE.models[brand.code]||FIPE_BASE.models['moto_'+brand.code]||FIPE_BASE.models['truck_'+brand.code]||[];
   const model=brandModels.find(m=>m.name.toLowerCase()===modelo.toLowerCase())||brandModels.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase().split(' ')[0]));
   if(!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
-  showToast('Buscando anos disponíveis...','warning');
   try{
     const vehicleType=brand._type==='moto'?'motorcycles':brand._type==='truck'?'trucks':'cars';
     const yearsResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years');
@@ -2812,7 +2811,7 @@ async function consultarPrecoFipeComAno(marca, modelo){
     if(!years.length){showToast('Nenhum ano disponível para este modelo.','warning');return;}
     // Show modal with year selection
     const options=years.map(y=>'<option value="'+y.code+'">'+y.name+'</option>').join('');
-    showModal('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Preço FIPE — '+marca+' '+modelo,
+    showModal('Preço FIPE — '+marca+' '+modelo,
       '<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Selecione o ano modelo:</label><select id="fipeYearSelect" style="width:100%">'+options+'</select><span style="font-size:.72rem;color:var(--text3)">O preço será consultado para o ano selecionado.</span></div>',
       async function(){
         const yearCode=document.getElementById('fipeYearSelect').value;
@@ -2823,7 +2822,7 @@ async function consultarPrecoFipeComAno(marca, modelo){
           const priceResp=await fipeFetch('/'+vehicleType+'/brands/'+brand.code+'/models/'+model.code+'/years/'+yearCode);
           if(!priceResp.ok){showToast('Erro ao buscar preço','error');return;}
           const priceData=await priceResp.json();
-          showModal('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Preço FIPE',`<div style="line-height:2;font-size:.88rem"><div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px"><span style="color:var(--text2);font-weight:600">Marca:</span><span>${priceData.brand||marca}</span><span style="color:var(--text2);font-weight:600">Modelo:</span><span>${priceData.model||modelo}</span><span style="color:var(--text2);font-weight:600">Ano:</span><span>${priceData.modelYear||yearName}</span><span style="color:var(--text2);font-weight:600">Combustível:</span><span>${priceData.fuel||'—'}</span><span style="color:var(--text2);font-weight:600">Código FIPE:</span><span>${priceData.codeFipe||'—'}</span><span style="color:var(--text2);font-weight:600">Referência:</span><span>${priceData.referenceMonth||'—'}</span></div><div style="margin-top:16px;padding:16px;background:var(--green-bg);border-radius:var(--radius);text-align:center"><div style="font-size:.75rem;color:var(--text2)">Valor FIPE</div><div style="font-size:1.5rem;font-weight:700;color:var(--green)">${priceData.price||'Indisponível'}</div></div></div>`);
+          showModal('Preço FIPE',`<div style="line-height:2;font-size:.88rem"><div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px"><span style="color:var(--text2);font-weight:600">Marca:</span><span>${priceData.brand||marca}</span><span style="color:var(--text2);font-weight:600">Modelo:</span><span>${priceData.model||modelo}</span><span style="color:var(--text2);font-weight:600">Ano:</span><span>${priceData.modelYear||yearName}</span><span style="color:var(--text2);font-weight:600">Combustível:</span><span>${priceData.fuel||'—'}</span><span style="color:var(--text2);font-weight:600">Código FIPE:</span><span>${priceData.codeFipe||'—'}</span><span style="color:var(--text2);font-weight:600">Referência:</span><span>${priceData.referenceMonth||'—'}</span></div><div style="margin-top:16px;padding:16px;background:var(--green-bg);border-radius:var(--radius);text-align:center"><div style="font-size:.75rem;color:var(--text2)">Valor FIPE</div><div style="font-size:1.5rem;font-weight:700;color:var(--green)">${priceData.price||'Indisponível'}</div></div></div>`);
           trackFipeRequest(2);
         }catch(e){showToast('Erro na consulta FIPE: '+e.message,'error');}
       },'green');
