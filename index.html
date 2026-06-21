@@ -1770,13 +1770,33 @@ function renderRecentActivity(){
   if(HISTORY && HISTORY.length){
     for(const h of HISTORY.slice(-5)){
       let icon='•', iconClass='edit';
-      const tipo = h.tipo || h.type || h.action || '';
+      const tipo = h.tipo || h.type || '';
       if(tipo.includes('Adição') || tipo.includes('add')){ icon='+'; iconClass='add'; }
       else if(tipo.includes('Remoção') || tipo.includes('remove')){ icon='−'; iconClass='remove'; }
       else if(tipo.includes('Mov') || tipo.includes('move')){ icon='↔'; iconClass='move'; }
-      const text = h.detalhes || h.description || h.details || (tipo+': '+(h.marca||'')+' '+(h.modelo||''));
-      const time = h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : (h.date || h.timestamp || '');
-      const user = h.usuario_nome || h.user || '';
+      // Build readable text
+      let text = '';
+      const marca = h.marca || '';
+      const modelo = h.modelo || '';
+      const categoria = h.categoria || '';
+      const detalhes = h.detalhes || '';
+      if(marca && modelo){
+        text = tipo + ': ' + marca + ' ' + modelo;
+        if(categoria) text += ' → ' + categoria;
+      } else if(detalhes && !detalhes.startsWith('{')){
+        text = detalhes;
+      } else if(detalhes && detalhes.startsWith('{')){
+        try{
+          const d=JSON.parse(detalhes);
+          text = (d.type||tipo)+': '+(d.marca||'')+' '+(d.modelo||'');
+          if(d.catTo) text += ' → '+d.catTo;
+          else if(d.catFrom) text += ' de '+d.catFrom;
+        }catch(e){ text = tipo || 'Ação'; }
+      } else {
+        text = tipo || 'Ação';
+      }
+      const time = h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : '';
+      const user = h.usuario_nome || '';
       activities.push({icon, iconClass, text, meta: user, time});
     }
   }
@@ -5198,8 +5218,8 @@ async function saveToDatabaseHistory(entries){
         tipo: entry.type || entry.action || 'Ação',
         marca: entry.marca || entry.brand || '',
         modelo: entry.modelo || entry.model || '',
-        categoria: entry.categoria || entry.category || '',
-        detalhes: entry.details || entry.description || JSON.stringify(entry)
+        categoria: entry.categoria || entry.category || entry.catTo || entry.catFrom || '',
+        detalhes: entry.details || entry.description || ((entry.type||'')+': '+(entry.marca||'')+' '+(entry.modelo||'')+(entry.catTo?' → '+entry.catTo:'')+(entry.catFrom&&!entry.catTo?' de '+entry.catFrom:''))
       });
     }
     // Reload history
