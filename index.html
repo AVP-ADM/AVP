@@ -5576,15 +5576,17 @@ function searchDuplicidades(query){
 }
 
 function searchDivergencias(query){
+  // Use pre-computed divergences instead of recalculating (much faster)
   const data=[];
-  for(let i=0;i<COMP_GROUPS.length;i++){
-    const g=COMP_GROUPS[i];
-    const modelsA=getModelsForCat(g.a);
-    const modelsB=getModelsForCat(g.b);
-    const onlyA=modelsA.filter(m=>!modelsB.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    const onlyB=modelsB.filter(m=>!modelsA.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo)));
-    for(const m of onlyA){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.a,groupIdx:i});}
-    for(const m of onlyB){if(norm(m.modelo).includes(query)||norm(m.marca).includes(query)) data.push({...m,comp:g.label,status:'Somente em '+g.b,groupIdx:i});}
+  for(const d of DIVERGENCES_ERRORS){
+    if(norm(d.modelo).includes(query)||norm(d.marca).includes(query)){
+      data.push({marca:d.marca, modelo:d.modelo, comp:d.from+' → '+d.missing, status:'Falta em '+d.missing});
+    }
+  }
+  for(const d of DIVERGENCES_REVIEW){
+    if(norm(d.modelo).includes(query)||norm(d.marca).includes(query)){
+      data.push({marca:d.marca, modelo:d.modelo, comp:d.label, status:'Apenas em '+d.onlyIn});
+    }
   }
   if(!data.length) return '';
   let html='<table class="search-result-table"><thead><tr><th>Modelo</th><th>Marca</th><th>Comparação</th><th>Status</th></tr></thead><tbody>';
