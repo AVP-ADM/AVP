@@ -1832,20 +1832,43 @@ function renderOverviewTable(){
   else if(sort==='brands') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length - Object.keys(RAW[a].brands||{}).length);
 
   const tbody = document.getElementById('ovTableBody');
-  tbody.innerHTML = cats.map(cat=>{
-    const brands = Object.keys(RAW[cat].brands||{});
+  
+  // Get pending category creations from staging
+  const pendingCreations = STAGING.ops.filter(op=>op.type==='Criação de Categoria').map(op=>op.modelo);
+  
+  // Combine existing categories + pending creations
+  const allCats = [...cats];
+  for(const pc of pendingCreations){
+    if(!allCats.includes(pc) && (!filt || norm(pc).includes(filt))) allCats.push(pc);
+  }
+  
+  tbody.innerHTML = allCats.map(cat=>{
+    const isPendingCreation = pendingCreations.includes(cat) && !CATEGORIES.includes(cat);
+    const brands = RAW[cat] ? Object.keys(RAW[cat].brands||{}) : [];
     const dups = _catDupsCount[cat]||0;
     const catPending = hasPendingCategoryChange(cat);
     const catPendingType = catPending ? getPendingCategoryChangeType(cat) : null;
     let divs = 0;
-    for(const g of COMP_GROUPS){
-      if(g.a===cat||g.b===cat){
-        const other = g.a===cat?g.b:g.a;
-        const modelsMe = getModelsForCat(cat);
-        const modelsOther = getModelsForCat(other);
-        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
-        divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+    if(!isPendingCreation){
+      for(const g of COMP_GROUPS){
+        if(g.a===cat||g.b===cat){
+          const other = g.a===cat?g.b:g.a;
+          const modelsMe = getModelsForCat(cat);
+          const modelsOther = getModelsForCat(other);
+          const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+          divs += modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+        }
       }
+    }
+    if(isPendingCreation){
+      return `<tr style="opacity:.7">
+        <td><strong>${cat}</strong> <span class="tag tag-amber" style="font-size:.6rem">Pendente</span></td>
+        <td>0</td>
+        <td>0</td>
+        <td>—</td>
+        <td>—</td>
+        <td><button class="btn btn-sm btn-red" onclick="cancelPendingCategory('${cat.replace(/'/g,"\\'")}')" title="Cancelar criação" style="padding:3px 8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>
+      </tr>`;
     }
     return `<tr>
       <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+catPendingType+'">⏳</span>':''}</td>
@@ -3840,6 +3863,18 @@ document.addEventListener('click',function(e){
 });
 
 // ========= CATEGORY MANAGEMENT =========
+function cancelPendingCategory(catName){
+  const idx = STAGING.ops.findIndex(op=>op.type==='Criação de Categoria'&&op.modelo===catName);
+  if(idx===-1){showToast('Pendência não encontrada','error');return;}
+  STAGING.ops.splice(idx, 1);
+  saveStagingToStorage();
+  renderOverviewTable();
+  renderStagingBars();
+  renderStagingTable();
+  updateSidebarBadges();
+  showToast('Criação de "'+catName+'" cancelada','success');
+}
+
 function openAddCategory(){
   if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   showModal('+ Nova Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
