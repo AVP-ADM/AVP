@@ -5098,8 +5098,7 @@ function showSyncStatus(type,msg){
   el.innerHTML=(icons[type]||'')+' <span>'+msg+'</span>';
   el.style.borderColor=type==='success'?'rgba(22,163,74,.5)':type==='error'?'rgba(220,38,38,.5)':type==='warning'?'rgba(217,119,6,.5)':'var(--border)';
   if(type==='success'){
-    setTimeout(()=>{el.innerHTML='🟢 <span>Conectado ao Supabase</span>';el.style.borderColor='rgba(22,163,74,.3)';},1000);
-    setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(10px)';el.style.pointerEvents='none';},2000);
+    setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(10px)';el.style.pointerEvents='none';},1000);
   }
   if(type==='error'){
     // Keep error visible until next status change
