@@ -69,6 +69,18 @@ const supabase = {
     return resp.json();
   },
 
+  async selectPaginated(table, options = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${options.select || '*'}`;
+    if (options.filter) url += `&${options.filter}`;
+    if (options.order) url += `&order=${options.order}`;
+    if (options.limit) url += `&limit=${options.limit}`;
+    if (options.offset) url += `&offset=${options.offset}`;
+    const headers = { ...supabase._headers() };
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) throw new Error(`Select ${table} failed: ${resp.status}`);
+    return resp.json();
+  },
+
   async insert(table, data, options = {}) {
     const headers = { ...supabase._headers(), 'Prefer': options.upsert ? 'resolution=merge-duplicates' : 'return=minimal' };
     if (options.returnData) headers['Prefer'] = 'return=representation';
@@ -117,13 +129,26 @@ const supabase = {
 
   // ========= AVP-SPECIFIC FUNCTIONS =========
 
-  // Load all data (categorias + modelos)
+  // Load all data (categorias + modelos) - handles pagination for large datasets
   async loadAllData() {
-    const [categorias, modelos] = await Promise.all([
-      supabase.select('categorias', { filter: 'ativo=eq.true', order: 'nome' }),
-      supabase.select('modelos', { select: '*,categorias(nome,tipo_fipe,ano_minimo)' })
-    ]);
-    return { categorias, modelos };
+    const categorias = await supabase.select('categorias', { filter: 'ativo=eq.true', order: 'nome' });
+    
+    // Load all modelos with pagination (Supabase limits to 1000 per request)
+    let allModelos = [];
+    let offset = 0;
+    const PAGE_SIZE = 1000;
+    while(true) {
+      const chunk = await supabase.selectPaginated('modelos', {
+        select: '*,categorias(nome,tipo_fipe,ano_minimo)',
+        limit: PAGE_SIZE,
+        offset: offset
+      });
+      allModelos = allModelos.concat(chunk);
+      if(chunk.length < PAGE_SIZE) break; // Last page
+      offset += PAGE_SIZE;
+    }
+    
+    return { categorias, modelos: allModelos };
   },
 
   // Load history
