@@ -4415,7 +4415,7 @@ function commitStaging(){
     const d = getStagingData();
     for(const[k,v] of Object.entries(d)) RAW[k]=v;
     for(const op of STAGING.ops){
-      HISTORY.push({...op});
+      HISTORY.push({...op, timestamp: new Date().toLocaleString("pt-BR")});
       mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':op.type==='Edição'?'moved':'moved']++;
       mgmtStats.session++;
     }
@@ -4665,9 +4665,10 @@ function renderHistory(){
   const filt = norm(document.getElementById('histFilter').value);
   const typeF = document.getElementById('histType').value;
   let items = HISTORY.filter(h=>{
-    if(typeF && h.type!==typeF) return false;
+    const htype = h.type || h.tipo || '';
+    if(typeF && htype!==typeF) return false;
     if(filt){
-      const s = norm(h.marca)+norm(h.modelo)+norm(h.catFrom||'')+norm(h.catTo||'');
+      const s = norm(h.marca||'')+norm(h.modelo||'')+norm(h.catFrom||h.categoria||'')+norm(h.catTo||'');
       if(!s.includes(filt)) return false;
     }
     return true;
@@ -4680,16 +4681,22 @@ function renderHistory(){
   const page = items.slice(start, start+HIST_PER_PAGE);
 
   document.getElementById('histTableBody').innerHTML = page.map((h,i)=>{
-    const isCatOp=(h.type||'').includes('Categoria');
-    const tagClass=(h.type||'').includes('Adição')||(h.type||'').includes('Criação')?'tag-green':(h.type||'').includes('Remoção')?'tag-red':'tag-blue';
+    const htype = h.type || h.tipo || '';
+    const htimestamp = h.timestamp || (h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : '—');
+    const hmarca = h.marca || '';
+    const hmodelo = h.modelo || '';
+    const hcatFrom = h.catFrom || h.categoria || '';
+    const hcatTo = h.catTo || '';
+    const isCatOp = htype.includes('Categoria');
+    const tagClass = htype.includes('Adição')||htype.includes('Criação')?'tag-green':htype.includes('Remoção')?'tag-red':'tag-blue';
     return `<tr>
     <td style="color:var(--text2)">${start+i+1}</td>
-    <td style="font-size:.78rem">${h.timestamp||'—'}</td>
-    <td><span class="tag ${tagClass}">${h.type}</span></td>
-    <td>${isCatOp?'—':h.marca}</td>
-    <td>${isCatOp?'—':h.modelo}</td>
-    <td>${h.catFrom||'—'}</td>
-    <td>${h.catTo||'—'}</td>
+    <td style="font-size:.78rem">${htimestamp}</td>
+    <td><span class="tag ${tagClass}">${htype||'—'}</span></td>
+    <td>${isCatOp?'—':hmarca}</td>
+    <td>${isCatOp?'—':hmodelo}</td>
+    <td>${hcatFrom||'—'}</td>
+    <td>${hcatTo||'—'}</td>
   </tr>`;
   }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
@@ -5323,7 +5330,7 @@ commitStaging = function(){
       }
       const newHistoryEntries=[];
       for(const op of STAGING.ops){
-        HISTORY.push({...op});
+        HISTORY.push({...op, timestamp: new Date().toLocaleString("pt-BR")});
         newHistoryEntries.push({...op});
         if(op.type==='Adição') mgmtStats.added++;
         else if(op.type==='Remoção') mgmtStats.removed++;
