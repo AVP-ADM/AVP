@@ -95,12 +95,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .sidebar-pin-bottom{padding:8px;border-top:1px solid var(--border)}
 .app-sidebar:not(.collapsed) .pin-icon-nav{transform:rotate(45deg);color:var(--accent)}
 /* Sidebar expand on hover - controlled by JS */
-.app-sidebar.hover-expanded{width:240px;min-width:240px}
-.app-sidebar.hover-expanded .si-text{opacity:1;transition:opacity .15s .05s}
-.app-sidebar.hover-expanded .si-badge{right:12px;top:50%;transform:translateY(-50%);font-size:.6rem;padding:2px 6px;min-width:18px}
-.app-sidebar.hover-expanded .sidebar-item{padding:10px 14px}
-.app-sidebar.hover-expanded .sidebar-collapse-btn .collapse-text{opacity:1;width:auto}
-.app-sidebar.hover-expanded .sidebar-collapse-btn svg{transform:rotate(0deg)}
+.app-sidebar.collapsed.hover-expanded{width:240px;min-width:240px}
+.app-sidebar.collapsed.hover-expanded .si-text{opacity:1;transition:opacity .15s .05s}
+.app-sidebar.collapsed.hover-expanded .si-badge{right:12px;top:50%;transform:translateY(-50%);font-size:.6rem;padding:2px 6px;min-width:18px}
+.app-sidebar.collapsed.hover-expanded .sidebar-item{padding:10px 14px}
+.app-sidebar.collapsed.hover-expanded .sidebar-collapse-btn .collapse-text{opacity:1;width:auto}
+.app-sidebar.collapsed.hover-expanded .sidebar-collapse-btn svg{transform:rotate(0deg)}
 .app-sidebar.collapsed .sidebar-item{padding:10px 14px}
 .app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none;animation:tooltipIn .15s}
 @keyframes tooltipIn{from{opacity:0;transform:translateY(-50%) translateX(-4px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
@@ -5707,31 +5707,34 @@ function toggleSidebar(){
   }
 }
 
+let _sidebarInitialized = false;
 function initSidebar(){
   const sidebar = document.getElementById('appSidebar');
+  if(!sidebar) return;
   // Default: collapsed with expand-on-hover
-  if(sidebar){
-    const saved = localStorage.getItem('avp-sidebar-collapsed');
-    if(saved === '0'){
-      sidebar.classList.remove('collapsed');
-    } else {
-      sidebar.classList.add('collapsed');
-    }
-    // JS-controlled hover expand with delay on close
-    let hoverTimer = null;
-    sidebar.addEventListener('mouseenter', function(){
-      if(!sidebar.classList.contains('collapsed')) return;
-      if(hoverTimer){clearTimeout(hoverTimer);hoverTimer=null;}
-      sidebar.classList.add('hover-expanded');
-    });
-    sidebar.addEventListener('mouseleave', function(){
-      if(!sidebar.classList.contains('collapsed')) return;
-      if(hoverTimer) clearTimeout(hoverTimer);
-      hoverTimer = setTimeout(function(){
-        sidebar.classList.remove('hover-expanded');
-      }, 400);
-    });
+  const saved = localStorage.getItem('avp-sidebar-collapsed');
+  if(saved === '0'){
+    sidebar.classList.remove('collapsed');
+  } else {
+    sidebar.classList.add('collapsed');
   }
+  // Only attach hover listeners once
+  if(_sidebarInitialized) return;
+  _sidebarInitialized = true;
+  // JS-controlled hover expand with delay on close
+  let hoverTimer = null;
+  sidebar.addEventListener('mouseenter', function(){
+    if(!sidebar.classList.contains('collapsed')) return;
+    if(hoverTimer){clearTimeout(hoverTimer);hoverTimer=null;}
+    sidebar.classList.add('hover-expanded');
+  });
+  sidebar.addEventListener('mouseleave', function(){
+    if(!sidebar.classList.contains('collapsed')) return;
+    if(hoverTimer) clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(function(){
+      sidebar.classList.remove('hover-expanded');
+    }, 400);
+  });
 }
 
 function toggleMobileSidebar(){
