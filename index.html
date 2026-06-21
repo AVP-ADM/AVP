@@ -1483,6 +1483,26 @@ function norm(s){
   return r;
 }
 
+// Normalização agressiva para comparação FIPE (ignora diferenças cosméticas)
+const _normFipeCache={};
+function normFipe(s){
+  if(!s) return '';
+  if(_normFipeCache[s]!==undefined) return _normFipeCache[s];
+  let r=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  // Converter caracteres especiais similares
+  r=r.replace(/×/g,'x');           // multiplication sign → x
+  r=r.replace(/–/g,'-');           // en-dash → hyphen
+  r=r.replace(/—/g,'-');           // em-dash → hyphen
+  r=r.replace(/\u00a0/g,' ');      // non-breaking space → space
+  r=r.replace(/[\u200b\u200c\u200d\ufeff]/g,''); // zero-width chars
+  r=r.replace(/[\/|\\]/g,' ');     // separadores → espaço
+  r=r.replace(/\.+$/g,'');         // remove pontos no final
+  r=r.replace(/\s+/g,' ');         // múltiplos espaços → um
+  r=r.trim();
+  _normFipeCache[s]=r;
+  return r;
+}
+
 // Debounce utility
 function debounce(fn, delay){
   let timer;
@@ -3002,7 +3022,7 @@ function openAddModelToCat(categoria){
     }
     // Validate: check if already exists in this category
     const models=getModelsForCat(categoria);
-    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(modelo));
+    const exists=models.some(m=>normFipe(m.marca)===normFipe(marca)&&normFipe(m.modelo)===normFipe(modelo));
     if(exists){showToast('Este modelo já está cadastrado nesta categoria.','error');return;}
     // Check if there's already a pending addition for the same model
     const pendingAdd=STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
@@ -5452,10 +5472,10 @@ function searchModelos(query){
 }
 
 function searchFipeNotRegistered(query, limit){
-  // Build set of all registered models (normalized)
+  // Build set of all registered models (normalized aggressively for FIPE comparison)
   const registeredSet=new Set();
   for(const r of ALL_RECORDS){
-    registeredSet.add(norm(r.marca)+'|||'+norm(r.modelo));
+    registeredSet.add(normFipe(r.marca)+'|||'+normFipe(r.modelo));
   }
   const results=[];
   let hasMore=false;
@@ -5467,7 +5487,7 @@ function searchFipeNotRegistered(query, limit){
     const brandMatches=norm(brandName).includes(query);
     for(const m of models){
       if(!brandMatches&&!norm(m.name).includes(query)) continue;
-      if(registeredSet.has(norm(brandName)+'|||'+norm(m.name))) continue;
+      if(registeredSet.has(normFipe(brandName)+'|||'+normFipe(m.name))) continue;
       if(results.length>=limit){hasMore=true;break;}
       results.push({marca:brandName,modelo:m.name});
     }
