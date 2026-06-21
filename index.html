@@ -1782,7 +1782,9 @@ function renderRecentActivity(){
       const detalhes = h.detalhes || '';
       if(marca && modelo){
         text = tipo + ': ' + marca + ' ' + modelo;
-        if(categoria) text += ' → ' + categoria;
+        if(categoria && tipo.includes('Adição')) text += ' → ' + categoria;
+        else if(categoria && tipo.includes('Remoção')) text += ' de ' + categoria;
+        else if(categoria) text += ' em ' + categoria;
       } else if(detalhes && !detalhes.startsWith('{')){
         text = detalhes;
       } else if(detalhes && detalhes.startsWith('{')){
