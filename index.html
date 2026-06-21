@@ -65,10 +65,10 @@
 [data-theme="dark"] .sidebar-item:hover{background:var(--surface-2)}
 [data-theme="dark"] .skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,#1E2D4A 50%,var(--surface-2) 75%);background-size:200% 100%}
 html{font-size:13px}
-body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5;font-feature-settings:'cv02','cv03','cv04','cv11'}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh;line-height:1.5;font-feature-settings:'cv02','cv03','cv04','cv11';overflow:hidden}
 
 /* ========= LAYOUT ========= */
-.app-layout{display:flex;height:100%;overflow:hidden}
+.app-layout{display:flex;height:calc(100vh - 48px);overflow:hidden;margin-top:48px}
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between;height:48px}
 .app-logo{font-size:1.1rem;font-weight:700;color:var(--primary);letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
 .app-logo span{color:var(--text2);font-weight:400;font-size:.78rem;margin-left:4px}
@@ -146,7 +146,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .upload-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:.82rem}
 .upload-preview .stat{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-light)}
 .upload-preview .stat:last-child{border-bottom:none}
-.app-container{margin-top:48px;height:calc(100vh - 48px);display:flex;flex-direction:column}
+.app-container{margin-top:48px;height:calc(100vh - 48px)}
 
 /* ========= TABS (hidden - replaced by sidebar) ========= */
 .tabs{display:none}
