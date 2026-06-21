@@ -3032,54 +3032,9 @@ function openAddModelToCat(categoria){
   },50);
 }
 
-// ========= SIMPLE MODEL EDIT (name only) =========
+// ========= SIMPLE MODEL EDIT (ano de aceitação) =========
 function openSimpleModelEdit(marca, modelo, categoria){
-  // Block if model already has a pending change
-  if(hasPendingChange(marca, modelo, categoria)){
-    const type = getPendingChangeType(marca, modelo, categoria);
-    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
-    return;
-  }
-  showModal('✏️ Editar Nome do Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
-    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
-
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
-    <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${marca}</div>
-
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome do modelo:</label>
-    <input id="simpleEdit_modelo" value="${modelo}" placeholder="Nome do modelo...">
-
-    <div id="simpleEdit_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A alteração será incluída nas Alterações Pendentes.</span>
-  </div>`,function(){
-    const newName=document.getElementById('simpleEdit_modelo').value.trim();
-    if(!newName){showToast('Digite o nome do modelo','error');return;}
-    if(newName===modelo){closeModal();return;}
-    // Validate: check if the new name already exists in this category with same brand
-    const models=getModelsForCat(categoria);
-    const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(newName));
-    if(exists){showToast('Já existe um modelo com esse nome nesta categoria.','error');return;}
-    // Create a single staging op for rename (instead of remove + add)
-    addToStaging({type:'Edição',marca:marca,modelo:modelo+' → '+newName,catFrom:categoria,catTo:categoria,oldModelo:modelo,newModelo:newName},true);
-    closeModal();
-    showToast('Renomeação de "'+modelo+'" → "'+newName+'" pendente','success');
-    // Refresh the drawer
-    showCatDetail(categoria,'modelos');
-  },'blue');
-  // Real-time validation
-  setTimeout(()=>{
-    const input=document.getElementById('simpleEdit_modelo');
-    const msg=document.getElementById('simpleEdit_msg');
-    if(input) input.oninput=function(){
-      const val=this.value.trim();
-      if(!val||val===modelo){msg.textContent='';msg.className='ac-msg';return;}
-      const models=getModelsForCat(categoria);
-      const exists=models.some(m=>norm(m.marca)===norm(marca)&&norm(m.modelo)===norm(val));
-      if(exists){msg.textContent='✕ Já existe um modelo com esse nome nesta categoria';msg.className='ac-msg invalid';}
-      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
-    };
-  },50);
+  openModelEdit(marca, modelo, categoria);
 }
 
 // ========= BRAND LIST WITH ACTIONS =========
@@ -3369,52 +3324,31 @@ function openModelEdit(marca, modelo, categoria){
     showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
     return;
   }
-  const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'Ano da categoria';
-  const allModelos=[...new Set(ALL_RECORDS.map(r=>r.modelo))].sort();
-  showModal('✏️ Editar Modelo',`<div style="display:flex;flex-direction:column;gap:12px">
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
-    <div class="ac-wrap">
-      <input class="ac-input" id="ac_marca" placeholder="Digite para pesquisar marca..." value="${marca}" onfocus="acOpen('ac_marca','brands')" oninput="acFilter('ac_marca','brands')" onkeydown="acKeydown(event,'ac_marca','brands')">
-      <span class="ac-icon" id="ac_marca_icon">▼</span>
-      <div class="ac-dropdown" id="ac_marca_dd"></div>
+  const ano=typeof getAno==='function'?getAno(categoria,marca,modelo):'';
+  const anoMinimo=getAnoMinimoCat(categoria);
+  showModal('Editar Ano — '+modelo,`<div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;line-height:2">
+      <span style="color:var(--text2);font-weight:600">Marca:</span><span>${marca}</span>
+      <span style="color:var(--text2);font-weight:600">Modelo:</span><span>${modelo}</span>
+      <span style="color:var(--text2);font-weight:600">Categoria:</span><span>${categoria}</span>
+      <span style="color:var(--text2);font-weight:600">Ano padrão da categoria:</span><span>A partir de ${anoMinimo}</span>
     </div>
-    <div class="ac-msg" id="ac_marca_msg"></div>
-
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo:</label>
-    <div class="ac-wrap">
-      <input class="ac-input" id="ac_modelo" placeholder="Digite para pesquisar modelo..." value="${modelo}" onfocus="acOpen('ac_modelo','models')" oninput="acFilter('ac_modelo','models')" onkeydown="acKeydown(event,'ac_modelo','models')">
-      <span class="ac-icon" id="ac_modelo_icon">▼</span>
-      <div class="ac-dropdown" id="ac_modelo_dd"></div>
-    </div>
-    <div class="ac-msg" id="ac_modelo_msg"></div>
-
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
-    <div class="ac-wrap">
-      <input class="ac-input" id="ac_cat" placeholder="Digite para pesquisar categoria..." value="${categoria}" onfocus="acOpen('ac_cat','cats')" oninput="acFilter('ac_cat','cats')" onkeydown="acKeydown(event,'ac_cat','cats')">
-      <span class="ac-icon" id="ac_cat_icon">▼</span>
-      <div class="ac-dropdown" id="ac_cat_dd"></div>
-    </div>
-    <div class="ac-msg" id="ac_cat_msg"></div>
-
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Ano de Aceitação:</label>
-    <input id="edit_ano" value="${ano}" style="padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem">
-
-    <span style="font-size:.72rem;color:var(--text3)">Selecione apenas valores existentes na base. O botão será habilitado quando todos os campos forem válidos.</span>
-  </div>`,null,'blue');
-
-  // Store original values and setup
-  window._editCtx={marca,modelo,categoria,ano};
-  window._acSelected={marca:marca,modelo:modelo,cat:categoria};
-
-  // Replace modal confirm button with controlled one
-  setTimeout(()=>{
-    const actions=document.getElementById('modalActions');
-    actions.innerHTML=`<button class="btn" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-blue" id="editSaveBtn" onclick="saveModelEdit()" disabled style="opacity:.5">🔒 Salvar Alteração</button>`;
-    acValidateAll();
-    // Close dropdown on outside click
-    document.addEventListener('click',acCloseAll);
-  },50);
+    <input id="edit_ano_value" value="${ano.replace('A partir de ','')}" placeholder="Ex: 2010 ou deixe vazio para usar padrão" style="padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem">
+    <span style="font-size:.72rem;color:var(--text3)">Deixe vazio para usar o ano padrão da categoria (A partir de ${anoMinimo}). A alteração será adicionada às Pendentes.</span>
+  </div>`,function(){
+    const newAno=document.getElementById('edit_ano_value').value.trim();
+    const currentAno=ano.replace('A partir de ','');
+    if(newAno===currentAno){closeModal();return;}
+    addToStaging({type:'Alterar Ano',marca:marca,modelo:modelo,catFrom:categoria,catTo:categoria,details:'Ano: '+(currentAno||'padrão')+' → '+(newAno||'padrão')});
+    // Update ANOS_ACEITACAO locally (will be saved when staging is applied)
+    const key=categoria+'|||'+marca+'|||'+modelo;
+    ANOS_ACEITACAO[key]=newAno||'';
+    closeModal();
+    showToast('Alteração de ano adicionada às pendentes','success');
+    // Refresh if detail panel is open
+    openModelDetail(marca, modelo);
+  },'blue');
 }
 
 // Autocomplete data sources
