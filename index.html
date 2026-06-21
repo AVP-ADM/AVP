@@ -2344,8 +2344,12 @@ function sortDrawerTableLazy(id,colIdx){
   const state=window['_drawerData_'+id];
   if(!state) return;
   // Toggle sort direction
-  state._sortCol=state._sortCol===colIdx?-1:colIdx;
-  state._sortAsc=state._sortCol===colIdx?!state._sortAsc:true;
+  if(state._sortCol===colIdx){
+    state._sortAsc=!state._sortAsc;
+  } else {
+    state._sortCol=colIdx;
+    state._sortAsc=true;
+  }
   const asc=state._sortAsc;
   const col=colIdx;
   state.filtered.sort((a,b)=>{
@@ -2357,7 +2361,21 @@ function sortDrawerTableLazy(id,colIdx){
   });
   state.page=1;
   const tableId='drawerTableData_'+id;
-  const tbody=document.getElementById(tableId).querySelector('tbody');
+  const table=document.getElementById(tableId);
+  // Update header indicators
+  const ths=table.querySelectorAll('thead th');
+  ths.forEach((th,i)=>{
+    const baseName=state.headers[i];
+    if(i===colIdx){
+      th.innerHTML=baseName+' '+(asc?'↑':'↓');
+      th.style.color='var(--accent)';
+    } else {
+      th.innerHTML=baseName+' ↕';
+      th.style.color='';
+    }
+  });
+  // Re-render tbody
+  const tbody=table.querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
   tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
   const btn=document.getElementById('loadMore_'+id);
