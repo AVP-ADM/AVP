@@ -3197,8 +3197,17 @@ function openModelDetail(marca, modelo){
 
   let status='Normal';
   let statusClass='tag-green';
-  if(isDup){status='Duplicado ('+cats.length+' categorias)';statusClass='tag-dup';}
-  else if(divergences.length){status='Divergente';statusClass='tag-amber';}
+  if(isDup){
+    // Check if it's a problematic duplicate or valid one
+    const isProblematic = isDuplicateProblematic(cats);
+    if(isProblematic){
+      status='Conflito ('+cats.length+' categorias)';
+      statusClass='tag-dup';
+    } else {
+      status='Válido ('+cats.length+' categorias)';
+      statusClass='tag-green';
+    }
+  } else if(divergences.length){status='Divergente';statusClass='tag-amber';}
 
   // Check for pending changes
   const modelPending = hasPendingChange(marca, modelo, null);
