@@ -1778,8 +1778,12 @@ function renderRecentActivity(){
       let text = '';
       const marca = h.marca || '';
       const modelo = h.modelo || '';
-      const categoria = h.categoria || '';
+      let categoria = h.categoria || '';
       const detalhes = h.detalhes || '';
+      // Extract category from detalhes JSON if empty
+      if(!categoria && detalhes && detalhes.startsWith('{')){
+        try{const d=JSON.parse(detalhes);categoria=d.catTo||d.catFrom||'';}catch(e){}
+      }
       if(marca && modelo){
         text = tipo + ': ' + marca + ' ' + modelo;
         if(categoria && tipo.includes('Adição')) text += ' → ' + categoria;
@@ -4689,6 +4693,14 @@ function renderHistory(){
     const hmodelo = h.modelo || '';
     const hcatFrom = h.catFrom || h.categoria || '';
     const hcatTo = h.catTo || '';
+    // Fallback: extract from detalhes JSON if empty
+    let catOrigem = hcatFrom;
+    let catDestino = hcatTo;
+    if(!catOrigem && !catDestino && h.detalhes && h.detalhes.startsWith('{')){
+      try{const d=JSON.parse(h.detalhes);catOrigem=d.catFrom||'';catDestino=d.catTo||'';}catch(e){}
+    }
+    if(!catOrigem && catDestino) catOrigem = '';
+    if(!catDestino && catOrigem && htype.includes('Remoção')) catDestino = '';
     const isCatOp = htype.includes('Categoria');
     const tagClass = htype.includes('Adição')||htype.includes('Criação')?'tag-green':htype.includes('Remoção')?'tag-red':'tag-blue';
     return `<tr>
@@ -4697,8 +4709,8 @@ function renderHistory(){
     <td><span class="tag ${tagClass}">${htype||'—'}</span></td>
     <td>${isCatOp?'—':hmarca}</td>
     <td>${isCatOp?'—':hmodelo}</td>
-    <td>${hcatFrom||'—'}</td>
-    <td>${hcatTo||'—'}</td>
+    <td>${catOrigem||'—'}</td>
+    <td>${catDestino||'—'}</td>
   </tr>`;
   }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
