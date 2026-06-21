@@ -1764,38 +1764,27 @@ function renderRecentActivity(){
   const el = document.getElementById('activityContent');
   if(!el) return;
 
-  // Get recent operations from STAGING and HISTORY
   let activities = [];
 
-  // From staging (pending)
-  if(STAGING && STAGING.ops){
-    for(const op of STAGING.ops.slice(-5)){
-      let icon='edit', iconClass='edit';
-      if(op.type==='Adição'){ icon='+'; iconClass='add'; }
-      else if(op.type==='Remoção'){ icon='−'; iconClass='remove'; }
-      else if(op.type==='Mover'){ icon='↔'; iconClass='move'; }
-      activities.push({icon, iconClass, text:`${op.type}: ${op.marca} ${op.modelo}`, meta: op.catTo ? `→ ${op.catTo}` : (op.catFrom||''), time:'Pendente'});
-    }
-  }
-
-  // From history
+  // Only from confirmed HISTORY (not from pending STAGING)
   if(HISTORY && HISTORY.length){
-    for(const h of HISTORY.slice(-10)){
+    for(const h of HISTORY.slice(-5)){
       let icon='•', iconClass='edit';
-      if(h.type==='Adição'||h.action==='add'){ icon='+'; iconClass='add'; }
-      else if(h.type==='Remoção'||h.action==='remove'){ icon='−'; iconClass='remove'; }
-      else if(h.type==='Mover'||h.action==='move'){ icon='↔'; iconClass='move'; }
-      const text = h.description || h.details || `${h.type||h.action||'Ação'}: ${h.marca||''} ${h.modelo||''}`;
-      const time = h.date || h.timestamp || '';
-      activities.push({icon, iconClass, text, meta: h.user||'', time});
+      const tipo = h.tipo || h.type || h.action || '';
+      if(tipo.includes('Adição') || tipo.includes('add')){ icon='+'; iconClass='add'; }
+      else if(tipo.includes('Remoção') || tipo.includes('remove')){ icon='−'; iconClass='remove'; }
+      else if(tipo.includes('Mov') || tipo.includes('move')){ icon='↔'; iconClass='move'; }
+      const text = h.detalhes || h.description || h.details || (tipo+': '+(h.marca||'')+' '+(h.modelo||''));
+      const time = h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : (h.date || h.timestamp || '');
+      const user = h.usuario_nome || h.user || '';
+      activities.push({icon, iconClass, text, meta: user, time});
     }
   }
 
-  // Show last 5
-  activities = activities.slice(-5).reverse();
+  activities = activities.reverse();
 
   if(activities.length === 0){
-    el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteração recente</h4><p style="font-size:.75rem">As atividades aparecerão aqui conforme o sistema for utilizado.</p></div>';
+    el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteração recente</h4><p style="font-size:.75rem">As alterações confirmadas aparecerão aqui.</p></div>';
     return;
   }
 
