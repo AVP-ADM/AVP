@@ -2577,15 +2577,19 @@ function openEditCategoryType(cat){
       <input type="checkbox" id="catType_trucks" ${hasTrucks?'checked':''}> Caminhões
     </label>
     <span style="font-size:.72rem;color:var(--text3)">Isso define quais marcas/modelos FIPE serão exibidos ao adicionar modelos nesta categoria.</span>
+    <span style="font-size:.72rem;color:var(--amber)">A alteração será adicionada às Alterações Pendentes.</span>
   </div>`,function(){
     const types=[];
     if(document.getElementById('catType_cars').checked) types.push('cars');
     if(document.getElementById('catType_motos').checked) types.push('motorcycles');
     if(document.getElementById('catType_trucks').checked) types.push('trucks');
     if(!types.length){showToast('Selecione pelo menos um tipo','error');return;}
-    setCategoryFipeType(cat, types.join(','));
+    const newType = types.join(',');
+    if(newType === current){closeModal();return;}
+    // Add to staging instead of applying directly
+    addToStaging({type:'Alterar Tipo FIPE', marca:'—', modelo:cat, catFrom:current, catTo:newType, details:'Tipo FIPE: '+current+' → '+newType});
     closeModal();
-    showToast('Tipo da categoria "'+cat+'" atualizado para: '+getCategoryFipeTypeLabel(cat),'success');
+    showToast('Alteração de tipo adicionada às pendentes. Vá em Manutenção para aplicar.','success');
     renderOverviewTable();
   },'blue');
 }
