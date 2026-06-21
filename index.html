@@ -4791,7 +4791,7 @@ function styledXLSX(headers, dataRows, sheetName, fileName){
 function exportChangesXLSX(){
   if(!HISTORY.length) return showToast('Nenhuma alteração registrada','warning');
   const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
-  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  const data=HISTORY.map(h=>[h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',h.type||h.tipo||'',h.marca||'',h.modelo||'',h.catFrom||h.categoria||'',h.catTo||'']);
   styledXLSX(headers, data, 'Alterações', 'alteracoes_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
@@ -4831,7 +4831,7 @@ function exportDivergencesXLSX(){
 function exportHistoryXLSX(){
   if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
   const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
-  const data=HISTORY.map(h=>[h.timestamp||'',h.type||'',h.marca||'',h.modelo||'',h.catFrom||'',h.catTo||'']);
+  const data=HISTORY.map(h=>[h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',h.type||h.tipo||'',h.marca||'',h.modelo||'',h.catFrom||h.categoria||'',h.catTo||'']);
   styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
