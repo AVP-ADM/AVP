@@ -92,6 +92,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .sidebar-collapse{display:none}
 .sidebar-collapse-btn{display:none}
 /* Sidebar pin as nav item */
+.sidebar-pin-bottom{padding:8px;border-top:1px solid var(--border);margin-top:auto}
 .app-sidebar:not(.collapsed) .pin-icon-nav{transform:rotate(45deg);color:var(--accent)}
 /* Sidebar expand on hover */
 .app-sidebar.collapsed:hover{width:240px;min-width:240px;transition:width .2s cubic-bezier(.4,0,.2,1) 0s,min-width .2s cubic-bezier(.4,0,.2,1) 0s}
@@ -635,12 +636,13 @@ tr:hover .row-actions{opacity:1}
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
         </button>
-        <div style="margin:8px 14px;height:1px;background:var(--border)"></div>
+      </nav>
+      <div class="sidebar-pin-bottom">
         <button class="sidebar-item" data-tooltip="Fixar menu" onclick="toggleSidebar()">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pin-icon-nav"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76z"/></svg></span>
           <span class="si-text">Fixar menu</span>
         </button>
-      </nav>
+      </div>
     </aside>
 
     <!-- ========= CONTENT AREA ========= -->
