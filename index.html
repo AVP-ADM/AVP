@@ -4008,6 +4008,7 @@ function openAddCategory(){
     setCategoryFipeType(name, types.join(','));
     addToStaging({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name});
     closeModal();
+    renderOverviewTable();
     showToast('Criação de "'+name+'" adicionada às pendentes','success');
   },'green');
   setTimeout(()=>{
