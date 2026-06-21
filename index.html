@@ -89,13 +89,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .app-sidebar.collapsed .si-text{opacity:0;transition:opacity .1s}
 .sidebar-item .si-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;min-width:18px;text-align:center;transition:all .2s}
 .app-sidebar.collapsed .si-badge{right:6px;top:6px;transform:none;font-size:.55rem;padding:1px 4px;min-width:14px}
-.sidebar-collapse{padding:8px;border-top:1px solid var(--border);display:flex;justify-content:center}
-.sidebar-collapse-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;cursor:pointer;color:var(--text3);transition:all .2s;display:flex;align-items:center;gap:6px;font-size:.72rem;width:100%;justify-content:center}
-.sidebar-collapse-btn:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
-.sidebar-collapse-btn .collapse-text{transition:opacity .2s}
-.app-sidebar.collapsed .sidebar-collapse-btn .collapse-text{opacity:0;width:0;overflow:hidden}
-.sidebar-collapse-btn svg{transition:transform .25s}
-.app-sidebar.collapsed .sidebar-collapse-btn svg{transform:rotate(180deg)}
+.sidebar-collapse{display:none}
+.sidebar-collapse-btn{display:none}
+/* Sidebar pin button */
+.sidebar-pin{padding:8px 10px;display:flex;justify-content:flex-end}
+.sidebar-pin-btn{background:none;border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;cursor:pointer;color:var(--text3);transition:all .2s;display:flex;align-items:center;gap:5px;font-size:.68rem;white-space:nowrap}
+.sidebar-pin-btn:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.sidebar-pin-btn .pin-text{transition:opacity .2s}
+.sidebar-pin-btn .pin-icon{transition:transform .2s}
+.app-sidebar.collapsed .sidebar-pin{justify-content:center}
+.app-sidebar.collapsed .sidebar-pin-btn .pin-text{opacity:0;width:0;overflow:hidden}
+.app-sidebar.collapsed:hover .sidebar-pin-btn .pin-text{opacity:1;width:auto}
+.app-sidebar.collapsed:hover .sidebar-pin{justify-content:flex-end}
+/* When sidebar is pinned (not collapsed) */
+.app-sidebar:not(.collapsed) .sidebar-pin-btn{color:var(--accent);border-color:var(--accent);background:var(--accent-light)}
+.app-sidebar:not(.collapsed) .sidebar-pin-btn .pin-icon{transform:rotate(45deg)}
 /* Sidebar expand on hover */
 .app-sidebar.collapsed:hover{width:240px;min-width:240px}
 .app-sidebar.collapsed:hover .si-text{opacity:1;transition:opacity .2s .1s}
@@ -610,6 +618,12 @@ tr:hover .row-actions{opacity:1}
   <div class="app-layout">
     <!-- ========= SIDEBAR ========= -->
     <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-pin" id="sidebarPin">
+        <button class="sidebar-pin-btn" onclick="toggleSidebar()" title="Fixar menu aberto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pin-icon"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76z"/></svg>
+          <span class="pin-text">Fixar</span>
+        </button>
+      </div>
       <nav class="sidebar-nav">
         <button class="sidebar-item active" data-tab="overview" data-tooltip="Visão Geral" onclick="goTab('overview')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
@@ -639,12 +653,6 @@ tr:hover .row-actions{opacity:1}
           <span class="si-text">Exportações</span>
         </button>
       </nav>
-      <div class="sidebar-collapse">
-        <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Colapsar menu">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
-          <span class="collapse-text">Colapsar</span>
-        </button>
-      </div>
     </aside>
 
     <!-- ========= CONTENT AREA ========= -->
@@ -5695,7 +5703,8 @@ function toggleSidebar(){
   const sidebar = document.getElementById('appSidebar');
   if(sidebar){
     sidebar.classList.toggle('collapsed');
-    localStorage.setItem('avp-sidebar-collapsed', sidebar.classList.contains('collapsed')?'1':'0');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    localStorage.setItem('avp-sidebar-collapsed', isCollapsed?'1':'0');
   }
 }
 
