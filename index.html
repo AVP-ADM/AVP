@@ -1969,7 +1969,7 @@ function renderTopDivergences(){
     const topErrors = errors.slice(0,3);
     html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${errors.length})</span></div>`;
     html += topErrors.map((d,i)=>`
-      <div class="rank-item critical" onclick="navigateToDivergence(${groupIdx})">
+      <div class="rank-item critical" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
         <div class="rank-num">${i+1}</div>
         <div class="rank-info">
           <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
@@ -1984,7 +1984,7 @@ function renderTopDivergences(){
     const topReview = reviews.slice(0,3);
     html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${reviews.length})</span></div>`;
     html += topReview.map((d,i)=>`
-      <div class="rank-item warning" onclick="navigateToDivergence(${groupIdx})">
+      <div class="rank-item warning" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
         <div class="rank-num">${i+1}</div>
         <div class="rank-info">
           <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
@@ -2025,11 +2025,23 @@ function navigateToDuplicate(marca, modelo){
   },100);
 }
 
-function navigateToDivergence(groupIdx){
+function navigateToDivergence(groupIdx, modelo){
   // Navigate to Divergências tab and select the correct group
   currentCompGroup=groupIdx;
   goTab('divergences');
-  setTimeout(()=>{renderDivergences();},100);
+  setTimeout(()=>{
+    renderDivergences();
+    // If a model was specified, filter by it
+    if(modelo){
+      setTimeout(()=>{
+        const filterInput=document.getElementById('divSearchFilter');
+        if(filterInput){
+          filterInput.value=modelo;
+          filterDivergencesList();
+        }
+      },150);
+    }
+  },100);
 }
 
 // ========= DRAWER =========
@@ -2160,7 +2172,12 @@ function showCatDetail(cat, type){
     title='Divergências - '+cat+' ('+data.length+')';
     html=buildDrawerTableClickable(['Marca','Modelo','Situação'],data,'cat-diverg',function(row){
       closeDrawer();
-      goTab('divergences');
+      // Determine the correct group index based on the category
+      let gIdx=0;
+      for(let i=0;i<COMP_GROUPS.length;i++){
+        if(COMP_GROUPS[i].a===cat||COMP_GROUPS[i].b===cat){gIdx=i;break;}
+      }
+      navigateToDivergence(gIdx, row[1]);
     });
   }
   openDetailDrawer(title, html);
