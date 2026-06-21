@@ -1962,12 +1962,14 @@ function renderTopDivergences(){
 
   let html = '';
 
+  const groupIdx = mode === 'passeio' ? 0 : 1;
+
   // Errors section
   if(errors.length > 0){
     const topErrors = errors.slice(0,3);
     html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${errors.length})</span></div>`;
     html += topErrors.map((d,i)=>`
-      <div class="rank-item critical" onclick="goTab('divergences')">
+      <div class="rank-item critical" onclick="navigateToDivergence(${groupIdx})">
         <div class="rank-num">${i+1}</div>
         <div class="rank-info">
           <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
@@ -1982,7 +1984,7 @@ function renderTopDivergences(){
     const topReview = reviews.slice(0,3);
     html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${reviews.length})</span></div>`;
     html += topReview.map((d,i)=>`
-      <div class="rank-item warning" onclick="goTab('divergences')">
+      <div class="rank-item warning" onclick="navigateToDivergence(${groupIdx})">
         <div class="rank-num">${i+1}</div>
         <div class="rank-info">
           <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
