@@ -3380,7 +3380,7 @@ function openModelEdit(marca, modelo, categoria){
     closeModal();
     showToast('Alteração de ano adicionada às pendentes','success');
     // Refresh if detail panel is open
-    openModelDetail(marca, modelo);
+    showCatDetail(categoria,'modelos');
   },'blue');
 }
 
@@ -3536,6 +3536,7 @@ function openModelRemove(marca, modelo){
     });
     closeModal();
     closeDrawer();
+    renderOverviewTable();
     showToast('Remoção adicionada às alterações pendentes','success');
   },'red');
 }
@@ -3565,6 +3566,7 @@ function openModelMove(marca, modelo){
     addToStaging({type:'Movimentação',marca:marca,modelo:modelo,catFrom:from,catTo:to});
     closeModal();
     closeDrawer();
+    renderOverviewTable();
     showToast('Movimentação adicionada às alterações pendentes','success');
   },'blue');
 }
@@ -4043,6 +4045,7 @@ function openRenameCategory(cat){
     if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
     addToStaging({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName});
     closeModal();
+    renderOverviewTable();
     showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
   },'blue');
   setTimeout(()=>{
@@ -4079,6 +4082,7 @@ function openRemoveCategory(cat){
   </div>`,function(){
     addToStaging({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null});
     closeModal();
+    renderOverviewTable();
     showToast('Remoção da categoria "'+cat+'" pendente','success');
   },'red');
 }
@@ -4574,6 +4578,7 @@ function showMgmtModal(type){
       if(!brand||!model) return alert('Preencha marca e modelo');
       addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
       closeModal();
+      renderOverviewTable();
     };
   } else if(type==='remove'){
     title='➖ Remover Modelo';
@@ -4589,6 +4594,7 @@ function showMgmtModal(type){
       if(!brand||!model) return alert('Preencha marca e modelo');
       addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
       closeModal();
+      renderOverviewTable();
     };
   } else if(type==='move'){
     title='↔️ Mover Modelo';
@@ -4609,6 +4615,7 @@ function showMgmtModal(type){
       if(catFrom===catTo) return alert('Origem e destino devem ser diferentes');
       addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom,catTo});
       closeModal();
+      renderOverviewTable();
     };
   } else if(type==='mass'){
     title='📋 Correção em Massa';
@@ -4993,6 +5000,7 @@ function finalizeTempRelease(idx){
     closeModal();
     renderTempReleases();
     renderTempReleaseAlert();
+    renderOverviewTable();
     showToast('Liberação finalizada. Remoção adicionada às pendentes.','success');
   },'red');
 }
