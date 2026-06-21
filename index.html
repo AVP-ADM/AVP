@@ -3912,6 +3912,7 @@ function cancelPendingRemoval(marca, modelo, categoria){
     STAGING.data=null;
     rebuildPendingIndex();
     saveStagingToStorage();
+    updateSidebarBadges();
     markAllDirty();
     renderDupTable();
     renderStagingBars();
@@ -4314,6 +4315,7 @@ function removeFromStaging(idx){
   rebuildPendingIndex();
   markAllDirty();
   saveStagingToStorage();
+  updateSidebarBadges();
   renderStagingBars();
   renderStagingTable();
   // If a removal was cancelled, re-render views to restore visually
