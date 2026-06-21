@@ -40,6 +40,31 @@ const supabase = {
     } catch { return null; }
   },
 
+  getRefreshToken() {
+    try {
+      const session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
+      return session?.refresh_token || null;
+    } catch { return null; }
+  },
+
+  async refreshSession() {
+    const refreshToken = supabase.getRefreshToken();
+    if (!refreshToken) return false;
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+      const data = await resp.json();
+      if (data.access_token) {
+        supabase.saveSession(data);
+        return true;
+      }
+    } catch(e) { console.warn('Token refresh failed:', e); }
+    return false;
+  },
+
   getUser() {
     try {
       const session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
@@ -64,7 +89,14 @@ const supabase = {
     if (options.filter) url += `&${options.filter}`;
     if (options.order) url += `&order=${options.order}`;
     if (options.limit) url += `&limit=${options.limit}`;
-    const resp = await fetch(url, { headers: supabase._headers() });
+    let resp = await fetch(url, { headers: supabase._headers() });
+    // Auto-refresh token on 401
+    if (resp.status === 401) {
+      const refreshed = await supabase.refreshSession();
+      if (refreshed) {
+        resp = await fetch(url, { headers: supabase._headers() });
+      }
+    }
     if (!resp.ok) throw new Error(`Select ${table} failed: ${resp.status}`);
     return resp.json();
   },
@@ -75,8 +107,13 @@ const supabase = {
     if (options.order) url += `&order=${options.order}`;
     if (options.limit) url += `&limit=${options.limit}`;
     if (options.offset) url += `&offset=${options.offset}`;
-    const headers = { ...supabase._headers() };
-    const resp = await fetch(url, { headers });
+    let resp = await fetch(url, { headers: supabase._headers() });
+    if (resp.status === 401) {
+      const refreshed = await supabase.refreshSession();
+      if (refreshed) {
+        resp = await fetch(url, { headers: supabase._headers() });
+      }
+    }
     if (!resp.ok) throw new Error(`Select ${table} failed: ${resp.status}`);
     return resp.json();
   },

@@ -6035,6 +6035,12 @@ async function initDataConnection(){
   try{
     showSyncStatus('loading','Carregando dados do Supabase...');
 
+    // Ensure token is valid (refresh if expired)
+    const token = supabase.getToken();
+    if(token){
+      await supabase.refreshSession();
+    }
+
     // Load all data from Supabase
     const {categorias, modelos} = await supabase.loadAllData();
 
@@ -6072,28 +6078,28 @@ async function initDataConnection(){
     try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
     try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
 
-    // Load history
+    // Load history (non-critical - don't fail the whole load)
     try{
       HISTORY = await supabase.loadHistory();
       try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
-    }catch(e){ console.warn('History load error:',e); }
+    }catch(e){ console.warn('History load (non-critical):',e); }
 
-    // Load temp releases
+    // Load temp releases (non-critical)
     try{
       const tempRel = await supabase.loadTempReleases();
       if(tempRel && tempRel.length > 0){
         TEMP_RELEASES = tempRel;
         saveTempReleasesToStorage();
       }
-    }catch(e){}
+    }catch(e){ console.warn('Temp releases load (non-critical):',e); }
 
-    // Load pending changes
+    // Load pending changes (non-critical)
     try{
       const pending = await supabase.loadPendingChanges();
       if(pending && pending.length > 0){
         STAGING.ops = pending.map(p=>({type:p.tipo, marca:p.marca, modelo:p.modelo, catFrom:p.categoria_origem, catTo:p.categoria_destino, details:p.detalhes, id:p.id}));
       }
-    }catch(e){}
+    }catch(e){ console.warn('Pending changes load (non-critical):',e); }
 
     isConnected=true;
     dataLoaded=true;
@@ -6122,11 +6128,23 @@ async function initDataConnection(){
 
   } catch(err){
     console.error('Erro ao carregar do Supabase:',err);
-    // Fallback - try to render from cache
-    recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
-    enableExportButtons();
-    showSyncStatus('error','Falha ao conectar com Supabase');
-    showToast('Falha ao carregar dados. Usando cache local.','error');
+    // Check if we have cached data - if so, it's not a total failure
+    if(Object.keys(RAW).length > 0){
+      // Data loaded from cache, just the remote sync failed
+      recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+      enableExportButtons();
+      showSyncStatus('warning','Usando dados do cache local');
+      setTimeout(()=>{
+        const el=document.getElementById('syncIndicator');
+        if(el){el.style.opacity='0';el.style.transform='translateY(10px)';}
+      },4000);
+    } else {
+      // No data at all
+      recomputeAll();initAnos();renderKPIs();renderOverviewTable();renderMgmtKpis();renderStagingBars();renderStagingTable();
+      enableExportButtons();
+      showSyncStatus('error','Falha ao conectar com Supabase');
+      showToast('Falha ao carregar dados. Verifique sua conexão.','error');
+    }
   }
 }
 
