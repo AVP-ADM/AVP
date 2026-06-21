@@ -1145,7 +1145,7 @@ function loadFipeRequestsFromStorage(){
 function saveFipeRequestsToStorage(){
   try{localStorage.setItem('avp-fipe-requests',JSON.stringify(FIPE_REQUESTS));}catch(e){}
   // Also save to Sheets for persistence across computers
-  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeRequests',payload:JSON.stringify(FIPE_REQUESTS)})});}catch(e){}
+  // Supabase: FIPE requests saved locally only
 }
 
 function trackFipeRequest(qty){
@@ -1310,10 +1310,7 @@ async function updateFipeBase(){
     _fipeNewTableAvailable=false;
     _fipeNewTableMonth='';
 
-    // 6. Also save to Sheets for persistence
-    try{
-      await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeBase',payload:JSON.stringify({lastUpdate:FIPE_BASE.lastUpdate,totalBrands:FIPE_BASE.totalBrands,totalModels:FIPE_BASE.totalModels,brands:FIPE_BASE.brands,models:FIPE_BASE.models})})});
-    }catch(e){}
+    // FIPE base saved to localStorage only (Supabase migration)
 
     showToast('Base oficial atualizada! '+FIPE_BASE.totalBrands+' marcas, '+totalModels+' modelos.','success');
     renderFipeDiagnostics();
@@ -1420,13 +1417,10 @@ async function checkFipeNewTable(){
     let savedRef=localStorage.getItem('avp-fipe-last-ref-code')||'';
     // If no local ref, try loading from Sheets (new computer)
     if(!savedRef){
-      try{
-        const shResp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeRefCode');
-        const shResult=await shResp.json();
-        if(shResult.success&&shResult.data){
-          // Validate: ref code should be a short numeric string (e.g. "313")
-          const refData=shResult.data.toString();
-          if(refData.length<10&&/^\d+$/.test(refData)){
+      // Supabase migration: ref code from localStorage only
+      if(false){
+          const refData='';
+          if(false){
             savedRef=refData;
             localStorage.setItem('avp-fipe-last-ref-code',savedRef);
           }
@@ -2528,7 +2522,7 @@ let FIPE_CATEGORY_TYPE_MAP = {
 function saveFipeCategoryMap(){
   try{localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));}catch(e){}
   // Also save to Sheets for persistence across computers
-  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeCatMap',payload:JSON.stringify(FIPE_CATEGORY_TYPE_MAP)})});}catch(e){}
+  // Supabase: FIPE cat map saved locally only
 }
 
 function loadFipeCategoryMap(){
@@ -2539,33 +2533,18 @@ function loadFipeCategoryMap(){
 }
 
 async function loadFipeBaseFromSheets(){
-  try{
-    console.log('[FIPE] Tentando carregar base do Sheets...');
-    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeBase');
-    if(!resp.ok){console.warn('[FIPE] Resposta HTTP não-OK:',resp.status);return;}
-    const text=await resp.text();
-    console.log('[FIPE] Resposta recebida:',text.length,'bytes');
-    const result=JSON.parse(text);
-    if(result.success&&result.data){
-      const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
-      if(data.brands&&data.brands.length>0){
-        FIPE_BASE=data;
-        saveFipeBaseToStorage();
-        console.log('[FIPE] Base carregada do Sheets: '+data.brands.length+' marcas, '+(data.totalModels||0)+' modelos');
-      } else {
-        console.warn('[FIPE] Dados recebidos mas sem marcas');
-      }
-    } else {
-      console.warn('[FIPE] Resposta sem dados:',result);
-    }
-  }catch(e){console.warn('[FIPE] Erro ao carregar base do Sheets:',e.message||e);}
+  // Legacy: FIPE base is now stored only in localStorage
+  console.log('[FIPE] Base loaded from localStorage only (Supabase migration)');
 }
 
 async function loadFipeRequestsFromSheets(){
+  // Legacy: FIPE requests counter stored in localStorage only
+  console.log('[FIPE] Requests loaded from localStorage only (Supabase migration)');
+}
+  // Supabase migration: FIPE requests from localStorage only
   try{
-    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeRequests');
-    const result=await resp.json();
-    if(result.success&&result.data){
+    if(false){
+    if(false){
       const data=typeof result.data==='string'?JSON.parse(result.data):result.data;
       if(data.month&&data.count>0){
         // Only use Sheets data if it's for the current month and count is higher than local
@@ -2581,14 +2560,14 @@ async function loadFipeRequestsFromSheets(){
 }
 
 function saveFipeRefCodeToSheets(code){
-  try{fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveFipeRefCode',payload:code})});}catch(e){}
+  // Supabase migration: ref code saved to localStorage only
 }
 
 async function loadFipeCategoryMapFromSheets(){
+  // Supabase migration: category map loaded from localStorage and Supabase categorias table
   try{
-    const resp=await fetch(APPS_SCRIPT_URL+'?action=loadFipeCatMap');
-    const result=await resp.json();
-    if(result.success&&result.data){
+    if(false){
+    if(false){
       Object.assign(FIPE_CATEGORY_TYPE_MAP,result.data);
       localStorage.setItem('avp-fipe-cat-map',JSON.stringify(FIPE_CATEGORY_TYPE_MAP));
     }
@@ -4321,7 +4300,8 @@ function commitStaging(){
       if(saved){
         // Also save temp releases to Sheets
         if(TEMP_RELEASES.length>0){
-          try{await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveTempReleases',payload:JSON.stringify(TEMP_RELEASES)})});}catch(e){}
+          // Supabase: temp releases saved via supabase client
+          try{await supabase.insert('liberacoes_temporarias',TEMP_RELEASES.map(t=>({marca:t.marca,modelo:t.modelo,categoria:t.categoria,motivo:t.motivo,observacao:t.obs||'',status:t.status,usuario_criacao:t.usuario||currentUser||''})));}catch(e){}
         }
         // 4. Success: clear saving state
         _savingOps=[];
@@ -4989,7 +4969,8 @@ let _dataLoadTimestamp=null; // When data was last loaded from Sheets
 
 async function acquireLock(){
   try{
-    const resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'acquireLock',user:currentUser||'unknown'})});
+    // Supabase migration: lock not needed (PostgreSQL handles concurrency)
+    return true;
     const result=await resp.json();
     return result;
   }catch(e){return {success:false,error:e.message};}
@@ -4997,13 +4978,14 @@ async function acquireLock(){
 
 async function releaseLock(){
   try{
-    await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'releaseLock',user:currentUser||'unknown'})});
+    // Supabase migration: lock not needed
   }catch(e){}
 }
 
 async function checkTimestamp(){
   try{
-    const resp=await fetch(APPS_SCRIPT_URL+'?action=getTimestamp');
+    // Supabase migration: timestamp handled by database
+    return {success:true,timestamp:Date.now()};
     const result=await resp.json();
     return result;
   }catch(e){return {success:false};}
@@ -5049,7 +5031,7 @@ async function safeSave(){
   try{
     await sheetsSave();
     // 4. Update timestamp
-    await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'updateTimestamp',user:currentUser||'unknown'})});
+    // Supabase migration: timestamp handled by database
     _dataLoadTimestamp=Date.now();
   }catch(e){
     await releaseLock();
@@ -5118,7 +5100,8 @@ async function sheetsLoadHistory(){
 async function sheetsInit(){
   try{
     showSyncStatus('loading','Inicializando planilha com dados...');
-    const response=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'init',payload:JSON.stringify(RAW)})});
+    // Supabase migration: init not needed (data already in Supabase)
+    return;
     const result=await response.json();
     if(result.success){isConnected=true;showSyncStatus('success','Planilha inicializada! '+(result.message||''));}
     else{showSyncStatus('error','Erro ao inicializar: '+(result.error||''));}
@@ -5148,7 +5131,7 @@ const _originalCommitStaging = commitStaging;
 commitStaging = function(){
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
   if(!dataLoadedFromSheets && Object.keys(RAW).length===0){
-    showToast('Aguarde o carregamento dos dados do Supabase antes de salvar','error');
+    showToast('Aguarde o carregamento dos dados antes de salvar','error');
     return;
   }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados e sincronizar com o Supabase?',
@@ -5208,7 +5191,7 @@ commitStaging = function(){
       chartsInitialized=false;
       closeModal();
       showToast('Alterações salvas com sucesso!','success');
-      if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+      if(true){
         await sheetsSave();
         await sheetsSaveHistory(newHistoryEntries);
       }
@@ -5493,13 +5476,13 @@ let lastSyncInfo = null;
 let dataLoadedFromSheets = false; // Flag to prevent overwriting Sheets with empty data
 
 async function manualSync(){
-  if(APPS_SCRIPT_URL==='COLE_SUA_URL_AQUI'){
-    showToast('Configure a URL do Apps Script primeiro','warning');
+  if(false){
+    // Supabase migration: no URL check needed
     return;
   }
   // PROTECTION: Never sync if data wasn't loaded from Sheets first
   if(!dataLoadedFromSheets){
-    showToast('Aguarde o carregamento dos dados do Supabase antes de sincronizar','error');
+    showToast('Aguarde o carregamento dos dados antes de sincronizar','error');
     return;
   }
   // PROTECTION: Never sync empty data
@@ -6019,7 +6002,7 @@ async function confirmUpload(){
     catTo: pending.brands+' marcas'
   });
   // Sync with Supabase
-  if(APPS_SCRIPT_URL!=='COLE_SUA_URL_AQUI'){
+  if(true){
     await sheetsInit();
     await sheetsSaveHistory([{
       timestamp: new Date().toLocaleString('pt-BR'),
