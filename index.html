@@ -1740,6 +1740,7 @@ function renderKPIs(){
     <div class="kpi-card amber" onclick="showKpiDetail('divergencias')">
       <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
       <div class="kpi-label">Divergências</div><div class="kpi-value">${totalDivsErrors + totalDivsReview}</div>
+      <div class="kpi-trend">${totalDivsErrors} críticas · ${totalDivsReview} revisão</div>
     </div>
   `;
 
@@ -1894,6 +1895,9 @@ function renderOverviewTable(){
         }
       }
     }
+    // Count critical vs review divergences for this category
+    const catDivCritical = DIVERGENCES_ERRORS.filter(d=>d.from===cat||d.missing===cat).length;
+    const catDivReview = DIVERGENCES_REVIEW.filter(d=>d.onlyIn===cat||d.notIn===cat).length;
     if(isPendingCreation){
       return `<tr style="opacity:.7">
         <td><strong>${cat}</strong> <span class="tag tag-amber" style="font-size:.6rem">Pendente</span></td>
@@ -1909,7 +1913,7 @@ function renderOverviewTable(){
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
-      <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')">${divs}</span>`:'—'}</td>
+      <td>${divs>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical} críticas · ${catDivReview} revisão">${catDivCritical>0?catDivCritical:''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?'<span style="color:var(--amber)">'+catDivReview+'</span>':''}</span>`:'—'}</td>
       <td style="white-space:nowrap">
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
@@ -2127,14 +2131,14 @@ function showKpiDetail(type){
     const data=[];
     // Erros obrigatórios
     for(const d of DIVERGENCES_ERRORS){
-      data.push([d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
+      data.push(['❌', d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
     }
     // Para revisão
     for(const d of DIVERGENCES_REVIEW){
-      data.push([d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
+      data.push(['⚠️', d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
     }
-    title+=' ('+data.length+')';
-    html=buildDrawerTable(['Marca','Modelo','Situação'],data,'divergencias');
+    title+=' ('+data.length+') — '+DIVERGENCES_ERRORS.length+' críticas · '+DIVERGENCES_REVIEW.length+' revisão';
+    html=buildDrawerTable(['Tipo','Marca','Modelo','Situação'],data,'divergencias');
   }
   openDetailDrawer(title, html);
 }
