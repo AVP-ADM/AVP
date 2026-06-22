@@ -1,7 +1,6 @@
 // ========= AVP BASE - SUPABASE CLIENT =========
 const SUPABASE_URL = 'https://thchtjwbytdphmviympg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VMEfbrcWX4dHBAZZSsc3yQ_RniWyTz9';
-// SUPABASE_SERVICE_KEY is defined in index.html before this file loads
 
 // Supabase client helper (sem SDK externo, usa fetch puro)
 const supabase = {
@@ -86,7 +85,8 @@ const supabase = {
   },
 
   _serviceHeaders() {
-    return { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' };
+    // Kept for potential server-side use; browser operations use _headers() with user token
+    return supabase._headers();
   },
 
   async select(table, options = {}) {
