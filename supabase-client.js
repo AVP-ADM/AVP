@@ -1,6 +1,7 @@
 // ========= AVP BASE - SUPABASE CLIENT =========
 const SUPABASE_URL = 'https://thchtjwbytdphmviympg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_VMEfbrcWX4dHBAZZSsc3yQ_RniWyTz9';
+// SUPABASE_SERVICE_KEY is defined in index.html before this file loads
 
 // Supabase client helper (sem SDK externo, usa fetch puro)
 const supabase = {
@@ -82,6 +83,10 @@ const supabase = {
     const headers = { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return headers;
+  },
+
+  _serviceHeaders() {
+    return { 'apikey': SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' };
   },
 
   async select(table, options = {}) {
@@ -302,11 +307,14 @@ const supabase = {
 
     // Clean up old chunks that are no longer needed
     try {
-      const allCache = await supabase.select('fipe_cache', { select: 'chave' });
-      const validKeys = new Set(['fipe_metadata', 'fipe_brands', 'fipe_models_manifest', ...chunkManifest]);
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=chave`, { headers: supabase._serviceHeaders() });
+      const allCache = resp.ok ? await resp.json() : [];
+      const validKeys = new Set(['fipe_metadata', 'fipe_brands', 'fipe_models_manifest', 'fipe_requests', ...chunkManifest]);
       for (const row of allCache) {
         if (row.chave.startsWith('fipe_models_chunk_') && !validKeys.has(row.chave)) {
-          await supabase.delete('fipe_cache', `chave=eq.${encodeURIComponent(row.chave)}`);
+          await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?chave=eq.${encodeURIComponent(row.chave)}`, {
+            method: 'DELETE', headers: supabase._serviceHeaders()
+          });
         }
       }
     } catch(e) { console.warn('[FIPE Cache] Cleanup old chunks:', e); }
@@ -314,30 +322,37 @@ const supabase = {
     return true;
   },
 
-  // Load FIPE base from Supabase cache
+  // Load FIPE base from Supabase cache (uses service_role for guaranteed access)
   async loadFipeCache() {
     try {
+      const svcHeaders = supabase._serviceHeaders();
+      const fetchCache = async (filter) => {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=chave,valor&${filter}`, { headers: svcHeaders });
+        if (!resp.ok) return [];
+        return resp.json();
+      };
+
       // Load metadata
-      const metaRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_metadata' });
+      const metaRows = await fetchCache('chave=eq.fipe_metadata');
       if (!metaRows || metaRows.length === 0) return null; // No cache exists
 
       const metadata = metaRows[0].valor;
       if (!metadata || !metadata.lastUpdate) return null;
 
       // Load brands
-      const brandsRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_brands' });
+      const brandsRows = await fetchCache('chave=eq.fipe_brands');
       if (!brandsRows || brandsRows.length === 0) return null;
       const brands = brandsRows[0].valor;
 
       // Load models manifest
-      const manifestRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_models_manifest' });
+      const manifestRows = await fetchCache('chave=eq.fipe_models_manifest');
       if (!manifestRows || manifestRows.length === 0) return null;
       const manifest = manifestRows[0].valor;
 
       // Load all model chunks
       const models = {};
       for (const chunkKey of manifest) {
-        const chunkRows = await supabase.select('fipe_cache', { filter: `chave=eq.${encodeURIComponent(chunkKey)}` });
+        const chunkRows = await fetchCache(`chave=eq.${encodeURIComponent(chunkKey)}`);
         if (chunkRows && chunkRows.length > 0) {
           Object.assign(models, chunkRows[0].valor);
         }
@@ -364,15 +379,17 @@ const supabase = {
   // Load FIPE requests counter from Supabase
   async loadFipeRequestsCache() {
     try {
-      const rows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_requests' });
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=valor&chave=eq.fipe_requests`, { headers: supabase._serviceHeaders() });
+      if (!resp.ok) return null;
+      const rows = await resp.json();
       if (rows && rows.length > 0) return rows[0].valor;
       return null;
     } catch(e) { return null; }
   },
 
-  // Upsert a single key in fipe_cache table
+  // Upsert a single key in fipe_cache table (uses service_role for write access)
   async upsertFipeCacheKey(chave, valor) {
-    const headers = { ...supabase._headers(), 'Prefer': 'resolution=merge-duplicates' };
+    const headers = { ...supabase._serviceHeaders(), 'Prefer': 'resolution=merge-duplicates' };
     const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache`, {
       method: 'POST',
       headers,
