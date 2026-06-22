@@ -249,6 +249,23 @@ const supabase = {
     return supabase.insert('modelos', models, { upsert: true });
   },
 
+  // Divergências ignoradas
+  async loadDivergenciasIgnoradas() {
+    return supabase.select('divergencias_ignoradas');
+  },
+
+  async ignorarDivergencia(marca, modelo, catOrigem, catDestino, usuario) {
+    return supabase.insert('divergencias_ignoradas', {
+      marca, modelo, categoria_origem: catOrigem, categoria_destino: catDestino, usuario
+    });
+  },
+
+  async desigNorarDivergencia(marca, modelo, catOrigem, catDestino) {
+    return supabase.delete('divergencias_ignoradas',
+      `marca=eq.${encodeURIComponent(marca)}&modelo=eq.${encodeURIComponent(modelo)}&categoria_origem=eq.${encodeURIComponent(catOrigem)}&categoria_destino=eq.${encodeURIComponent(catDestino)}`
+    );
+  },
+
   // Save full base (replaces all models for given categories)
   async saveFullBase(rawData, categoriasMap) {
     // rawData = {catName: {brands: {brand: [model1, model2]}}}
