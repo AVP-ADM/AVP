@@ -1231,13 +1231,20 @@ function isFipeBaseOutdated(){
 }
 
 function getFipeBrands(){
-  return FIPE_BASE.brands.map(b=>b.name).sort();
+  return [...new Set(FIPE_BASE.brands.map(b=>b.name))].sort();
 }
 
 function getFipeModelsForBrand(brandName){
-  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===brandName.toLowerCase());
-  if(!brand||!FIPE_BASE.models[brand.code]) return [];
-  return FIPE_BASE.models[brand.code].map(m=>m.name).sort();
+  // Search across all vehicle types for this brand name (handles duplicates like BMW in cars+motos)
+  const allBrands=FIPE_BASE.brands.filter(b=>b.name.toLowerCase()===brandName.toLowerCase());
+  if(!allBrands.length) return [];
+  const allModels=[];
+  for(const brand of allBrands){
+    const key=brand._type==='moto'?'moto_'+brand.code:brand._type==='truck'?'truck_'+brand.code:brand.code;
+    const models=FIPE_BASE.models[key]||[];
+    allModels.push(...models.map(m=>m.name));
+  }
+  return [...new Set(allModels)].sort();
 }
 
 function isFipeValidBrand(brandName){
@@ -1293,9 +1300,9 @@ async function updateFipeBase(){
     const motoBrandsResp=await fipeFetch('/motorcycles/brands');
     if(motoBrandsResp.ok){
       const motoBrands=await motoBrandsResp.json();
-      // Add moto brands with prefix to distinguish
+      // Add moto brands (always add even if name exists in cars — different vehicle type)
       for(const mb of motoBrands){
-        if(!brands.find(b=>b.name.toLowerCase()===mb.name.toLowerCase())){
+        if(!FIPE_BASE.brands.find(b=>b.name.toLowerCase()===mb.name.toLowerCase()&&b._type==='moto')){
           FIPE_BASE.brands.push({...mb, _type:'moto'});
         }
       }
@@ -1320,7 +1327,7 @@ async function updateFipeBase(){
     if(truckBrandsResp.ok){
       const truckBrands=await truckBrandsResp.json();
       for(const tb of truckBrands){
-        if(!FIPE_BASE.brands.find(b=>b.name.toLowerCase()===tb.name.toLowerCase())){
+        if(!FIPE_BASE.brands.find(b=>b.name.toLowerCase()===tb.name.toLowerCase()&&b._type==='truck')){
           FIPE_BASE.brands.push({...tb, _type:'truck'});
         }
       }
@@ -1340,7 +1347,7 @@ async function updateFipeBase(){
 
     // 5. Save metadata
     FIPE_BASE.lastUpdate=new Date().toISOString();
-    FIPE_BASE.totalBrands=FIPE_BASE.brands.length;
+    FIPE_BASE.totalBrands=new Set(FIPE_BASE.brands.map(b=>b.name.toLowerCase())).size;
     FIPE_BASE.totalModels=totalModels;
     saveFipeBaseToStorage();
     // Save current reference code
@@ -2842,14 +2849,15 @@ function getFipeTypeForCategory(categoria){
 function getFipeBrandsForCategory(categoria){
   if(!isFipeBaseLoaded()) return getFipeBrands();
   const types=(getFipeTypeForCategory(categoria)||'cars').split(',').map(t=>t.trim());
-  return FIPE_BASE.brands.filter(b=>{
+  const names=FIPE_BASE.brands.filter(b=>{
     for(const type of types){
       if(type==='cars'&&!b._type) return true;
       if(type==='motorcycles'&&b._type==='moto') return true;
       if(type==='trucks'&&b._type==='truck') return true;
     }
     return false;
-  }).map(b=>b.name).sort();
+  }).map(b=>b.name);
+  return [...new Set(names)].sort();
 }
 
 function getFipeModelsForBrandAndCategory(brandName, categoria){
