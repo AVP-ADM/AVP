@@ -2027,9 +2027,9 @@ function navigateToDuplicate(marca, modelo){
 
 function navigateToDivergence(groupIdx, modelo){
   // Navigate to Divergências tab and select the correct group
-  currentCompGroup=groupIdx;
   goTab('divergences');
   setTimeout(()=>{
+    currentCompGroup=groupIdx;
     renderDivergences();
     // If a model was specified, filter by it
     if(modelo){
