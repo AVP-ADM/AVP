@@ -3844,24 +3844,114 @@ function updateDupSelection(){
   if(btn&&checked>0) btn.textContent='🗑️ Remover '+checked+' Selecionado(s)';
 }
 
+// Encontra o maior grupo de categorias mutuamente compatíveis
+function findLargestCompatibleGroup(categories){
+  // Gerar todas as combinações possíveis e encontrar a maior onde todos são compatíveis entre si
+  let bestGroup = [categories[0]];
+  
+  // Para cada subset possível (começando dos maiores)
+  const n = categories.length;
+  for(let size = n; size >= 2; size--){
+    const combos = getCombinations(categories, size);
+    for(const combo of combos){
+      if(isGroupFullyCompatible(combo)){
+        if(combo.length > bestGroup.length){
+          bestGroup = combo;
+        }
+        if(combo.length === size && size > bestGroup.length) break;
+      }
+    }
+    if(bestGroup.length >= size) break;
+  }
+  return bestGroup;
+}
+
+function getCombinations(arr, size){
+  if(size === 1) return arr.map(x=>[x]);
+  const results = [];
+  for(let i = 0; i <= arr.length - size; i++){
+    const rest = getCombinations(arr.slice(i+1), size-1);
+    for(const combo of rest){
+      results.push([arr[i], ...combo]);
+    }
+  }
+  return results;
+}
+
+function isGroupFullyCompatible(group){
+  for(let i = 0; i < group.length; i++){
+    for(let j = i+1; j < group.length; j++){
+      const compatA = CAT_COMPAT_MAP[group[i]];
+      if(!compatA || !compatA.includes(group[j])){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function removeSelectedDuplicates(){
   const checks=document.querySelectorAll('.dup-check:checked');
   if(!checks.length){showToast('Nenhum modelo selecionado','warning');return;}
-  showModal('Remover '+checks.length+' modelo(s)?','Deseja marcar '+checks.length+' modelo(s) para remoção de TODAS as categorias duplicadas (mantendo apenas a primeira)?<br><br><span style="font-size:.78rem;color:var(--text2)">As remoções serão adicionadas às Alterações Pendentes.</span>',function(){
-    let count=0;
-    checks.forEach(cb=>{
-      const marca=cb.dataset.marca;
-      const modelo=cb.dataset.modelo;
-      const dup=DUPLICATES.find(d=>d.marca===marca&&d.modelo===modelo);
-      if(dup&&dup.cats.length>1){
-        // Remove from all categories except the first one
-        for(let i=1;i<dup.cats.length;i++){
-          if(!isPendingRemoval(marca,modelo,dup.cats[i])){
-            addToStaging({type:'Remoção',marca:marca,modelo:modelo,catFrom:dup.cats[i],catTo:null},true);
-            count++;
-          }
-        }
+  
+  // Analisar cada modelo selecionado e identificar categorias intrusas
+  let removalPlan = [];
+  
+  checks.forEach(cb=>{
+    const marca=cb.dataset.marca;
+    const modelo=cb.dataset.modelo;
+    const dup=DUPLICATES_REAL.find(d=>d.marca===marca&&d.modelo===modelo);
+    if(dup&&dup.cats.length>1){
+      const compatGroup = findLargestCompatibleGroup(dup.cats);
+      const intrusas = dup.cats.filter(c=>!compatGroup.includes(c));
+      if(intrusas.length>0){
+        removalPlan.push({marca, modelo, cats: dup.cats, compatGroup, intrusas});
       }
+    }
+  });
+  
+  if(!removalPlan.length){
+    showToast('Nenhuma categoria intrusa identificada nos modelos selecionados','warning');
+    return;
+  }
+  
+  // Montar detalhamento visual para o modal
+  let detailHtml = '<div style="max-height:350px;overflow-y:auto;margin-bottom:12px">';
+  removalPlan.forEach(item=>{
+    detailHtml += `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <strong>${item.marca} — ${item.modelo}</strong><br>
+      <span style="font-size:.78rem;color:var(--text2)">Categorias atuais:</span> ${item.cats.map(c=>`<span class="tag tag-blue" style="font-size:.7rem">${c}</span>`).join(' ')}
+      <br><span style="font-size:.78rem;color:var(--success)">✓ Mantém:</span> ${item.compatGroup.map(c=>`<span class="tag" style="font-size:.7rem;background:var(--success);color:#fff">${c}</span>`).join(' ')}
+      <br><span style="font-size:.78rem;color:var(--danger)">✗ Remove:</span> ${item.intrusas.map(c=>`<span class="tag" style="font-size:.7rem;background:var(--danger);color:#fff">${c}</span>`).join(' ')}
+    </div>`;
+  });
+  detailHtml += '</div>';
+  
+  const totalRemovals = removalPlan.reduce((sum,item)=>sum+item.intrusas.length, 0);
+  
+  const modalContent = `
+    <div style="line-height:1.7">
+      <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid var(--primary)">
+        <strong style="font-size:.85rem">🧠 Remoção Inteligente de Conflitos</strong><br>
+        <span style="font-size:.78rem;color:var(--text2)">O sistema identificou automaticamente as categorias <strong>incompatíveis</strong> (intrusas) para cada modelo, mantendo o maior grupo de categorias que podem coexistir.</span>
+      </div>
+      ${detailHtml}
+      <div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:.8rem">
+        <strong>Resumo:</strong> ${totalRemovals} remoção(ões) de ${removalPlan.length} modelo(s)<br>
+        <span style="color:var(--text2)">⚠️ As remoções serão adicionadas às <strong>Alterações Pendentes</strong> na aba Manutenção.<br>
+        Um badge de pendência aparecerá em cada item afetado. Para aplicar, confirme na aba Manutenção.</span>
+      </div>
+    </div>`;
+  
+  showModal('Remover Categorias Intrusas ('+totalRemovals+')', modalContent, function(){
+    let count=0;
+    removalPlan.forEach(item=>{
+      item.intrusas.forEach(cat=>{
+        if(!isPendingRemoval(item.marca, item.modelo, cat)){
+          addToStaging({type:'Remoção', marca:item.marca, modelo:item.modelo, catFrom:cat, catTo:null}, true);
+          count++;
+        }
+      });
     });
     closeModal();
     if(count>0){
