@@ -1192,6 +1192,8 @@ function trackFipeRequest(qty){
   if(FIPE_REQUESTS.month!==currentMonth){FIPE_REQUESTS={month:currentMonth,count:0};}
   FIPE_REQUESTS.count+=(qty||1);
   saveFipeRequestsToStorage();
+  // Also persist to Supabase (non-blocking)
+  saveFipeRequestsRemote();
 }
 
 // Fetch from FIPE API with tracking
@@ -1349,7 +1351,9 @@ async function updateFipeBase(){
     _fipeNewTableAvailable=false;
     _fipeNewTableMonth='';
 
-    // FIPE base saved to localStorage only (Supabase migration)
+    // Save FIPE base to Supabase for cross-device access
+    saveFipeBaseRemote();
+    saveFipeRequestsRemote();
 
     showToast('Base oficial atualizada! '+FIPE_BASE.totalBrands+' marcas, '+totalModels+' modelos.','success');
     renderFipeDiagnostics();
@@ -2722,17 +2726,63 @@ function loadFipeCategoryMap(){
 }
 
 async function loadFipeBaseRemote(){
-  // Legacy: FIPE base is now stored only in localStorage
-  console.log('[FIPE] Base loaded from localStorage only (Supabase migration)');
+  try{
+    console.log('[FIPE] Tentando carregar base do Supabase...');
+    const cached = await supabase.loadFipeCache();
+    if(cached && cached.brands && cached.brands.length > 0){
+      FIPE_BASE.brands = cached.brands;
+      FIPE_BASE.models = cached.models || {};
+      FIPE_BASE.lastUpdate = cached.lastUpdate;
+      FIPE_BASE.totalBrands = cached.totalBrands || cached.brands.length;
+      FIPE_BASE.totalModels = cached.totalModels || 0;
+      // Also save to localStorage for faster load next time on this device
+      saveFipeBaseToStorage();
+      console.log('[FIPE] Base carregada do Supabase: '+FIPE_BASE.totalBrands+' marcas, '+FIPE_BASE.totalModels+' modelos');
+      return true;
+    }
+    console.log('[FIPE] Nenhum cache encontrado no Supabase');
+    return false;
+  }catch(e){
+    console.warn('[FIPE] Erro ao carregar base do Supabase:', e);
+    return false;
+  }
 }
 
 async function loadFipeRequestsRemote(){
-  // Legacy: FIPE requests counter stored in localStorage only
-  console.log('[FIPE] Requests loaded from localStorage only (Supabase migration)');
+  try{
+    const cached = await supabase.loadFipeRequestsCache();
+    if(cached){
+      FIPE_REQUESTS = cached;
+      saveFipeRequestsToStorage();
+      console.log('[FIPE] Requests counter carregado do Supabase:', FIPE_REQUESTS.count);
+    }
+  }catch(e){
+    console.warn('[FIPE] Erro ao carregar requests do Supabase:', e);
+  }
+}
+
+async function saveFipeBaseRemote(){
+  try{
+    console.log('[FIPE] Salvando base no Supabase...');
+    await supabase.saveFipeCache(FIPE_BASE);
+    console.log('[FIPE] Base salva no Supabase com sucesso');
+    return true;
+  }catch(e){
+    console.warn('[FIPE] Erro ao salvar base no Supabase:', e);
+    return false;
+  }
+}
+
+async function saveFipeRequestsRemote(){
+  try{
+    await supabase.saveFipeRequestsCache(FIPE_REQUESTS);
+  }catch(e){
+    console.warn('[FIPE] Erro ao salvar requests no Supabase:', e);
+  }
 }
 
 function saveFipeRefCodeRemote(code){
-  // Supabase migration: ref code saved to localStorage only
+  // Ref code saved to localStorage (and synced via fipe_metadata)
 }
 
 async function loadFipeCategoryMapRemote(){
@@ -6509,6 +6559,21 @@ async function initDataConnection(){
         DIVERGENCIAS_IGNORADAS = ignoradas;
       }
     }catch(e){ console.warn('Divergencias ignoradas load (non-critical):',e); }
+
+    // Load FIPE base from Supabase if not available locally (cross-device support)
+    if(!isFipeBaseLoaded()){
+      try{
+        console.log('[FIPE] Base não encontrada no localStorage, tentando Supabase...');
+        const loaded = await loadFipeBaseRemote();
+        if(loaded){
+          showToast('Base FIPE carregada do servidor ('+FIPE_BASE.totalBrands+' marcas, '+FIPE_BASE.totalModels+' modelos)','success');
+        }
+      }catch(e){ console.warn('FIPE base remote load (non-critical):',e); }
+    }
+    // Load FIPE requests from Supabase if empty locally
+    if(FIPE_REQUESTS.count === 0){
+      try{ await loadFipeRequestsRemote(); }catch(e){}
+    }
 
     // Load pending changes (non-critical)
     try{

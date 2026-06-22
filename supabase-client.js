@@ -266,6 +266,125 @@ const supabase = {
     );
   },
 
+  // ========= FIPE CACHE (cross-device) =========
+
+  // Save FIPE base to Supabase cache (brands + models + metadata)
+  async saveFipeCache(fipeBase) {
+    // Save metadata (lastUpdate, totalBrands, totalModels)
+    const metadata = {
+      lastUpdate: fipeBase.lastUpdate,
+      totalBrands: fipeBase.totalBrands,
+      totalModels: fipeBase.totalModels
+    };
+    await supabase.upsertFipeCacheKey('fipe_metadata', metadata);
+
+    // Save brands array
+    await supabase.upsertFipeCacheKey('fipe_brands', fipeBase.brands);
+
+    // Save models in chunks (each brand's models as a separate key to avoid payload limits)
+    // Group by chunks of ~50 brand codes to stay under Supabase payload limits
+    const modelKeys = Object.keys(fipeBase.models);
+    const CHUNK_SIZE = 50;
+    // First, save a manifest of chunk keys
+    const chunkManifest = [];
+    for (let i = 0; i < modelKeys.length; i += CHUNK_SIZE) {
+      const chunkIdx = Math.floor(i / CHUNK_SIZE);
+      const chunkKey = `fipe_models_chunk_${chunkIdx}`;
+      const chunkData = {};
+      const sliceKeys = modelKeys.slice(i, i + CHUNK_SIZE);
+      for (const k of sliceKeys) {
+        chunkData[k] = fipeBase.models[k];
+      }
+      await supabase.upsertFipeCacheKey(chunkKey, chunkData);
+      chunkManifest.push(chunkKey);
+    }
+    await supabase.upsertFipeCacheKey('fipe_models_manifest', chunkManifest);
+
+    // Clean up old chunks that are no longer needed
+    try {
+      const allCache = await supabase.select('fipe_cache', { select: 'chave' });
+      const validKeys = new Set(['fipe_metadata', 'fipe_brands', 'fipe_models_manifest', ...chunkManifest]);
+      for (const row of allCache) {
+        if (row.chave.startsWith('fipe_models_chunk_') && !validKeys.has(row.chave)) {
+          await supabase.delete('fipe_cache', `chave=eq.${encodeURIComponent(row.chave)}`);
+        }
+      }
+    } catch(e) { console.warn('[FIPE Cache] Cleanup old chunks:', e); }
+
+    return true;
+  },
+
+  // Load FIPE base from Supabase cache
+  async loadFipeCache() {
+    try {
+      // Load metadata
+      const metaRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_metadata' });
+      if (!metaRows || metaRows.length === 0) return null; // No cache exists
+
+      const metadata = metaRows[0].valor;
+      if (!metadata || !metadata.lastUpdate) return null;
+
+      // Load brands
+      const brandsRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_brands' });
+      if (!brandsRows || brandsRows.length === 0) return null;
+      const brands = brandsRows[0].valor;
+
+      // Load models manifest
+      const manifestRows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_models_manifest' });
+      if (!manifestRows || manifestRows.length === 0) return null;
+      const manifest = manifestRows[0].valor;
+
+      // Load all model chunks
+      const models = {};
+      for (const chunkKey of manifest) {
+        const chunkRows = await supabase.select('fipe_cache', { filter: `chave=eq.${encodeURIComponent(chunkKey)}` });
+        if (chunkRows && chunkRows.length > 0) {
+          Object.assign(models, chunkRows[0].valor);
+        }
+      }
+
+      return {
+        brands: brands,
+        models: models,
+        lastUpdate: metadata.lastUpdate,
+        totalBrands: metadata.totalBrands,
+        totalModels: metadata.totalModels
+      };
+    } catch(e) {
+      console.warn('[FIPE Cache] Load from Supabase failed:', e);
+      return null;
+    }
+  },
+
+  // Save FIPE requests counter to Supabase
+  async saveFipeRequestsCache(requests) {
+    return supabase.upsertFipeCacheKey('fipe_requests', requests);
+  },
+
+  // Load FIPE requests counter from Supabase
+  async loadFipeRequestsCache() {
+    try {
+      const rows = await supabase.select('fipe_cache', { filter: 'chave=eq.fipe_requests' });
+      if (rows && rows.length > 0) return rows[0].valor;
+      return null;
+    } catch(e) { return null; }
+  },
+
+  // Upsert a single key in fipe_cache table
+  async upsertFipeCacheKey(chave, valor) {
+    const headers = { ...supabase._headers(), 'Prefer': 'resolution=merge-duplicates' };
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ chave, valor, updated_at: new Date().toISOString() })
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`Upsert fipe_cache [${chave}] failed: ${err}`);
+    }
+    return true;
+  },
+
   // Save full base (replaces all models for given categories)
   async saveFullBase(rawData, categoriasMap) {
     // rawData = {catName: {brands: {brand: [model1, model2]}}}

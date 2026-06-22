@@ -181,6 +181,26 @@ CREATE POLICY "Admins gerenciam regras inclusao" ON public.regras_inclusao FOR A
   EXISTS (SELECT 1 FROM public.perfis WHERE id = auth.uid() AND nivel = 'admin')
 );
 
+-- ========= TABELA: fipe_cache (cache da base oficial FIPE para acesso cross-device) =========
+CREATE TABLE IF NOT EXISTS public.fipe_cache (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  chave TEXT NOT NULL UNIQUE, -- 'brands', 'models_<code>', 'metadata', 'requests'
+  valor JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for fast key lookup
+CREATE INDEX IF NOT EXISTS idx_fipe_cache_chave ON public.fipe_cache(chave);
+
+-- RLS
+ALTER TABLE public.fipe_cache ENABLE ROW LEVEL SECURITY;
+
+-- Policies: todos autenticados podem ler, operadores e admins podem escrever
+CREATE POLICY "Todos veem fipe_cache" ON public.fipe_cache FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Operadores e admins gerenciam fipe_cache" ON public.fipe_cache FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.perfis WHERE id = auth.uid() AND nivel IN ('admin', 'operador'))
+);
+
 -- ========= FUNCTION: invalidar sessões anteriores no login =========
 CREATE OR REPLACE FUNCTION public.invalidar_sessoes_anteriores(p_usuario_id UUID, p_novo_token TEXT)
 RETURNS VOID AS $$
