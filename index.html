@@ -3051,11 +3051,27 @@ function setCachedPrice(brandCode, modelCode, yearCode, priceData){
 
 async function consultarPrecoFipeComAno(marca, modelo){
   if(!isFipeBaseLoaded()){showToast('Base FIPE não carregada. Atualize primeiro.','warning');return;}
-  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===marca.toLowerCase());
-  if(!brand){showToast('Marca "'+marca+'" não encontrada na base FIPE.','warning');return;}
-  const brandModels=FIPE_BASE.models[brand.code]||FIPE_BASE.models['moto_'+brand.code]||FIPE_BASE.models['truck_'+brand.code]||[];
-  const model=brandModels.find(m=>m.name.toLowerCase()===modelo.toLowerCase())||brandModels.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase().split(' ')[0]));
-  if(!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
+  // Find all brands with this name (e.g. BMW exists in cars AND motorcycles)
+  const allBrands=FIPE_BASE.brands.filter(b=>b.name.toLowerCase()===marca.toLowerCase());
+  if(!allBrands.length){showToast('Marca "'+marca+'" não encontrada na base FIPE.','warning');return;}
+  // Search for the model across all matching brands (cars, motos, trucks)
+  let brand=null, model=null;
+  for(const b of allBrands){
+    const key=b._type==='moto'?'moto_'+b.code:b._type==='truck'?'truck_'+b.code:b.code;
+    const models=FIPE_BASE.models[key]||[];
+    const exactMatch=models.find(m=>m.name.toLowerCase()===modelo.toLowerCase());
+    if(exactMatch){brand=b;model=exactMatch;break;}
+  }
+  // If no exact match, try partial match across all brands
+  if(!model){
+    for(const b of allBrands){
+      const key=b._type==='moto'?'moto_'+b.code:b._type==='truck'?'truck_'+b.code:b.code;
+      const models=FIPE_BASE.models[key]||[];
+      const partial=models.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase()))||models.find(m=>modelo.toLowerCase().includes(m.name.toLowerCase()));
+      if(partial){brand=b;model=partial;break;}
+    }
+  }
+  if(!brand||!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
   try{
     const vehicleType=brand._type==='moto'?'motorcycles':brand._type==='truck'?'trucks':'cars';
     // Check cache first
@@ -3095,12 +3111,26 @@ async function consultarPrecoFipeComAno(marca, modelo){
 
 async function consultarPrecoFipe(marca, modelo){
   if(!isFipeBaseLoaded()){showToast('Base FIPE não carregada. Atualize primeiro.','warning');return;}
-  const brand=FIPE_BASE.brands.find(b=>b.name.toLowerCase()===marca.toLowerCase());
-  if(!brand){showToast('Marca "'+marca+'" não encontrada na base FIPE.','warning');return;}
-  const brandModels=FIPE_BASE.models[brand.code]||FIPE_BASE.models['moto_'+brand.code]||FIPE_BASE.models['truck_'+brand.code]||[];
-  // Find closest model match
-  const model=brandModels.find(m=>m.name.toLowerCase()===modelo.toLowerCase())||brandModels.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase().split(' ')[0]));
-  if(!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
+  // Find all brands with this name (e.g. BMW exists in cars AND motorcycles)
+  const allBrands=FIPE_BASE.brands.filter(b=>b.name.toLowerCase()===marca.toLowerCase());
+  if(!allBrands.length){showToast('Marca "'+marca+'" não encontrada na base FIPE.','warning');return;}
+  // Search for the model across all matching brands (cars, motos, trucks)
+  let brand=null, model=null;
+  for(const b of allBrands){
+    const key=b._type==='moto'?'moto_'+b.code:b._type==='truck'?'truck_'+b.code:b.code;
+    const models=FIPE_BASE.models[key]||[];
+    const exactMatch=models.find(m=>m.name.toLowerCase()===modelo.toLowerCase());
+    if(exactMatch){brand=b;model=exactMatch;break;}
+  }
+  if(!model){
+    for(const b of allBrands){
+      const key=b._type==='moto'?'moto_'+b.code:b._type==='truck'?'truck_'+b.code:b.code;
+      const models=FIPE_BASE.models[key]||[];
+      const partial=models.find(m=>m.name.toLowerCase().includes(modelo.toLowerCase()))||models.find(m=>modelo.toLowerCase().includes(m.name.toLowerCase()));
+      if(partial){brand=b;model=partial;break;}
+    }
+  }
+  if(!brand||!model){showToast('Modelo "'+modelo+'" não encontrado na FIPE para esta marca.','warning');return;}
   showToast('Consultando preço FIPE...','warning');
   try{
     // Get years for this model
