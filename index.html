@@ -1734,7 +1734,7 @@ function renderKPIs(){
       <div class="kpi-label">Modelos</div><div class="kpi-value">${totalModels.toLocaleString()}</div>
     </div>
     <div class="kpi-card red" onclick="showKpiDetail('duplicados')">
-      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
       <div class="kpi-label">Conflitos</div><div class="kpi-value">${totalDupsReal}</div>
     </div>
     <div class="kpi-card amber" onclick="showKpiDetail('divergencias')">
