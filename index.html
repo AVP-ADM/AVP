@@ -4559,10 +4559,24 @@ function copySelectedDivergences(listId){
 // Filter divergences list by search text
 function filterDivergencesList(){
   const query=norm(document.getElementById('divSearchFilter').value);
-  document.querySelectorAll('#compContent .comp-card .model-list > div').forEach(div=>{
-    if(!query) {div.style.display='';return;}
-    const text=norm(div.textContent);
-    div.style.display=text.includes(query)?'':'none';
+  const cards=document.querySelectorAll('#compContent .comp-card');
+  cards.forEach(card=>{
+    const items=card.querySelectorAll('.model-list > div');
+    let visibleCount=0;
+    items.forEach(div=>{
+      if(!query){div.style.display='';visibleCount++;return;}
+      const text=norm(div.textContent);
+      const visible=text.includes(query);
+      div.style.display=visible?'':'none';
+      if(visible) visibleCount++;
+    });
+    // Hide action buttons (Copiar Todos, Copiar Selecionados) when filtering shows no results
+    const actionBtns=card.querySelectorAll('.btn');
+    actionBtns.forEach(btn=>{
+      if(btn.textContent.includes('Copiar')){
+        btn.style.display=(!query||visibleCount>0)?'':'none';
+      }
+    });
   });
 }
 
