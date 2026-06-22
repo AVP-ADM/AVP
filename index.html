@@ -4422,8 +4422,8 @@ function renderDivergences(){
     <div class="comp-card" style="border-color:var(--red-light)">
       <h5><span class="badge badge-red">${onlyA.length}</span> Somente em ${g.a}</h5>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')">➡️ Copiar Todos para ${g.b.split(' - ').pop().split('|')[0].trim()}</button>
-        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyA')" id="btnCopySelA" style="display:none">📋 Copiar Selecionados</button>
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Copiar Todos para ${g.b.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyA')" id="btnCopySelA" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Selecionados</button>
       </div>
       <div class="model-list" id="divListA">${onlyA.map((m,i)=>{
         const em=m.marca.replace(/'/g,"\\'");
@@ -4431,15 +4431,15 @@ function renderDivergences(){
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
           <input type="checkbox" class="div-check-a" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('A')">
           <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
-          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eA}','${eB}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.b}">➡️</button>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eA}','${eB}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.b}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         </div>`;
       }).join('')||'<div>Nenhum</div>'}</div>
     </div>
     <div class="comp-card" style="border-color:var(--amber-light)">
       <h5><span class="badge badge-amber">${onlyB.length}</span> Somente em ${g.b}</h5>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')">⬅️ Copiar Todos para ${g.a.split(' - ').pop().split('|')[0].trim()}</button>
-        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyB')" id="btnCopySelB" style="display:none">📋 Copiar Selecionados</button>
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Copiar Todos para ${g.a.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm" onclick="copySelectedDivergences('onlyB')" id="btnCopySelB" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Selecionados</button>
       </div>
       <div class="model-list" id="divListB">${onlyB.map((m,i)=>{
         const em=m.marca.replace(/'/g,"\\'");
@@ -4447,7 +4447,7 @@ function renderDivergences(){
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
           <input type="checkbox" class="div-check-b" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('B')">
           <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
-          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eB}','${eA}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.a}">⬅️</button>
+          <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eB}','${eA}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.a}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
         </div>`;
       }).join('')||'<div>Nenhum</div>'}</div>
     </div>
@@ -4578,7 +4578,8 @@ function filterDivergencesList(){
     // Hide/update action buttons when filtering
     const actionBtns=card.querySelectorAll('.btn');
     actionBtns.forEach(btn=>{
-      if(btn.textContent.includes('Copiar Todos')||btn.textContent.includes('Copiar Filtrados')){
+      const btnText=btn.textContent;
+      if(btnText.includes('Copiar Todos')||btnText.includes('Copiar Filtrados')){
         if(!query){
           btn.style.display='';
           // Restore original label
@@ -4586,13 +4587,14 @@ function filterDivergencesList(){
         } else if(visibleCount>0){
           btn.style.display='';
           if(!btn.dataset.originalLabel) btn.dataset.originalLabel=btn.innerHTML;
-          const arrow=btn.innerHTML.match(/^[➡️⬅️]+/)?.[0]||'';
-          const dest=btn.innerHTML.match(/para (.+)$/)?.[1]||'';
-          btn.innerHTML=arrow+' Copiar Filtrados ('+visibleCount+') para '+dest;
+          const svgIcon=btn.querySelector('svg')?btn.querySelector('svg').outerHTML:'';
+          const destMatch=btnText.match(/para (.+)$/);
+          const dest=destMatch?destMatch[1]:'';
+          btn.innerHTML=svgIcon+' Copiar Filtrados ('+visibleCount+') para '+dest;
         } else {
           btn.style.display='none';
         }
-      } else if(btn.textContent.includes('Copiar')){
+      } else if(btnText.includes('Copiar')){
         btn.style.display=(!query||visibleCount>0)?'':'none';
       }
     });
