@@ -1588,6 +1588,8 @@ function refreshActiveTab(){
 }
 
 function goTab(tab){
+  // Reset inactivity timer on tab change
+  resetActivityTimer();
   // Close drawer and modal if open
   closeDrawer();
   // Close mobile sidebar if open
@@ -2138,6 +2140,7 @@ function showKpiDetail(type){
 }
 
 function showCatDetail(cat, type){
+  resetActivityTimer();
   let title='', html='';
   if(type==='modelos'){
     const models=getModelsForCat(cat);
@@ -5431,6 +5434,7 @@ let searchType = 'modelo';
 let _searchFilterMode = 'all'; // 'all', 'base', 'fipe'
 
 function openGlobalSearch(){
+  resetActivityTimer();
   document.getElementById('searchOverlay').classList.add('open');
   const input=document.getElementById('globalSearchInput');
   input.value='';
@@ -5486,6 +5490,7 @@ function updateSearchFilterButtons(){
 }
 
 function performGlobalSearch(){
+  resetActivityTimer();
   const query=norm(document.getElementById('globalSearchInput').value);
   const container=document.getElementById('globalSearchResults');
   if(!query||query.length<1){
@@ -6506,11 +6511,6 @@ async function doLogout(){
   // Stop session check
   if(_sessionCheckInterval){clearInterval(_sessionCheckInterval);_sessionCheckInterval=null;}
   if(_inactivityTimer){clearInterval(_inactivityTimer);_inactivityTimer=null;}
-  // Remove activity listeners
-  document.removeEventListener('mousemove', resetActivityTimer);
-  document.removeEventListener('keydown', resetActivityTimer);
-  document.removeEventListener('click', resetActivityTimer);
-  document.removeEventListener('scroll', resetActivityTimer, true);
   // Invalidate session in DB
   try{
     const user=supabase.getUser();
@@ -6573,12 +6573,6 @@ function startSessionCheck(){
       },3000);
     }
   }, 30000);
-
-  // Track user activity
-  document.addEventListener('mousemove', resetActivityTimer);
-  document.addEventListener('keydown', resetActivityTimer);
-  document.addEventListener('click', resetActivityTimer);
-  document.addEventListener('scroll', resetActivityTimer, true);
 }
 
 function initApp(){
