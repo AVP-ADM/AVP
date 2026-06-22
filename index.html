@@ -1146,8 +1146,8 @@ function classifyDuplicates(){
 
 // ========= COMPARISON GROUPS =========
 const COMP_GROUPS = [
-  {label:'Passeio Nacional vs Importado', a:'Passeio - Nacional', b:'Passeio - Importado'},
-  {label:'SUV/Caminhonete vs Importado', a:'SUV|Caminhonete|Utilitário', b:'SUV|Caminhonete|Utilitário - I'}
+  {label:'Passeio Nacional vs Importado', a:'Passeio - Nacional', b:'Passeio - Importado', shortA:'Nacional', shortB:'Importado'},
+  {label:'SUV/Caminhonete vs Importado', a:'SUV|Caminhonete|Utilitário', b:'SUV|Caminhonete|Utilitário - I', shortA:'SUV Nacional', shortB:'SUV Importado'}
 ];
 
 // ========= PAGINATION STATE =========
@@ -4420,9 +4420,9 @@ function renderDivergences(){
 
   document.getElementById('compContent').innerHTML = `
     <div class="comp-card" style="border-color:var(--red-light)">
-      <h5><span class="badge badge-red">${onlyA.length}</span> Somente em ${g.a}</h5>
+      <h5><span class="badge badge-red">${onlyA.length}</span> Somente em ${g.shortA}</h5>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Copiar Todos para ${g.b.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eA}','${eB}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Copiar Todos para ${g.shortB}</button>
         <button class="btn btn-sm" onclick="copySelectedDivergences('onlyA')" id="btnCopySelA" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Selecionados</button>
       </div>
       <div class="model-list" id="divListA">${onlyA.map((m,i)=>{
@@ -4436,9 +4436,9 @@ function renderDivergences(){
       }).join('')||'<div>Nenhum</div>'}</div>
     </div>
     <div class="comp-card" style="border-color:var(--amber-light)">
-      <h5><span class="badge badge-amber">${onlyB.length}</span> Somente em ${g.b}</h5>
+      <h5><span class="badge badge-amber">${onlyB.length}</span> Somente em ${g.shortB}</h5>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Copiar Todos para ${g.a.split(' - ').pop().split('|')[0].trim()}</button>
+        <button class="btn btn-sm btn-blue" onclick="copyAllDivergences('${eB}','${eA}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Copiar Todos para ${g.shortA}</button>
         <button class="btn btn-sm" onclick="copySelectedDivergences('onlyB')" id="btnCopySelB" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Selecionados</button>
       </div>
       <div class="model-list" id="divListB">${onlyB.map((m,i)=>{
