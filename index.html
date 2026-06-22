@@ -1025,15 +1025,15 @@ let chartsInitialized = false;
 const CAT_COMPAT_MAP = {
   'Passeio - Nacional': ['Passeio - Importado', 'Start'],
   'Passeio - Importado': ['Passeio - Nacional', 'Start'],
-  'SUV|Caminhonete|Utilitário': ['SUV|Caminhonete|Utilitário - I', 'Start'],
-  'SUV|Caminhonete|Utilitário - I': ['SUV|Caminhonete|Utilitário', 'Start'],
+  'SUV|Caminhonete|Utilitário': ['SUV | Caminhonete | Utilitário - Importado', 'Start'],
+  'SUV | Caminhonete | Utilitário - Importado': ['SUV|Caminhonete|Utilitário', 'Start'],
   'Automóvel Premium': ['Start'],
   'Elétrico | Híbrido': [],
-  'Start': ['Passeio - Nacional', 'Passeio - Importado', 'SUV|Caminhonete|Utilitário', 'SUV|Caminhonete|Utilitário - I', 'Automóvel Premium', 'Truck Leve (até 14t)', 'Truck Pesado (a partir de 14t)'],
+  'Start': ['Passeio - Nacional', 'Passeio - Importado', 'SUV|Caminhonete|Utilitário', 'SUV | Caminhonete | Utilitário - Importado', 'Automóvel Premium', 'Truck Leve (até 14t)', 'Truck Pesado (a partir de 14t)'],
   'Truck Leve (até 14t)': ['Start'],
   'Truck Pesado (a partir de 14t)': ['Start'],
   'ELITE 125 | FLUO 125 | NEO': [],
-  'Motocicletas - Avelloz | Shiner': [],
+  'Motocicletas - Avelloz | Shineray | Bajaj': [],
   'Motocicletas - Honda': [],
   'Motocicletas - Yamaha': [],
   'Motocicletas Especiais': [],
@@ -1044,13 +1044,13 @@ const CAT_COMPAT_MAP = {
 // Regras de inclusão obrigatória: se está em A, DEVE estar em B
 const CAT_MANDATORY_INCLUSION = [
   {from: 'Passeio - Nacional', mustBeIn: 'Passeio - Importado'},
-  {from: 'SUV|Caminhonete|Utilitário', mustBeIn: 'SUV|Caminhonete|Utilitário - I'}
+  {from: 'SUV|Caminhonete|Utilitário', mustBeIn: 'SUV | Caminhonete | Utilitário - Importado'}
 ];
 
 // Regras de revisão: se está APENAS em B sem A, mostrar para conferência
 const CAT_REVIEW_RULES = [
   {onlyIn: 'Passeio - Importado', notIn: 'Passeio - Nacional', label: 'Apenas em Passeio Importado'},
-  {onlyIn: 'SUV|Caminhonete|Utilitário - I', notIn: 'SUV|Caminhonete|Utilitário', label: 'Apenas em SUV Importado'}
+  {onlyIn: 'SUV | Caminhonete | Utilitário - Importado', notIn: 'SUV|Caminhonete|Utilitário', label: 'Apenas em SUV Importado'}
 ];
 
 // Função para verificar se um duplicado é problemático
@@ -1147,7 +1147,7 @@ function classifyDuplicates(){
 // ========= COMPARISON GROUPS =========
 const COMP_GROUPS = [
   {label:'Passeio Nacional vs Importado', a:'Passeio - Nacional', b:'Passeio - Importado', shortA:'Nacional', shortB:'Importado'},
-  {label:'SUV/Caminhonete vs Importado', a:'SUV|Caminhonete|Utilitário', b:'SUV|Caminhonete|Utilitário - I', shortA:'SUV Nacional', shortB:'SUV Importado'}
+  {label:'SUV/Caminhonete vs Importado', a:'SUV|Caminhonete|Utilitário', b:'SUV | Caminhonete | Utilitário - Importado', shortA:'SUV Nacional', shortB:'SUV Importado'}
 ];
 
 // ========= PAGINATION STATE =========
@@ -2002,8 +2002,8 @@ function renderTopDivergences(){
 
   const mode = _divToggleMode || 'passeio'; // 'passeio' or 'suv'
   const filterFrom = mode === 'passeio' ? 'Passeio - Nacional' : 'SUV|Caminhonete|Utilitário';
-  const filterMissing = mode === 'passeio' ? 'Passeio - Importado' : 'SUV|Caminhonete|Utilitário - I';
-  const filterOnlyIn = mode === 'passeio' ? 'Passeio - Importado' : 'SUV|Caminhonete|Utilitário - I';
+  const filterMissing = mode === 'passeio' ? 'Passeio - Importado' : 'SUV | Caminhonete | Utilitário - Importado';
+  const filterOnlyIn = mode === 'passeio' ? 'Passeio - Importado' : 'SUV | Caminhonete | Utilitário - Importado';
   const filterNotIn = mode === 'passeio' ? 'Passeio - Nacional' : 'SUV|Caminhonete|Utilitário';
 
   const errors = DIVERGENCES_ERRORS.filter(d => d.from === filterFrom && d.missing === filterMissing);
@@ -2705,10 +2705,10 @@ let FIPE_CATEGORY_TYPE_MAP = {
   'Passeio - Nacional': 'cars',
   'Passeio - Importado': 'cars',
   'SUV|Caminhonete|Utilitário': 'cars',
-  'SUV|Caminhonete|Utilitário - I': 'cars',
+  'SUV | Caminhonete | Utilitário - Importado': 'cars',
   'Start': 'cars',
   'ELITE 125 | FLUO 125 | NEO': 'motorcycles',
-  'Motocicletas - Avelloz | Shiner': 'motorcycles',
+  'Motocicletas - Avelloz | Shineray | Bajaj': 'motorcycles',
   'Motocicletas - Honda': 'motorcycles',
   'Motocicletas - Yamaha': 'motorcycles',
   'Motocicletas Especiais': 'motorcycles',
@@ -5285,12 +5285,12 @@ const CAT_ANO_MINIMO = {
   'Passeio - Nacional': 2006,
   'Passeio - Importado': 2006,
   'SUV|Caminhonete|Utilitário': 2006,
-  'SUV|Caminhonete|Utilitário - I': 2006,
+  'SUV | Caminhonete | Utilitário - Importado': 2006,
   'Automóvel Premium': 2016,
   'Elétrico | Híbrido': 2016,
   'Start': 1996,
   'ELITE 125 | FLUO 125 | NEO': 2006,
-  'Motocicletas - Avelloz | Shiner': 2006,
+  'Motocicletas - Avelloz | Shineray | Bajaj': 2006,
   'Motocicletas - Honda': 2006,
   'Motocicletas - Yamaha': 2006,
   'Motocicletas Especiais': 2006,
