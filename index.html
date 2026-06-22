@@ -2746,9 +2746,21 @@ async function loadFipeRequestsRemote(){
   try{
     const cached = await supabase.loadFipeRequestsCache();
     if(cached){
-      FIPE_REQUESTS = cached;
+      const currentMonth=new Date().getFullYear()+'-'+(new Date().getMonth()+1);
+      // If remote is same month, use the higher count (local might have unsaved increments)
+      if(cached.month === currentMonth && FIPE_REQUESTS.month === currentMonth){
+        FIPE_REQUESTS.count = Math.max(FIPE_REQUESTS.count, cached.count);
+      } else if(cached.month === currentMonth){
+        // Remote has current month data, local doesn't — use remote
+        FIPE_REQUESTS = cached;
+      } else {
+        // Remote is old month — reset to current month with local count
+        if(FIPE_REQUESTS.month !== currentMonth){
+          FIPE_REQUESTS = {month: currentMonth, count: 0};
+        }
+      }
       saveFipeRequestsToStorage();
-      console.log('[FIPE] Requests counter carregado do Supabase:', FIPE_REQUESTS.count);
+      console.log('[FIPE] Requests counter sincronizado:', FIPE_REQUESTS.count);
     }
   }catch(e){
     console.warn('[FIPE] Erro ao carregar requests do Supabase:', e);
@@ -3076,7 +3088,6 @@ async function consultarPrecoFipeComAno(marca, modelo){
       if(!yearsResp.ok){showToast('Erro ao buscar anos: HTTP '+yearsResp.status,'error');return;}
       years=await yearsResp.json();
       if(years.length) setCachedYears(brand.code, model.code, years);
-      trackFipeRequest(1);
     }
     if(!years.length){showToast('Nenhum ano disponível para este modelo.','warning');return;}
     // Show modal with year selection
@@ -3096,7 +3107,6 @@ async function consultarPrecoFipeComAno(marca, modelo){
             if(!priceResp.ok){showToast('Erro ao buscar preço','error');return;}
             priceData=await priceResp.json();
             setCachedPrice(brand.code, model.code, yearCode, priceData);
-            trackFipeRequest(1);
           }catch(e){showToast('Erro na consulta FIPE: '+e.message,'error');return;}
         }
         showModal('Preço FIPE',`<div style="line-height:2;font-size:.88rem"><div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px"><span style="color:var(--text2);font-weight:600">Marca:</span><span>${priceData.brand||marca}</span><span style="color:var(--text2);font-weight:600">Modelo:</span><span>${priceData.model||modelo}</span><span style="color:var(--text2);font-weight:600">Ano:</span><span>${priceData.modelYear||yearName}</span><span style="color:var(--text2);font-weight:600">Combustível:</span><span>${priceData.fuel||'—'}</span><span style="color:var(--text2);font-weight:600">Código FIPE:</span><span>${priceData.codeFipe||'—'}</span><span style="color:var(--text2);font-weight:600">Referência:</span><span>${priceData.referenceMonth||'—'}</span></div><div style="margin-top:16px;padding:16px;background:var(--green-bg);border-radius:var(--radius);text-align:center"><div style="font-size:.75rem;color:var(--text2)">Valor FIPE</div><div style="font-size:1.5rem;font-weight:700;color:var(--green)">${priceData.price||'Indisponível'}</div></div></div>`);
@@ -6595,10 +6605,8 @@ async function initDataConnection(){
         }
       }catch(e){ console.warn('FIPE base remote load (non-critical):',e); }
     }
-    // Load FIPE requests from Supabase if empty locally
-    if(FIPE_REQUESTS.count === 0){
-      try{ await loadFipeRequestsRemote(); }catch(e){}
-    }
+    // Load FIPE requests from Supabase (always sync to get cross-device total)
+    try{ await loadFipeRequestsRemote(); }catch(e){}
 
     // Load pending changes (non-critical)
     try{
