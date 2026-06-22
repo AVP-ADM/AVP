@@ -616,9 +616,9 @@ tr:hover .row-actions{opacity:1}
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span class="si-text">Visão Geral</span>
         </button>
-        <button class="sidebar-item" data-tab="duplicates" data-tooltip="Duplicidades" onclick="goTab('duplicates')">
+        <button class="sidebar-item" data-tab="duplicates" data-tooltip="Conflitos" onclick="goTab('duplicates')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
-          <span class="si-text">Duplicidades</span>
+          <span class="si-text">Conflitos</span>
           <span class="si-badge" id="badgeDuplicates" style="display:none"></span>
         </button>
         <button class="sidebar-item" data-tab="divergences" data-tooltip="Divergências" onclick="goTab('divergences')">
@@ -654,7 +654,7 @@ tr:hover .row-actions{opacity:1}
   <!-- ========= NAVIGATION TABS (hidden, kept for compat) ========= -->
   <div class="tabs" id="mainTabs">
     <button class="tab active" onclick="goTab('overview')">Visão Geral</button>
-    <button class="tab" onclick="goTab('duplicates')">Duplicidades</button>
+    <button class="tab" onclick="goTab('duplicates')">Conflitos</button>
     <button class="tab" onclick="goTab('divergences')">Divergências</button>
     <button class="tab" onclick="goTab('management')">Manutenção</button>
     <button class="tab" onclick="goTab('history')">Histórico</button>
@@ -722,7 +722,7 @@ tr:hover .row-actions{opacity:1}
   <!-- ========= TAB: DUPLICIDADES ========= -->
   <div class="tab-panel" id="panel-duplicates">
     <div class="card">
-      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Modelos Duplicados (em múltiplas categorias)</div>
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Modelos em Conflito (categorias incompatíveis)</div>
       <div class="filter-row">
         <input type="text" id="dupBrandFilter" placeholder="Filtrar marca..." oninput="debouncedRenderDupTable()">
         <input type="text" id="dupModelFilter" placeholder="Filtrar modelo..." oninput="debouncedRenderDupTable()">
@@ -898,7 +898,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="export-card">
         <div class="icon">🔁</div>
-        <h4>Duplicidades</h4>
+        <h4>Conflitos</h4>
         <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
         <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
       </div>
@@ -2153,7 +2153,7 @@ function showCatDetail(cat, type){
     title='Marcas - '+cat+' ('+effectiveBrands.length+')';
     html=buildBrandListWithActions(effectiveBrands, cat);
   } else if(type==='duplicados'){
-    const dups=DUPLICATES.filter(d=>d.cats.includes(cat));
+    const dups=DUPLICATES_REAL.filter(d=>d.cats.includes(cat));
     title='Conflitos - '+cat+' ('+dups.length+')';
     const data=dups.map(d=>[d.marca, d.modelo, d.cats.filter(c=>c!==cat).join(', ')]);
     html=buildDrawerTableClickable(['Marca','Modelo','Também em'],data,'cat-dups',function(row){
@@ -3721,14 +3721,14 @@ function renderDupTable(){
   const mf = norm(document.getElementById('dupModelFilter').value);
   const cf = parseInt(document.getElementById('dupCountFilter').value)||0;
 
-  let filtered = DUPLICATES.filter(d=>{
+  let filtered = DUPLICATES_REAL.filter(d=>{
     if(bf && !norm(d.marca).includes(bf)) return false;
     if(mf && !norm(d.modelo).includes(mf)) return false;
     if(d.count < cf) return false;
     return true;
   });
 
-  document.getElementById('dupCount').textContent = filtered.length + ' modelos duplicados encontrados';
+  document.getElementById('dupCount').textContent = filtered.length + ' modelos em conflito encontrados';
 
   const total = filtered.length;
   const pages = Math.ceil(total/DUP_PER_PAGE);
@@ -3788,9 +3788,9 @@ function exportDuplicates(){
     const cell=colLetters[i]+'2';
     if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
-  XLSX.utils.book_append_sheet(wb, ws, 'Duplicados');
+  XLSX.utils.book_append_sheet(wb, ws, 'Conflitos');
   XLSX.writeFile(wb, 'duplicados_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  showToast('Duplicados exportados com sucesso!','success');
+  showToast('Conflitos exportados com sucesso!','success');
 }
 
 function toggleDupSelectAll(){
@@ -4932,8 +4932,8 @@ function exportHealthReport(){
     ['Total de Categorias',CATEGORIES.length],
     ['Total de Marcas',ALL_BRANDS.length],
     ['Total de Modelos',ALL_RECORDS.length],
-    ['Modelos Duplicados',DUPLICATES.length],
-    ['% Duplicidade',(DUPLICATES.length/ALL_RECORDS.length*100).toFixed(1)+'%'],
+    ['Modelos em Conflito',DUPLICATES_REAL.length],
+    ['% Duplicidade',(DUPLICATES_REAL.length/ALL_RECORDS.length*100).toFixed(1)+'%'],
     ['Divergências Totais',''],
     ['Alterações Pendentes',STAGING.ops.length],
   ];
@@ -4955,7 +4955,7 @@ function exportHealthReport(){
   XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
 
   // Sheet 2: Saúde por Categoria
-  const catHeaders=['Categoria','Modelos','Marcas','Duplicados','% Duplicidade'];
+  const catHeaders=['Categoria','Modelos','Marcas','Conflitos','% Duplicidade'];
   const catRows=[catHeaders.map(()=>''),catHeaders];
   for(const cat of CATEGORIES.sort()){
     const total=CAT_TOTALS[cat]||0;
@@ -5668,7 +5668,7 @@ function searchMarcas(query){
 }
 
 function searchDuplicidades(query){
-  const results=DUPLICATES.filter(d=>norm(d.marca).includes(query)||norm(d.modelo).includes(query));
+  const results=DUPLICATES_REAL.filter(d=>norm(d.marca).includes(query)||norm(d.modelo).includes(query));
   if(!results.length) return '';
   let html='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categorias</th></tr></thead><tbody>';
   for(const d of results.slice(0,40)){
