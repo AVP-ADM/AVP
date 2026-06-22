@@ -1082,15 +1082,9 @@ function isDivergenciaIgnoradaModelo(marca, modelo){
 }
 
 async function ignorarDivergencia(marca, modelo, catOrigem, catDestino){
-  try{
-    await supabase.ignorarDivergencia(marca, modelo, catOrigem, catDestino, currentUser||'');
-    DIVERGENCIAS_IGNORADAS.push({marca, modelo, categoria_origem:catOrigem, categoria_destino:catDestino, usuario:currentUser||''});
-    computeSmartDivergences();
-    renderKPIs();
-    renderOverviewTable();
-    renderTopDivergences();
-    showToast('Modelo marcado como exclusivo','success');
-  }catch(e){showToast('Erro ao ignorar divergência','error');console.error(e);}
+  addToStaging({type:'Ignorar Divergência',marca:marca,modelo:modelo,catFrom:catOrigem,catTo:catDestino,details:'Marcar como exclusivo: '+marca+' '+modelo+' em '+catOrigem});
+  showToast('Marcação de exclusivo adicionada às pendentes','success');
+  renderTopDivergences();
 }
 
 async function desigNorarDivergencia(marca, modelo, catOrigem, catDestino){
