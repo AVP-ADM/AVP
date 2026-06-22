@@ -6505,6 +6505,12 @@ async function doLogout(){
   closeSettings();
   // Stop session check
   if(_sessionCheckInterval){clearInterval(_sessionCheckInterval);_sessionCheckInterval=null;}
+  if(_inactivityTimer){clearInterval(_inactivityTimer);_inactivityTimer=null;}
+  // Remove activity listeners
+  document.removeEventListener('mousemove', resetActivityTimer);
+  document.removeEventListener('keydown', resetActivityTimer);
+  document.removeEventListener('click', resetActivityTimer);
+  document.removeEventListener('scroll', resetActivityTimer, true);
   // Invalidate session in DB
   try{
     const user=supabase.getUser();
@@ -6527,23 +6533,52 @@ async function doLogout(){
 }
 
 // ========= SESSION SINGLE-DEVICE CHECK =========
+const SESSION_CHECK_INTERVAL = 12000; // 12 seconds
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour
+let _lastActivity = Date.now();
+let _inactivityTimer = null;
+
+function resetActivityTimer(){
+  _lastActivity = Date.now();
+}
+
 function startSessionCheck(){
   if(_sessionCheckInterval) clearInterval(_sessionCheckInterval);
+  
+  // Session uniqueness check (every 12s)
   _sessionCheckInterval=setInterval(async()=>{
     try{
       const user=supabase.getUser();
       if(!user||!_sessionToken) return;
       const valid=await supabase.verifySession(user.id, _sessionToken);
       if(!valid){
-        // Session invalidated (someone logged in elsewhere)
         clearInterval(_sessionCheckInterval);
+        if(_inactivityTimer) clearInterval(_inactivityTimer);
         showToast('Sua sessão foi encerrada. Outro dispositivo fez login.','error');
         setTimeout(()=>{
           doLogout();
         },3000);
       }
     }catch(e){ console.warn('Session check error:',e); }
-  },30000); // Check every 30 seconds
+  }, SESSION_CHECK_INTERVAL);
+
+  // Inactivity check (every 30s, logout after 1h)
+  _inactivityTimer=setInterval(()=>{
+    if(Date.now() - _lastActivity > INACTIVITY_TIMEOUT){
+      clearInterval(_sessionCheckInterval);
+      clearInterval(_inactivityTimer);
+      showToast('Sessão encerrada por inatividade (1 hora).','warning');
+      setTimeout(()=>{
+        doLogout();
+      },3000);
+    }
+  }, 30000);
+
+  // Track user activity
+  document.addEventListener('mousemove', resetActivityTimer);
+  document.addEventListener('keydown', resetActivityTimer);
+  document.addEventListener('click', resetActivityTimer);
+  document.addEventListener('scroll', resetActivityTimer, true);
 }
 
 function initApp(){
