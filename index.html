@@ -4494,14 +4494,19 @@ function copyModelToCategory(marca, modelo, catFrom, catTo){
   renderKPIs();
 }
 
-// Copy all divergences from one side to the other
+// Copy all divergences from one side to the other (respects active filter)
 function copyAllDivergences(catFrom, catTo){
   if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   const modelsFrom=getModelsForCat(catFrom);
   const modelsTo=getModelsForCat(catTo);
-  const only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
+  let only=modelsFrom.filter(m=>!modelsTo.find(x=>norm(x.marca)===norm(m.marca)&&norm(x.modelo)===norm(m.modelo))).filter(m=>!isPendingCopyTo(m.marca,m.modelo,catTo));
+  // If there's an active filter, only copy visible (filtered) models
+  const filterQuery=norm((document.getElementById('divSearchFilter')||{}).value||'');
+  if(filterQuery){
+    only=only.filter(m=>norm(m.marca+' '+m.modelo).includes(filterQuery));
+  }
   if(!only.length){showToast('Nenhum modelo para copiar','warning');return;}
-  showModal('Copiar '+only.length+' modelo(s)?','Deseja copiar todos os modelos exclusivos de <strong>'+catFrom+'</strong> para <strong>'+catTo+'</strong>?<br><br><span style="font-size:.78rem;color:var(--text2)">Serão criadas '+only.length+' alterações pendentes.</span>',function(){
+  showModal('Copiar '+only.length+' modelo(s)?','Deseja copiar '+(filterQuery?'os <strong>'+only.length+' modelo(s) filtrado(s)</strong>':'todos os modelos exclusivos')+' de <strong>'+catFrom+'</strong> para <strong>'+catTo+'</strong>?<br><br><span style="font-size:.78rem;color:var(--text2)">Serão criadas '+only.length+' alterações pendentes.</span>',function(){
     let count=0;
     for(const m of only){
       if(!isPendingCopyTo(m.marca,m.modelo,catTo)){
@@ -4570,10 +4575,24 @@ function filterDivergencesList(){
       div.style.display=visible?'':'none';
       if(visible) visibleCount++;
     });
-    // Hide action buttons (Copiar Todos, Copiar Selecionados) when filtering shows no results
+    // Hide/update action buttons when filtering
     const actionBtns=card.querySelectorAll('.btn');
     actionBtns.forEach(btn=>{
-      if(btn.textContent.includes('Copiar')){
+      if(btn.textContent.includes('Copiar Todos')||btn.textContent.includes('Copiar Filtrados')){
+        if(!query){
+          btn.style.display='';
+          // Restore original label
+          if(btn.dataset.originalLabel) btn.innerHTML=btn.dataset.originalLabel;
+        } else if(visibleCount>0){
+          btn.style.display='';
+          if(!btn.dataset.originalLabel) btn.dataset.originalLabel=btn.innerHTML;
+          const arrow=btn.innerHTML.match(/^[➡️⬅️]+/)?.[0]||'';
+          const dest=btn.innerHTML.match(/para (.+)$/)?.[1]||'';
+          btn.innerHTML=arrow+' Copiar Filtrados ('+visibleCount+') para '+dest;
+        } else {
+          btn.style.display='none';
+        }
+      } else if(btn.textContent.includes('Copiar')){
         btn.style.display=(!query||visibleCount>0)?'':'none';
       }
     });
