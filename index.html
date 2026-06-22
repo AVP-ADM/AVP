@@ -834,7 +834,7 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Base Oficial FIPE</div>
       <div id="fipeDiagnostics"></div>
       <div style="margin-top:12px" id="fipeUpdateBtnContainer">
-        <button class="btn btn-blue btn-sm" id="btnUpdateFipeBase" onclick="updateFipeBase()">🔄 Atualizar Base Oficial</button>
+        <button class="btn btn-blue btn-sm" id="btnUpdateFipeBase" onclick="updateFipeBase(true)">🔄 Atualizar Base Oficial</button>
       </div>
     </div>
   </div>
@@ -1259,9 +1259,9 @@ function isFipeValidModel(brandName, modelName){
 }
 
 // Update FIPE base from API (with rate limiting)
-async function updateFipeBase(){
+async function updateFipeBase(forceUpdate){
   if(!FIPE_API_TOKEN){showToast('Token da API FIPE não configurado','error');return;}
-  if(isFipeBaseValid()){
+  if(!forceUpdate && isFipeBaseValid()){
     showToast('Base oficial ainda está válida. Atualização será liberada após 30 dias ou quando nova tabela FIPE for detectada.','warning');
     return;
   }
@@ -1412,26 +1412,13 @@ function updateFipeUpdateButton(){
   const btn=document.getElementById('btnUpdateFipeBase');
   if(!btn) return;
   const container=document.getElementById('fipeUpdateBtnContainer');
-  if(isFipeBaseValid()){
-    const lastDate=new Date(FIPE_BASE.lastUpdate);
-    const nextUpdate=new Date(lastDate.getTime()+(30*24*60*60*1000));
-    const daysLeft=Math.ceil((nextUpdate.getTime()-Date.now())/(24*60*60*1000));
-    btn.disabled=true;
-    btn.style.opacity='.4';
-    btn.style.cursor='not-allowed';
-    btn.innerHTML='🔒 Base atualizada (próxima em '+daysLeft+' dia'+(daysLeft!==1?'s':'')+')';
-    // Add info below button
-    let info=container.querySelector('.fipe-valid-info');
-    if(!info){info=document.createElement('div');info.className='fipe-valid-info';info.style.cssText='margin-top:6px;font-size:.72rem;color:var(--text3)';container.appendChild(info);}
-    info.textContent='A base oficial está dentro do período de validade. Atualização será liberada quando completar 30 dias ou quando uma nova tabela FIPE for detectada.';
-  } else {
-    btn.disabled=false;
-    btn.style.opacity='1';
-    btn.style.cursor='pointer';
-    btn.innerHTML='🔄 Atualizar Base Oficial';
-    const info=container.querySelector('.fipe-valid-info');
-    if(info) info.remove();
-  }
+  // Temporarily force-enabled for re-sync
+  btn.disabled=false;
+  btn.style.opacity='1';
+  btn.style.cursor='pointer';
+  btn.innerHTML='🔄 Atualizar Base Oficial';
+  const info=container.querySelector('.fipe-valid-info');
+  if(info) info.remove();
 }
 
 function renderFipeOutdatedAlert(){
