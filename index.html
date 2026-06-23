@@ -2443,7 +2443,7 @@ function loadMoreDrawer(id){
   const tbody=document.getElementById(tableId).querySelector('tbody');
   let html='';
   for(const row of slice){
-    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+    html+='<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>';
   }
   tbody.insertAdjacentHTML('beforeend',html);
   const shown=Math.min(state.page*state.pageSize,state.filtered.length);
@@ -2664,7 +2664,7 @@ function filterDrawerTableLazy(id){
   // Re-render first page
   const tbody=document.getElementById(tableId).querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
-  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
   document.getElementById('count_'+tableId).textContent=state.filtered.length+' registros';
   const btn=document.getElementById('loadMore_'+id);
   if(btn){
@@ -2675,6 +2675,14 @@ function filterDrawerTableLazy(id){
       btn.style.display='none';
     }
   }
+}
+
+function formatDrawerCell(id, cell, colIdx){
+  if(id==='divergencias'&&colIdx===0){
+    const typeLabels={'critica':'<span style="color:var(--red);font-weight:600;font-size:.7rem">Critica</span>','revisao':'<span style="color:var(--amber);font-weight:600;font-size:.7rem">Revisao</span>'};
+    return typeLabels[cell]||cell||'';
+  }
+  return cell!=null?cell:'';
 }
 
 function sortDrawerTableLazy(id,colIdx){
@@ -2714,7 +2722,7 @@ function sortDrawerTableLazy(id,colIdx){
   // Re-render tbody
   const tbody=table.querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
-  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
   const btn=document.getElementById('loadMore_'+id);
   if(btn){
     if(state.filtered.length>state.pageSize){
