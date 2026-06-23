@@ -2898,7 +2898,7 @@ function buildModelListWithActions(models, cat){
     const isTemp = isTempRelease(m.marca, m.modelo, cat);
     const pendingLabel = pendingType?
       (pendingType.startsWith('Salvando:')?pendingType.replace('Salvando: ','')+'...':
-       pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente')
+       pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':pendingType==='Alterar Ano'?'Alterar Ano':'Pendente')
       :'Pendente';
     const isSaving = pendingType&&pendingType.startsWith('Salvando:');
     let pendingBadge='';
@@ -6496,7 +6496,7 @@ function getPendingColor(type){
   const t=type.toLowerCase();
   if(t.includes('adição')||t.includes('adicao')||t.includes('criação')||t.includes('criacao')) return 'var(--green)';
   if(t.includes('remoção')||t.includes('remocao')) return 'var(--red)';
-  if(t.includes('edição')||t.includes('edicao')||t.includes('renomear')) return 'var(--blue)';
+  if(t.includes('edição')||t.includes('edicao')||t.includes('renomear')||t.includes('alterar')) return 'var(--blue)';
   if(t.includes('movimentação')||t.includes('movimentacao')||t.includes('mover')) return 'var(--purple)';
   if(t.includes('ignorar')) return 'var(--amber)';
   return 'var(--amber)';
