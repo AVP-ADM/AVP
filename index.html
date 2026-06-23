@@ -4401,6 +4401,18 @@ function rebuildPendingIndex(){
       _pendingIndex.changes[k]=true;
       _pendingIndex.changeTypes[k]=typeLabel;
     }
+    // Also index by newModelo for edits (so both old and new names are found)
+    if(op.newModelo&&op.catFrom){
+      const k2=op.marca+'|||'+op.newModelo+'|||'+op.catFrom;
+      _pendingIndex.changes[k2]=true;
+      _pendingIndex.changeTypes[k2]=typeLabel;
+    }
+    // Also index by modelo (current) for edits
+    if(op.type==='Edição'&&op.modelo&&op.catFrom){
+      const k3=op.marca+'|||'+op.modelo+'|||'+op.catFrom;
+      _pendingIndex.changes[k3]=true;
+      _pendingIndex.changeTypes[k3]=typeLabel;
+    }
     // Global (without category)
     const gk=op.marca+'|||'+opModelo;
     _pendingIndex.changes[gk]=true;
