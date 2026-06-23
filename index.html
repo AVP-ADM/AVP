@@ -831,14 +831,7 @@ tr:hover .row-actions{opacity:1}
         </table>
       </div>
     </div>
-    <!-- FIPE DIAGNOSTICS PANEL -->
-    <div class="card">
-      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span> Base Oficial FIPE</div>
-      <div id="fipeDiagnostics"></div>
-      <div style="margin-top:12px" id="fipeUpdateBtnContainer">
-        <button class="btn btn-blue btn-sm" id="btnUpdateFipeBase" onclick="updateFipeBase()">🔄 Atualizar Base Oficial</button>
-      </div>
-    </div>
+    <!-- FIPE DIAGNOSTICS PANEL - moved to Configurações > Base FIPE -->
   </div>
 
   <!-- ========= TAB: HISTÓRICO ========= -->
@@ -1045,6 +1038,9 @@ tr:hover .row-actions{opacity:1}
       <div id="settingsPanel_fipe" style="display:none">
         <h4 style="font-size:.9rem;font-weight:600;color:var(--text1);margin-bottom:16px">Base Oficial FIPE</h4>
         <div id="settingsFipeDiagnostics"></div>
+        <div style="margin-top:12px" id="fipeUpdateBtnContainer">
+          <button class="btn btn-blue btn-sm" id="btnUpdateFipeBase" onclick="updateFipeBase()">Atualizar Base Oficial</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1519,7 +1515,7 @@ async function updateFipeBase(){
 }
 
 function renderFipeDiagnostics(){
-  const el=document.getElementById('fipeDiagnostics');
+  const el=document.getElementById('fipeDiagnostics')||document.getElementById('settingsFipeDiagnostics');
   if(!el) return;
   loadFipeRequestsFromStorage();
   if(!FIPE_BASE.lastUpdate){
@@ -3452,7 +3448,7 @@ function openAddModelToCat(categoria){
   if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
   _fipeCurrentCategory=categoria;
   const fipeBrands=isFipeBaseLoaded()?getFipeBrandsForCategory(categoria):ALL_BRANDS;
-  showModal('➕ Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
+  showModal('Adicionar Modelo em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
 
@@ -5182,97 +5178,240 @@ function renderMgmtKpis(){
   }
 }
 
+// ========= MGMT SYSTEM AUTOCOMPLETE (RAW data) =========
+var _mgmtSelectedCat='';
+var _mgmtSelectedBrand='';
+
+function mgmtSysGetBrands(cat){
+  if(!cat||!RAW[cat]) return [];
+  return Object.keys(RAW[cat].brands||{}).sort();
+}
+
+function mgmtSysGetModels(cat, brand){
+  if(!cat||!brand||!RAW[cat]) return [];
+  var brands=RAW[cat].brands||{};
+  // Case-insensitive match
+  var key=Object.keys(brands).find(function(b){return b.toLowerCase()===brand.toLowerCase();});
+  if(!key) return [];
+  return (brands[key]||[]).slice().sort();
+}
+
+function mgmtSysFilterBrands(inputId, ddId, msgId){
+  var input=document.getElementById(inputId);
+  var dd=document.getElementById(ddId);
+  var msg=document.getElementById(msgId);
+  if(!input||!dd) return;
+  var query=input.value.trim().toLowerCase();
+  var brands=mgmtSysGetBrands(_mgmtSelectedCat);
+  var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
+  filtered=filtered.slice(0,50);
+  if(filtered.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada nesta categoria</div>';
+    if(msg&&query){msg.textContent='Marca nao encontrada no sistema';msg.className='ac-msg invalid';}
+    return;
+  }
+  dd.style.display='block';
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    var esc=filtered[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var dataEsc=filtered[i].replace(/"/g,'&quot;');
+    html+='<div class="fipe-item" data-value="'+dataEsc+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+highlightMatch(esc,query)+'</div>';
+  }
+  if(brands.length>50&&!query) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Digite para filtrar ('+brands.length+' marcas)</div>';
+  dd.innerHTML=html;
+  dd.onmousedown=function(e){
+    e.preventDefault();
+    var el=e.target;
+    while(el&&el!==dd){
+      if(el.dataset&&el.dataset.value){
+        mgmtSysSelectBrand(el.dataset.value,inputId,ddId,msgId);
+        return;
+      }
+      el=el.parentElement;
+    }
+  };
+  if(msg){
+    if(query){
+      var exact=brands.find(function(b){return b.toLowerCase()===query;});
+      if(exact){msg.textContent='Marca valida';msg.className='ac-msg valid';}
+      else{msg.textContent='Selecione uma marca da lista';msg.className='ac-msg';}
+    }else{msg.textContent='';msg.className='ac-msg';}
+  }
+}
+
+function mgmtSysSelectBrand(brand, inputId, ddId, msgId){
+  _mgmtSelectedBrand=brand;
+  var input=document.getElementById(inputId);
+  var dd=document.getElementById(ddId);
+  var msg=document.getElementById(msgId);
+  if(input) input.value=brand;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent=''+brand;msg.className='ac-msg valid';}
+  // Enable and focus model input
+  var modelInput=document.getElementById('mgmt_model');
+  if(modelInput){
+    modelInput.disabled=false;
+    modelInput.placeholder='Digite para pesquisar modelo...';
+    modelInput.value='';
+    modelInput.focus();
+  }
+  var modelMsg=document.getElementById('mgmt_modelMsg');
+  if(modelMsg){modelMsg.textContent='';modelMsg.className='ac-msg';}
+}
+
+function mgmtSysFilterModels(inputId, ddId, msgId){
+  var input=document.getElementById(inputId);
+  var dd=document.getElementById(ddId);
+  var msg=document.getElementById(msgId);
+  if(!input||!dd) return;
+  var query=input.value.trim().toLowerCase();
+  var models=mgmtSysGetModels(_mgmtSelectedCat,_mgmtSelectedBrand);
+  var filtered=query?models.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):models;
+  filtered=filtered.slice(0,50);
+  if(filtered.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhum modelo encontrado</div>';
+    if(msg&&query){msg.textContent='Modelo nao encontrado no sistema';msg.className='ac-msg invalid';}
+    return;
+  }
+  dd.style.display='block';
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    var esc=filtered[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var dataEsc=filtered[i].replace(/"/g,'&quot;');
+    html+='<div class="fipe-item" data-value="'+dataEsc+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+highlightMatch(esc,query)+'</div>';
+  }
+  if(models.length>50&&!query) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Digite para filtrar ('+models.length+' modelos)</div>';
+  dd.innerHTML=html;
+  dd.onmousedown=function(e){
+    e.preventDefault();
+    var el=e.target;
+    while(el&&el!==dd){
+      if(el.dataset&&el.dataset.value){
+        mgmtSysSelectModel(el.dataset.value,inputId,ddId,msgId);
+        return;
+      }
+      el=el.parentElement;
+    }
+  };
+  if(msg){
+    if(query){
+      var exact=models.find(function(m){return m.toLowerCase()===query;});
+      if(exact){msg.textContent='Modelo valido';msg.className='ac-msg valid';}
+      else{msg.textContent='Selecione um modelo da lista';msg.className='ac-msg';}
+    }else{msg.textContent='';msg.className='ac-msg';}
+  }
+}
+
+function mgmtSysSelectModel(model, inputId, ddId, msgId){
+  var input=document.getElementById(inputId);
+  var dd=document.getElementById(ddId);
+  var msg=document.getElementById(msgId);
+  if(input) input.value=model;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent=''+model;msg.className='ac-msg valid';}
+}
+
+function mgmtSysCatChanged(selectId){
+  _mgmtSelectedCat=document.getElementById(selectId).value;
+  _mgmtSelectedBrand='';
+  // Reset brand input
+  var brandInput=document.getElementById('mgmt_brand');
+  if(brandInput){brandInput.value='';brandInput.placeholder='Digite para pesquisar marca...';}
+  var brandMsg=document.getElementById('mgmt_brandMsg');
+  if(brandMsg){brandMsg.textContent='';brandMsg.className='ac-msg';}
+  // Reset model input
+  var modelInput=document.getElementById('mgmt_model');
+  if(modelInput){modelInput.value='';modelInput.disabled=true;modelInput.placeholder='Selecione uma marca primeiro...';}
+  var modelMsg=document.getElementById('mgmt_modelMsg');
+  if(modelMsg){modelMsg.textContent='';modelMsg.className='ac-msg';}
+}
+
+// ========= MGMT MODAL REFACTORED =========
 function showMgmtModal(type){
   if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
-  const catOptions = CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
-  const brandOptions = ALL_BRANDS.map(b=>`<option value="${b}">${b}</option>`).join('');
-  let title='', body='', onConfirm=null;
+  const catOptions = CATEGORIES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
 
   if(type==='add'){
-    title='➕ Adicionar Modelo';
-    body=`<div style="display:flex;flex-direction:column;gap:10px">
-      <select id="mgmt_cat">${catOptions}</select>
-      <input id="mgmt_brand" placeholder="Marca" list="brandList"><datalist id="brandList">${brandOptions}</datalist>
-      <input id="mgmt_model" placeholder="Modelo">
-    </div>`;
-    onConfirm=()=>{
-      const cat=document.getElementById('mgmt_cat').value;
-      const brand=document.getElementById('mgmt_brand').value.trim();
-      const model=document.getElementById('mgmt_model').value.trim();
-      if(!brand||!model) return alert('Preencha marca e modelo');
-      addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
+    // Show category picker, then call openAddModelToCat
+    showModal('Adicionar Modelo','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Selecione a categoria:</label><select id="mgmt_addCatPicker" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem">'+catOptions+'</select><span style="font-size:.72rem;color:var(--text3)">O modal de adicao usara a base oficial FIPE para sugestoes de marca e modelo.</span></div>',function(){
+      var cat=document.getElementById('mgmt_addCatPicker').value;
       closeModal();
-      renderOverviewTable();
-    };
-  } else if(type==='remove'){
-    title='➖ Remover Modelo';
-    body=`<div style="display:flex;flex-direction:column;gap:10px">
-      <select id="mgmt_cat">${catOptions}</select>
-      <input id="mgmt_brand" placeholder="Marca" list="brandList2"><datalist id="brandList2">${brandOptions}</datalist>
-      <input id="mgmt_model" placeholder="Modelo">
-    </div>`;
-    onConfirm=()=>{
-      const cat=document.getElementById('mgmt_cat').value;
-      const brand=document.getElementById('mgmt_brand').value.trim();
-      const model=document.getElementById('mgmt_model').value.trim();
-      if(!brand||!model) return alert('Preencha marca e modelo');
+      setTimeout(function(){openAddModelToCat(cat);},100);
+    },'green');
+    return;
+  }
+
+  if(type==='remove'){
+    _mgmtSelectedCat=CATEGORIES[0]||'';
+    _mgmtSelectedBrand='';
+    showModal('Remover Modelo','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><select id="mgmt_cat" onchange="mgmtSysCatChanged(\'mgmt_cat\')" style="width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_brand" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onfocus="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_brandDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_brandDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_brandMsg" class="ac-msg"></div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_model" placeholder="Selecione uma marca primeiro..." autocomplete="off" disabled oninput="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onfocus="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_modelDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_modelDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_modelMsg" class="ac-msg"></div><span style="font-size:.72rem;color:var(--text3)">Apenas marcas e modelos existentes no sistema serao sugeridos.</span></div>',function(){
+      var cat=document.getElementById('mgmt_cat').value;
+      var brand=document.getElementById('mgmt_brand').value.trim();
+      var model=document.getElementById('mgmt_model').value.trim();
+      if(!brand||!model){showToast('Preencha marca e modelo','error');return;}
+      // Validate exists in system
+      var sysBrands=mgmtSysGetBrands(cat);
+      if(!sysBrands.some(function(b){return b.toLowerCase()===brand.toLowerCase();})){showToast('Marca "'+brand+'" nao encontrada nesta categoria','error');return;}
+      var sysModels=mgmtSysGetModels(cat,brand);
+      if(!sysModels.some(function(m){return m.toLowerCase()===model.toLowerCase();})){showToast('Modelo "'+model+'" nao encontrado para esta marca nesta categoria','error');return;}
       addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
       closeModal();
       renderOverviewTable();
-    };
-  } else if(type==='move'){
-    title='↔️ Mover Modelo';
-    body=`<div style="display:flex;flex-direction:column;gap:10px">
-      <label style="font-size:.78rem;color:var(--text2)">Categoria origem:</label>
-      <select id="mgmt_catFrom">${catOptions}</select>
-      <label style="font-size:.78rem;color:var(--text2)">Categoria destino:</label>
-      <select id="mgmt_catTo">${catOptions}</select>
-      <input id="mgmt_brand" placeholder="Marca" list="brandList3"><datalist id="brandList3">${brandOptions}</datalist>
-      <input id="mgmt_model" placeholder="Modelo">
-    </div>`;
-    onConfirm=()=>{
-      const catFrom=document.getElementById('mgmt_catFrom').value;
-      const catTo=document.getElementById('mgmt_catTo').value;
-      const brand=document.getElementById('mgmt_brand').value.trim();
-      const model=document.getElementById('mgmt_model').value.trim();
-      if(!brand||!model) return alert('Preencha marca e modelo');
-      if(catFrom===catTo) return alert('Origem e destino devem ser diferentes');
-      addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom,catTo});
+      showToast('Remoção de "'+brand+' '+model+'" pendente','success');
+    },'red');
+    return;
+  }
+
+  if(type==='move'){
+    _mgmtSelectedCat=CATEGORIES[0]||'';
+    _mgmtSelectedBrand='';
+    showModal('Mover Modelo','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria origem:</label><select id="mgmt_catFrom" onchange="mgmtSysCatChanged(\'mgmt_catFrom\')" style="width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_brand" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onfocus="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_brandDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_brandDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_brandMsg" class="ac-msg"></div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_model" placeholder="Selecione uma marca primeiro..." autocomplete="off" disabled oninput="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onfocus="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_modelDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_modelDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_modelMsg" class="ac-msg"></div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria destino:</label><select id="mgmt_catTo" style="width:100%">'+catOptions+'</select><span style="font-size:.72rem;color:var(--text3)">Marca e modelo sao da categoria de origem (dados do sistema).</span></div>',function(){
+      var catFrom=document.getElementById('mgmt_catFrom').value;
+      var catTo=document.getElementById('mgmt_catTo').value;
+      var brand=document.getElementById('mgmt_brand').value.trim();
+      var model=document.getElementById('mgmt_model').value.trim();
+      if(!brand||!model){showToast('Preencha marca e modelo','error');return;}
+      if(catFrom===catTo){showToast('Origem e destino devem ser diferentes','error');return;}
+      // Validate exists in source category
+      var sysBrands=mgmtSysGetBrands(catFrom);
+      if(!sysBrands.some(function(b){return b.toLowerCase()===brand.toLowerCase();})){showToast('Marca "'+brand+'" nao encontrada na categoria de origem','error');return;}
+      var sysModels=mgmtSysGetModels(catFrom,brand);
+      if(!sysModels.some(function(m){return m.toLowerCase()===model.toLowerCase();})){showToast('Modelo "'+model+'" nao encontrado na categoria de origem','error');return;}
+      addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:catFrom,catTo:catTo});
       closeModal();
       renderOverviewTable();
-    };
-  } else if(type==='mass'){
-    title='📋 Correção em Massa';
-    body=`<div style="display:flex;flex-direction:column;gap:10px">
-      <label style="font-size:.78rem;color:var(--text2)">Tipo de operação:</label>
-      <select id="mgmt_massType"><option value="add">Adição</option><option value="remove">Remoção</option><option value="move">Movimentação</option></select>
-      <select id="mgmt_cat">${catOptions}</select>
-      <select id="mgmt_catTo" style="display:none">${catOptions}</select>
-      <label style="font-size:.78rem;color:var(--text2)">Lista (uma por linha: Marca | Modelo):</label>
-      <textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea>
-    </div>
-    <script>document.getElementById('mgmt_massType').onchange=function(){document.getElementById('mgmt_catTo').style.display=this.value==='move'?'block':'none'}<\/script>`;
-    onConfirm=()=>{
-      const massType=document.getElementById('mgmt_massType').value;
-      const cat=document.getElementById('mgmt_cat').value;
-      const catTo=document.getElementById('mgmt_catTo').value;
-      const lines=document.getElementById('mgmt_list').value.trim().split('\n').filter(l=>l.trim());
-      if(!lines.length) return alert('Insira pelo menos uma linha');
-      let count=0;
-      for(const line of lines){
-        const parts=line.split('|').map(s=>s.trim());
+      showToast('Movimentação de "'+brand+' '+model+'" pendente','success');
+    },'blue');
+    return;
+  }
+
+  if(type==='mass'){
+    showModal('Correcao em Massa','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de operacao:</label><select id="mgmt_massType" onchange="document.getElementById(\'mgmt_massCatTo\').style.display=this.value===\'move\'?\'block\':\'none\'"><option value="add">Adicao</option><option value="remove">Remocao</option><option value="move">Movimentacao</option></select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><select id="mgmt_cat" style="width:100%">'+catOptions+'</select><select id="mgmt_massCatTo" style="display:none;width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Lista (uma por linha: Marca | Modelo):</label><textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea><span style="font-size:.72rem;color:var(--text3)">Formato: MARCA | MODELO (uma entrada por linha)</span></div>',function(){
+      var massType=document.getElementById('mgmt_massType').value;
+      var cat=document.getElementById('mgmt_cat').value;
+      var catTo=document.getElementById('mgmt_massCatTo').value;
+      var lines=document.getElementById('mgmt_list').value.trim().split('\n').filter(function(l){return l.trim();});
+      if(!lines.length){showToast('Insira pelo menos uma linha','error');return;}
+      var count=0;
+      for(var i=0;i<lines.length;i++){
+        var parts=lines[i].split('|').map(function(s){return s.trim();});
         if(parts.length<2) continue;
-        const[brand,model]=parts;
+        var brand=parts[0];
+        var model=parts[1];
+        if(!brand||!model) continue;
         if(massType==='add') addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
         else if(massType==='remove') addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
-        else if(massType==='move') addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:cat,catTo});
+        else if(massType==='move') addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:cat,catTo:catTo});
         count++;
       }
       closeModal();
-      showToast(count+' operações adicionadas ao staging','success');
-    };
+      renderOverviewTable();
+      showToast(count+' operacoes adicionadas ao staging','success');
+    },'blue');
+    return;
   }
-  showModal(title,body,onConfirm,'blue');
 }
 
 // ========= HISTORY =========
@@ -6551,11 +6690,9 @@ function switchSettingsTab(tab){
 function renderSettingsFipe(){
   const el=document.getElementById('settingsFipeDiagnostics');
   if(!el) return;
-  // Reuse existing FIPE diagnostics rendering
+  // Render FIPE diagnostics directly into settings panel
   if(typeof renderFipeDiagnostics==='function'){
-    const origEl=document.getElementById('fipeDiagnostics');
-    if(origEl) el.innerHTML=origEl.innerHTML;
-    else el.innerHTML='<div style="color:var(--text3);font-size:.82rem">Informações FIPE disponíveis na aba Manutenção.</div>';
+    renderFipeDiagnostics();
   }
 }
 
