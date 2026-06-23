@@ -2106,7 +2106,7 @@ function renderOverviewTable(){
     }
     if(isPendingCreation){
       return `<tr style="opacity:.6">
-        <td><strong style="color:var(--amber)">${cat}</strong> <span style="font-size:.6rem;color:var(--amber);opacity:.8">Pendente</span></td>
+        <td><strong style="color:var(--green)">${cat}</strong> <span style="font-size:.6rem;color:var(--green);opacity:.8">Pendente</span></td>
         <td>0</td>
         <td>0</td>
         <td>—</td>
@@ -2115,7 +2115,7 @@ function renderOverviewTable(){
       </tr>`;
     }
     return `<tr${catPending?' style="opacity:.6"':''}>
-      <td><strong${catPending?' style="color:var(--amber)"':''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:var(--amber);opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
+      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
@@ -2280,7 +2280,7 @@ function openDrawer(cat){
       const pending = hasPendingChange(b, m, cat);
       const pendingType = pending ? getPendingChangeType(b, m, cat) : null;
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
-        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')"${pending?' style="font-size:.82rem;flex:1;cursor:pointer;color:var(--amber)"':''}>${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:var(--amber);opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
+        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')"${pending?` style="font-size:.82rem;flex:1;cursor:pointer;color:${getPendingColor(pendingType)}"`:''}>${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:'+getPendingColor(pendingType)+';opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span style="display:flex;gap:4px;flex-shrink:0">
           <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}>✏️</button>
           <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}>🗑️</button>
@@ -2903,7 +2903,7 @@ function buildModelListWithActions(models, cat){
     const isSaving = pendingType&&pendingType.startsWith('Salvando:');
     let pendingBadge='';
     if(pending){
-      pendingBadge=isSaving?` <span style="font-size:.6rem;color:var(--blue);vertical-align:middle">${pendingLabel}...</span>`:` <span style="font-size:.6rem;color:var(--amber);vertical-align:middle">${pendingLabel}</span> <span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="cursor:pointer;font-size:9px;font-weight:700;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span>`;
+      pendingBadge=isSaving?` <span style="font-size:.6rem;color:var(--blue);vertical-align:middle">${pendingLabel}...</span>`:` <span style="font-size:.6rem;color:${getPendingColor(pendingType)};vertical-align:middle">${pendingLabel}</span> <span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="cursor:pointer;font-size:9px;font-weight:700;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span>`;
     }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
@@ -3602,7 +3602,7 @@ function buildBrandListWithActions(brands, cat){
     const pendingType=pending?getPendingBrandChangeType(b,cat):null;
     html+=`<div class="model-action-row" data-search="${norm(b)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info">
-        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span style="font-size:.6rem;color:var(--amber);vertical-align:middle;margin-left:6px">'+(pendingType||'Pendente')+'</span>':''}</span>
+        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span style="font-size:.6rem;color:'+getPendingColor(pendingType)+';vertical-align:middle;margin-left:6px">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span class="model-action-brand">${modelCount} modelo${modelCount!==1?'s':''}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
@@ -3806,7 +3806,7 @@ function openModelDetail(marca, modelo){
   // Action buttons
   html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">`;
   if(modelPending){
-    html+=`<div style="font-size:.78rem;color:var(--amber);font-weight:600;width:100%;margin-bottom:6px">Este registro possui uma alteracao pendente (${modelPendingType}). Acoes bloqueadas ate que seja salva ou cancelada.</div>`;
+    html+=`<div style="font-size:.78rem;color:${getPendingColor(modelPendingType)};font-weight:600;width:100%;margin-bottom:6px">Este registro possui uma alteracao pendente (${modelPendingType}). Acoes bloqueadas ate que seja salva ou cancelada.</div>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remover</button>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Mover</button>`;
@@ -4139,7 +4139,7 @@ function renderDupTable(){
       const escapedModelo = d.modelo.replace(/'/g,"\\'");
       const pending = isPendingRemoval(d.marca, d.modelo, c);
       if(pending){
-        return `<span style="color:var(--amber);opacity:.7;font-size:.72rem" title="Remoção pendente">${c} <span style="font-size:.6rem">Pendente</span> <span style="font-size:9px;cursor:pointer;font-weight:700;width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></span>`;
+        return `<span style="color:var(--red);opacity:.7;font-size:.72rem" title="Remoção pendente">${c} <span style="font-size:.6rem">Pendente</span> <span style="font-size:9px;cursor:pointer;font-weight:700;width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></span>`;
       }
       if(canRemove){
         return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
@@ -6476,6 +6476,18 @@ function updateThemeButton(theme){
       menuItem.innerHTML='<span class="si-icon">'+icon('moon')+'</span><span class="si-label">Tema Escuro</span>';
     }
   }
+}
+
+// ========= PENDING COLOR HELPER =========
+function getPendingColor(type){
+  if(!type) return 'var(--amber)';
+  const t=type.toLowerCase();
+  if(t.includes('adição')||t.includes('adicao')||t.includes('criação')||t.includes('criacao')) return 'var(--green)';
+  if(t.includes('remoção')||t.includes('remocao')) return 'var(--red)';
+  if(t.includes('edição')||t.includes('edicao')||t.includes('renomear')) return 'var(--blue)';
+  if(t.includes('movimentação')||t.includes('movimentacao')||t.includes('mover')) return 'var(--purple)';
+  if(t.includes('ignorar')) return 'var(--amber)';
+  return 'var(--amber)';
 }
 
 // ========= PASSWORD VALIDATION =========
