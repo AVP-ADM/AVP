@@ -2322,14 +2322,38 @@ function showKpiDetail(type){
     const data=[];
     // Erros obrigatórios
     for(const d of DIVERGENCES_ERRORS){
-      data.push(['<span title="Erro Obrigatório — Modelo deveria estar cadastrado na outra categoria">❌</span>', d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
+      data.push(['critica', d.marca, d.modelo, 'Em '+d.from+' — Falta em '+d.missing]);
     }
     // Para revisão
     for(const d of DIVERGENCES_REVIEW){
-      data.push(['<span title="Para Revisão — Modelo está apenas nesta categoria, verificar se é intencional">⚠️</span>', d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
+      data.push(['revisao', d.marca, d.modelo, d.label+' — Não está em '+d.notIn]);
     }
-    title+=' ('+data.length+') — '+DIVERGENCES_ERRORS.length+' críticas · '+DIVERGENCES_REVIEW.length+' revisão';
-    html=buildDrawerTable(['Tipo','Marca','Modelo','Situação'],data,'divergencias');
+    title+=' ('+data.length+') — '+DIVERGENCES_ERRORS.length+' criticas · '+DIVERGENCES_REVIEW.length+' revisao';
+    // Build custom table with type filter
+    const searchId='drawerSearch_divergencias';
+    const tableId='drawerTableData_divergencias';
+    const PAGE_SIZE=100;
+    window['_drawerData_divergencias']={headers:['Tipo','Marca','Modelo','Situação'],allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
+    html='<div class="drawer-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+    html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDivergenceDrawer()" style="flex:1;min-width:150px">';
+    html+='<select id="divDrawerTypeFilter" onchange="filterDivergenceDrawer()" style="font-size:.78rem;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1)"><option value="">Todos os tipos</option><option value="critica">Criticas</option><option value="revisao">Para Revisao</option></select>';
+    html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\'divergencias\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+    html+='</div>';
+    html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
+    html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
+    html+='<table class="drawer-table" id="'+tableId+'">';
+    html+='<thead><tr><th onclick="sortDrawerTableLazy(\'divergencias\',0)" style="cursor:pointer">Tipo ↕</th><th onclick="sortDrawerTableLazy(\'divergencias\',1)" style="cursor:pointer">Marca ↕</th><th onclick="sortDrawerTableLazy(\'divergencias\',2)" style="cursor:pointer">Modelo ↕</th><th onclick="sortDrawerTableLazy(\'divergencias\',3)" style="cursor:pointer">Situação ↕</th></tr></thead>';
+    html+='<tbody>';
+    const slice=data.slice(0,PAGE_SIZE);
+    const typeLabels={'critica':'<span style="color:var(--red);font-weight:600;font-size:.7rem">Critica</span>','revisao':'<span style="color:var(--amber);font-weight:600;font-size:.7rem">Revisao</span>'};
+    for(const row of slice){
+      html+='<tr><td>'+(typeLabels[row[0]]||row[0])+'</td><td>'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td></tr>';
+    }
+    html+='</tbody></table>';
+    if(data.length>PAGE_SIZE){
+      html+='<div id="loadMore_divergencias" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreDrawer(\'divergencias\')">Carregar mais (mostrando '+Math.min(PAGE_SIZE,data.length)+' de '+data.length+')</button></div>';
+    }
+    html+='</div>';
   }
   openDetailDrawer(title, html);
 }
@@ -2605,6 +2629,28 @@ function exportModelosByCategory(){
 
   XLSX.writeFile(wb,'modelos_por_categoria_'+new Date().toISOString().slice(0,10)+'.xlsx');
   showToast('Modelos exportados por categoria com sucesso!','success');
+}
+
+function filterDivergenceDrawer(){
+  const store=window['_drawerData_divergencias'];
+  if(!store) return;
+  const query=norm((document.getElementById('drawerSearch_divergencias')||{}).value||'');
+  const typeFilter=(document.getElementById('divDrawerTypeFilter')||{}).value||'';
+  let filtered=store.allData;
+  if(typeFilter) filtered=filtered.filter(row=>row[0]===typeFilter);
+  if(query) filtered=filtered.filter(row=>norm(row.join(' ')).includes(query));
+  store.filtered=filtered;
+  store.page=1;
+  const typeLabels={'critica':'<span style="color:var(--red);font-weight:600;font-size:.7rem">Critica</span>','revisao':'<span style="color:var(--amber);font-weight:600;font-size:.7rem">Revisao</span>'};
+  const tbody=document.querySelector('#drawerTableData_divergencias tbody');
+  if(tbody){
+    const slice=filtered.slice(0,store.pageSize);
+    tbody.innerHTML=slice.map(row=>'<tr><td>'+(typeLabels[row[0]]||row[0])+'</td><td>'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td></tr>').join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Nenhum resultado</td></tr>';
+  }
+  const countEl=document.getElementById('count_drawerTableData_divergencias');
+  if(countEl) countEl.textContent=filtered.length+' registros';
+  const loadMore=document.getElementById('loadMore_divergencias');
+  if(loadMore) loadMore.style.display=filtered.length>store.pageSize?'block':'none';
 }
 
 function filterDrawerTableLazy(id){
