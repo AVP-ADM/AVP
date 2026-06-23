@@ -6345,6 +6345,32 @@ function updateThemeButton(theme){
   }
 }
 
+// ========= PASSWORD VALIDATION =========
+function validatePassword(pass){
+  if(pass.length<8) return 'Senha deve ter no mínimo 8 caracteres';
+  if(!/[A-Z]/.test(pass)) return 'Senha deve conter pelo menos 1 letra maiúscula';
+  if(!/[0-9]/.test(pass)) return 'Senha deve conter pelo menos 1 número';
+  if(!/[^A-Za-z0-9]/.test(pass)) return 'Senha deve conter pelo menos 1 caractere especial (!@#$%...)';
+  return null;
+}
+
+function passwordFieldHtml(id, placeholder){
+  return `<div style="position:relative"><input id="${id}" type="password" placeholder="${placeholder||'Mín. 8 caracteres, maiúscula, número e especial'}" style="width:100%;padding-right:36px"><button type="button" onclick="togglePassField('${id}')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:2px" title="Mostrar/ocultar senha"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>`;
+}
+
+function togglePassField(id){
+  const input=document.getElementById(id);
+  if(!input) return;
+  const btn=input.nextElementSibling;
+  if(input.type==='password'){
+    input.type='text';
+    if(btn) btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  } else {
+    input.type='password';
+    if(btn) btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  }
+}
+
 // ========= SETTINGS PAGE =========
 let _settingsCurrentTab='users';
 function switchSettingsTab(tab){
@@ -6614,12 +6640,13 @@ function openMyProfileModal(){
         <span style="color:var(--text2);font-weight:500">Setor:</span><span>${profile.setor||'—'}</span>
       </div>
       <div class="settings-divider" style="margin:4px 0"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Alterar senha</label><input id="myProfileNewPass" type="password" placeholder="Nova senha (mín. 6 caracteres)" style="width:100%"></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Alterar senha</label>${passwordFieldHtml('myProfileNewPass','Nova senha...')}</div>
     </div>
   `,async function(){
     const pass=document.getElementById('myProfileNewPass').value;
     if(!pass){closeModal();return;}
-    if(pass.length<6){showToast('Senha deve ter no mínimo 6 caracteres','error');return;}
+    const passErr=validatePassword(pass);
+    if(passErr){showToast(passErr,'error');return;}
     try{
       // Note: changing own password requires admin API or re-auth
       // For now just show success (actual implementation depends on Supabase admin setup)
@@ -6645,7 +6672,7 @@ function openCreateUserModal(){
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="newUserName" placeholder="Nome completo" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="newUserEmail" placeholder="email@exemplo.com" style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label><input id="newUserPass" type="password" placeholder="Mínimo 6 caracteres" style="width:100%"></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label>'+passwordFieldHtml('newUserPass','Senha do novo usuário...')+'</div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="consultor">Consultor</option><option value="operador">Operador</option><option value="auditor">Auditor</option><option value="viewer">Viewer</option><option value="admin">Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="newUserSetor" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
     </div>
@@ -6656,7 +6683,8 @@ function openCreateUserModal(){
     const nivel=document.getElementById('newUserNivel').value;
     const setor=document.getElementById('newUserSetor').value.trim();
     if(!nome||!email||!pass){showToast('Preencha nome, email e senha','error');return;}
-    if(pass.length<6){showToast('Senha deve ter no mínimo 6 caracteres','error');return;}
+    const passErr=validatePassword(pass);
+    if(passErr){showToast(passErr,'error');return;}
     try{
       // Create user in Supabase Auth
       const result=await supabase.signUp(email,pass,{nome:nome});
@@ -6685,7 +6713,7 @@ function openEditUserModal(userId){
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="editUserEmail" value="${(user.email||'').replace(/"/g,'&quot;')}" disabled style="width:100%;opacity:.6"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="editUserNivel" style="width:100%"><option value="consultor" ${user.nivel==='consultor'?'selected':''}>Consultor</option><option value="operador" ${user.nivel==='operador'?'selected':''}>Operador</option><option value="auditor" ${user.nivel==='auditor'?'selected':''}>Auditor</option><option value="viewer" ${user.nivel==='viewer'?'selected':''}>Viewer</option><option value="admin" ${user.nivel==='admin'?'selected':''}>Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="editUserSetor" value="${(user.setor||'').replace(/"/g,'&quot;')}" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label><input id="editUserPass" type="password" placeholder="Nova senha..." style="width:100%"></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label>'+passwordFieldHtml('editUserPass','Nova senha...')+'</div>
     </div>
   `,async function(){
     const nome=document.getElementById('editUserName').value.trim();
@@ -6693,7 +6721,7 @@ function openEditUserModal(userId){
     const setor=document.getElementById('editUserSetor').value.trim();
     const pass=document.getElementById('editUserPass').value;
     if(!nome){showToast('Nome é obrigatório','error');return;}
-    if(pass&&pass.length<6){showToast('Senha deve ter no mínimo 6 caracteres','error');return;}
+    if(pass){const passErr=validatePassword(pass);if(passErr){showToast(passErr,'error');return;}}
     try{
       // Update profile
       await supabase.update('perfis',{nome:nome,nivel:nivel,setor:setor||null,updated_at:new Date().toISOString()},'id=eq.'+userId);
