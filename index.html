@@ -2105,17 +2105,17 @@ function renderOverviewTable(){
       }
     }
     if(isPendingCreation){
-      return `<tr style="opacity:.7">
-        <td><strong>${cat}</strong> <span class="tag tag-amber" style="font-size:.6rem">Pendente</span></td>
+      return `<tr style="opacity:.6">
+        <td><strong style="color:var(--amber)">${cat}</strong> <span style="font-size:.6rem;color:var(--amber);opacity:.8">Pendente</span></td>
         <td>0</td>
         <td>0</td>
         <td>—</td>
         <td>—</td>
-        <td><button class="btn btn-sm btn-red" onclick="cancelPendingCategory('${cat.replace(/'/g,"\\'")}')" title="Cancelar criação" style="padding:3px 8px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>
+        <td><span onclick="event.stopPropagation();cancelPendingCategory('${cat.replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></td>
       </tr>`;
     }
-    return `<tr>
-      <td><strong>${cat}</strong>${catPending?' <span class="tag tag-amber" style="font-size:.6rem;position:relative;padding-right:18px" title="'+catPendingType+'">⏳ '+(catPendingType||'Pendente')+'<span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendência cancelada\',\'success\')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=1;this.style.transform=&quot;translateY(-50%) scale(1.3)&quot;" onmouseout="this.style.opacity=.7;this.style.transform=&quot;translateY(-50%) scale(1)&quot;" title="Cancelar">✕</span></span>':''}</td>
+    return `<tr${catPending?' style="opacity:.6"':''}>
+      <td><strong${catPending?' style="color:var(--amber)"':''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:var(--amber);opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
@@ -2280,7 +2280,7 @@ function openDrawer(cat){
       const pending = hasPendingChange(b, m, cat);
       const pendingType = pending ? getPendingChangeType(b, m, cat) : null;
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
-        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span class="tag tag-amber" style="font-size:.6rem" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span style="font-size:.82rem;flex:1;cursor:pointer" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')"${pending?' style="font-size:.82rem;flex:1;cursor:pointer;color:var(--amber)"':''}>${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:var(--amber);opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span style="display:flex;gap:4px;flex-shrink:0">
           <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}>✏️</button>
           <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}>🗑️</button>
@@ -2899,11 +2899,9 @@ function buildModelListWithActions(models, cat){
        pendingType==='Remoção'?'Remoção':pendingType==='Edição'?'Edição':pendingType==='Movimentação'?'Movimentação':'Pendente')
       :'Pendente';
     const isSaving = pendingType&&pendingType.startsWith('Salvando:');
-    const badgeClass = isSaving?'tag-blue':'tag-amber';
-    const badgeIcon = isSaving?'⏳':'⏳';
     let pendingBadge='';
     if(pending){
-      pendingBadge=` <span class="tag ${badgeClass}" style="font-size:.6rem;vertical-align:middle;padding-right:${isSaving?'8':'18'}px;position:relative">${badgeIcon} ${pendingLabel}${isSaving?'':'<span onclick="event.stopPropagation();cancelPendingModelChange(\''+eMarca+'\',\''+eModelo+'\',\''+eCat+'\')" style="position:absolute;right:3px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=\'1\';this.style.transform=\'translateY(-50%) scale(1.3)\'" onmouseout="this.style.opacity=\'.7\';this.style.transform=\'translateY(-50%) scale(1)\'" title="Cancelar pendência">✕</span>'}</span>`;
+      pendingBadge=isSaving?` <span style="font-size:.6rem;color:var(--blue);vertical-align:middle">${pendingLabel}...</span>`:` <span style="font-size:.6rem;color:var(--amber);vertical-align:middle">${pendingLabel}</span> <span onclick="event.stopPropagation();cancelPendingModelChange('${eMarca}','${eModelo}','${eCat}')" style="cursor:pointer;font-size:9px;font-weight:700;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span>`;
     }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
@@ -3602,7 +3600,7 @@ function buildBrandListWithActions(brands, cat){
     const pendingType=pending?getPendingBrandChangeType(b,cat):null;
     html+=`<div class="model-action-row" data-search="${norm(b)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info">
-        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span class="tag tag-amber" style="font-size:.6rem;vertical-align:middle" title="'+pendingType+'">⏳ Pendente</span>':''}</span>
+        <span class="model-action-name" style="font-weight:600">${b}${pending?' <span style="font-size:.6rem;color:var(--amber);vertical-align:middle;margin-left:6px">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span class="model-action-brand">${modelCount} modelo${modelCount!==1?'s':''}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
@@ -3806,7 +3804,7 @@ function openModelDetail(marca, modelo){
   // Action buttons
   html+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">`;
   if(modelPending){
-    html+=`<div style="font-size:.78rem;color:var(--amber);font-weight:600;width:100%;margin-bottom:6px">⏳ Este registro possui uma alteração pendente (${modelPendingType}). Ações bloqueadas até que seja salva ou cancelada.</div>`;
+    html+=`<div style="font-size:.78rem;color:var(--amber);font-weight:600;width:100%;margin-bottom:6px">Este registro possui uma alteracao pendente (${modelPendingType}). Acoes bloqueadas ate que seja salva ou cancelada.</div>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remover</button>`;
     html+=`<button class="btn btn-sm" disabled style="opacity:.4;pointer-events:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Mover</button>`;
@@ -4139,7 +4137,7 @@ function renderDupTable(){
       const escapedModelo = d.modelo.replace(/'/g,"\\'");
       const pending = isPendingRemoval(d.marca, d.modelo, c);
       if(pending){
-        return `<span class="tag tag-amber" title="Remoção pendente">${c} ⏳ <span style="font-size:9px;cursor:pointer;opacity:.7;margin-left:2px;transition:opacity .15s,transform .15s;display:inline-block" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" onmouseover="this.style.opacity='1';this.style.transform='scale(1.3)'" onmouseout="this.style.opacity='.7';this.style.transform='scale(1)'" title="Cancelar remoção">✕</span></span>`;
+        return `<span style="color:var(--amber);opacity:.7;font-size:.72rem" title="Remoção pendente">${c} <span style="font-size:.6rem">Pendente</span> <span style="font-size:9px;cursor:pointer;font-weight:700;width:14px;height:14px;line-height:14px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:2px;transition:transform .15s" onclick="event.stopPropagation();cancelPendingRemoval('${escapedMarca}','${escapedModelo}','${escapedCat}')" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></span>`;
       }
       if(canRemove){
         return `<span class="tag tag-blue removable" title="${c}">${c}<span class="tag-remove" onclick="event.stopPropagation();confirmRemoveFromCat('${escapedMarca}','${escapedModelo}','${escapedCat}')" title="Remover desta categoria">✕</span></span>`;
@@ -4719,7 +4717,7 @@ function renderDivergences(){
           const eM=op.marca.replace(/'/g,"\\'");
           const eMo=op.modelo.replace(/'/g,"\\'");
           const idx=STAGING.ops.indexOf(op);
-          return '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:var(--green-bg);border:1px solid var(--green-light);display:flex;align-items:center;gap:6px" title="Copiado para '+op.catTo+'. Aguardando Salvar Alterações."><span style="font-size:.7rem">➕</span><span style="flex:1;font-size:.78rem"><strong>'+op.marca+'</strong> — '+op.modelo+' <span class="tag tag-green" style="font-size:.55rem;vertical-align:middle">⏳ Pendente</span></span><span onclick="removeFromStaging('+idx+');renderDivergences()" style="cursor:pointer;font-size:9px;opacity:.6;transition:opacity .15s,transform .15s" onmouseover="this.style.opacity=1;this.style.transform=\'scale(1.3)\'" onmouseout="this.style.opacity=.6;this.style.transform=\'scale(1)\'" title="Cancelar cópia">✕</span></div>';
+          return '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:var(--green-bg);border:1px solid var(--green-light);display:flex;align-items:center;gap:6px;opacity:.7" title="Copiado para '+op.catTo+'. Aguardando Salvar Alterações."><span style="flex:1;font-size:.78rem;color:var(--green)"><strong>'+op.marca+'</strong> — '+op.modelo+' <span style="font-size:.55rem;opacity:.8">Pendente</span></span><span onclick="removeFromStaging('+idx+');renderDivergences()" style="cursor:pointer;font-size:9px;font-weight:700;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--red);color:#fff;flex-shrink:0;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span></div>';
         }).join('');
         // Regular "in both" models - show first 100 with "show more" option
         const maxShow=100;
