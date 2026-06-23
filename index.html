@@ -2084,9 +2084,26 @@ function renderOverviewTable(){
         }
       }
     }
-    // Count critical vs review divergences for this category
-    const catDivCritical = DIVERGENCES_ERRORS.filter(d=>d.from===cat||d.missing===cat).length;
-    const catDivReview = DIVERGENCES_REVIEW.filter(d=>d.onlyIn===cat||d.notIn===cat).length;
+    // Count critical vs review divergences specifically FOR this category
+    // Critical: models in THIS cat that should also be in the paired cat (from DIVERGENCES_ERRORS where from===cat)
+    // Review: models only in THIS cat that might be intentional (from the onlyMe list minus errors)
+    let catDivCritical=0, catDivReview=0;
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other=g.a===cat?g.b:g.a;
+        const modelsMe=getModelsForCat(cat);
+        const modelsOther=getModelsForCat(other);
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        const onlyMe=modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo)));
+        for(const m of onlyMe){
+          if(DIVERGENCES_ERRORS.some(d=>norm(d.marca)===norm(m.marca)&&norm(d.modelo)===norm(m.modelo)&&(d.from===cat||d.missing===cat))){
+            catDivCritical++;
+          } else {
+            catDivReview++;
+          }
+        }
+      }
+    }
     if(isPendingCreation){
       return `<tr style="opacity:.7">
         <td><strong>${cat}</strong> <span class="tag tag-amber" style="font-size:.6rem">Pendente</span></td>
