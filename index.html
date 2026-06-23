@@ -4640,11 +4640,12 @@ function openRemoveCategory(cat){
   }
   const total=CAT_TOTALS[cat]||0;
   if(total>0){
-    showModal('⚠️ Não é possível remover',`<div style="line-height:1.8">
+    showModal('Não é possível remover',`<div style="line-height:1.8">
       <strong>${cat}</strong><br><br>
       Existem <strong>${total} modelos</strong> vinculados a esta categoria.<br><br>
       <span style="color:var(--text2)">Remova ou mova os modelos antes de excluir a categoria.</span>
     </div>`,function(){closeModal();},'blue');
+    setTimeout(()=>{const actions=document.getElementById('modalActions');if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Entendi</button>';},50);
     return;
   }
   showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
