@@ -2178,16 +2178,17 @@ function renderTopDivergences(){
   if(reviews.length > 0){
     const topReview = reviews.slice(0,3);
     html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${reviews.length})</span></div>`;
-    html += topReview.map((d,i)=>`
-      <div class="rank-item warning" style="position:relative">
+    html += topReview.map((d,i)=>{
+      const pending=isPendingIgnoreDivergencia(d.marca,d.modelo,d.onlyIn,d.notIn);
+      return `<div class="rank-item warning" style="position:relative;${pending?'opacity:.6':''}">
         <div class="rank-num" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')"">${i+1}</div>
         <div class="rank-info" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
-          <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
-          <div class="rank-sub">${d.label} · Não está em ${d.notIn}</div>
+          <div class="rank-title" style="${pending?'color:var(--amber)':''}"><strong>${d.marca}</strong> — ${d.modelo}${pending?' <span style="font-size:.6rem;vertical-align:middle;opacity:.8">Pendente</span>':''}</div>
+          <div class="rank-sub">${d.label} · Nao esta em ${d.notIn}</div>
         </div>
-        <button class="btn btn-sm" onclick="event.stopPropagation();ignorarDivergencia('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}','${d.onlyIn.replace(/'/g,"\\'")}','${d.notIn.replace(/'/g,"\\'")}')" title="Marcar como exclusivo (intencional)" style="padding:2px 8px;font-size:.65rem">${isPendingIgnoreDivergencia(d.marca,d.modelo,d.onlyIn,d.notIn)?'<span class="tag tag-amber" style="font-size:.6rem;position:relative;padding-right:16px">Pendente<span onclick="event.stopPropagation();cancelPendingIgnore(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\')" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar">&#10005;</span></span>':'Ignorar'}</button>
-      </div>
-    `).join('');
+        ${pending?'<span onclick="event.stopPropagation();cancelPendingIgnore(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;flex-shrink:0;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':'<button class="btn btn-sm" onclick="event.stopPropagation();ignorarDivergencia(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\');renderTopDivergences()" title="Marcar como exclusivo" style="padding:2px 8px;font-size:.65rem">Ignorar</button>'}
+      </div>`;
+    }).join('');
   }
 
   if(!html){
