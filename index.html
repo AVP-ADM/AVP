@@ -4795,6 +4795,18 @@ function addToStaging(op, silent){
     showToast('Aguarde o carregamento dos dados antes de realizar alterações','error');
     return;
   }
+  // Check for duplicate operation already in staging
+  const isDuplicate = STAGING.ops.some(existing =>
+    existing.type === op.type &&
+    norm(existing.marca||'') === norm(op.marca||'') &&
+    norm(existing.modelo||'') === norm(op.modelo||'') &&
+    norm(existing.catFrom||'') === norm(op.catFrom||'') &&
+    norm(existing.catTo||'') === norm(op.catTo||'')
+  );
+  if(isDuplicate){
+    if(!silent) showToast('Esta ação ja esta pendente. Operacao duplicada ignorada.','warning');
+    return;
+  }
   op.timestamp = new Date().toLocaleString('pt-BR');
   op.usuario = currentUser || 'Desconhecido';
   STAGING.ops.push(op);
@@ -4804,7 +4816,7 @@ function addToStaging(op, silent){
   saveStagingToStorage();
   renderStagingBars();
   renderStagingTable();
-  if(!silent) showToast('Operação adicionada ao staging','success');
+  if(!silent) showToast('Operacao adicionada ao staging','success');
 }
 
 function removeFromStaging(idx){
