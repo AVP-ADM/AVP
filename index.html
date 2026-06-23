@@ -1222,6 +1222,15 @@ async function ignorarDivergencia(marca, modelo, catOrigem, catDestino){
   renderTopDivergences();
 }
 
+function isPendingIgnoreDivergencia(marca, modelo, catOrigem, catDestino){
+  return STAGING.ops.some(op=>op.type==='Ignorar Divergência'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&norm(op.catFrom||'')===norm(catOrigem)&&norm(op.catTo||'')===norm(catDestino));
+}
+
+function cancelPendingIgnore(marca, modelo, catOrigem, catDestino){
+  const idx=STAGING.ops.findIndex(op=>op.type==='Ignorar Divergência'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&norm(op.catFrom||'')===norm(catOrigem)&&norm(op.catTo||'')===norm(catDestino));
+  if(idx>=0){removeFromStaging(idx);showToast('Pendência cancelada','success');renderTopDivergences();}
+}
+
 async function desigNorarDivergencia(marca, modelo, catOrigem, catDestino){
   try{
     await supabase.desigNorarDivergencia(marca, modelo, catOrigem, catDestino);
@@ -2176,7 +2185,7 @@ function renderTopDivergences(){
           <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
           <div class="rank-sub">${d.label} · Não está em ${d.notIn}</div>
         </div>
-        <button class="btn btn-sm" onclick="event.stopPropagation();ignorarDivergencia('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}','${d.onlyIn.replace(/'/g,"\\'")}','${d.notIn.replace(/'/g,"\\'")}')" title="Marcar como exclusivo (intencional)" style="padding:2px 8px;font-size:.65rem">Ignorar</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();ignorarDivergencia('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}','${d.onlyIn.replace(/'/g,"\\'")}','${d.notIn.replace(/'/g,"\\'")}')" title="Marcar como exclusivo (intencional)" style="padding:2px 8px;font-size:.65rem">${isPendingIgnoreDivergencia(d.marca,d.modelo,d.onlyIn,d.notIn)?'<span class="tag tag-amber" style="font-size:.6rem;position:relative;padding-right:16px">Pendente<span onclick="event.stopPropagation();cancelPendingIgnore(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\')" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:8px;font-weight:700;opacity:.7;width:12px;height:12px;line-height:12px;text-align:center;border-radius:50%;background:var(--red);color:#fff" title="Cancelar">&#10005;</span></span>':'Ignorar'}</button>
       </div>
     `).join('');
   }
