@@ -425,5 +425,43 @@ const supabase = {
       await supabase.insert('modelos', allModels.slice(i, i + CHUNK));
     }
     return true;
+  },
+
+  // ========= SYSTEM LOG =========
+  async insertSystemLog(tipo, mensagem, detalhes) {
+    try {
+      const user = supabase.getUser();
+      await supabase.insert('system_log', [{
+        tipo: tipo,
+        mensagem: mensagem,
+        detalhes: detalhes || null,
+        usuario_id: user?.id || null,
+        usuario_nome: user?.user_metadata?.nome || user?.email || null
+      }]);
+    } catch(e) { console.warn('[SystemLog] Insert failed:', e); }
+  },
+
+  async loadSystemLog(limit) {
+    try {
+      return await supabase.select('system_log', { order: 'created_at.desc', limit: limit || 50 });
+    } catch(e) { return []; }
+  },
+
+  // ========= SESSION MANAGEMENT =========
+  async getActiveSessions(userId) {
+    try {
+      return await supabase.select('sessoes', { filter: `usuario_id=eq.${userId}&ativo=eq.true` });
+    } catch(e) { return []; }
+  },
+
+  async killOtherSessions(userId, currentToken) {
+    try {
+      // Get all active sessions except current
+      const sessions = await supabase.select('sessoes', { filter: `usuario_id=eq.${userId}&ativo=eq.true&token=neq.${currentToken}` });
+      for (const s of sessions) {
+        await supabase.update('sessoes', { ativo: false }, `id=eq.${s.id}`);
+      }
+      return sessions.length;
+    } catch(e) { return 0; }
   }
 };
