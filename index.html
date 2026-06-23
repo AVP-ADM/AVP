@@ -6601,8 +6601,8 @@ async function renderSettingsUsers(){
       return;
     }
     tbody.innerHTML=_usersCache.map(u=>{
-      const nivelColors={'admin':'var(--red)','operador':'var(--blue)','consultor':'var(--purple)','auditor':'var(--amber)','viewer':'var(--text3)'};
-      const nivelLabels={'admin':'Admin','operador':'Operador','consultor':'Consultor','auditor':'Auditor','viewer':'Viewer'};
+      const nivelColors={'admin':'var(--red)','operador':'var(--blue)'};
+      const nivelLabels={'admin':'Admin','operador':'Operador'};
       const statusHtml=u.ativo!==false?'<span style="color:var(--green);font-weight:500;font-size:.75rem">Ativo</span>':'<span style="color:var(--red);font-weight:500;font-size:.75rem">Inativo</span>';
       const eName=(u.nome||'').replace(/'/g,"\\'");
       const eEmail=(u.email||'').replace(/'/g,"\\'");
@@ -6628,7 +6628,7 @@ async function renderSettingsUsers(){
 
 function openMyProfileModal(){
   const profile=currentProfile||{};
-  const nivelLabels={'admin':'Administrador','operador':'Operador','consultor':'Consultor','auditor':'Auditor','viewer':'Visualizador'};
+  const nivelLabels={'admin':'Administrador','operador':'Operador'};
   showModal('Meu Perfil',`
     <div style="display:grid;gap:14px">
       <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
@@ -6692,7 +6692,7 @@ function openCreateUserModal(){
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="newUserName" placeholder="Nome completo" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="newUserEmail" placeholder="email@exemplo.com" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label>'+passwordFieldHtml('newUserPass','Senha do novo usuário...')+'</div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="consultor">Consultor</option><option value="operador">Operador</option><option value="auditor">Auditor</option><option value="viewer">Viewer</option><option value="admin">Admin</option></select></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="operador">Operador</option><option value="admin">Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="newUserSetor" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
     </div>
   `,async function(){
@@ -6730,7 +6730,7 @@ function openEditUserModal(userId){
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="editUserName" value="${(user.nome||'').replace(/"/g,'&quot;')}" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="editUserEmail" value="${(user.email||'').replace(/"/g,'&quot;')}" disabled style="width:100%;opacity:.6"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="editUserNivel" style="width:100%"><option value="consultor" ${user.nivel==='consultor'?'selected':''}>Consultor</option><option value="operador" ${user.nivel==='operador'?'selected':''}>Operador</option><option value="auditor" ${user.nivel==='auditor'?'selected':''}>Auditor</option><option value="viewer" ${user.nivel==='viewer'?'selected':''}>Viewer</option><option value="admin" ${user.nivel==='admin'?'selected':''}>Admin</option></select></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="editUserNivel" style="width:100%"><option value="operador" ${user.nivel==='operador'?'selected':''}>Operador</option><option value="admin" ${user.nivel==='admin'?'selected':''}>Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="editUserSetor" value="${(user.setor||'').replace(/"/g,'&quot;')}" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label>'+passwordFieldHtml('editUserPass','Nova senha...')+'</div>
     </div>
@@ -7321,17 +7321,14 @@ function showApp(){
 
 // ========= ACCESS LEVELS =========
 function applyAccessLevels(){
-  const nivel=(currentProfile&&currentProfile.nivel)||'viewer';
+  const nivel=(currentProfile&&currentProfile.nivel)||'operador';
   // Sidebar visibility based on nivel
   const sidebarItems=document.querySelectorAll('.sidebar-item[data-tab]');
   const access={
     admin:['overview','duplicates','divergences','management','history','exports'],
-    operador:['overview','duplicates','divergences','management','history','exports'],
-    auditor:['overview','duplicates','divergences','history','exports'],
-    consultor:['overview','history'],
-    viewer:['overview']
+    operador:['overview','history','exports']
   };
-  const allowed=access[nivel]||access.viewer;
+  const allowed=access[nivel]||access.operador;
   sidebarItems.forEach(item=>{
     const tab=item.dataset.tab;
     if(tab) item.style.display=allowed.includes(tab)?'':'none';
@@ -7343,6 +7340,11 @@ function applyAccessLevels(){
   if(settingsUsersItem&&settingsUsersItem.previousElementSibling){
     settingsUsersItem.previousElementSibling.style.display=(nivel==='admin')?'':'none';
   }
+  // Sync/base info in header - only admin
+  const syncInfo=document.getElementById('syncInfo');
+  const baseInfo=document.getElementById('baseInfo');
+  if(syncInfo) syncInfo.style.display=(nivel==='admin')?'':'none';
+  if(baseInfo) baseInfo.style.display=(nivel==='admin')?'':'none';
 }
 
 async function doLogin(){
