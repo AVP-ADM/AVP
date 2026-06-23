@@ -6384,8 +6384,10 @@ async function renderSettingsSystem(){
   const recordsEl=document.getElementById('sysTotalRecords');
   const statusEl=document.getElementById('sysStatusBadge');
   if(syncEl){
-    const baseInfo=document.getElementById('baseInfo');
-    syncEl.textContent=baseInfo?baseInfo.textContent.replace('Última:','').trim():'—';
+    if(!lastSyncInfo){
+      try{ const saved=localStorage.getItem('avp-last-sync'); if(saved) lastSyncInfo=JSON.parse(saved); }catch(e){}
+    }
+    syncEl.textContent=lastSyncInfo&&lastSyncInfo.date?lastSyncInfo.date:'—';
   }
   if(recordsEl) recordsEl.textContent=ALL_RECORDS?ALL_RECORDS.length.toLocaleString():'—';
   if(statusEl){
