@@ -940,19 +940,21 @@ tr:hover .row-actions{opacity:1}
 
       <!-- Sub-tab: Sistema -->
       <div id="settingsPanel_system" style="display:none">
-        <div id="settingsSystemContent">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+          <!-- Coluna Esquerda: Configurações -->
           <div style="display:grid;gap:20px">
 
             <!-- Conexão & Sincronização -->
             <div>
               <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Conexão & Sincronização</h4>
-              <div style="display:grid;gap:10px;max-width:600px">
+              <div style="display:grid;gap:10px">
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
                   <div><div style="font-weight:500;font-size:.82rem">Status</div><div style="font-size:.72rem;color:var(--text3)">Conexão com Supabase</div></div>
                   <span id="sysStatusBadge" style="font-size:.75rem;font-weight:500;color:var(--green)">✓ Conectado</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Última sincronização</div><div style="font-size:.72rem;color:var(--text3)">Data/hora da última sync com o banco</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Última sincronização</div><div style="font-size:.72rem;color:var(--text3)">Data/hora da última sync</div></div>
                   <span id="sysLastSync" style="font-size:.75rem;color:var(--text2)">—</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
@@ -960,7 +962,7 @@ tr:hover .row-actions{opacity:1}
                   <span id="sysTotalRecords" style="font-size:.75rem;font-weight:600;color:var(--text1)">—</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Sincronizar</div><div style="font-size:.72rem;color:var(--text3)">Forçar sincronização com o banco de dados</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Sincronizar</div><div style="font-size:.72rem;color:var(--text3)">Forçar sincronização com o banco</div></div>
                   <button class="btn btn-sm" onclick="manualSync();renderSettingsSystem()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Sincronizar</button>
                 </div>
               </div>
@@ -969,9 +971,9 @@ tr:hover .row-actions{opacity:1}
             <!-- API FIPE -->
             <div>
               <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">API FIPE</h4>
-              <div style="display:grid;gap:10px;max-width:600px">
+              <div style="display:grid;gap:10px">
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Requisições este mês</div><div style="font-size:.72rem;color:var(--text3)">Consumo de requisições da API</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Requisições este mês</div><div style="font-size:.72rem;color:var(--text3)">Consumo da API</div></div>
                   <span id="sysFipeRequests" style="font-size:.75rem;font-weight:600;color:var(--text1)">—</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
@@ -988,21 +990,21 @@ tr:hover .row-actions{opacity:1}
             <!-- Segurança -->
             <div>
               <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Segurança</h4>
-              <div style="display:grid;gap:10px;max-width:600px">
+              <div style="display:grid;gap:10px">
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Sessão única</div><div style="font-size:.72rem;color:var(--text3)">Verifica a cada 12s se outra sessão foi aberta</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Sessão única</div><div style="font-size:.72rem;color:var(--text3)">Check a cada 12s</div></div>
                   <span style="font-size:.75rem;color:var(--green);font-weight:500">✓ Ativo</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Inatividade</div><div style="font-size:.72rem;color:var(--text3)">Desconecta após 1 hora sem atividade</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Inatividade</div><div style="font-size:.72rem;color:var(--text3)">Desconecta automaticamente</div></div>
                   <span style="font-size:.75rem;color:var(--green);font-weight:500">✓ 1 hora</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Sessões ativas</div><div style="font-size:.72rem;color:var(--text3)">Dispositivos conectados com sua conta</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Sessões ativas</div><div style="font-size:.72rem;color:var(--text3)">Dispositivos conectados</div></div>
                   <span id="sysActiveSessions" style="font-size:.75rem;font-weight:500;color:var(--text1)">—</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Encerrar outras sessões</div><div style="font-size:.72rem;color:var(--text3)">Desconecta todos os outros dispositivos</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Encerrar outras sessões</div><div style="font-size:.72rem;color:var(--text3)">Desconectar outros dispositivos</div></div>
                   <button class="btn btn-sm btn-red" onclick="killOtherSessionsAction()" style="padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Encerrar</button>
                 </div>
               </div>
@@ -1011,27 +1013,31 @@ tr:hover .row-actions{opacity:1}
             <!-- Manutenção -->
             <div>
               <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Manutenção do Sistema</h4>
-              <div style="display:grid;gap:10px;max-width:600px">
+              <div style="display:grid;gap:10px">
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
                   <div><div style="font-weight:500;font-size:.82rem">Backup completo</div><div style="font-size:.72rem;color:var(--text3)">Exportar toda a base em XLSX</div></div>
-                  <button class="btn btn-sm" onclick="exportFullBaseXLSX()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Backup XLSX</button>
+                  <button class="btn btn-sm" onclick="exportFullBaseXLSX()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Backup</button>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div><div style="font-weight:500;font-size:.82rem">Limpar cache local</div><div style="font-size:.72rem;color:var(--text3)">Remove dados em cache do navegador (base FIPE, filtros, etc.)</div></div>
+                  <div><div style="font-weight:500;font-size:.82rem">Limpar cache local</div><div style="font-size:.72rem;color:var(--text3)">Remove dados em cache do navegador</div></div>
                   <button class="btn btn-sm btn-red" onclick="clearLocalCacheAction()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Limpar</button>
                 </div>
               </div>
             </div>
 
-            <!-- Log do Sistema -->
-            <div>
-              <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Log de Atividades</h4>
-              <div style="max-width:600px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);max-height:300px;overflow-y:auto" id="sysLogContainer">
-                <div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Carregando...</div>
-              </div>
-            </div>
-
           </div>
+
+          <!-- Coluna Direita: Log de Atividades -->
+          <div style="position:sticky;top:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h4 style="font-size:.82rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Log de Atividades</h4>
+              <button class="btn btn-sm" onclick="openFullLogModal()" style="font-size:.68rem;padding:3px 8px">Ver todos</button>
+            </div>
+            <div style="background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden" id="sysLogContainer">
+              <div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Carregando...</div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -6418,25 +6424,54 @@ async function renderSystemLog(){
   const container=document.getElementById('sysLogContainer');
   if(!container) return;
   try{
-    const logs=await supabase.loadSystemLog(30);
+    const logs=await supabase.loadSystemLog(5);
     if(!logs||!logs.length){
       container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Nenhum registro no log.</div>';
       return;
     }
-    const iconMap={info:'ℹ️',success:'✅',warning:'⚠️',error:'❌',login:'🔑',logout:'🚪',sync:'🔄'};
-    const colorMap={info:'var(--text2)',success:'var(--green)',warning:'var(--amber)',error:'var(--red)',login:'var(--blue)',logout:'var(--text3)',sync:'var(--blue)'};
-    container.innerHTML=logs.map(log=>{
-      const dt=log.created_at?new Date(log.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
-      const icon=iconMap[log.tipo]||'📋';
-      const color=colorMap[log.tipo]||'var(--text2)';
-      return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:.75rem">
-        <span style="flex-shrink:0">${icon}</span>
-        <span style="flex:1;color:${color}">${log.mensagem||'—'}${log.detalhes?'<br><span style="color:var(--text3);font-size:.68rem">'+log.detalhes+'</span>':''}</span>
-        <span style="flex-shrink:0;color:var(--text3);font-size:.68rem;white-space:nowrap">${dt}</span>
-      </div>`;
-    }).join('');
+    container.innerHTML=formatLogEntries(logs);
   }catch(e){
-    container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Log não disponível. Crie a tabela system_log no Supabase.</div>';
+    container.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Log não disponível.</div>';
+  }
+}
+
+function formatLogEntries(logs){
+  const iconMap={info:'ℹ️',success:'✅',warning:'⚠️',error:'❌',login:'🔑',logout:'🚪',sync:'🔄'};
+  const colorMap={info:'var(--text2)',success:'var(--green)',warning:'var(--amber)',error:'var(--red)',login:'var(--blue)',logout:'var(--text3)',sync:'var(--blue)'};
+  return logs.map(log=>{
+    const dt=log.created_at?new Date(log.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
+    const icon=iconMap[log.tipo]||'📋';
+    const color=colorMap[log.tipo]||'var(--text2)';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:.75rem">
+      <span style="flex-shrink:0">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="color:${color};font-weight:500">${log.mensagem||'—'}</div>
+        ${log.detalhes?'<div style="color:var(--text3);font-size:.68rem;margin-top:2px">'+log.detalhes+'</div>':''}
+        ${log.usuario_nome?'<div style="color:var(--text3);font-size:.65rem;margin-top:1px">por '+log.usuario_nome+'</div>':''}
+      </div>
+      <span style="flex-shrink:0;color:var(--text3);font-size:.65rem;white-space:nowrap">${dt}</span>
+    </div>`;
+  }).join('');
+}
+
+async function openFullLogModal(){
+  showModal('Log de Atividades do Sistema','<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>',function(){closeModal();},'blue');
+  setTimeout(()=>{
+    const actions=document.getElementById('modalActions');
+    if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Fechar</button>';
+  },50);
+  try{
+    const logs=await supabase.loadSystemLog(100);
+    const body=document.getElementById('modalBody');
+    if(!body) return;
+    if(!logs||!logs.length){
+      body.innerHTML='<div style="text-align:center;color:var(--text3);padding:20px">Nenhum registro encontrado.</div>';
+      return;
+    }
+    body.innerHTML='<div style="max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)">'+formatLogEntries(logs)+'</div><div style="margin-top:8px;font-size:.7rem;color:var(--text3);text-align:right">Mostrando últimos '+logs.length+' registros</div>';
+  }catch(e){
+    const body=document.getElementById('modalBody');
+    if(body) body.innerHTML='<div style="color:var(--red);padding:20px;text-align:center">Erro ao carregar log: '+e.message+'</div>';
   }
 }
 
