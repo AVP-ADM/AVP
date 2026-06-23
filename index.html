@@ -2119,7 +2119,7 @@ function renderOverviewTable(){
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
-      <td>${divs>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical} críticas · ${catDivReview} revisão">${catDivCritical>0?catDivCritical:''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?'<span style="color:var(--amber)">'+catDivReview+'</span>':''}</span>`:'—'}</td>
+      <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
       <td style="white-space:nowrap">
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
