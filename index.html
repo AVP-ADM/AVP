@@ -6943,6 +6943,11 @@ function checkSession(){
     if(session&&session.access_token&&session.user){
       currentUser=session.user.user_metadata?.nome || session.user.email;
       _sessionToken=localStorage.getItem('avp-session-token')||null;
+      // Load profile before showing app (for access levels)
+      supabase.getProfile(session.user.id).then(profile=>{
+        currentProfile=profile;
+        applyAccessLevels();
+      }).catch(()=>{});
       showApp();
       return true;
     }
