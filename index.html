@@ -6461,17 +6461,48 @@ async function openFullLogModal(){
     if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Fechar</button>';
   },50);
   try{
-    const logs=await supabase.loadSystemLog(100);
+    const logs=await supabase.loadSystemLog(20);
     const body=document.getElementById('modalBody');
     if(!body) return;
     if(!logs||!logs.length){
       body.innerHTML='<div style="text-align:center;color:var(--text3);padding:20px">Nenhum registro encontrado.</div>';
       return;
     }
-    body.innerHTML='<div style="max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)">'+formatLogEntries(logs)+'</div><div style="margin-top:8px;font-size:.7rem;color:var(--text3);text-align:right">Mostrando últimos '+logs.length+' registros</div>';
+    window._fullLogOffset=20;
+    window._fullLogHasMore=logs.length>=20;
+    body.innerHTML='<div id="fullLogList" style="max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)">'+formatLogEntries(logs)+'</div>'
+      +(window._fullLogHasMore?'<div id="fullLogLoadMore" style="text-align:center;padding:12px"><button class="btn btn-sm" onclick="loadMoreLogs()">Carregar mais</button></div>':'')
+      +'<div style="margin-top:8px;font-size:.7rem;color:var(--text3);text-align:right" id="fullLogCount">Mostrando '+logs.length+' registros</div>';
   }catch(e){
     const body=document.getElementById('modalBody');
     if(body) body.innerHTML='<div style="color:var(--red);padding:20px;text-align:center">Erro ao carregar log: '+e.message+'</div>';
+  }
+}
+
+async function loadMoreLogs(){
+  const btn=document.getElementById('fullLogLoadMore');
+  if(btn) btn.innerHTML='<div class="spinner" style="margin:0 auto;width:16px;height:16px"></div>';
+  try{
+    const logs=await supabase.select('system_log',{order:'created_at.desc',limit:20,filter:'created_at=lt.'+new Date(Date.now()-window._fullLogOffset*0).toISOString()});
+    // Use offset-based approach
+    const allLogs=await supabase.loadSystemLog(window._fullLogOffset+20);
+    const newLogs=allLogs.slice(window._fullLogOffset);
+    if(!newLogs||!newLogs.length){
+      if(btn) btn.innerHTML='<span style="font-size:.75rem;color:var(--text3)">Sem mais registros</span>';
+      return;
+    }
+    const list=document.getElementById('fullLogList');
+    if(list) list.insertAdjacentHTML('beforeend',formatLogEntries(newLogs));
+    window._fullLogOffset+=newLogs.length;
+    const hasMore=newLogs.length>=20;
+    if(btn){
+      if(hasMore) btn.innerHTML='<button class="btn btn-sm" onclick="loadMoreLogs()">Carregar mais</button>';
+      else btn.innerHTML='<span style="font-size:.75rem;color:var(--text3)">Todos os registros carregados</span>';
+    }
+    const countEl=document.getElementById('fullLogCount');
+    if(countEl) countEl.textContent='Mostrando '+window._fullLogOffset+' registros';
+  }catch(e){
+    if(btn) btn.innerHTML='<span style="font-size:.75rem;color:var(--red)">Erro ao carregar</span>';
   }
 }
 
