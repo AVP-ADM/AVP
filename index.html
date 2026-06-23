@@ -2388,11 +2388,10 @@ function showCatDetail(cat, type){
         const modelsOther=getModelsForCat(other);
         const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
         const onlyMe=modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo)));
-        // Determine if this is a critical (obligatory) or review divergence
-        const isCritical=DIVERGENCES_ERRORS.some(d=>d.from===cat||d.missing===cat);
         for(const m of onlyMe){
-          const tipo=DIVERGENCES_ERRORS.some(d=>norm(d.marca)===norm(m.marca)&&norm(d.modelo)===norm(m.modelo))?'critica':'revisao';
-          data.push([tipo, m.marca, m.modelo, 'Ausente em '+other]);
+          // Check if this is a critical divergence (model in 'from' cat, missing in 'mustBeIn' cat)
+          const isCrit=DIVERGENCES_ERRORS.some(d=>norm(d.marca)===norm(m.marca)&&norm(d.modelo)===norm(m.modelo)&&(d.from===cat||d.missing===cat));
+          data.push([isCrit?'critica':'revisao', m.marca, m.modelo, 'Ausente em '+other]);
         }
       }
     }
