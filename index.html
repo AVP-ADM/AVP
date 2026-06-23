@@ -7296,7 +7296,7 @@ async function doLogin(){
       initApp();
       // Start session verification
       startSessionCheck();
-      logSystem('login','Login realizado',currentUser);
+      logSystem('login','Login realizado');
     } else {
       const msg=result.error_description||result.msg||result.error?.message||'Usuário ou senha incorretos';
       errEl.textContent=msg;
@@ -7311,7 +7311,7 @@ async function doLogin(){
 
 async function doLogout(){
   closeSettings();
-  logSystem('logout','Logout realizado',currentUser);
+  logSystem('logout','Logout realizado');
   // Stop session check
   if(_sessionCheckInterval){clearInterval(_sessionCheckInterval);_sessionCheckInterval=null;}
   if(_inactivityTimer){clearInterval(_inactivityTimer);_inactivityTimer=null;}
