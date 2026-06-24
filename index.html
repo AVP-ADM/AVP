@@ -8434,17 +8434,84 @@ function crlvLimpar(){
 }
 
 function crlvHandleBatch(event){
-  showToast('Processamento em lote sera implementado na Etapa 5','info');
+  var files=event.target.files;
+  if(!files||files.length===0) return;
+  var text=document.getElementById('crlv_batchText');
+  var lines=[];
+  for(var i=0;i<files.length;i++){lines.push('[ARQUIVO] '+files[i].name);}
+  if(text) text.value=(text.value?text.value+'\n':'')+lines.join('\n');
+  showToast(files.length+' arquivo(s) adicionado(s) a fila','success');
 }
 
 function crlvProcessBatch(){
   var text=document.getElementById('crlv_batchText').value.trim();
-  if(!text){showToast('Insira dados ou faça upload de arquivos','error');return;}
-  showToast('Processamento em lote sera implementado na Etapa 5','info');
+  if(!text){showToast('Insira dados ou faca upload de arquivos','error');return;}
+  var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l&&!l.startsWith('[ARQUIVO]');});
+  if(lines.length===0){showToast('Nenhuma linha valida para processar','error');return;}
+  _crlvBatchResults=[];
+  var resultsEl=document.getElementById('crlv_batchResults');
+  var exportBtn=document.getElementById('crlv_exportBatchBtn');
+  if(resultsEl) resultsEl.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner" style="margin:0 auto 8px"></div><span style="font-size:.78rem;color:var(--text2)">Processando '+lines.length+' entrada(s)...</span></div>';
+  setTimeout(function(){
+    for(var i=0;i<lines.length;i++){
+      var parts=lines[i].split('|').map(function(s){return s.trim();});
+      var marcaModelo=parts[0]||'';
+      var ano=parts.length>1?parts[1]:'';
+      var chassi=parts.length>2?parts[2]:'';
+      var input={marcaModelo:marcaModelo,chassi:chassi,ano:ano,combustivel:'',tipo:'',potencia:''};
+      var result=crlvMatch(input);
+      var top=result.candidates&&result.candidates[0]||null;
+      _crlvBatchResults.push({
+        input:marcaModelo,
+        ano:ano,
+        chassi:chassi,
+        match:top?top.brand+' '+top.model:'—',
+        confidence:top?top.confidence:0,
+        category:top&&top.categories&&top.categories.length>0?top.categories[0]:'N/A',
+        registered:top?top.registered:false
+      });
+    }
+    crlvRenderBatchResults();
+    if(exportBtn) exportBtn.style.display='inline-flex';
+    showToast(_crlvBatchResults.length+' veiculo(s) processado(s)','success');
+  },100);
+}
+
+function crlvRenderBatchResults(){
+  var el=document.getElementById('crlv_batchResults');
+  if(!el||_crlvBatchResults.length===0){if(el) el.innerHTML='';return;}
+  var html='<div class="table-wrap"><table><thead><tr><th>#</th><th>Entrada</th><th>Match FIPE</th><th>Confianca</th><th>Categoria</th><th>Status</th></tr></thead><tbody>';
+  for(var i=0;i<_crlvBatchResults.length;i++){
+    var r=_crlvBatchResults[i];
+    var confColor=r.confidence>=80?'var(--green)':r.confidence>=50?'var(--amber)':'var(--red)';
+    var statusBadge=r.registered?'<span class="crlv-cat-badge registered">Cadastrado</span>':'<span class="crlv-cat-badge not-registered">Nao cadastrado</span>';
+    html+='<tr><td style="color:var(--text3)">'+(i+1)+'</td><td style="font-size:.8rem">'+r.input+'</td><td style="font-size:.8rem">'+r.match+'</td><td style="font-weight:600;color:'+confColor+'">'+r.confidence+'%</td><td style="font-size:.78rem">'+(r.category||'—')+'</td><td>'+statusBadge+'</td></tr>';
+  }
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
 }
 
 function crlvExportBatch(){
-  showToast('Exportação sera implementada na Etapa 5','info');
+  if(_crlvBatchResults.length===0){showToast('Nenhum resultado para exportar','error');return;}
+  var lines=['#;Entrada;Match FIPE;Confianca;Categoria;Status'];
+  for(var i=0;i<_crlvBatchResults.length;i++){
+    var r=_crlvBatchResults[i];
+    lines.push((i+1)+';'+r.input+';'+r.match+';'+r.confidence+'%;'+r.category+';'+(r.registered?'Cadastrado':'Nao cadastrado'));
+  }
+  var csv=lines.join('\n');
+  // Try clipboard first
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(csv).then(function(){showToast('Resultado copiado para a area de transferencia','success');});
+  } else {
+    // Fallback: download
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download='crlv_lote_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Arquivo CSV exportado','success');
+  }
 }
 
 function crlvRenderHistory(){
