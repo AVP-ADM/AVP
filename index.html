@@ -1154,6 +1154,7 @@ let DIVERGENCES_REVIEW = []; // Apenas no Importado sem Nacional (para revisão)
 let DIVERGENCIAS_IGNORADAS = []; // Modelos confirmados como "exclusivo" (não conta como revisão)
 let modelStatus = {};
 let _catDupsCount = {};
+let _catDivsCount = {};
 let chartsInitialized = false;
 
 // ========= CATEGORY COMPATIBILITY RULES =========
@@ -1747,6 +1748,21 @@ function recomputeAll(){
       _catDupsCount[c]=(_catDupsCount[c]||0)+1;
     }
   }
+  // Pre-compute divergences count per category
+  _catDivsCount={};
+  for(const cat of CATEGORIES){
+    let divs=0;
+    for(const g of COMP_GROUPS){
+      if(g.a===cat||g.b===cat){
+        const other=g.a===cat?g.b:g.a;
+        const modelsMe=getModelsForCat(cat);
+        const modelsOther=getModelsForCat(other);
+        const setOther=new Set(modelsOther.map(m=>norm(m.marca)+'|||'+norm(m.modelo)));
+        divs+=modelsMe.filter(m=>!setOther.has(norm(m.marca)+'|||'+norm(m.modelo))).length;
+      }
+    }
+    if(divs>0) _catDivsCount[cat]=divs;
+  }
   // Update sidebar badges
   if(typeof updateSidebarBadges==='function') updateSidebarBadges();
 }
@@ -2097,7 +2113,14 @@ function renderOverviewTable(){
   else if(sort==='count_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
   else if(sort==='count_asc') cats.sort((a,b)=>CAT_TOTALS[a]-CAT_TOTALS[b]);
   else if(sort==='brands') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length - Object.keys(RAW[a].brands||{}).length);
-  else if(sort==='status') cats.sort((a,b)=>getCategoryStatus(a).level - getCategoryStatus(b).level);
+  else if(sort==='status') cats.sort((a,b)=>{
+    const diff=getCategoryStatus(a).level - getCategoryStatus(b).level;
+    if(diff!==0) return diff;
+    // Same status: more divergences first
+    const divA=_catDivsCount&&_catDivsCount[a]||0;
+    const divB=_catDivsCount&&_catDivsCount[b]||0;
+    return divB-divA;
+  });
 
   const tbody = document.getElementById('ovTableBody');
   
