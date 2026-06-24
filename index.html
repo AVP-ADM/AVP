@@ -8266,6 +8266,108 @@ function crlvBuscar(){
 }
 function crlvToggleManual(){var el=document.getElementById('crlv_fields');if(el) el.style.display=el.style.display==='none'?'block':'none';}
 
+// --- Lazy load libs ---
+var _crlvPdfJsLoaded=false;
+var _crlvTesseractLoaded=false;
+function crlvLoadPdfJs(cb){
+  if(_crlvPdfJsLoaded){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  s.onload=function(){
+    if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    _crlvPdfJsLoaded=true;cb();
+  };
+  s.onerror=function(){showToast('Erro ao carregar pdf.js','error');cb();};
+  document.head.appendChild(s);
+}
+function crlvLoadTesseract(cb){
+  if(_crlvTesseractLoaded){cb();return;}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  s.onload=function(){_crlvTesseractLoaded=true;cb();};
+  s.onerror=function(){showToast('Erro ao carregar Tesseract.js','error');cb();};
+  document.head.appendChild(s);
+}
+// --- Extrair texto de PDF ---
+function crlvExtractPdfText(file,cb){
+  crlvLoadPdfJs(function(){
+    if(!window.pdfjsLib){cb('',0);return;}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var data=new Uint8Array(e.target.result);
+      window.pdfjsLib.getDocument({data:data}).promise.then(function(pdf){
+        var pages=[];var total=pdf.numPages;
+        function getPage(n){
+          if(n>total){cb(pages.join('\n'),95);return;}
+          pdf.getPage(n).then(function(page){
+            page.getTextContent().then(function(tc){
+              var text=tc.items.map(function(i){return i.str;}).join(' ');
+              pages.push(text);getPage(n+1);
+            });
+          });
+        }
+        getPage(1);
+      }).catch(function(){cb('',0);});
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+// --- OCR de imagem ---
+function crlvExtractImageText(file,cb){
+  crlvLoadTesseract(function(){
+    if(!window.Tesseract){cb('',0);return;}
+    var msg=document.getElementById('crlv_progressMsg');
+    window.Tesseract.recognize(file,'por',{
+      logger:function(m){if(msg&&m.status) msg.textContent=m.status==='recognizing text'?'Reconhecendo texto... '+(Math.round((m.progress||0)*100))+'%':m.status;}
+    }).then(function(result){
+      var text=result.data&&result.data.text||'';
+      var conf=result.data&&result.data.confidence||0;
+      cb(text,conf);
+    }).catch(function(){cb('',0);});
+  });
+}
+// --- Parser de campos do CRLV a partir do texto extraído ---
+function crlvParseFields(text){
+  var fields={marcaModelo:'',chassi:'',ano:'',combustivel:'',tipo:'',potencia:''};
+  if(!text) return fields;
+  var lines=text.replace(/\r/g,'').split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
+  var fullText=text.toUpperCase();
+  // Marca/Modelo: procurar padrão após "MARCA/MODELO" ou "MARCAMODELO"
+  var mmMatch=fullText.match(/MARCA\s*\/?\s*MODELO\s*[:\-]?\s*([A-Z0-9\s\/\.\-]+)/);
+  if(mmMatch) fields.marcaModelo=mmMatch[1].trim().substring(0,60);
+  // Chassi: 17 caracteres alfanumericos
+  var chassiMatch=text.match(/[A-HJ-NPR-Z0-9]{17}/i);
+  if(chassiMatch) fields.chassi=chassiMatch[0].toUpperCase();
+  // Ano: padrão NNNN/NNNN
+  var anoMatch=text.match(/(\d{4})\s*\/\s*(\d{4})/);
+  if(anoMatch) fields.ano=anoMatch[0].replace(/\s/g,'');
+  else{var anoSingle=text.match(/\b(19|20)\d{2}\b/);if(anoSingle) fields.ano=anoSingle[0];}
+  // Combustível
+  if(fullText.indexOf('FLEX')!==-1||fullText.indexOf('ALCOOL/GASOLINA')!==-1) fields.combustivel='Flex';
+  else if(fullText.indexOf('DIESEL')!==-1) fields.combustivel='Diesel';
+  else if(fullText.indexOf('GASOLINA')!==-1) fields.combustivel='Gasolina';
+  else if(fullText.indexOf('ELETRICO')!==-1||fullText.indexOf('ELÉTRICO')!==-1) fields.combustivel='Eletrico';
+  // Tipo
+  if(fullText.indexOf('MOTOCICLETA')!==-1||fullText.indexOf('MOTO')!==-1) fields.tipo='motorcycles';
+  else if(fullText.indexOf('CAMINHAO')!==-1||fullText.indexOf('CAMINHÃO')!==-1) fields.tipo='trucks';
+  else if(fullText.indexOf('AUTOMOVEL')!==-1||fullText.indexOf('AUTOMÓVEL')!==-1||fullText.indexOf('PASSAGEIRO')!==-1) fields.tipo='cars';
+  // Potência/Cilindrada
+  var potMatch=text.match(/(\d{2,4})\s*CC/i);
+  if(potMatch) fields.potencia=potMatch[1]+'cc';
+  else{var cvMatch=text.match(/(\d{2,3})\s*CV/i);if(cvMatch) fields.potencia=cvMatch[1]+'cv';}
+  if(!fields.potencia){var litros=text.match(/\b(\d\.\d)\b/);if(litros) fields.potencia=litros[1];}
+  return fields;
+}
+// --- Preencher campos na UI ---
+function crlvFillFields(fields,confidence){
+  if(fields.marcaModelo){var el=document.getElementById('crlv_marcaModelo');if(el){el.value=fields.marcaModelo;if(confidence<70) el.classList.add('low-confidence');else if(confidence>90) el.classList.add('high-confidence');}}
+  if(fields.chassi){var el=document.getElementById('crlv_chassi');if(el) el.value=fields.chassi;}
+  if(fields.ano){var el=document.getElementById('crlv_ano');if(el) el.value=fields.ano;}
+  if(fields.combustivel){var el=document.getElementById('crlv_combustivel');if(el) el.value=fields.combustivel;}
+  if(fields.tipo){var el=document.getElementById('crlv_tipo');if(el) el.value=fields.tipo;}
+  if(fields.potencia){var el=document.getElementById('crlv_potencia');if(el) el.value=fields.potencia;}
+}
+
 function crlvHandleFile(event){
   var file=event.target.files&&event.target.files[0];
   if(!file) return;
@@ -8274,12 +8376,45 @@ function crlvHandleFile(event){
   var progress=document.getElementById('crlv_progress');
   if(progress) progress.style.display='block';
   var msg=document.getElementById('crlv_progressMsg');
-  if(msg) msg.textContent='Processando "'+file.name+'"...';
-  // Will be implemented in Etapa 3 (OCR/PDF)
-  setTimeout(function(){
+  // Reset field highlights
+  var inputs=document.querySelectorAll('.crlv-field input');
+  for(var i=0;i<inputs.length;i++){inputs[i].classList.remove('low-confidence','high-confidence');}
+  var isPdf=file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf');
+  var isImage=/\.(jpg|jpeg|png)$/i.test(file.name)||file.type.startsWith('image/');
+  if(isPdf){
+    if(msg) msg.textContent='Carregando pdf.js...';
+    crlvExtractPdfText(file,function(text,confidence){
+      if(progress) progress.style.display='none';
+      if(!text||text.trim().length<10){
+        if(msg) msg.textContent='PDF sem texto digital, tentando OCR...';
+        if(progress) progress.style.display='block';
+        crlvExtractImageText(file,function(ocrText,ocrConf){
+          if(progress) progress.style.display='none';
+          var parsed=crlvParseFields(ocrText);
+          crlvFillFields(parsed,ocrConf);
+          if(parsed.marcaModelo) showToast('Campos extraidos via OCR (confianca: '+Math.round(ocrConf)+'%)','success');
+          else showToast('Nao foi possivel extrair texto. Preencha manualmente.','warning');
+        });
+        return;
+      }
+      var parsed=crlvParseFields(text);
+      crlvFillFields(parsed,confidence);
+      if(parsed.marcaModelo) showToast('Campos extraidos do PDF com sucesso','success');
+      else showToast('PDF lido mas campos nao identificados. Verifique ou preencha manualmente.','warning');
+    });
+  } else if(isImage){
+    if(msg) msg.textContent='Carregando Tesseract.js para OCR...';
+    crlvExtractImageText(file,function(text,confidence){
+      if(progress) progress.style.display='none';
+      var parsed=crlvParseFields(text);
+      crlvFillFields(parsed,confidence);
+      if(parsed.marcaModelo) showToast('Campos extraidos via OCR (confianca: '+Math.round(confidence)+'%)','success');
+      else showToast('OCR concluido mas campos nao identificados. Preencha manualmente.','warning');
+    });
+  } else {
     if(progress) progress.style.display='none';
-    showToast('Processamento de arquivos sera implementado na proxima etapa','info');
-  },1500);
+    showToast('Formato nao suportado. Use PDF, JPG ou PNG.','error');
+  }
 }
 
 function crlvLimpar(){
