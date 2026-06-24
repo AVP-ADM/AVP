@@ -8118,10 +8118,153 @@ var _crlvHistory=[];
 var _crlvHistPage=1;
 var _crlvBatchResults=[];
 
-function crlvToggleManual(){
-  var el=document.getElementById('crlv_fields');
-  if(el) el.style.display=el.style.display==='none'?'block':'none';
+// --- WMI MAP (Chassi posições 1-3 → fabricante) ---
+var WMI_MAP={
+  '9BW':{marca:'VW - VolksWagen',tipo:'cars',pais:'BR'},'9BV':{marca:'VW - VolksWagen',tipo:'trucks',pais:'BR'},
+  '9BD':{marca:'Fiat',tipo:'cars',pais:'BR'},'9BG':{marca:'GM - Chevrolet',tipo:'cars',pais:'BR'},
+  '9BF':{marca:'Ford',tipo:'cars',pais:'BR'},'9BR':{marca:'Toyota',tipo:'cars',pais:'BR'},
+  '93Y':{marca:'Renault',tipo:'cars',pais:'BR'},'93W':{marca:'Hyundai',tipo:'cars',pais:'BR'},
+  '93H':{marca:'Honda',tipo:'motorcycles',pais:'BR'},'9C2':{marca:'Honda',tipo:'motorcycles',pais:'BR'},
+  '9C6':{marca:'Yamaha',tipo:'motorcycles',pais:'BR'},'9BM':{marca:'Mercedes-Benz',tipo:'trucks',pais:'BR'},
+  'WBA':{marca:'BMW',tipo:'cars',pais:'DE'},'WBS':{marca:'BMW',tipo:'cars',pais:'DE'},
+  'WB1':{marca:'BMW',tipo:'motorcycles',pais:'DE'},'WDB':{marca:'Mercedes-Benz',tipo:'cars',pais:'DE'},
+  'WDC':{marca:'Mercedes-Benz',tipo:'cars',pais:'DE'},'WF0':{marca:'Ford',tipo:'cars',pais:'DE'},
+  'WVW':{marca:'VW - VolksWagen',tipo:'cars',pais:'DE'},'WAU':{marca:'Audi',tipo:'cars',pais:'DE'},
+  'ZFA':{marca:'Fiat',tipo:'cars',pais:'IT'},'ZAR':{marca:'Alfa Romeo',tipo:'cars',pais:'IT'},
+  'JHM':{marca:'Honda',tipo:'cars',pais:'JP'},'JTD':{marca:'Toyota',tipo:'cars',pais:'JP'},
+  'JN1':{marca:'Nissan',tipo:'cars',pais:'JP'},'JMZ':{marca:'Mazda',tipo:'cars',pais:'JP'},
+  'JS1':{marca:'Suzuki',tipo:'motorcycles',pais:'JP'},'JYA':{marca:'Yamaha',tipo:'motorcycles',pais:'JP'},
+  'KMH':{marca:'Hyundai',tipo:'cars',pais:'KR'},'KNA':{marca:'Kia Motors',tipo:'cars',pais:'KR'},
+  'LVS':{marca:'CAOA Chery',tipo:'cars',pais:'CN'},'LFV':{marca:'CAOA Chery',tipo:'cars',pais:'CN'},
+  'SAL':{marca:'Land Rover',tipo:'cars',pais:'GB'},'SAJ':{marca:'Jaguar',tipo:'cars',pais:'GB'},
+  'VF1':{marca:'Renault',tipo:'cars',pais:'FR'},'VF3':{marca:'Peugeot',tipo:'cars',pais:'FR'},
+  'VF7':{marca:'Citroen',tipo:'cars',pais:'FR'},'1G1':{marca:'GM - Chevrolet',tipo:'cars',pais:'US'},
+  '1FA':{marca:'Ford',tipo:'cars',pais:'US'},'1HD':{marca:'Harley-Davidson',tipo:'motorcycles',pais:'US'},
+  '5YJ':{marca:'Tesla',tipo:'cars',pais:'US'},'3VW':{marca:'VW - VolksWagen',tipo:'cars',pais:'MX'},
+  '936':{marca:'Bajaj',tipo:'motorcycles',pais:'BR'},'94T':{marca:'Shineray',tipo:'motorcycles',pais:'BR'},
+  '949':{marca:'Avelloz',tipo:'motorcycles',pais:'BR'}
+};
+
+// --- VIN Year Code (posição 10) ---
+var VIN_YEAR={
+  'A':2010,'B':2011,'C':2012,'D':2013,'E':2014,'F':2015,
+  'G':2016,'H':2017,'J':2018,'K':2019,'L':2020,'M':2021,
+  'N':2022,'P':2023,'R':2024,'S':2025,'T':2026,'V':2027,
+  'W':2028,'X':2029,'Y':2030,'1':2031,'2':2032,'3':2033,
+  '4':2034,'5':2035,'6':2036,'7':2037,'8':2038,'9':2039
+};
+// --- Brand Aliases ---
+var BRAND_ALIASES={
+  'VW':'VW - VolksWagen','VOLKSWAGEN':'VW - VolksWagen','VOLKS':'VW - VolksWagen',
+  'GM':'GM - Chevrolet','CHEVROLET':'GM - Chevrolet','CHEVY':'GM - Chevrolet',
+  'MB':'Mercedes-Benz','MERCEDES':'Mercedes-Benz','MERC':'Mercedes-Benz',
+  'MITSU':'Mitsubishi','MITSUB':'Mitsubishi',
+  'LAND':'Land Rover','LAND ROVER':'Land Rover',
+  'CAOA':'CAOA Chery','CHERY':'CAOA Chery',
+  'HARLEY':'Harley-Davidson','HD':'Harley-Davidson'
+};
+// --- Normalização ---
+function crlvNormalize(str){
+  if(!str) return '';
+  var s=str.toUpperCase().trim();
+  s=s.replace(/^(I\/|IMP\/|IMP\s)/,'');
+  s=s.replace(/[^A-Z0-9\s\.]/g,' ');
+  s=s.replace(/\bAUT\.?\b/g,'AUTOMATICO');
+  s=s.replace(/\bMEC\.?\b/g,'MECANICO');
+  s=s.replace(/\bTB\b/g,'TURBO');
+  s=s.replace(/\bDIES\.?\b/g,'DIESEL');
+  s=s.replace(/\bFLX?\b/g,'FLEX');
+  s=s.replace(/\bGAS\.?\b/g,'GASOLINA');
+  s=s.replace(/\bALC\.?\b/g,'ALCOOL');
+  s=s.replace(/\bCV\b/g,'');
+  s=s.replace(/\bCC\b/g,'');
+  s=s.replace(/\bHP\b/g,'');
+  s=s.replace(/\b([A-Z])\s+(\d)/g,'$1$2');
+  s=s.replace(/\s+/g,' ').trim();
+  return s;
 }
+function crlvTokenize(str){return crlvNormalize(str).split(' ').filter(function(t){return t.length>0;});}
+function crlvDecodeVIN(vin){
+  if(!vin||vin.length<3) return null;
+  var result={wmi:null,marca:null,tipo:null,pais:null,ano:null,anoChar:null};
+  var wmi=vin.substring(0,3).toUpperCase();
+  result.wmi=wmi;
+  if(WMI_MAP[wmi]){result.marca=WMI_MAP[wmi].marca;result.tipo=WMI_MAP[wmi].tipo;result.pais=WMI_MAP[wmi].pais;}
+  if(vin.length>=10){var yc=vin.charAt(9).toUpperCase();result.anoChar=yc;if(VIN_YEAR[yc]) result.ano=VIN_YEAR[yc];}
+  return result;
+}
+function crlvResolveBrand(text,vinData){
+  var tokens=crlvTokenize(text);
+  for(var i=0;i<Math.min(tokens.length,3);i++){var c=tokens.slice(0,i+1).join(' ');if(BRAND_ALIASES[c]) return BRAND_ALIASES[c];}
+  if(vinData&&vinData.marca) return vinData.marca;
+  if(typeof ALL_BRANDS!=='undefined'&&ALL_BRANDS.length>0){var ft=tokens[0];for(var i=0;i<ALL_BRANDS.length;i++){if(ALL_BRANDS[i].toUpperCase()===ft||ALL_BRANDS[i].toUpperCase().indexOf(ft)===0) return ALL_BRANDS[i];}}
+  return tokens[0]||'';
+}
+function crlvExtractEngine(text){
+  if(!text) return null;
+  var l=text.match(/(\d\.\d)/);if(l) return l[1];
+  var cc=text.match(/(\d{2,4})\s*cc/i);if(cc) return cc[1]+'cc';
+  var cv=text.match(/(\d{2,3})\s*cv/i);if(cv) return cv[1]+'cv';
+  return null;
+}
+function crlvBuildIndex(){
+  if(!isFipeBaseLoaded||!isFipeBaseLoaded()) return crlvBuildIndexFromRAW();
+  var index={},allModels=[];
+  var fipeData=FIPE_BASE.data||{};
+  for(var tipo in fipeData){var brands=fipeData[tipo]||[];for(var bi=0;bi<brands.length;bi++){var brand=brands[bi];var models=brand.models||[];for(var mi=0;mi<models.length;mi++){var m=models[mi];var fn=brand.name+' '+m.name;var entry={brand:brand.name,model:m.name,brandCode:brand.code,modelCode:m.code,tipo:tipo,fullName:fn};allModels.push(entry);var toks=crlvTokenize(fn);for(var ti=0;ti<toks.length;ti++){if(!index[toks[ti]]) index[toks[ti]]=[];index[toks[ti]].push(allModels.length-1);}}}}
+  return allModels.length>0?{index:index,models:allModels}:crlvBuildIndexFromRAW();
+}
+function crlvBuildIndexFromRAW(){
+  var index={},allModels=[],seen={};
+  if(!ALL_RECORDS||ALL_RECORDS.length===0) return null;
+  for(var i=0;i<ALL_RECORDS.length;i++){var r=ALL_RECORDS[i];var key=r.marca+'|||'+r.modelo;if(seen[key]) continue;seen[key]=true;var fn=r.marca+' '+r.modelo;var entry={brand:r.marca,model:r.modelo,brandCode:'',modelCode:'',tipo:'',fullName:fn};allModels.push(entry);var toks=crlvTokenize(fn);for(var ti=0;ti<toks.length;ti++){if(!index[toks[ti]]) index[toks[ti]]=[];index[toks[ti]].push(allModels.length-1);}}
+  return {index:index,models:allModels};
+}
+function crlvScore(qTokens,candName,opts){
+  opts=opts||{};var candTokens=crlvTokenize(candName);var matchCount=0;
+  for(var i=0;i<qTokens.length;i++){for(var j=0;j<candTokens.length;j++){if(qTokens[i]===candTokens[j]){matchCount++;break;}if(candTokens[j].indexOf(qTokens[i])!==-1||qTokens[i].indexOf(candTokens[j])!==-1){matchCount+=0.6;break;}}}
+  var maxT=Math.max(qTokens.length,candTokens.length);var tokenScore=maxT>0?matchCount/maxT:0;
+  var engineScore=0;if(opts.engine){var en=opts.engine.replace(/[^0-9\.]/g,'');if(en&&candName.toUpperCase().indexOf(en)!==-1) engineScore=1;}
+  var fuelScore=0;if(opts.fuel){if(crlvNormalize(candName).indexOf(crlvNormalize(opts.fuel))!==-1) fuelScore=1;}
+  var yearScore=opts.yearValid?1:0;
+  return Math.min(1,Math.max(0,(tokenScore*0.5)+(engineScore*0.2)+(fuelScore*0.15)+(yearScore*0.15)));
+}
+function crlvMatch(input){
+  var vinData=crlvDecodeVIN(input.chassi||'');
+  var resolvedBrand=crlvResolveBrand(input.marcaModelo||'',vinData);
+  var tipoFilter=input.tipo||'';
+  if(!tipoFilter&&vinData&&vinData.tipo) tipoFilter=vinData.tipo;
+  var anoModelo=0;if(input.ano){var p=input.ano.split('/');anoModelo=parseInt(p[p.length-1])||0;}
+  if(!anoModelo&&vinData&&vinData.ano) anoModelo=vinData.ano;
+  var engine=crlvExtractEngine(input.potencia)||crlvExtractEngine(input.marcaModelo);
+  var qTokens=crlvTokenize(input.marcaModelo||'');
+  var indexData=crlvBuildIndex();
+  if(!indexData) return {vinData:vinData,resolvedBrand:resolvedBrand,candidates:[],anoModelo:anoModelo};
+  var scores={};
+  for(var i=0;i<qTokens.length;i++){var hits=indexData.index[qTokens[i]]||[];for(var j=0;j<hits.length;j++){scores[hits[j]]=(scores[hits[j]]||0)+1;}}
+  var candidates=[];
+  for(var idx in scores){if(!scores.hasOwnProperty(idx)) continue;var entry=indexData.models[parseInt(idx)];if(tipoFilter&&entry.tipo&&entry.tipo!==tipoFilter) continue;var brandOk=true;if(vinData&&vinData.marca){brandOk=(entry.brand.toUpperCase().indexOf(vinData.marca.toUpperCase())!==-1);}var sc=crlvScore(qTokens,entry.fullName,{engine:engine,fuel:input.combustivel,yearValid:true});if(brandOk&&vinData&&vinData.marca) sc=Math.min(1,sc+0.1);candidates.push({brand:entry.brand,model:entry.model,brandCode:entry.brandCode,modelCode:entry.modelCode,tipo:entry.tipo,fullName:entry.fullName,score:sc});}
+  candidates.sort(function(a,b){return b.score-a.score;});
+  candidates=candidates.slice(0,10);
+  for(var i=0;i<candidates.length;i++){var c=candidates[i];c.categories=[];if(typeof ALL_RECORDS!=='undefined'){for(var j=0;j<ALL_RECORDS.length;j++){var r=ALL_RECORDS[j];if(norm(r.marca)===norm(c.brand)&&norm(r.modelo)===norm(c.model)){if(c.categories.indexOf(r.categoria)===-1) c.categories.push(r.categoria);}}}c.registered=c.categories.length>0;c.confidence=Math.round(c.score*100);}
+  return {vinData:vinData,resolvedBrand:resolvedBrand,candidates:candidates,anoModelo:anoModelo};
+}
+function crlvRenderResult(result){
+  var resultsEl=document.getElementById('crlv_results');var vinInfoEl=document.getElementById('crlv_vinInfo');var rankingEl=document.getElementById('crlv_ranking');
+  if(!resultsEl||!rankingEl) return;resultsEl.style.display='block';
+  if(result.vinData&&result.vinData.marca){vinInfoEl.style.display='grid';var pm={BR:'Brasil',DE:'Alemanha',IT:'Italia',JP:'Japao',KR:'Coreia do Sul',CN:'China',GB:'Reino Unido',FR:'Franca',US:'EUA',MX:'Mexico'};vinInfoEl.innerHTML='<div><span>Fabricante</span><strong>'+result.vinData.marca+'</strong></div><div><span>Tipo</span><strong>'+(result.vinData.tipo==='cars'?'Automovel':result.vinData.tipo==='motorcycles'?'Motocicleta':'Caminhao')+'</strong></div><div><span>Pais</span><strong>'+(pm[result.vinData.pais]||result.vinData.pais||'—')+'</strong></div><div><span>Ano (VIN)</span><strong>'+(result.vinData.ano||'—')+'</strong></div>';}else{vinInfoEl.style.display='none';}
+  if(result.candidates.length===0){rankingEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:.82rem">Nenhum modelo encontrado. Verifique os dados informados.</div>';return;}
+  var html='';for(var i=0;i<result.candidates.length;i++){var c=result.candidates[i];var sc=c.confidence>=80?'var(--green)':c.confidence>=50?'var(--amber)':'var(--red)';var badges='';if(c.registered){for(var j=0;j<c.categories.length;j++) badges+='<span class="crlv-cat-badge registered">'+c.categories[j]+'</span>';}else{badges='<span class="crlv-cat-badge not-registered">Nao cadastrado</span>';}html+='<div class="crlv-match-item"><div class="crlv-rank">#'+(i+1)+'</div><div class="crlv-match-info"><div class="crlv-match-name">'+c.brand+' '+c.model+'</div><div class="crlv-match-badges">'+badges+'</div></div><div class="crlv-match-score" style="color:'+sc+'">'+c.confidence+'%</div></div>';}
+  rankingEl.innerHTML=html;
+}
+function crlvBuscar(){
+  var marcaModelo=document.getElementById('crlv_marcaModelo').value.trim();
+  if(!marcaModelo){showToast('Preencha pelo menos o campo Marca/Modelo','error');return;}
+  var input={marcaModelo:marcaModelo,chassi:document.getElementById('crlv_chassi').value.trim(),ano:document.getElementById('crlv_ano').value.trim(),combustivel:document.getElementById('crlv_combustivel').value.trim(),tipo:document.getElementById('crlv_tipo').value,potencia:document.getElementById('crlv_potencia').value.trim()};
+  var result=crlvMatch(input);crlvRenderResult(result);
+  if(result.candidates.length>0) showToast('Identificados '+result.candidates.length+' modelo(s) candidato(s)','success');
+}
+function crlvToggleManual(){var el=document.getElementById('crlv_fields');if(el) el.style.display=el.style.display==='none'?'block':'none';}
 
 function crlvHandleFile(event){
   var file=event.target.files&&event.target.files[0];
@@ -8151,13 +8294,6 @@ function crlvLimpar(){
   if(results) results.style.display='none';
   var vinInfo=document.getElementById('crlv_vinInfo');
   if(vinInfo) vinInfo.style.display='none';
-}
-
-function crlvBuscar(){
-  var marcaModelo=document.getElementById('crlv_marcaModelo').value.trim();
-  if(!marcaModelo){showToast('Preencha pelo menos o campo Marca/Modelo','error');return;}
-  // Will be fully implemented in Etapa 2 (Engine)
-  showToast('Engine de matching sera implementada na proxima etapa','info');
 }
 
 function crlvHandleBatch(event){
