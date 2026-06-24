@@ -700,7 +700,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Status</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Divergências</th><th>Status</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="ovTableBody"></tbody>
         </table>
       </div>
@@ -2161,8 +2161,8 @@ function renderOverviewTable(){
       <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
-      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getCategoryStatus(cat).color}" title="${getCategoryStatus(cat).tooltip}"></span></td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getCategoryStatus(cat).color}" title="${getCategoryStatus(cat).tooltip}"></span></td>
       <td style="white-space:nowrap">
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
