@@ -1936,6 +1936,7 @@ function refreshActiveTab(){
   if(tab==='divergences'){renderDivergences();_dirtyTabs.divergences=false;}
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
   if(tab==='history'){renderHistory();_dirtyTabs.history=false;}
+  if(tab==='crlv'){crlvLoadHistory();}
 }
 
 function goTab(tab){
@@ -1973,6 +1974,7 @@ function goTab(tab){
   if(tab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
   if(tab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
+  if(tab==='crlv'){crlvLoadHistory();}
   if(tab==='settings'){renderSettingsUsers();}
 }
 
@@ -8262,7 +8264,7 @@ function crlvBuscar(){
   if(!marcaModelo){showToast('Preencha pelo menos o campo Marca/Modelo','error');return;}
   var input={marcaModelo:marcaModelo,chassi:document.getElementById('crlv_chassi').value.trim(),ano:document.getElementById('crlv_ano').value.trim(),combustivel:document.getElementById('crlv_combustivel').value.trim(),tipo:document.getElementById('crlv_tipo').value,potencia:document.getElementById('crlv_potencia').value.trim()};
   var result=crlvMatch(input);crlvRenderResult(result);
-  if(result.candidates.length>0) showToast('Identificados '+result.candidates.length+' modelo(s) candidato(s)','success');
+  if(result.candidates.length>0){showToast('Identificados '+result.candidates.length+' modelo(s) candidato(s)','success');crlvSaveMatch(input,result);}
 }
 function crlvToggleManual(){var el=document.getElementById('crlv_fields');if(el) el.style.display=el.style.display==='none'?'block':'none';}
 
@@ -8448,10 +8450,64 @@ function crlvExportBatch(){
 function crlvRenderHistory(){
   var body=document.getElementById('crlv_histBody');
   if(!body) return;
-  if(_crlvHistory.length===0){
+  var filter=document.getElementById('crlv_histFilter');
+  var query=filter?filter.value.trim().toLowerCase():'';
+  var filtered=_crlvHistory;
+  if(query){
+    filtered=_crlvHistory.filter(function(h){
+      return (h.crlv_texto||'').toLowerCase().indexOf(query)!==-1||(h.fipe_model_name||'').toLowerCase().indexOf(query)!==-1||(h.categoria||'').toLowerCase().indexOf(query)!==-1;
+    });
+  }
+  if(filtered.length===0){
     body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);font-size:.82rem">Nenhuma consulta realizada ainda.</td></tr>';
+    var pag=document.getElementById('crlv_histPagination');if(pag) pag.innerHTML='';
     return;
   }
+  var perPage=20;var pages=Math.ceil(filtered.length/perPage);
+  if(_crlvHistPage>pages) _crlvHistPage=1;
+  var start=(_crlvHistPage-1)*perPage;
+  var page=filtered.slice(start,start+perPage);
+  body.innerHTML=page.map(function(h){
+    var dt=h.created_at?new Date(h.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+    var confColor=h.confianca>=80?'var(--green)':h.confianca>=50?'var(--amber)':'var(--red)';
+    var catBadge=h.categoria?'<span class="crlv-cat-badge registered">'+h.categoria+'</span>':'<span class="crlv-cat-badge not-registered">N/A</span>';
+    return '<tr><td style="font-size:.75rem;color:var(--text2)">'+dt+'</td><td style="font-size:.8rem">'+((h.crlv_texto||'').substring(0,35))+'</td><td style="font-size:.8rem">'+(h.fipe_model_name||'—')+'</td><td style="font-weight:600;color:'+confColor+'">'+((h.confianca||0))+'%</td><td>'+catBadge+'</td></tr>';
+  }).join('');
+  var pagEl=document.getElementById('crlv_histPagination');
+  if(pagEl&&pages>1){
+    renderPagination('crlv_histPagination',pages,_crlvHistPage,function(p){_crlvHistPage=p;crlvRenderHistory();});
+  } else if(pagEl){pagEl.innerHTML='';}
+}
+
+async function crlvSaveMatch(input,result){
+  if(!result||!result.candidates||result.candidates.length===0) return;
+  var top=result.candidates[0];
+  var record={
+    crlv_texto:input.marcaModelo||'',
+    chassi_wmi:result.vinData&&result.vinData.wmi||null,
+    ano:input.ano||null,
+    combustivel:input.combustivel||null,
+    tipo_veiculo:input.tipo||(result.vinData&&result.vinData.tipo)||null,
+    fipe_brand_code:top.brandCode||null,
+    fipe_model_code:top.modelCode||null,
+    fipe_model_name:top.brand+' '+top.model,
+    categoria:top.categories&&top.categories.length>0?top.categories[0]:null,
+    confianca:top.confidence||0,
+    confirmed_by:currentUser||null
+  };
+  // Save locally
+  _crlvHistory.unshift({...record,created_at:new Date().toISOString()});
+  crlvRenderHistory();
+  // Save to Supabase (non-blocking)
+  try{await supabase.insert('crlv_matches',[record]);}catch(e){console.warn('crlv save error:',e);}
+}
+
+async function crlvLoadHistory(){
+  try{
+    var data=await supabase.select('crlv_matches',{order:'created_at.desc',limit:200});
+    if(Array.isArray(data)) _crlvHistory=data;
+    crlvRenderHistory();
+  }catch(e){console.warn('crlv load history error:',e);}
 }
 
 // CRLV Drag & Drop setup
