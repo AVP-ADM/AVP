@@ -816,7 +816,7 @@ tr:hover .row-actions{opacity:1}
     </div>
     <!-- TEMP RELEASES PANEL -->
     <div class="card" id="tempReleasesCard" style="display:none">
-      <div class="card-title"><span class="icon">⚠️</span> Liberações Temporárias</div>
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Liberações Temporárias</div>
       <div class="filter-row">
         <select id="tempReleaseFilter" onchange="renderTempReleases()">
           <option value="Ativa">Ativas</option>
@@ -837,7 +837,7 @@ tr:hover .row-actions{opacity:1}
   <!-- ========= TAB: HISTÓRICO ========= -->
   <div class="tab-panel" id="panel-history">
     <div class="card">
-      <div class="card-title"><span class="icon">📜</span> Histórico de Alterações</div>
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Histórico de Alterações</div>
       <div class="filter-row">
         <input type="text" id="histFilter" placeholder="Buscar..." oninput="debouncedRenderHistory()">
         <select id="histType" onchange="renderHistory()">
@@ -892,13 +892,13 @@ tr:hover .row-actions{opacity:1}
         <button class="btn btn-blue export-btn" onclick="exportHistoryXLSX()">Exportar XLSX</button>
       </div>
       <div class="export-card">
-        <div class="icon">🔁</div>
+        <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
         <h4>Conflitos</h4>
         <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
         <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
       </div>
       <div class="export-card">
-        <div class="icon">🏥</div>
+        <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
         <h4>Relatório de Saúde</h4>
         <p>Resumo da integridade da base: duplicidades, divergências e cobertura</p>
         <button class="btn btn-purple export-btn" onclick="exportHealthReport()">Exportar XLSX</button>
@@ -912,9 +912,9 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title" style="margin-bottom:20px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configurações</div>
       <!-- Settings Sub-tabs -->
       <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px">
-        <button class="comp-tab active" id="settingsTab_users" onclick="switchSettingsTab('users')">👥 Usuários</button>
-        <button class="comp-tab" id="settingsTab_system" onclick="switchSettingsTab('system')">🔧 Sistema</button>
-        <button class="comp-tab" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">📊 Base FIPE</button>
+        <button class="comp-tab active" id="settingsTab_users" onclick="switchSettingsTab('users')">Usuarios</button>
+        <button class="comp-tab" id="settingsTab_system" onclick="switchSettingsTab('system')">Sistema</button>
+        <button class="comp-tab" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">Base FIPE</button>
       </div>
 
       <!-- Sub-tab: Usuários -->
@@ -1070,8 +1070,8 @@ tr:hover .row-actions{opacity:1}
     </div>
     <div id="searchFilterToggle" style="display:none;padding:8px 18px;border-bottom:1px solid var(--border);display:none">
       <div style="display:flex;gap:8px">
-        <button id="sfBtn_base" class="sf-pill" onclick="toggleSearchFilter('base')">📋 Só Cadastrados</button>
-        <button id="sfBtn_fipe" class="sf-pill" onclick="toggleSearchFilter('fipe')">🔍 Não Cadastrados</button>
+        <button id="sfBtn_base" class="sf-pill" onclick="toggleSearchFilter('base')">So Cadastrados</button>
+        <button id="sfBtn_fipe" class="sf-pill" onclick="toggleSearchFilter('fipe')">Nao Cadastrados</button>
       </div>
     </div>
     <div class="search-results" id="globalSearchResults">
@@ -1530,7 +1530,7 @@ function renderFipeDiagnostics(){
   const pct=Math.min(100,Math.round(FIPE_REQUESTS.count/1000*100));
   const barColor=pct>80?'var(--red)':pct>50?'var(--amber)':'var(--green)';
   el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem">
-    <div><span style="color:var(--text2)">Status:</span> <strong style="color:${daysAgo>30?'var(--amber)':'var(--green)'}">${daysAgo>30?'⚠️ Desatualizada':'✓ Atualizada'}</strong></div>
+    <div><span style="color:var(--text2)">Status:</span> <strong style="color:${daysAgo>30?'var(--amber)':'var(--green)'}">${daysAgo>30?'Desatualizada':'Atualizada'}</strong></div>
     <div><span style="color:var(--text2)">Última atualização:</span> <strong>${lastDate.toLocaleString('pt-BR')}</strong></div>
     <div><span style="color:var(--text2)">Próxima recomendada:</span> <strong>${nextUpdate.toLocaleDateString('pt-BR')}</strong></div>
     <div><span style="color:var(--text2)">Há:</span> <strong>${daysAgo} dia(s)</strong></div>
@@ -1563,7 +1563,7 @@ function updateFipeUpdateButton(){
     btn.disabled=true;
     btn.style.opacity='.4';
     btn.style.cursor='not-allowed';
-    btn.innerHTML='🔒 Base atualizada (próxima em '+daysLeft+' dia'+(daysLeft!==1?'s':'')+')';
+    btn.innerHTML='Base atualizada (proxima em '+daysLeft+' dia'+(daysLeft!==1?'s':'')+')';
     let info=container.querySelector('.fipe-valid-info');
     if(!info){info=document.createElement('div');info.className='fipe-valid-info';info.style.cssText='margin-top:6px;font-size:.72rem;color:var(--text3)';container.appendChild(info);}
     info.textContent='A base oficial está dentro do período de validade. Atualização será liberada quando completar 30 dias ou quando uma nova tabela FIPE for detectada.';
@@ -1571,7 +1571,7 @@ function updateFipeUpdateButton(){
     btn.disabled=false;
     btn.style.opacity='1';
     btn.style.cursor='pointer';
-    btn.innerHTML='🔄 Atualizar Base Oficial';
+    btn.innerHTML='Atualizar Base Oficial';
     const info=container.querySelector('.fipe-valid-info');
     if(info) info.remove();
   }
@@ -1586,10 +1586,10 @@ function renderFipeOutdatedAlert(){
   } else if(isFipeBaseOutdated()&&isFipeBaseLoaded()){
     const daysAgo=Math.floor((Date.now()-new Date(FIPE_BASE.lastUpdate).getTime())/(24*60*60*1000));
     el.style.display='';
-    el.innerHTML='⚠️ Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. Atualize na aba Manutenção.';
+    el.innerHTML='Base Oficial Desatualizada — Última atualização há '+daysAgo+' dias. Atualize na aba Manutenção.';
   } else if(!isFipeBaseLoaded()){
     el.style.display='';
-    el.innerHTML='⚠️ Base Oficial não carregada. Atualize na aba Manutenção.';
+    el.innerHTML='Base Oficial não carregada. Atualize na aba Manutenção.';
   } else {
     el.style.display='none';
   }
@@ -2178,7 +2178,7 @@ function renderTopDivergences(){
   // Errors section
   if(errors.length > 0){
     const topErrors = errors.slice(0,3);
-    html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">❌ Erros Obrigatórios (${errors.length})</span></div>`;
+    html += `<div style="margin-bottom:6px"><span class="badge badge-red" style="font-size:.65rem">Erros Obrigatorios (${errors.length})</span></div>`;
     html += topErrors.map((d,i)=>`
       <div class="rank-item critical" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
         <div class="rank-num">${i+1}</div>
@@ -2193,7 +2193,7 @@ function renderTopDivergences(){
   // Review section
   if(reviews.length > 0){
     const topReview = reviews.slice(0,3);
-    html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">⚠️ Para Revisão (${reviews.length})</span></div>`;
+    html += `<div style="margin-top:12px;margin-bottom:6px"><span class="badge badge-amber" style="font-size:.65rem">Para Revisao (${reviews.length})</span></div>`;
     html += topReview.map((d,i)=>{
       const pending=isPendingIgnoreDivergencia(d.marca,d.modelo,d.onlyIn,d.notIn);
       return `<div class="rank-item warning" style="position:relative;${pending?'opacity:.6':''}">
@@ -2281,9 +2281,9 @@ function openDrawer(cat){
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
         <span style="font-size:.82rem;flex:1;cursor:pointer${pending?';color:'+getPendingColor(pendingType):''}" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:'+getPendingColor(pendingType)+';opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span style="display:flex;gap:4px;flex-shrink:0">
-          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}>✏️</button>
-          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}>🗑️</button>
-          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)${pending?';opacity:.3;pointer-events:none':''}" title="Mover"${pending?' disabled':''}>↔️</button>
+          <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)${pending?';opacity:.3;pointer-events:none':''}" title="Mover"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
         </span>
       </div>`;
     }
@@ -2907,7 +2907,7 @@ function buildModelListWithActions(models, cat){
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
         <span class="model-action-brand">${m.marca}</span>
-        <span class="model-action-name">${m.modelo}${isTemp?' <span class="tag tag-amber" style="font-size:.55rem;vertical-align:middle">⚠️ Temporário</span>':''}${isDivergenciaIgnoradaModelo(m.marca,m.modelo)?' <span class="tag tag-gray" style="font-size:.55rem;vertical-align:middle">Exclusivo ✓</span>':''}${pendingBadge}</span>
+        <span class="model-action-name">${m.modelo}${isTemp?' <span class="tag tag-amber" style="font-size:.55rem;vertical-align:middle">Temporario</span>':''}${isDivergenciaIgnoradaModelo(m.marca,m.modelo)?' <span class="tag tag-gray" style="font-size:.55rem;vertical-align:middle">Exclusivo</span>':''}${pendingBadge}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
         <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px"${pending?' disabled':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -3081,7 +3081,7 @@ function openEditCategoryType(cat){
   const hasCars=current.includes('cars');
   const hasMotos=current.includes('motorcycles');
   const hasTrucks=current.includes('trucks');
-  showModal('⚙️ Tipo de Veículo — '+cat,`<div style="display:flex;flex-direction:column;gap:12px">
+  showModal('Tipo de Veiculo — '+cat,`<div style="display:flex;flex-direction:column;gap:12px">
     <span style="font-size:.78rem;color:var(--text2)">Selecione quais tipos de veículo esta categoria aceita:</span>
     <label style="display:flex;align-items:center;gap:8px;font-size:.88rem;cursor:pointer">
       <input type="checkbox" id="catType_cars" ${hasCars?'checked':''}> Carros
@@ -3419,7 +3419,7 @@ async function consultarPrecoFipe(marca, modelo){
     if(!priceResp.ok){showToast('Erro ao buscar preço: HTTP '+priceResp.status,'error');return;}
     const priceData=await priceResp.json();
     // Show result in modal
-    showModal('💰 Preço FIPE — '+marca+' '+modelo,`<div style="line-height:2;font-size:.88rem">
+    showModal('Preco FIPE — '+marca+' '+modelo,`<div style="line-height:2;font-size:.88rem">
       <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px">
         <span style="color:var(--text2);font-weight:600">Marca:</span><span>${priceData.brand||marca}</span>
         <span style="color:var(--text2);font-weight:600">Modelo:</span><span>${priceData.model||modelo}</span>
@@ -3470,7 +3470,7 @@ function openAddModelToCat(categoria){
 
     <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius)">
       <input type="checkbox" id="addModel_temp" onchange="document.getElementById('addModel_tempFields').style.display=this.checked?'flex':'none'">
-      <span>⚠️ Liberação Temporária</span>
+      <span>Liberação Temporária</span>
     </label>
     <div id="addModel_tempFields" style="display:none;flex-direction:column;gap:8px">
       <label style="font-size:.78rem;color:var(--text2);font-weight:600">Motivo da liberação:</label>
@@ -3628,41 +3628,67 @@ function filterBrandList(){
 
 function openAddBrandToCat(categoria){
   if(!dataLoaded && Object.keys(RAW).length===0){showToast('Aguarde o carregamento dos dados','error');return;}
-  showModal('➕ Adicionar Marca em '+categoria,`<div style="display:flex;flex-direction:column;gap:12px">
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
-    <div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">${categoria}</div>
-
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca:</label>
-    <input id="addBrand_marca" placeholder="Digite o nome da marca..." list="addBrandList">
-    <datalist id="addBrandList">${ALL_BRANDS.map(b=>'<option value="'+b+'">').join('')}</datalist>
-
-    <div id="addBrand_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A marca será adicionada às Alterações Pendentes. Após salvar, você poderá incluir modelos nela.</span>
-  </div>`,function(){
-    const marca=document.getElementById('addBrand_marca').value.trim();
+  showModal('Adicionar Marca em '+categoria,'<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><div style="font-weight:600;font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text1)">'+categoria+'</div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca: <span style="font-size:.65rem;color:var(--blue)">sugestoes do sistema</span></label><div style="position:relative"><input id="addBrand_marca" placeholder="Digite o nome da marca..." autocomplete="off" style="width:100%"><div id="addBrand_dd" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="addBrand_msg" class="ac-msg"></div><span style="font-size:.72rem;color:var(--text3)">A marca sera adicionada as Alteracoes Pendentes. Apos salvar, voce podera incluir modelos nela.</span></div>',function(){
+    var marca=document.getElementById('addBrand_marca').value.trim();
     if(!marca){showToast('Preencha o nome da marca','error');return;}
-    // Validate: check if brand already exists in this category
-    const existingBrands=Object.keys(RAW[categoria].brands||{});
-    if(existingBrands.some(b=>norm(b)===norm(marca))){showToast('Esta marca já está cadastrada nesta categoria.','error');return;}
-    // Check pending
-    const pendingAdd=STAGING.ops.some(op=>op.type==='Adição de Marca'&&norm(op.marca)===norm(marca)&&op.catTo===categoria);
-    if(pendingAdd){showToast('Já existe uma adição pendente para esta marca nesta categoria.','warning');return;}
+    var existingBrands=Object.keys(RAW[categoria].brands||{});
+    if(existingBrands.some(function(b){return norm(b)===norm(marca);})){showToast('Esta marca ja esta cadastrada nesta categoria.','error');return;}
+    var pendingAdd=STAGING.ops.some(function(op){return op.type==='Adição de Marca'&&norm(op.marca)===norm(marca)&&op.catTo===categoria;});
+    if(pendingAdd){showToast('Ja existe uma adicao pendente para esta marca nesta categoria.','warning');return;}
     addToStaging({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria},true);
     closeModal();
-    showToast('Adição da marca "'+marca+'" pendente em '+categoria,'success');
+    showToast('Adicao da marca "'+marca+'" pendente em '+categoria,'success');
     showCatDetail(categoria,'marcas');
   },'green');
-  // Real-time validation
-  setTimeout(()=>{
-    const input=document.getElementById('addBrand_marca');
-    const msg=document.getElementById('addBrand_msg');
-    if(input) input.oninput=function(){
-      const val=this.value.trim();
+  setTimeout(function(){
+    var input=document.getElementById('addBrand_marca');
+    var dd=document.getElementById('addBrand_dd');
+    var msg=document.getElementById('addBrand_msg');
+    if(!input||!dd) return;
+    function filterBrands(){
+      var query=input.value.trim().toLowerCase();
+      var brands=ALL_BRANDS;
+      var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
+      filtered=filtered.slice(0,50);
+      if(filtered.length===0){
+        dd.style.display='block';
+        dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
+      } else {
+        dd.style.display='block';
+        var html='';
+        for(var i=0;i<filtered.length;i++){
+          var esc=filtered[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          var dataEsc=filtered[i].replace(/"/g,'&quot;');
+          html+='<div class="fipe-item" data-value="'+dataEsc+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+highlightMatch(esc,query)+'</div>';
+        }
+        if(brands.length>50&&!query) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Digite para filtrar ('+brands.length+' marcas)</div>';
+        dd.innerHTML=html;
+      }
+      dd.onmousedown=function(e){
+        e.preventDefault();
+        var el=e.target;
+        while(el&&el!==dd){
+          if(el.dataset&&el.dataset.value){
+            input.value=el.dataset.value;
+            dd.style.display='none';
+            validateBrand();
+            return;
+          }
+          el=el.parentElement;
+        }
+      };
+      validateBrand();
+    }
+    function validateBrand(){
+      var val=input.value.trim();
       if(!val){msg.textContent='';msg.className='ac-msg';return;}
-      const existingBrands=Object.keys(RAW[categoria].brands||{});
-      if(existingBrands.some(b=>norm(b)===norm(val))){msg.textContent='✕ Esta marca já existe nesta categoria';msg.className='ac-msg invalid';}
-      else{msg.textContent='✓ Marca disponível para inclusão';msg.className='ac-msg valid';}
-    };
+      var existingBrands=Object.keys(RAW[categoria].brands||{});
+      if(existingBrands.some(function(b){return norm(b)===norm(val);})){msg.textContent='Esta marca ja existe nesta categoria';msg.className='ac-msg invalid';}
+      else{msg.textContent='Marca disponivel para inclusao';msg.className='ac-msg valid';}
+    }
+    input.addEventListener('input',filterBrands);
+    input.addEventListener('focus',filterBrands);
+    input.addEventListener('blur',function(){setTimeout(function(){dd.style.display='none';},200);});
   },50);
 }
 
@@ -3671,7 +3697,7 @@ function openSimpleBrandEdit(marca, categoria){
     showToast('Esta marca já possui uma alteração pendente.','warning');
     return;
   }
-  showModal('✏️ Editar Nome da Marca',`<div style="display:flex;flex-direction:column;gap:12px">
+  showModal('Editar Nome da Marca',`<div style="display:flex;flex-direction:column;gap:12px">
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
     <div style="font-size:.88rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius);color:var(--text3)">${categoria}</div>
 
@@ -3976,7 +4002,7 @@ function acValidateAll(){
     const allValid=marcaValid&&modeloValid&&catValid;
     btn.disabled=!allValid;
     btn.style.opacity=allValid?'1':'.5';
-    btn.textContent=allValid?'✓ Salvar Alteração':'🔒 Salvar Alteração';
+    btn.textContent=allValid?'Salvar Alteração':'Salvar Alteração';
   }
 }
 
@@ -3997,7 +4023,7 @@ function openModelRemove(marca, modelo){
     <span style="font-size:.78rem;color:var(--text2)">Selecione de qual categoria remover:</span><br>`;
   body+=cats.map(c=>`<label style="display:block;padding:4px 0;font-size:.82rem;cursor:pointer"><input type="checkbox" name="rem_cat" value="${c}"> ${c}</label>`).join('');
   body+=`<br><span style="font-size:.72rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span></div>`;
-  showModal('🗑️ Remover Modelo',body,function(){
+  showModal('Remover Modelo',body,function(){
     const checked=document.querySelectorAll('input[name="rem_cat"]:checked');
     if(!checked.length) return alert('Selecione pelo menos uma categoria');
     checked.forEach(cb=>{
@@ -4020,7 +4046,7 @@ function openModelMove(marca, modelo){
   const currentCats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
   const fromOptions=currentCats.map(c=>`<option value="${c}">${c}</option>`).join('');
   const toOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
-  showModal('↔️ Mover de Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+  showModal('Mover de Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
     <strong>${marca} — ${modelo}</strong>
     <label style="font-size:.78rem;color:var(--text2)">Categoria de origem:</label>
     <select id="move_from">${fromOptions}</select>
@@ -4195,7 +4221,7 @@ function updateDupSelection(){
   const checked=document.querySelectorAll('.dup-check:checked').length;
   const btn=document.getElementById('btnRemoveSelDup');
   if(btn) btn.style.display=checked>0?'':'none';
-  if(btn&&checked>0) btn.textContent='🗑️ Remover '+checked+' Selecionado(s)';
+  if(btn&&checked>0) btn.textContent='Remover '+checked+' Selecionado(s)';
 }
 
 // Encontra o maior grupo de categorias mutuamente compatíveis
@@ -4286,13 +4312,13 @@ function removeSelectedDuplicates(){
   const modalContent = `
     <div style="line-height:1.7">
       <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid var(--primary)">
-        <strong style="font-size:.85rem">🧠 Remoção Inteligente de Conflitos</strong><br>
+        <strong style="font-size:.85rem">Remocao Inteligente de Conflitos</strong><br>
         <span style="font-size:.78rem;color:var(--text2)">O sistema identificou automaticamente as categorias <strong>incompatíveis</strong> (intrusas) para cada modelo, mantendo o maior grupo de categorias que podem coexistir.</span>
       </div>
       ${detailHtml}
       <div style="background:var(--bg2);border-radius:8px;padding:10px;font-size:.8rem">
         <strong>Resumo:</strong> ${totalRemovals} remoção(ões) de ${removalPlan.length} modelo(s)<br>
-        <span style="color:var(--text2)">⚠️ As remoções serão adicionadas às <strong>Alterações Pendentes</strong> na aba Manutenção.<br>
+        <span style="color:var(--text2)">As remoções serão adicionadas às <strong>Alterações Pendentes</strong> na aba Manutenção.<br>
         Um badge de pendência aparecerá em cada item afetado. Para aplicar, confirme na aba Manutenção.</span>
       </div>
     </div>`;
@@ -4602,7 +4628,7 @@ function openRenameCategory(cat){
     showToast('Esta categoria já possui uma alteração pendente.','warning');
     return;
   }
-  showModal('✏️ Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
+  showModal('Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
     <label style="font-size:.78rem;color:var(--text2)">Categoria atual:</label>
     <div style="font-weight:600;font-size:.9rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius)">${cat}</div>
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
@@ -4647,7 +4673,7 @@ function openRemoveCategory(cat){
     setTimeout(()=>{const actions=document.getElementById('modalActions');if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Entendi</button>';},50);
     return;
   }
-  showModal('🗑️ Remover Categoria',`<div style="line-height:1.8">
+  showModal('Remover Categoria',`<div style="line-height:1.8">
     <strong>${cat}</strong><br><br>
     Esta categoria está vazia e será removida.<br>
     <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
@@ -4800,7 +4826,7 @@ function updateDivSelection(side){
   const btn=document.getElementById(btnId);
   if(btn){
     btn.style.display=checked>0?'':'none';
-    btn.textContent='📋 Copiar '+checked+' Selecionado(s)';
+    btn.textContent='Copiar '+checked+' Selecionado(s)';
   }
 }
 
@@ -5017,7 +5043,7 @@ function commitStaging(){
     }
   }
   if(conflicts.length>0){
-    showModal('⚠️ Conflitos Detectados','<div style="line-height:1.8"><strong>Foram encontradas operações contraditórias:</strong><br><br>'+conflicts.slice(0,5).map(c=>'• '+c).join('<br>')+(conflicts.length>5?'<br>...e mais '+(conflicts.length-5):'')+'<br><br><span style="color:var(--text2);font-size:.78rem">Revise as alterações pendentes antes de salvar.</span></div>',()=>{closeModal();},'amber');
+    showModal('Conflitos Detectados','<div style="line-height:1.8"><strong>Foram encontradas operações contraditórias:</strong><br><br>'+conflicts.slice(0,5).map(c=>'• '+c).join('<br>')+(conflicts.length>5?'<br>...e mais '+(conflicts.length-5):'')+'<br><br><span style="color:var(--text2);font-size:.78rem">Revise as alterações pendentes antes de salvar.</span></div>',()=>{closeModal();},'amber');
     return;
   }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',async ()=>{
@@ -5794,7 +5820,7 @@ function renderTempReleases(){
   if(!tbody) return;
   tbody.innerHTML=filtered.map((t,i)=>{
     const realIdx=TEMP_RELEASES.indexOf(t);
-    const statusTag=t.status==='Ativa'?'<span class="tag tag-amber">⚠️ Ativa</span>':'<span class="tag tag-green">✓ Finalizada</span>';
+    const statusTag=t.status==='Ativa'?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Finalizada</span>';
     return `<tr>
       <td><strong>${t.marca}</strong></td>
       <td>${t.modelo}</td>
@@ -5915,7 +5941,7 @@ async function safeSave(){
   if(tsResult.success&&tsResult.timestamp&&_dataLoadTimestamp){
     if(tsResult.timestamp>_dataLoadTimestamp){
       await releaseLock();
-      showModal('⚠️ Base Atualizada por Outro Usuário',
+      showModal('Base Atualizada por Outro Usuário',
         '<div style="line-height:1.8">A base de dados foi alterada por <strong>'+(tsResult.lastUser||'outro usuário')+'</strong> em '+(tsResult.lastDate||'')+'.<br><br>Suas alterações pendentes foram mantidas.<br><br><span style="color:var(--text2);font-size:.78rem">Clique em "Recarregar" para baixar os dados mais recentes e depois salve novamente.</span></div>',
         async function(){
           closeModal();
@@ -5930,7 +5956,7 @@ async function safeSave(){
       // Change button text
       setTimeout(()=>{
         const actions=document.getElementById('modalActions');
-        if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-blue" onclick="closeModal();loadFromDatabase().then(()=>{loadFromDatabaseHistory();recomputeAll();initAnos();refreshActiveTab();renderKPIs();renderOverviewTable();showToast(\'Dados recarregados\',\'success\');})">🔄 Recarregar</button>';
+        if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-blue" onclick="closeModal();loadFromDatabase().then(()=>{loadFromDatabaseHistory();recomputeAll();initAnos();refreshActiveTab();renderKPIs();renderOverviewTable();showToast(\'Dados recarregados\',\'success\');})">Recarregar</button>';
       },50);
       return false;
     }
@@ -6031,7 +6057,7 @@ function showSyncStatus(type,msg){
   el.style.opacity='1';
   el.style.transform='translateY(0)';
   el.style.pointerEvents='auto';
-  const icons={loading:'<div class="spinner"></div>',success:'🟢',error:'🔴',warning:'🟡'};
+  const icons={loading:'<div class="spinner"></div>',success:'<span style="color:var(--green)">&#x25CF;</span>',error:'<span style="color:var(--red)">&#x25CF;</span>',warning:'<span style="color:var(--amber)">&#x25CF;</span>'};
   el.innerHTML=(icons[type]||'')+' <span>'+msg+'</span>';
   el.style.borderColor=type==='success'?'rgba(22,163,74,.5)':type==='error'?'rgba(220,38,38,.5)':type==='warning'?'rgba(217,119,6,.5)':'var(--border)';
   if(type==='success'){
@@ -6229,7 +6255,7 @@ function searchModelos(query){
       if(results.length>=50) break;
     }
     if(results.length>0){
-      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--green);border-bottom:1px solid var(--border);background:var(--bg)">✅ Cadastrados ('+results.length+')</div>';
+      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--green);border-bottom:1px solid var(--border);background:var(--bg)">Cadastrados ('+results.length+')</div>';
       html+='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
       for(const r of results){
         html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
@@ -6244,7 +6270,7 @@ function searchModelos(query){
   if(isFipeBaseLoaded()&&(filterVal==='all'||filterVal==='fipe')){
     const fipeResults=searchFipeNotRegistered(query, filterVal==='fipe'?30:10);
     if(fipeResults.length>0){
-      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--amber);border-bottom:1px solid var(--border);background:var(--bg)">⚠️ Não cadastrados — disponíveis na FIPE ('+fipeResults.length+(fipeResults._hasMore?'+':'')+')</div>';
+      html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--amber);border-bottom:1px solid var(--border);background:var(--bg)">Nao cadastrados — disponiveis na FIPE ('+fipeResults.length+(fipeResults._hasMore?'+':'')+')</div>';
       html+='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo FIPE</th><th style="width:100px">Ação</th></tr></thead><tbody>';
       for(const item of fipeResults){
         const marcaEsc=item.marca.replace(/'/g,"\\'");
@@ -6288,7 +6314,7 @@ function searchFipeNotRegistered(query, limit){
 
 function openAddModelFromFipe(marca, modelo){
   const catOptions=CATEGORIES.sort().map(c=>'<option value="'+c+'">'+c+'</option>').join('');
-  showModal('➕ Adicionar Modelo da FIPE',`<div style="display:flex;flex-direction:column;gap:14px">
+  showModal('Adicionar Modelo da FIPE',`<div style="display:flex;flex-direction:column;gap:14px">
     <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)">
       <div style="font-size:.72rem;color:var(--text3);margin-bottom:4px">Modelo selecionado:</div>
       <div style="font-weight:700;font-size:.95rem">${marca} — ${modelo}</div>
@@ -6297,7 +6323,7 @@ function openAddModelFromFipe(marca, modelo){
     <select id="fipeAddCat" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text1)">${catOptions}</select>
     <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius)">
       <input type="checkbox" id="fipeAdd_temp" onchange="document.getElementById('fipeAdd_tempFields').style.display=this.checked?'flex':'none'">
-      <span>⚠️ Liberação Temporária</span>
+      <span>Liberação Temporária</span>
     </label>
     <div id="fipeAdd_tempFields" style="display:none;flex-direction:column;gap:8px">
       <input id="fipeAdd_tempMotivo" placeholder="Motivo da liberação...">
@@ -6760,14 +6786,22 @@ async function renderSystemLog(){
 }
 
 function formatLogEntries(logs){
-  const iconMap={info:'ℹ️',success:'✅',warning:'⚠️',error:'❌',login:'🔑',logout:'🚪',sync:'🔄'};
+  const svgInfo='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  const svgSuccess='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  const svgWarning='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  const svgError='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  const svgLogin='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+  const svgLogout='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+  const svgSync='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+  const svgDefault='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>';
+  const iconMap={info:svgInfo,success:svgSuccess,warning:svgWarning,error:svgError,login:svgLogin,logout:svgLogout,sync:svgSync};
   const colorMap={info:'var(--text2)',success:'var(--green)',warning:'var(--amber)',error:'var(--red)',login:'var(--blue)',logout:'var(--text3)',sync:'var(--blue)'};
   return logs.map(log=>{
     const dt=log.created_at?new Date(log.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—';
-    const icon=iconMap[log.tipo]||'📋';
+    const icon=iconMap[log.tipo]||svgDefault;
     const color=colorMap[log.tipo]||'var(--text2)';
     return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:.75rem">
-      <span style="flex-shrink:0">${icon}</span>
+      <span style="flex-shrink:0;color:${color}">${icon}</span>
       <div style="flex:1;min-width:0">
         <div style="color:${color};font-weight:500">${log.mensagem||'—'}</div>
         ${log.detalhes?'<div style="color:var(--text3);font-size:.68rem;margin-top:2px">'+log.detalhes+'</div>':''}
@@ -7194,14 +7228,14 @@ let baseFileInfo = null;
 function showUploadModal(){
   let body = `<div class="upload-modal-content">
     <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
-      <div class="icon">📁</div>
+      <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
       <p><strong>Clique aqui</strong> ou arraste um arquivo</p>
       <div class="formats">Formatos aceitos: .xlsx, .xls, .csv</div>
     </div>
     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
     <div id="uploadPreview" style="display:none"></div>
   </div>`;
-  showModal('📤 Atualizar Base de Dados', body, null);
+  showModal('Atualizar Base de Dados', body, null);
   // Setup drag and drop
   setTimeout(()=>{
     const dz = document.getElementById('uploadDropzone');
@@ -7810,7 +7844,7 @@ function initApp(){
   // Show startup alert for temp releases
   const activeTempCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
   if(activeTempCount>0){
-    setTimeout(()=>showToast('⚠️ Existem '+activeTempCount+' liberação(ões) temporária(s) aguardando finalização.','warning'),2000);
+    setTimeout(()=>showToast('Existem '+activeTempCount+' liberação(ões) temporária(s) aguardando finalização.','warning'),2000);
   }
   // Disable export buttons until data is loaded
   disableExportButtons();
