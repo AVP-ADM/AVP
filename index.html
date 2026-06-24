@@ -8386,12 +8386,12 @@ function crlvParseFields(text){
   else if(fullText.indexOf('GASOLINA')!==-1) fields.combustivel='Gasolina';
   else if(fullText.indexOf('ELETRIC')!==-1) fields.combustivel='Eletrico';
   // --- Tipo/Espécie: ordem de prioridade (mais específico primeiro) ---
-  if(fullText.indexOf('CAMINHONETE')!==-1||fullText.indexOf('CAMIONETA')!==-1||fullText.indexOf('CAMIONETE')!==-1) fields.tipo='trucks';
-  else if(fullText.indexOf('UTILITARI')!==-1||fullText.indexOf('UTILITÁRIO')!==-1) fields.tipo='trucks';
+  if(fullText.indexOf('CAMINHONETE')!==-1||fullText.indexOf('CAMIONETA')!==-1||fullText.indexOf('CAMIONETE')!==-1) fields.tipo='cars';
+  else if(fullText.indexOf('UTILITARI')!==-1||fullText.indexOf('UTILITÁRIO')!==-1) fields.tipo='cars';
   else if(fullText.indexOf('CAMINHAO')!==-1||fullText.indexOf('CAMINHÃO')!==-1) fields.tipo='trucks';
   else if(fullText.indexOf('MOTOCICLETA')!==-1) fields.tipo='motorcycles';
   else if(fullText.indexOf('AUTOMOVEL')!==-1||fullText.indexOf('AUTOMÓVEL')!==-1||fullText.indexOf('PASSAGEIRO')!==-1) fields.tipo='cars';
-  else if(fullText.indexOf('ESPECIAL')!==-1) fields.tipo='trucks';
+  else if(fullText.indexOf('ESPECIAL')!==-1) fields.tipo='cars';
   // NOTA: "MOTO" sozinho NÃO ativa motorcycles (evita falso positivo com "AUTOMOTOR" etc)
   // --- Potência/Cilindrada ---
   var potMatch=fullText.match(/(\d{2,4})\s*CC/);
