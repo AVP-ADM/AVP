@@ -8144,7 +8144,8 @@ var WMI_MAP={
   '1FA':{marca:'Ford',tipo:'cars',pais:'US'},'1HD':{marca:'Harley-Davidson',tipo:'motorcycles',pais:'US'},
   '5YJ':{marca:'Tesla',tipo:'cars',pais:'US'},'3VW':{marca:'VW - VolksWagen',tipo:'cars',pais:'MX'},
   '936':{marca:'Bajaj',tipo:'motorcycles',pais:'BR'},'94T':{marca:'Shineray',tipo:'motorcycles',pais:'BR'},
-  '949':{marca:'Avelloz',tipo:'motorcycles',pais:'BR'}
+  '949':{marca:'Avelloz',tipo:'motorcycles',pais:'BR'},
+  '93X':{marca:'Mitsubishi',tipo:'cars',pais:'BR'},'JMB':{marca:'Mitsubishi',tipo:'cars',pais:'JP'}
 };
 
 // --- VIN Year Code (posição 10) ---
@@ -8163,7 +8164,8 @@ var BRAND_ALIASES={
   'MITSU':'Mitsubishi','MITSUB':'Mitsubishi',
   'LAND':'Land Rover','LAND ROVER':'Land Rover',
   'CAOA':'CAOA Chery','CHERY':'CAOA Chery',
-  'HARLEY':'Harley-Davidson','HD':'Harley-Davidson'
+  'HARLEY':'Harley-Davidson','HD':'Harley-Davidson',
+  'MMC':'Mitsubishi','MITSUBISHI':'Mitsubishi','MITS':'Mitsubishi'
 };
 // --- Normalização ---
 function crlvNormalize(str){
@@ -8332,32 +8334,70 @@ function crlvExtractImageText(file,cb){
 function crlvParseFields(text){
   var fields={marcaModelo:'',chassi:'',ano:'',combustivel:'',tipo:'',potencia:''};
   if(!text) return fields;
-  var lines=text.replace(/\r/g,'').split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
-  var fullText=text.toUpperCase();
-  // Marca/Modelo: procurar padrão após "MARCA/MODELO" ou "MARCAMODELO"
-  var mmMatch=fullText.match(/MARCA\s*\/?\s*MODELO\s*[:\-]?\s*([A-Z0-9\s\/\.\-]+)/);
-  if(mmMatch) fields.marcaModelo=mmMatch[1].trim().substring(0,60);
-  // Chassi: 17 caracteres alfanumericos
-  var chassiMatch=text.match(/[A-HJ-NPR-Z0-9]{17}/i);
-  if(chassiMatch) fields.chassi=chassiMatch[0].toUpperCase();
-  // Ano: padrão NNNN/NNNN
-  var anoMatch=text.match(/(\d{4})\s*\/\s*(\d{4})/);
-  if(anoMatch) fields.ano=anoMatch[0].replace(/\s/g,'');
-  else{var anoSingle=text.match(/\b(19|20)\d{2}\b/);if(anoSingle) fields.ano=anoSingle[0];}
-  // Combustível
-  if(fullText.indexOf('FLEX')!==-1||fullText.indexOf('ALCOOL/GASOLINA')!==-1) fields.combustivel='Flex';
-  else if(fullText.indexOf('DIESEL')!==-1) fields.combustivel='Diesel';
+  var fullText=text.toUpperCase().replace(/\r/g,'');
+  var lines=fullText.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
+  // --- Marca/Modelo: múltiplas estratégias ---
+  // Estratégia 1: label "MARCA/MODELO" seguido de conteúdo
+  var mmMatch=fullText.match(/MARCA\s*[\/\\]\s*MODELO[^A-Z]*([A-Z0-9][A-Z0-9\s\/\.\-\(\)]+)/);
+  if(mmMatch) fields.marcaModelo=mmMatch[1].trim().replace(/\s{2,}/g,' ').substring(0,60);
+  // Estratégia 2: procurar padrão MARCA/MODELO (ex: MMC/L200 TRITON HPE D, I/VW GOL)
+  if(!fields.marcaModelo){
+    var brandPattern=fullText.match(/\b([A-Z]{2,10})\s*\/\s*([A-Z][A-Z0-9\s\.\-]{3,40})/);
+    if(brandPattern){
+      var candidate=brandPattern[1]+'/'+brandPattern[2].trim();
+      if(candidate.length>5&&!/MODELO|MARCA|DATA|EXERC/.test(candidate)) fields.marcaModelo=candidate.substring(0,60);
+    }
+  }
+  // --- Chassi: 17 caracteres alfanuméricos (exclui I, O, Q) ---
+  var chassiMatch=text.toUpperCase().match(/[A-HJ-NPR-Z0-9]{17}/);
+  if(chassiMatch) fields.chassi=chassiMatch[0];
+  // --- Ano: priorizar ANO FAB/MODELO (NNNN/NNNN onde ambos < 2026) ---
+  // Buscar especificamente após labels de ano
+  var anoLabelMatch=fullText.match(/(?:ANO\s*(?:FAB|FABR?ICA[CÇ])|MODELO)[^0-9]*(\d{4})\s*[\/\s]\s*(\d{4})/);
+  if(anoLabelMatch){
+    var a1=parseInt(anoLabelMatch[1]),a2=parseInt(anoLabelMatch[2]);
+    if(a1>=1980&&a1<=2030&&a2>=1980&&a2<=2030) fields.ano=a1+'/'+a2;
+  }
+  // Fallback: qualquer NNNN/NNNN onde ambos são anos razoáveis de veículo (não 2024 de exercício)
+  if(!fields.ano){
+    var allAnos=fullText.match(/(\d{4})\s*\/\s*(\d{4})/g)||[];
+    for(var i=0;i<allAnos.length;i++){
+      var parts=allAnos[i].replace(/\s/g,'').split('/');
+      var y1=parseInt(parts[0]),y2=parseInt(parts[1]);
+      // Ano modelo: y1 e y2 devem ser próximos (diferença <= 1) e y2 não deve ser ano corrente de exercício
+      if(y1>=1980&&y2>=1980&&y2<=2030&&Math.abs(y2-y1)<=1){
+        // Evitar pegar exercício: se houver "EXERC" próximo, pular
+        var pos=fullText.indexOf(allAnos[i]);
+        var context=fullText.substring(Math.max(0,pos-30),pos);
+        if(context.indexOf('EXERC')===-1&&context.indexOf('LICENCIA')===-1){
+          fields.ano=y1+'/'+y2;break;
+        }
+      }
+    }
+  }
+  // Último fallback: ano isolado de 4 dígitos próximo a label "MODELO"
+  if(!fields.ano){
+    var modeloAno=fullText.match(/MODELO[^0-9]{0,10}(\d{4})/);
+    if(modeloAno&&parseInt(modeloAno[1])>=1980&&parseInt(modeloAno[1])<=2030) fields.ano=modeloAno[1];
+  }
+  // --- Combustível ---
+  if(fullText.indexOf('DIESEL')!==-1) fields.combustivel='Diesel';
+  else if(fullText.indexOf('FLEX')!==-1||fullText.indexOf('ALCOOL/GAS')!==-1||fullText.indexOf('ALCOOL / GAS')!==-1) fields.combustivel='Flex';
   else if(fullText.indexOf('GASOLINA')!==-1) fields.combustivel='Gasolina';
-  else if(fullText.indexOf('ELETRICO')!==-1||fullText.indexOf('ELÉTRICO')!==-1) fields.combustivel='Eletrico';
-  // Tipo
-  if(fullText.indexOf('MOTOCICLETA')!==-1||fullText.indexOf('MOTO')!==-1) fields.tipo='motorcycles';
+  else if(fullText.indexOf('ELETRIC')!==-1) fields.combustivel='Eletrico';
+  // --- Tipo/Espécie: ordem de prioridade (mais específico primeiro) ---
+  if(fullText.indexOf('CAMINHONETE')!==-1||fullText.indexOf('CAMIONETA')!==-1||fullText.indexOf('CAMIONETE')!==-1) fields.tipo='trucks';
+  else if(fullText.indexOf('UTILITARI')!==-1||fullText.indexOf('UTILITÁRIO')!==-1) fields.tipo='trucks';
   else if(fullText.indexOf('CAMINHAO')!==-1||fullText.indexOf('CAMINHÃO')!==-1) fields.tipo='trucks';
+  else if(fullText.indexOf('MOTOCICLETA')!==-1) fields.tipo='motorcycles';
   else if(fullText.indexOf('AUTOMOVEL')!==-1||fullText.indexOf('AUTOMÓVEL')!==-1||fullText.indexOf('PASSAGEIRO')!==-1) fields.tipo='cars';
-  // Potência/Cilindrada
-  var potMatch=text.match(/(\d{2,4})\s*CC/i);
+  else if(fullText.indexOf('ESPECIAL')!==-1) fields.tipo='trucks';
+  // NOTA: "MOTO" sozinho NÃO ativa motorcycles (evita falso positivo com "AUTOMOTOR" etc)
+  // --- Potência/Cilindrada ---
+  var potMatch=fullText.match(/(\d{2,4})\s*CC/);
   if(potMatch) fields.potencia=potMatch[1]+'cc';
-  else{var cvMatch=text.match(/(\d{2,3})\s*CV/i);if(cvMatch) fields.potencia=cvMatch[1]+'cv';}
-  if(!fields.potencia){var litros=text.match(/\b(\d\.\d)\b/);if(litros) fields.potencia=litros[1];}
+  else{var cvMatch=fullText.match(/(\d{2,4})\s*CV/);if(cvMatch) fields.potencia=cvMatch[1]+'cv';}
+  if(!fields.potencia){var litros=text.match(/\b(\d\.\d)\s*[^0-9]/);if(litros) fields.potencia=litros[1];}
   return fields;
 }
 // --- Preencher campos na UI ---
