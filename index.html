@@ -2038,7 +2038,7 @@ function getEffectiveCatTotal(catName){
 
 // ========= CATEGORY STATUS =========
 // Returns: {level: 0-3, color, label, tooltip}
-// 0=red (conflitos reais ou divergencias criticas), 1=yellow (divergencias revisao), 2=green (limpo), 3=gray (sem par)
+// 0=red (conflitos reais ou divergencias criticas), 1=yellow (divergencias revisao), 2=green (limpo)
 function getCategoryStatus(cat){
   var hasCompGroup=false;
   for(var i=0;i<COMP_GROUPS.length;i++){
@@ -2075,10 +2075,7 @@ function getCategoryStatus(cat){
   if(hasReview){
     return {level:1,color:'var(--amber)',label:'Revisao',tooltip:'Divergencias pendentes de revisao'};
   }
-  if(hasCompGroup){
-    return {level:2,color:'var(--green)',label:'OK',tooltip:'Sem problemas detectados'};
-  }
-  return {level:3,color:'var(--text3)',label:'N/A',tooltip:'Categoria sem par de comparacao definido'};
+  return {level:2,color:'var(--green)',label:'OK',tooltip:'Sem problemas detectados'};
 }
 
 // ========= OVERVIEW TABLE =========
