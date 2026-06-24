@@ -690,6 +690,7 @@ tr:hover .row-actions{opacity:1}
           <option value="trucks">Caminhões</option>
         </select>
         <select id="ovSort" onchange="renderOverviewTable()">
+          <option value="status">Status</option>
           <option value="name">A-Z</option>
           <option value="count_desc">Mais modelos</option>
           <option value="count_asc">Menos modelos</option>
@@ -699,7 +700,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Conflitos</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>Modelos</th><th>Marcas</th><th>Status</th><th>Divergências</th><th style="width:80px">Ações</th></tr></thead>
           <tbody id="ovTableBody"></tbody>
         </table>
       </div>
@@ -2035,6 +2036,51 @@ function getEffectiveCatTotal(catName){
   return base - pendingRemovals;
 }
 
+// ========= CATEGORY STATUS =========
+// Returns: {level: 0-3, color, label, tooltip}
+// 0=red (conflitos reais ou divergencias criticas), 1=yellow (divergencias revisao), 2=green (limpo), 3=gray (sem par)
+function getCategoryStatus(cat){
+  var hasCompGroup=false;
+  for(var i=0;i<COMP_GROUPS.length;i++){
+    if(COMP_GROUPS[i].a===cat||COMP_GROUPS[i].b===cat){hasCompGroup=true;break;}
+  }
+  var catConflicts=(_catDupsCount[cat]||0);
+  var hasCritical=false;
+  var hasReview=false;
+  if(hasCompGroup){
+    for(var i=0;i<COMP_GROUPS.length;i++){
+      var g=COMP_GROUPS[i];
+      if(g.a===cat||g.b===cat){
+        var other=g.a===cat?g.b:g.a;
+        var modelsMe=getModelsForCat(cat);
+        var modelsOther=getModelsForCat(other);
+        var setOther=new Set(modelsOther.map(function(m){return norm(m.marca)+'|||'+norm(m.modelo);}));
+        var onlyMe=modelsMe.filter(function(m){return !setOther.has(norm(m.marca)+'|||'+norm(m.modelo));});
+        for(var j=0;j<onlyMe.length;j++){
+          var m=onlyMe[j];
+          if(DIVERGENCES_ERRORS.some(function(d){return norm(d.marca)===norm(m.marca)&&norm(d.modelo)===norm(m.modelo)&&(d.from===cat||d.missing===cat);})){
+            hasCritical=true;
+          } else {
+            hasReview=true;
+          }
+          if(hasCritical) break;
+        }
+        if(hasCritical) break;
+      }
+    }
+  }
+  if(catConflicts>0||hasCritical){
+    return {level:0,color:'var(--red)',label:'Critico',tooltip:catConflicts+' conflito(s)'+(hasCritical?' + divergencias criticas':'')};
+  }
+  if(hasReview){
+    return {level:1,color:'var(--amber)',label:'Revisao',tooltip:'Divergencias pendentes de revisao'};
+  }
+  if(hasCompGroup){
+    return {level:2,color:'var(--green)',label:'OK',tooltip:'Sem problemas detectados'};
+  }
+  return {level:3,color:'var(--text3)',label:'N/A',tooltip:'Categoria sem par de comparacao definido'};
+}
+
 // ========= OVERVIEW TABLE =========
 function renderOverviewTable(){
   const filt = norm(document.getElementById('ovFilter').value);
@@ -2053,6 +2099,7 @@ function renderOverviewTable(){
   else if(sort==='count_desc') cats.sort((a,b)=>CAT_TOTALS[b]-CAT_TOTALS[a]);
   else if(sort==='count_asc') cats.sort((a,b)=>CAT_TOTALS[a]-CAT_TOTALS[b]);
   else if(sort==='brands') cats.sort((a,b)=>Object.keys(RAW[b].brands||{}).length - Object.keys(RAW[a].brands||{}).length);
+  else if(sort==='status') cats.sort((a,b)=>getCategoryStatus(a).level - getCategoryStatus(b).level);
 
   const tbody = document.getElementById('ovTableBody');
   
@@ -2117,7 +2164,7 @@ function renderOverviewTable(){
       <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
-      <td>${dups>0?`<span class="badge badge-red clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','duplicados')">${dups}</span>`:'—'}</td>
+      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getCategoryStatus(cat).color}" title="${getCategoryStatus(cat).tooltip}"></span></td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
       <td style="white-space:nowrap">
         <div class="row-actions">
