@@ -1739,9 +1739,9 @@ function recomputeAll(){
     modelStatus[key] = 'Duplicado';
   }
 
-  // Pre-compute duplicates count per category
+  // Pre-compute duplicates count per category (only real conflicts)
   _catDupsCount={};
-  for(const d of DUPLICATES){
+  for(const d of DUPLICATES_REAL){
     for(const c of d.cats){
       _catDupsCount[c]=(_catDupsCount[c]||0)+1;
     }
