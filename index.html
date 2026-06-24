@@ -528,6 +528,34 @@ tr:hover .row-actions{opacity:1}
   .mobile-menu-btn{display:none!important}
   .sidebar-mobile-overlay{display:none!important}
 }
+/* ========= CRLV STYLES ========= */
+.crlv-dropzone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.crlv-dropzone:hover,.crlv-dropzone.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.crlv-dropzone-icon{margin-bottom:12px;color:var(--text3)}
+.crlv-dropzone:hover .crlv-dropzone-icon{color:var(--blue)}
+.crlv-dropzone p{font-size:.85rem;color:var(--text1);margin:0 0 6px}
+.crlv-dropzone-formats{font-size:.7rem;color:var(--text3)}
+.crlv-fields{padding:16px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);margin-top:16px}
+.crlv-fields-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.crlv-field label{display:block;font-size:.7rem;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.crlv-field input,.crlv-field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;background:var(--surface);color:var(--text1)}
+.crlv-field input:focus,.crlv-field select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 2px var(--blue-bg)}
+.crlv-field input.low-confidence{border-color:var(--amber);background:var(--amber-bg)}
+.crlv-field input.high-confidence{border-color:var(--green)}
+.crlv-vin-card{padding:12px 16px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:14px;font-size:.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.crlv-vin-card span{color:var(--text2);font-size:.7rem;display:block}
+.crlv-vin-card strong{color:var(--text1);font-size:.82rem}
+.crlv-match-item{padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:all .15s}
+.crlv-match-item:hover{border-color:var(--blue);box-shadow:var(--shadow)}
+.crlv-match-item .crlv-rank{font-size:.7rem;font-weight:700;color:var(--text3);min-width:20px}
+.crlv-match-item .crlv-match-info{flex:1;min-width:0}
+.crlv-match-item .crlv-match-name{font-weight:600;font-size:.85rem;color:var(--text1)}
+.crlv-match-item .crlv-match-detail{font-size:.72rem;color:var(--text2);margin-top:2px}
+.crlv-match-item .crlv-match-score{font-size:.78rem;font-weight:700;min-width:44px;text-align:right}
+.crlv-match-item .crlv-match-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.crlv-cat-badge{font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:600}
+.crlv-cat-badge.registered{background:var(--green-bg);color:var(--green);border:1px solid var(--green)}
+.crlv-cat-badge.not-registered{background:var(--red-bg,rgba(239,68,68,.1));color:var(--red);border:1px solid var(--red)}
 </style>
 </head>
 <body>
@@ -614,6 +642,10 @@ tr:hover .row-actions{opacity:1}
         <button class="sidebar-item active" data-tab="overview" data-tooltip="Visão Geral" onclick="goTab('overview')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span class="si-text">Visão Geral</span>
+        </button>
+        <button class="sidebar-item" data-tab="crlv" data-tooltip="Consultar Veículo" onclick="goTab('crlv')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
+          <span class="si-text">Consultar Veículo</span>
         </button>
         <button class="sidebar-item" data-tab="duplicates" data-tooltip="Conflitos" onclick="goTab('duplicates')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
@@ -716,6 +748,121 @@ tr:hover .row-actions{opacity:1}
         <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Divergências</span><span style="display:flex;align-items:center;gap:8px"><span class="div-toggle-wrap"><span class="div-toggle-label" id="divToggleLabelLeft">Passeio</span><button class="div-toggle-btn" id="divToggleBtn" onclick="toggleDivergenceType()" title="Alternar entre Passeio e SUV"><span class="div-toggle-knob" id="divToggleKnob"></span></button><span class="div-toggle-label" id="divToggleLabelRight">SUV</span></span><a href="#" onclick="goTab('divergences');return false" style="font-size:.72rem;color:var(--blue);font-weight:500;text-decoration:none">Ver todos →</a></span></div>
         <div id="topDivergences"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ========= TAB: CONSULTAR VEÍCULO (CRLV) ========= -->
+  <div class="tab-panel" id="panel-crlv">
+    <div class="card">
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span> Consultar Veiculo (CRLV)</div>
+
+      <!-- Upload Area -->
+      <div id="crlv_dropzone" class="crlv-dropzone" onclick="document.getElementById('crlv_fileInput').click()">
+        <div class="crlv-dropzone-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <p><strong>Arraste o CRLV aqui</strong> ou clique para selecionar</p>
+        <span class="crlv-dropzone-formats">Formatos: PDF, JPG, PNG</span>
+      </div>
+      <input type="file" id="crlv_fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="crlvHandleFile(event)">
+
+      <!-- Manual Input Toggle -->
+      <div style="margin-top:12px;text-align:center">
+        <button class="btn btn-sm" onclick="crlvToggleManual()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Digitar manualmente
+        </button>
+      </div>
+
+      <!-- Extracted / Manual Fields -->
+      <div id="crlv_fields" class="crlv-fields" style="display:none">
+        <h4 style="font-size:.82rem;font-weight:600;color:var(--text1);margin-bottom:12px">Dados do Veiculo</h4>
+        <div class="crlv-fields-grid">
+          <div class="crlv-field">
+            <label>Marca/Modelo (CRLV)</label>
+            <input id="crlv_marcaModelo" placeholder="Ex: I/BMW F 850 GS PREMIUM">
+          </div>
+          <div class="crlv-field">
+            <label>Chassi (VIN)</label>
+            <input id="crlv_chassi" placeholder="17 caracteres" maxlength="17" style="text-transform:uppercase">
+          </div>
+          <div class="crlv-field">
+            <label>Ano Fab/Modelo</label>
+            <input id="crlv_ano" placeholder="Ex: 2023/2024">
+          </div>
+          <div class="crlv-field">
+            <label>Combustivel</label>
+            <input id="crlv_combustivel" placeholder="Ex: Gasolina, Flex, Diesel">
+          </div>
+          <div class="crlv-field">
+            <label>Tipo/Especie</label>
+            <select id="crlv_tipo">
+              <option value="">Detectar automaticamente</option>
+              <option value="cars">Automovel</option>
+              <option value="motorcycles">Motocicleta</option>
+              <option value="trucks">Caminhao</option>
+            </select>
+          </div>
+          <div class="crlv-field">
+            <label>Potencia/Cilindradas</label>
+            <input id="crlv_potencia" placeholder="Ex: 1.0, 2.0, 150cv, 850cc">
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-blue" onclick="crlvBuscar()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Identificar Veiculo
+          </button>
+          <button class="btn btn-sm" onclick="crlvLimpar()">Limpar</button>
+        </div>
+      </div>
+
+      <!-- OCR Progress -->
+      <div id="crlv_progress" style="display:none;margin-top:16px;text-align:center">
+        <div class="spinner" style="margin:0 auto 8px"></div>
+        <div id="crlv_progressMsg" style="font-size:.78rem;color:var(--text2)">Processando documento...</div>
+      </div>
+
+      <!-- Results Area -->
+      <div id="crlv_results" style="display:none;margin-top:20px">
+        <h4 style="font-size:.82rem;font-weight:600;color:var(--text1);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Resultado da Identificacao
+        </h4>
+        <!-- VIN Decoded -->
+        <div id="crlv_vinInfo" style="display:none" class="crlv-vin-card"></div>
+        <!-- Ranking -->
+        <div id="crlv_ranking"></div>
+      </div>
+    </div>
+
+    <!-- Batch Section -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span> Consulta em Lote</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+        <button class="btn btn-sm" onclick="document.getElementById('crlv_batchFileInput').click()">Upload Multiplo</button>
+        <span style="font-size:.72rem;color:var(--text3)">ou digite abaixo (Marca | Modelo | Ano | Chassi)</span>
+      </div>
+      <input type="file" id="crlv_batchFileInput" accept=".pdf,.jpg,.jpeg,.png" multiple style="display:none" onchange="crlvHandleBatch(event)">
+      <textarea id="crlv_batchText" rows="5" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.8rem;resize:vertical" placeholder="BMW F 850 GS | 2023 | WB1&#10;FIAT ARGO | 2022/2023&#10;VW GOL 1.0 | 2020"></textarea>
+      <div style="margin-top:10px;display:flex;gap:10px">
+        <button class="btn btn-blue btn-sm" onclick="crlvProcessBatch()">Processar Lote</button>
+        <button class="btn btn-sm" onclick="crlvExportBatch()" id="crlv_exportBatchBtn" style="display:none">Exportar Resultados</button>
+      </div>
+      <div id="crlv_batchResults" style="margin-top:12px"></div>
+    </div>
+
+    <!-- History Section -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Historico de Consultas</div>
+      <div class="filter-row">
+        <input type="text" id="crlv_histFilter" placeholder="Buscar..." oninput="crlvRenderHistory()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Veiculo</th><th>Resultado</th><th>Confianca</th><th>Categoria</th></tr></thead>
+          <tbody id="crlv_histBody"></tbody>
+        </table>
+      </div>
+      <div id="crlv_histPagination" class="pagination"></div>
     </div>
   </div>
 
@@ -1808,7 +1955,7 @@ function goTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   const tabs = document.querySelectorAll('.tab');
-  const tabMap=['overview','duplicates','divergences','management','history','exports','settings'];
+  const tabMap=['overview','crlv','duplicates','divergences','management','history','exports','settings'];
   const idx = tabMap.indexOf(tab);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
 
@@ -7731,8 +7878,8 @@ function applyAccessLevels(){
   // Sidebar visibility based on nivel
   const sidebarItems=document.querySelectorAll('.sidebar-item[data-tab]');
   const access={
-    admin:['overview','duplicates','divergences','management','history','exports'],
-    operador:['overview','history','exports']
+    admin:['overview','crlv','duplicates','divergences','management','history','exports'],
+    operador:['overview','crlv','history','exports']
   };
   const allowed=access[nivel]||access.operador;
   sidebarItems.forEach(item=>{
@@ -7965,6 +8112,98 @@ function startApp(){
   }
   // Otherwise login screen is shown, initApp will be called after login
 }
+
+// ========= CONSULTAR VEÍCULO (CRLV) =========
+var _crlvHistory=[];
+var _crlvHistPage=1;
+var _crlvBatchResults=[];
+
+function crlvToggleManual(){
+  var el=document.getElementById('crlv_fields');
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function crlvHandleFile(event){
+  var file=event.target.files&&event.target.files[0];
+  if(!file) return;
+  var fields=document.getElementById('crlv_fields');
+  if(fields) fields.style.display='block';
+  var progress=document.getElementById('crlv_progress');
+  if(progress) progress.style.display='block';
+  var msg=document.getElementById('crlv_progressMsg');
+  if(msg) msg.textContent='Processando "'+file.name+'"...';
+  // Will be implemented in Etapa 3 (OCR/PDF)
+  setTimeout(function(){
+    if(progress) progress.style.display='none';
+    showToast('Processamento de arquivos sera implementado na proxima etapa','info');
+  },1500);
+}
+
+function crlvLimpar(){
+  var ids=['crlv_marcaModelo','crlv_chassi','crlv_ano','crlv_combustivel','crlv_potencia'];
+  for(var i=0;i<ids.length;i++){
+    var el=document.getElementById(ids[i]);
+    if(el) el.value='';
+  }
+  var tipo=document.getElementById('crlv_tipo');
+  if(tipo) tipo.selectedIndex=0;
+  var results=document.getElementById('crlv_results');
+  if(results) results.style.display='none';
+  var vinInfo=document.getElementById('crlv_vinInfo');
+  if(vinInfo) vinInfo.style.display='none';
+}
+
+function crlvBuscar(){
+  var marcaModelo=document.getElementById('crlv_marcaModelo').value.trim();
+  if(!marcaModelo){showToast('Preencha pelo menos o campo Marca/Modelo','error');return;}
+  // Will be fully implemented in Etapa 2 (Engine)
+  showToast('Engine de matching sera implementada na proxima etapa','info');
+}
+
+function crlvHandleBatch(event){
+  showToast('Processamento em lote sera implementado na Etapa 5','info');
+}
+
+function crlvProcessBatch(){
+  var text=document.getElementById('crlv_batchText').value.trim();
+  if(!text){showToast('Insira dados ou faça upload de arquivos','error');return;}
+  showToast('Processamento em lote sera implementado na Etapa 5','info');
+}
+
+function crlvExportBatch(){
+  showToast('Exportação sera implementada na Etapa 5','info');
+}
+
+function crlvRenderHistory(){
+  var body=document.getElementById('crlv_histBody');
+  if(!body) return;
+  if(_crlvHistory.length===0){
+    body.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3);font-size:.82rem">Nenhuma consulta realizada ainda.</td></tr>';
+    return;
+  }
+}
+
+// CRLV Drag & Drop setup
+document.addEventListener('DOMContentLoaded',function(){
+  var dz=document.getElementById('crlv_dropzone');
+  if(!dz) return;
+  dz.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();dz.classList.add('dragover');});
+  dz.addEventListener('dragleave',function(e){e.preventDefault();e.stopPropagation();dz.classList.remove('dragover');});
+  dz.addEventListener('drop',function(e){
+    e.preventDefault();e.stopPropagation();dz.classList.remove('dragover');
+    var files=e.dataTransfer&&e.dataTransfer.files;
+    if(files&&files.length>0){
+      var input=document.getElementById('crlv_fileInput');
+      if(input){
+        var dt=new DataTransfer();
+        dt.items.add(files[0]);
+        input.files=dt.files;
+        crlvHandleFile({target:{files:dt.files}});
+      }
+    }
+  });
+});
+// ========= FIM CONSULTAR VEÍCULO =========
 </script>
 </body>
 </html>
