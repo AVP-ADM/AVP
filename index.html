@@ -8487,6 +8487,34 @@ function crlvParseFields(text){
       fields.ano=modeloLabelMatch[1];
     }
   }
+  // Estratégia 5: encontrar par de anos (N e N+1) em qualquer lugar do texto
+  if(!fields.ano){
+    var allYears=fullText.match(/\b(19\d{2}|20[0-3]\d)\b/g)||[];
+    var yearNums=allYears.map(function(y){return parseInt(y);});
+    // Remover ano atual e próximo (provável exercício)
+    var currentYear=new Date().getFullYear();
+    for(var yi=0;yi<yearNums.length;yi++){
+      var yf=yearNums[yi];
+      if(yf>=currentYear) continue;
+      // Procurar se yf+1 também existe no texto
+      if(yearNums.indexOf(yf+1)!==-1){
+        fields.ano=yf+'/'+(yf+1);break;
+      }
+    }
+    // Se não achou par, pegar o ano mais antigo (provavelmente fabricação)
+    if(!fields.ano&&yearNums.length>0){
+      var validYears=yearNums.filter(function(y){return y>=1980&&y<currentYear;});
+      if(validYears.length>0){
+        validYears.sort(function(a,b){return a-b;});
+        fields.ano=String(validYears[0]);
+      }
+    }
+  }
+  // Estratégia 6: ano pelo VIN (posição 10)
+  if(!fields.ano&&fields.chassi&&fields.chassi.length>=10){
+    var vinYearChar=fields.chassi.charAt(9).toUpperCase();
+    if(VIN_YEAR[vinYearChar]) fields.ano=String(VIN_YEAR[vinYearChar]);
+  }
   // ============================================================
   // COMBUSTÍVEL
   // ============================================================
