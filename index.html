@@ -9035,12 +9035,19 @@ function tmUpdateTable(){
   var thead=document.getElementById('tm_thead');
   if(thead){
     var tr='<tr>';
+    if(_tmEditMode) tr+='<th style="width:30px"></th>';
     for(var ci=0;ci<sh.colunas.length;ci++){
-      var cls=ci===0?'style="text-align:left"':'style="text-align:right"';
-      tr+='<th '+cls+'>'+sh.colunas[ci]+'</th>';
+      var cls=ci===0?'style="text-align:left"':'style="text-align:right'+ (_tmEditMode?';cursor:pointer':'') +'"';
+      tr+='<th '+cls+' data-ci="'+ci+'">'+sh.colunas[ci]+'</th>';
     }
     tr+='</tr>';
     thead.innerHTML=tr;
+    if(_tmEditMode){
+      var ths=thead.querySelectorAll('th[data-ci]');
+      for(var i=0;i<ths.length;i++){
+        (function(th,ci){th.addEventListener('click',function(){tmStartEditHeader(th,ci);});})(ths[i],parseInt(ths[i].dataset.ci));
+      }
+    }
   }
   // Tbody
   var tbody=document.getElementById('tm_tbody');
@@ -9048,21 +9055,31 @@ function tmUpdateTable(){
     var html='';
     for(var ri=0;ri<sh.dados.length;ri++){
       html+='<tr>';
+      if(_tmEditMode) html+='<td style="padding:4px"><button onclick="tmDeleteRow('+ri+')" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>';
       for(var ci=0;ci<sh.dados[ri].length;ci++){
         var cell=sh.dados[ri][ci];
-        if(ci===0){html+='<td style="font-size:.78rem">'+cell+'</td>';}
+        if(ci===0){html+='<td style="font-size:.78rem'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+cell+'</td>';}
         else{
           var isFixed=sh.colsFixas&&sh.colsFixas.indexOf(ci)!==-1;
           var isAdj=sh.colsDesconto&&sh.colsDesconto.indexOf(ci)!==-1;
           var displayVal=isAdj&&hasPct?cell*(1+pct/100):cell;
           var tdClass=isFixed?'tm-fixed':(isAdj&&hasPct?(isDisc?'tm-adj-disc':'tm-adj-incr'):'');
           var orig=isAdj&&hasPct?'<span class="tm-orig">orig: '+tmFmtBRL(cell)+'</span>':'';
-          html+='<td class="'+tdClass+'" style="text-align:right">'+tmFmtBRL(displayVal)+orig+'</td>';
+          html+='<td class="'+tdClass+'" style="text-align:right'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+tmFmtBRL(displayVal)+orig+'</td>';
         }
       }
       html+='</tr>';
     }
     tbody.innerHTML=html;
+    if(_tmEditMode){
+      var tds=tbody.querySelectorAll('td[data-ri]');
+      for(var i=0;i<tds.length;i++){
+        (function(td){
+          var ri=parseInt(td.dataset.ri),ci=parseInt(td.dataset.ci);
+          td.addEventListener('click',function(){tmStartEditCell(td,ri,ci,ci!==0);});
+        })(tds[i]);
+      }
+    }
   }
   // Cota
   tmBuildCota();
@@ -9097,8 +9114,53 @@ function tmToggleEditMode(){
   var toolbar=document.getElementById('tm_editToolbar');
   if(toolbar) toolbar.style.display=_tmEditMode?'flex':'none';
   var btn=document.getElementById('tm_editBtn');
-  if(btn) btn.innerHTML=_tmEditMode?'Sair da Edicao':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao';
+  if(btn){
+    if(_tmEditMode){btn.className='btn btn-sm btn-amber';btn.textContent='Sair da Edicao';}
+    else{btn.className='btn btn-sm';btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao';}
+  }
+  tmUpdateTable();
 }
+
+function tmStartEditCell(td,ri,ci,isNumeric){
+  if(td.querySelector('input')) return;
+  var sh=_tmSheets[_tmCurrentKey];
+  var raw=sh.dados[ri][ci];
+  var input=document.createElement('input');
+  input.type=isNumeric?'number':'text';
+  input.step='0.01';
+  input.value=raw;
+  input.style.cssText='width:100%;padding:6px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text1);font-size:.8rem;font-family:inherit;text-align:'+(ci===0?'left':'right');
+  td.innerHTML='';td.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){
+    var v=isNumeric?(parseFloat(input.value.replace(',','.'))||0):input.value;
+    sh.dados[ri][ci]=v;tmUpdateTable();
+  };
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();commit();}
+    if(e.key==='Escape'){tmUpdateTable();}
+  });
+}
+
+function tmStartEditHeader(th,ci){
+  if(th.querySelector('input')) return;
+  var sh=_tmSheets[_tmCurrentKey];
+  var raw=sh.colunas[ci];
+  var input=document.createElement('input');
+  input.type='text';input.value=raw;
+  input.style.cssText='width:100%;padding:4px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text1);font-size:.7rem;font-family:inherit;text-align:center';
+  th.innerHTML='';th.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){sh.colunas[ci]=input.value||raw;tmUpdateTable();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();commit();}
+    if(e.key==='Escape'){tmUpdateTable();}
+  });
+}
+
+function tmDeleteRow(ri){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.splice(ri,1);tmUpdateTable();}
 
 function tmAddRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var row=sh.dados.length>0?sh.dados[sh.dados.length-1].map(function(v,i){return i===0?'Nova Faixa':0;}):['Nova Faixa',0];sh.dados.push(row);tmUpdateTable();}
 function tmDeleteLastRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.pop();tmUpdateTable();}
