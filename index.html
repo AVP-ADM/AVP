@@ -2359,7 +2359,13 @@ function renderRecentActivity(){
 
   // Only from confirmed HISTORY (not from pending STAGING)
   if(HISTORY && HISTORY.length){
-    for(const h of HISTORY.slice(-5)){
+    // Sort by date DESC and take 5 most recent
+    const sorted = HISTORY.slice().sort((a,b)=>{
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
+      return dateB - dateA;
+    });
+    for(const h of sorted.slice(0,5)){
       let icon='•', iconClass='edit';
       const tipo = h.tipo || h.type || '';
       if(tipo.includes('Adição') || tipo.includes('add')){ icon='+'; iconClass='add'; }
