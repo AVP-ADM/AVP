@@ -5921,28 +5921,195 @@ function showMgmtModal(type){
   }
 
   if(type==='mass'){
-    showModal('Correcao em Massa','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de operacao:</label><select id="mgmt_massType"><option value="add">Adicao</option><option value="remove">Remocao</option></select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><select id="mgmt_cat" style="width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Lista (uma por linha: Marca | Modelo):</label><textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea><span style="font-size:.72rem;color:var(--text3)">Formato: MARCA | MODELO (uma entrada por linha)</span></div>',function(){
-      var massType=document.getElementById('mgmt_massType').value;
-      var cat=document.getElementById('mgmt_cat').value;
-      var lines=document.getElementById('mgmt_list').value.trim().split('\n').filter(function(l){return l.trim();});
-      if(!lines.length){showToast('Insira pelo menos uma linha','error');return;}
-      var count=0;
-      for(var i=0;i<lines.length;i++){
-        var parts=lines[i].split('|').map(function(s){return s.trim();});
-        if(parts.length<2) continue;
-        var brand=parts[0];
-        var model=parts[1];
-        if(!brand||!model) continue;
-        if(massType==='add') addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
-        else if(massType==='remove') addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
-        count++;
+    _massSelected=[];
+    _massType='add';
+    _massCat=CATEGORIES[0]||'';
+    const body=`<div style="display:flex;flex-direction:column;gap:12px">
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de operacao:</label>
+      <select id="mgmt_massType" onchange="massTypeChanged()" style="width:100%">
+        <option value="add">Adicao</option>
+        <option value="remove">Remocao</option>
+      </select>
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label>
+      <select id="mgmt_massCat" onchange="massCatChanged()" style="width:100%">${catOptions}</select>
+      <label style="font-size:.78rem;color:var(--text2);font-weight:600" id="mgmt_massSearchLabel">Buscar modelo para adicionar:</label>
+      <div style="position:relative">
+        <input id="mgmt_massSearch" placeholder="Digite marca ou modelo..." autocomplete="off" oninput="massFilterList()" onfocus="massFilterList()" style="width:100%">
+        <div id="mgmt_massDropdown" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md);font-size:.78rem"></div>
+      </div>
+      <div id="mgmt_massSelectedWrap" style="display:none">
+        <label style="font-size:.78rem;color:var(--text2);font-weight:600" id="mgmt_massSelectedLabel">Selecionados (0):</label>
+        <div id="mgmt_massSelectedList" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-top:4px"></div>
+      </div>
+      <span style="font-size:.72rem;color:var(--text3)" id="mgmt_massHint">Somente modelos da base FIPE nao cadastrados serao listados.</span>
+    </div>`;
+    showModal('Correcao em Massa',body,function(){
+      if(!_massSelected.length){showToast('Selecione pelo menos um modelo','error');return;}
+      const massType=document.getElementById('mgmt_massType').value;
+      const cat=document.getElementById('mgmt_massCat').value;
+      if(massType==='add'){
+        // Adição em massa → commitDirectAction for each
+        closeModal();
+        showToast('Salvando '+_massSelected.length+' adições...','warning');
+        (async function(){
+          for(const item of _massSelected){
+            await commitDirectAction({type:'Adição',marca:item.marca,modelo:item.modelo,catFrom:null,catTo:cat});
+          }
+          showToast(_massSelected.length+' modelos adicionados com sucesso!','success');
+          _massSelected=[];
+        })();
+      } else {
+        // Remoção em massa → staging
+        for(const item of _massSelected){
+          addToStaging({type:'Remoção',marca:item.marca,modelo:item.modelo,catFrom:cat,catTo:null},true);
+        }
+        closeModal();
+        renderOverviewTable();
+        showToast(_massSelected.length+' remoções enviadas para revisão','success');
+        _massSelected=[];
       }
-      closeModal();
-      renderOverviewTable();
-      showToast(count+' operacoes adicionadas ao staging','success');
-    },'blue');
+    },'blue','Confirmar');
+    // Update confirm button text after render
+    setTimeout(()=>massUpdateConfirmBtn(),100);
     return;
   }
+}
+
+// ========= MASS OPERATION HELPERS =========
+let _massSelected=[];
+let _massType='add';
+let _massCat='';
+
+function massTypeChanged(){
+  _massType=document.getElementById('mgmt_massType').value;
+  _massSelected=[];
+  massRenderSelected();
+  massFilterList();
+  const label=document.getElementById('mgmt_massSearchLabel');
+  const hint=document.getElementById('mgmt_massHint');
+  if(_massType==='add'){
+    if(label) label.textContent='Buscar modelo para adicionar:';
+    if(hint) hint.textContent='Somente modelos da base FIPE nao cadastrados serao listados.';
+  } else {
+    if(label) label.textContent='Buscar modelo para remover:';
+    if(hint) hint.textContent='Somente modelos ja cadastrados nesta categoria serao listados.';
+  }
+  massUpdateConfirmBtn();
+}
+
+function massCatChanged(){
+  _massCat=document.getElementById('mgmt_massCat').value;
+  _massSelected=[];
+  massRenderSelected();
+  massFilterList();
+  massUpdateConfirmBtn();
+}
+
+function massFilterList(){
+  const query=norm(document.getElementById('mgmt_massSearch').value);
+  const cat=document.getElementById('mgmt_massCat').value;
+  const dd=document.getElementById('mgmt_massDropdown');
+  if(!dd) return;
+
+  let items=[];
+  if(_massType==='add'){
+    // Show FIPE models NOT in this category
+    if(isFipeBaseLoaded()){
+      const fipeBrands=getFipeBrandsForCategory(cat);
+      for(const brand of fipeBrands){
+        const models=getFipeModelsForBrandAndCategory(brand,cat);
+        const existing=RAW[cat]&&RAW[cat].brands[brand]?RAW[cat].brands[brand]:[];
+        const existingNorm=new Set(existing.map(m=>norm(m)));
+        for(const model of models){
+          if(existingNorm.has(norm(model))) continue;
+          if(_massSelected.some(s=>norm(s.marca)===norm(brand)&&norm(s.modelo)===norm(model))) continue;
+          if(query && !norm(brand+' '+model).includes(query)) continue;
+          items.push({marca:brand,modelo:model});
+        }
+      }
+    } else {
+      // No FIPE base - show nothing for add
+      dd.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">Base FIPE nao carregada</div>';
+      dd.style.display='block';
+      return;
+    }
+  } else {
+    // Show models IN this category
+    if(RAW[cat]){
+      const brands=Object.keys(RAW[cat].brands||{});
+      for(const brand of brands){
+        for(const model of RAW[cat].brands[brand]){
+          if(_massSelected.some(s=>norm(s.marca)===norm(brand)&&norm(s.modelo)===norm(model))) continue;
+          if(query && !norm(brand+' '+model).includes(query)) continue;
+          items.push({marca:brand,modelo:model});
+        }
+      }
+    }
+  }
+
+  if(!query && items.length>100) items=items.slice(0,100);
+  else if(query) items=items.slice(0,50);
+
+  if(!items.length){
+    dd.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3)">'+(query?'Nenhum resultado':'Digite para buscar...')+'</div>';
+    dd.style.display=query?'block':'none';
+    return;
+  }
+
+  dd.innerHTML=items.map((item,i)=>`<div class="ac-option" onmousedown="massSelectItem(${i})" data-idx="${i}" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border-light)"><strong style="font-size:.72rem;color:var(--text3)">${item.marca}</strong><br><span style="font-size:.78rem">${item.modelo}</span></div>`).join('');
+  dd.style.display='block';
+
+  // Store available items for selection
+  window._massAvailableItems=items;
+}
+
+function massSelectItem(idx){
+  const items=window._massAvailableItems||[];
+  if(!items[idx]) return;
+  _massSelected.push(items[idx]);
+  massRenderSelected();
+  massUpdateConfirmBtn();
+  // Clear search and refresh dropdown
+  const search=document.getElementById('mgmt_massSearch');
+  if(search){search.value='';search.focus();}
+  massFilterList();
+}
+
+function massRemoveItem(idx){
+  _massSelected.splice(idx,1);
+  massRenderSelected();
+  massUpdateConfirmBtn();
+  massFilterList();
+}
+
+function massRenderSelected(){
+  const wrap=document.getElementById('mgmt_massSelectedWrap');
+  const list=document.getElementById('mgmt_massSelectedList');
+  const label=document.getElementById('mgmt_massSelectedLabel');
+  if(!wrap||!list) return;
+
+  if(_massSelected.length===0){
+    wrap.style.display='none';
+    return;
+  }
+  wrap.style.display='block';
+  const typeLabel=_massType==='add'?'Selecionados':'Selecionados para remocao';
+  if(label) label.textContent=typeLabel+' ('+_massSelected.length+'):';
+
+  list.innerHTML=_massSelected.map((item,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px solid var(--border-light);font-size:.78rem">
+    <span><strong style="color:var(--text3);font-size:.68rem">${item.marca}</strong> — ${item.modelo}</span>
+    <span onclick="massRemoveItem(${i})" style="cursor:pointer;color:var(--red);font-weight:700;font-size:.7rem;padding:2px 6px;border-radius:3px;transition:background .1s" onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background='transparent'">&times;</span>
+  </div>`).join('');
+}
+
+function massUpdateConfirmBtn(){
+  const actions=document.getElementById('modalActions');
+  if(!actions) return;
+  const count=_massSelected.length;
+  const type=_massType||'add';
+  const btnText=count===0?'Confirmar':type==='add'?'Adicionar '+count+' modelo(s)':'Enviar '+count+' remocao(oes) para revisao';
+  const confirmBtn=actions.querySelector('.btn-blue');
+  if(confirmBtn) confirmBtn.textContent=btnText;
 }
 
 // ========= HISTORY =========
