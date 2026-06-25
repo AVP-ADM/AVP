@@ -8947,13 +8947,58 @@ var _tmTipo='desconto';
 var _tmEditMode=false;
 
 function tmInit(){
-  if(Object.keys(_tmSheets).length===0) tmLoadDefaultData();
+  tmLoadFromStorage();
   tmBuildSidebar();
   if(_tmCurrentKey&&_tmSheets[_tmCurrentKey]) tmSelectSheet(_tmCurrentKey);
   else{var keys=Object.keys(_tmSheets);if(keys.length>0) tmSelectSheet(keys[0]);}
-  // Show edit button for admin
+  // Show edit button for admin only
   var btn=document.getElementById('tm_editBtn');
   if(btn) btn.style.display=(currentProfile&&currentProfile.nivel==='admin')?'inline-flex':'none';
+  // Load from Supabase (async, non-blocking)
+  tmLoadFromSupabase();
+}
+
+// --- Persistência local (fallback) ---
+function tmSaveToStorage(){
+  try{localStorage.setItem('avp-tm-sheets',JSON.stringify(_tmSheets));localStorage.setItem('avp-tm-groups',JSON.stringify(_tmGroups));}catch(e){}
+}
+function tmLoadFromStorage(){
+  try{
+    var sheets=localStorage.getItem('avp-tm-sheets');
+    var groups=localStorage.getItem('avp-tm-groups');
+    if(sheets&&groups){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
+    else{tmLoadDefaultData();}
+  }catch(e){tmLoadDefaultData();}
+}
+
+// --- Persistência Supabase ---
+var _tmSaveTimeout=null;
+function tmScheduleSave(){
+  if(_tmSaveTimeout) clearTimeout(_tmSaveTimeout);
+  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmSaveToSupabase();},1500);
+}
+async function tmSaveToSupabase(){
+  try{
+    var payload={id:'tabela_master_v1',sheets:JSON.stringify(_tmSheets),groups:JSON.stringify(_tmGroups),updated_by:currentUser||'admin',updated_at:new Date().toISOString()};
+    await supabase.insert('tabela_planos',[payload],{upsert:true});
+  }catch(e){console.warn('tmSaveToSupabase error:',e);}
+}
+async function tmLoadFromSupabase(){
+  try{
+    var data=await supabase.select('tabela_planos',{filter:'id=eq.tabela_master_v1',limit:1});
+    if(data&&data.length>0){
+      var record=data[0];
+      var sheets=JSON.parse(record.sheets);
+      var groups=JSON.parse(record.groups);
+      if(sheets&&Object.keys(sheets).length>0){
+        _tmSheets=sheets;_tmGroups=groups;
+        tmSaveToStorage();
+        tmBuildSidebar();
+        if(_tmCurrentKey&&_tmSheets[_tmCurrentKey]) tmSelectSheet(_tmCurrentKey);
+        else{var keys=Object.keys(_tmSheets);if(keys.length>0) tmSelectSheet(keys[0]);}
+      }
+    }
+  }catch(e){console.warn('tmLoadFromSupabase error:',e);}
 }
 
 function tmBuildSidebar(){
@@ -8984,7 +9029,7 @@ function tmBuildSidebar(){
 function tmRenameGroup(gi){
   var g=_tmGroups[gi];if(!g) return;
   var name=prompt('Novo nome do grupo:',g.label);
-  if(name&&name.trim()){g.label=name.trim();tmBuildSidebar();}
+  if(name&&name.trim()){g.label=name.trim();tmBuildSidebar();tmScheduleSave();}
 }
 function tmDeleteGroup(gi){
   if(_tmGroups.length<=1){showToast('Precisa ter ao menos 1 grupo','error');return;}
@@ -8993,13 +9038,13 @@ function tmDeleteGroup(gi){
   _tmGroups.splice(gi,1);
   // Move keys to first group
   for(var i=0;i<keys.length;i++){if(_tmGroups[0]) _tmGroups[0].keys.push(keys[i]);}
-  tmBuildSidebar();
+  tmBuildSidebar();tmScheduleSave();
 }
 function tmAddGroup(){
   var name=prompt('Nome do novo grupo:');
   if(!name||!name.trim()) return;
   _tmGroups.push({label:name.trim(),keys:[]});
-  tmBuildSidebar();
+  tmBuildSidebar();tmScheduleSave();
 }
 function tmAddSheet(gi){
   var label=prompt('Nome da nova categoria:');
@@ -9008,7 +9053,7 @@ function tmAddSheet(gi){
   _tmSheets[key]={label:label.trim(),icon:'N',colunas:['Faixa de Valor Fipe','Basico','VIP','Top','Valor Adesao'],dados:[['Nova Faixa',0,0,0,0]],colsDesconto:[1,2,3],colsFixas:[4],cotaInfo:{}};
   _tmGroups[gi].keys.push(key);
   tmBuildSidebar();
-  tmSelectSheet(key);
+  tmSelectSheet(key);tmScheduleSave();
 }
 function tmDeleteSheet(key){
   if(Object.keys(_tmSheets).length<=1){showToast('Precisa ter ao menos 1 categoria','error');return;}
@@ -9017,12 +9062,12 @@ function tmDeleteSheet(key){
   for(var gi=0;gi<_tmGroups.length;gi++){_tmGroups[gi].keys=_tmGroups[gi].keys.filter(function(k){return k!==key;});}
   if(_tmCurrentKey===key){var remaining=Object.keys(_tmSheets);if(remaining.length) _tmCurrentKey=remaining[0];}
   tmBuildSidebar();
-  tmSelectSheet(_tmCurrentKey);
+  tmSelectSheet(_tmCurrentKey);tmScheduleSave();
 }
 function tmEditSheetMeta(){
   var sh=_tmSheets[_tmCurrentKey];if(!sh) return;
   var label=prompt('Nome da categoria:',sh.label);
-  if(label&&label.trim()){sh.label=label.trim();tmBuildSidebar();tmSelectSheet(_tmCurrentKey);}
+  if(label&&label.trim()){sh.label=label.trim();tmBuildSidebar();tmSelectSheet(_tmCurrentKey);tmScheduleSave();}
 }
 
 function tmSelectSheet(key){
@@ -9186,7 +9231,7 @@ function tmStartEditCell(td,ri,ci,isNumeric){
   input.focus();input.select();
   var commit=function(){
     var v=isNumeric?(parseFloat(input.value.replace(',','.'))||0):input.value;
-    sh.dados[ri][ci]=v;tmUpdateTable();
+    sh.dados[ri][ci]=v;tmUpdateTable();tmScheduleSave();
   };
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){
@@ -9204,7 +9249,7 @@ function tmStartEditHeader(th,ci){
   input.style.cssText='width:100%;padding:4px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text1);font-size:.7rem;font-family:inherit;text-align:center';
   th.innerHTML='';th.appendChild(input);
   input.focus();input.select();
-  var commit=function(){sh.colunas[ci]=input.value||raw;tmUpdateTable();};
+  var commit=function(){sh.colunas[ci]=input.value||raw;tmUpdateTable();tmScheduleSave();};
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){
     if(e.key==='Enter'){e.preventDefault();commit();}
@@ -9212,12 +9257,12 @@ function tmStartEditHeader(th,ci){
   });
 }
 
-function tmDeleteRow(ri){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.splice(ri,1);tmUpdateTable();}
+function tmDeleteRow(ri){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.splice(ri,1);tmUpdateTable();tmScheduleSave();}
 
-function tmAddRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var row=sh.dados.length>0?sh.dados[sh.dados.length-1].map(function(v,i){return i===0?'Nova Faixa':0;}):['Nova Faixa',0];sh.dados.push(row);tmUpdateTable();}
-function tmDeleteLastRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.pop();tmUpdateTable();}
-function tmAddColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var name=prompt('Nome da nova coluna:');if(!name) return;sh.colunas.push(name);sh.dados.forEach(function(r){r.push(0);});sh.colsDesconto.push(sh.colunas.length-1);tmUpdateTable();}
-function tmDeleteLastColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.colunas.length<=2) return;sh.colunas.pop();sh.dados.forEach(function(r){r.pop();});var li=sh.colunas.length;sh.colsDesconto=sh.colsDesconto.filter(function(c){return c<li;});sh.colsFixas=sh.colsFixas.filter(function(c){return c<li;});tmUpdateTable();}
+function tmAddRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var row=sh.dados.length>0?sh.dados[sh.dados.length-1].map(function(v,i){return i===0?'Nova Faixa':0;}):['Nova Faixa',0];sh.dados.push(row);tmUpdateTable();tmScheduleSave();}
+function tmDeleteLastRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.pop();tmUpdateTable();tmScheduleSave();}
+function tmAddColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var name=prompt('Nome da nova coluna:');if(!name) return;sh.colunas.push(name);sh.dados.forEach(function(r){r.push(0);});sh.colsDesconto.push(sh.colunas.length-1);tmUpdateTable();tmScheduleSave();}
+function tmDeleteLastColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.colunas.length<=2) return;sh.colunas.pop();sh.dados.forEach(function(r){r.pop();});var li=sh.colunas.length;sh.colsDesconto=sh.colsDesconto.filter(function(c){return c<li;});sh.colsFixas=sh.colsFixas.filter(function(c){return c<li;});tmUpdateTable();tmScheduleSave();}
 
 function tmLoadDefaultData(){
   _tmSheets={
