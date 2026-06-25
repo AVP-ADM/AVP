@@ -1153,6 +1153,7 @@ tr:hover .row-actions{opacity:1}
             <button class="btn btn-sm" onclick="tmAddColumn()">+ Coluna</button>
             <button class="btn btn-sm btn-red" onclick="tmDeleteLastRow()">- Linha</button>
             <button class="btn btn-sm btn-red" onclick="tmDeleteLastColumn()">- Coluna</button>
+            <button class="btn btn-sm" onclick="tmEditSheetMeta()" style="margin-left:auto">Renomear</button>
           </div>
           <div class="table-wrap">
             <table>
@@ -8961,16 +8962,67 @@ function tmBuildSidebar(){
   var html='';
   for(var gi=0;gi<_tmGroups.length;gi++){
     var g=_tmGroups[gi];
-    html+='<div class="tm-group"><div class="tm-group-label">'+g.label+'</div>';
+    html+='<div class="tm-group"><div class="tm-group-label">'+g.label;
+    if(_tmEditMode) html+=' <span style="margin-left:auto;display:flex;gap:3px"><button onclick="tmRenameGroup('+gi+')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:10px;padding:1px 4px" title="Renomear grupo"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button onclick="tmDeleteGroup('+gi+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:1px 4px" title="Excluir grupo"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>';
+    html+='</div>';
     for(var ki=0;ki<g.keys.length;ki++){
       var key=g.keys[ki];
       if(!_tmSheets[key]) continue;
       var sh=_tmSheets[key];
-      html+='<button class="tm-cat-btn'+(key===_tmCurrentKey?' active':'')+'" onclick="tmSelectSheet(\''+key+'\')"><span>'+sh.icon+'</span> '+sh.label+'</button>';
+      html+='<div style="display:flex;align-items:center"><button class="tm-cat-btn'+(key===_tmCurrentKey?' active':'')+'" onclick="tmSelectSheet(\''+key+'\')" style="flex:1"><span>'+sh.icon+'</span> '+sh.label+'</button>';
+      if(_tmEditMode) html+='<button onclick="event.stopPropagation();tmDeleteSheet(\''+key+'\')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:4px 6px;font-size:9px;opacity:.6" title="Excluir"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      html+='</div>';
     }
+    if(_tmEditMode) html+='<button onclick="tmAddSheet('+gi+')" style="width:calc(100% - 24px);margin:4px 12px;padding:5px 10px;background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:inherit">+ Nova categoria</button>';
     html+='</div>';
   }
+  if(_tmEditMode) html+='<div style="padding:8px 12px"><button onclick="tmAddGroup()" style="width:100%;padding:6px;background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text3);font-size:.7rem;cursor:pointer;font-family:inherit">+ Novo grupo</button></div>';
   nav.innerHTML=html;
+}
+
+// --- Gestão de Categorias/Grupos ---
+function tmRenameGroup(gi){
+  var g=_tmGroups[gi];if(!g) return;
+  var name=prompt('Novo nome do grupo:',g.label);
+  if(name&&name.trim()){g.label=name.trim();tmBuildSidebar();}
+}
+function tmDeleteGroup(gi){
+  if(_tmGroups.length<=1){showToast('Precisa ter ao menos 1 grupo','error');return;}
+  if(!confirm('Excluir o grupo "'+_tmGroups[gi].label+'"? As categorias serao movidas para o primeiro grupo.')) return;
+  var keys=_tmGroups[gi].keys;
+  _tmGroups.splice(gi,1);
+  // Move keys to first group
+  for(var i=0;i<keys.length;i++){if(_tmGroups[0]) _tmGroups[0].keys.push(keys[i]);}
+  tmBuildSidebar();
+}
+function tmAddGroup(){
+  var name=prompt('Nome do novo grupo:');
+  if(!name||!name.trim()) return;
+  _tmGroups.push({label:name.trim(),keys:[]});
+  tmBuildSidebar();
+}
+function tmAddSheet(gi){
+  var label=prompt('Nome da nova categoria:');
+  if(!label||!label.trim()) return;
+  var key='TM_'+Date.now();
+  _tmSheets[key]={label:label.trim(),icon:'N',colunas:['Faixa de Valor Fipe','Basico','VIP','Top','Valor Adesao'],dados:[['Nova Faixa',0,0,0,0]],colsDesconto:[1,2,3],colsFixas:[4],cotaInfo:{}};
+  _tmGroups[gi].keys.push(key);
+  tmBuildSidebar();
+  tmSelectSheet(key);
+}
+function tmDeleteSheet(key){
+  if(Object.keys(_tmSheets).length<=1){showToast('Precisa ter ao menos 1 categoria','error');return;}
+  if(!confirm('Excluir a categoria "'+(_tmSheets[key]?_tmSheets[key].label:key)+'"?')) return;
+  delete _tmSheets[key];
+  for(var gi=0;gi<_tmGroups.length;gi++){_tmGroups[gi].keys=_tmGroups[gi].keys.filter(function(k){return k!==key;});}
+  if(_tmCurrentKey===key){var remaining=Object.keys(_tmSheets);if(remaining.length) _tmCurrentKey=remaining[0];}
+  tmBuildSidebar();
+  tmSelectSheet(_tmCurrentKey);
+}
+function tmEditSheetMeta(){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh) return;
+  var label=prompt('Nome da categoria:',sh.label);
+  if(label&&label.trim()){sh.label=label.trim();tmBuildSidebar();tmSelectSheet(_tmCurrentKey);}
 }
 
 function tmSelectSheet(key){
