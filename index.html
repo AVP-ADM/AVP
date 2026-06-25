@@ -633,6 +633,8 @@ tr:hover .row-actions{opacity:1}
 .sidebar-sub-item:hover{color:var(--text1);background:var(--surface-2)}
 .sidebar-sub-item.active{color:var(--accent);font-weight:600;background:var(--accent-light)}
 .sidebar-sub-item .si-sub-badge{font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:4px;min-width:16px;text-align:center;background:var(--red-light);color:var(--red);margin-left:auto}
+.sidebar-sub-item .si-tag-beta{font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--amber-light);color:var(--amber);margin-left:auto;letter-spacing:.3px;text-transform:uppercase}
+[data-theme="dark"] .sidebar-sub-item .si-tag-beta{background:#451A03;color:#FBBF24}
 .sidebar-sub-item.active .si-sub-badge{background:rgba(27,122,61,.15);color:var(--accent)}
 [data-theme="dark"] .sidebar-sub-item:hover{background:var(--surface-2);color:var(--text1)}
 [data-theme="dark"] .sidebar-sub-item.active{background:rgba(52,208,88,.08);color:var(--accent)}
@@ -773,6 +775,7 @@ tr:hover .row-actions{opacity:1}
           <div class="sidebar-sub">
             <button class="sidebar-sub-item" data-subtab="crlv" onclick="goTab('crlv')">
               <span class="si-text">Consultar Veiculo</span>
+              <span class="si-tag-beta">BETA</span>
             </button>
             <button class="sidebar-sub-item" data-subtab="planos" onclick="goTab('planos')">
               <span class="si-text">Tabela de Planos</span>
