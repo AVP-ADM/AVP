@@ -90,8 +90,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .sidebar-item .si-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;min-width:18px;text-align:center;transition:all .2s}
 .sidebar-item.has-children .si-badge{right:32px}
 .app-sidebar.collapsed .si-badge{right:6px;top:6px;transform:none;font-size:.55rem;padding:1px 4px;min-width:14px}
-.sidebar-collapse{display:none}
-.sidebar-collapse-btn{display:none}
 /* Sidebar pin as nav item */
 .sidebar-pin-bottom{padding:8px;border-top:1px solid var(--border)}
 .app-sidebar:not(.collapsed) .pin-icon-nav{transform:rotate(45deg);color:var(--accent)}
@@ -100,8 +98,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .app-sidebar.collapsed.hover-expanded .si-text{opacity:1;transition:opacity .15s .05s}
 .app-sidebar.collapsed.hover-expanded .si-badge{right:12px;top:50%;transform:translateY(-50%);font-size:.6rem;padding:2px 6px;min-width:18px}
 .app-sidebar.collapsed.hover-expanded .sidebar-item{padding:10px 14px}
-.app-sidebar.collapsed.hover-expanded .sidebar-collapse-btn .collapse-text{opacity:1;width:auto}
-.app-sidebar.collapsed.hover-expanded .sidebar-collapse-btn svg{transform:rotate(0deg)}
 .app-sidebar.collapsed .sidebar-item{padding:10px 14px}
 .app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none;animation:tooltipIn .15s}
 @keyframes tooltipIn{from{opacity:0;transform:translateY(-50%) translateX(-4px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
@@ -149,9 +145,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .upload-preview .stat:last-child{border-bottom:none}
 .app-container{margin-top:48px;height:calc(100vh - 48px)}
 
-/* ========= TABS (hidden - replaced by sidebar) ========= */
-.tabs{display:none}
-.tab{display:none}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
 
@@ -798,18 +791,6 @@ tr:hover .row-actions{opacity:1}
     <main class="app-main" id="appMain">
       <div class="app-main-inner">
 
-  <!-- ========= NAVIGATION TABS (hidden, kept for compat) ========= -->
-  <div class="tabs" id="mainTabs">
-    <button class="tab active" onclick="goTab('overview')">Visão Geral</button>
-    <button class="tab" onclick="goTab('duplicates')">Conflitos</button>
-    <button class="tab" onclick="goTab('divergences')">Divergências</button>
-    <button class="tab" onclick="goTab('management')">Manutenção</button>
-    <button class="tab" onclick="goTab('history')">Histórico</button>
-    <button class="tab" onclick="goTab('exports')">Exportações</button>
-    <button class="search-trigger" onclick="openGlobalSearch()" title="Busca global (Ctrl+K)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Pesquisar <span class="shortcut">Ctrl+K</span></button>
-    <span class="tabs-spacer"></span>
-  </div>
-
   <!-- ========= TAB: VISÃO GERAL ========= -->
   <div class="tab-panel active" id="panel-overview">
     <!-- INTEGRITY + KPIs GRID (2 rows x 3 cols) -->
@@ -1103,7 +1084,6 @@ tr:hover .row-actions{opacity:1}
           <option value="Adição">Adicao</option>
           <option value="Remoção">Remocao</option>
           <option value="Edição">Edicao</option>
-          <option value="Movimentação">Movimentacao</option>
           <option value="Categoria">Categoria</option>
           <option value="Marca">Marca</option>
         </select>
@@ -2170,13 +2150,6 @@ function goTab(tab){
     if(subItem) subItem.classList.add('active');
   }
 
-  // Hidden tabs compat
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const tabs = document.querySelectorAll('.tab');
-  const tabMapLegacy=['overview','crlv','duplicates','divergences','management','history','exports','planos','settings'];
-  const idx = tabMapLegacy.indexOf(tab);
-  if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
-
   // Trigger renders based on actual content tab
   const effectiveTab = subTab || mainTab;
   if(effectiveTab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
@@ -2204,11 +2177,6 @@ function toggleSidebarGroup(groupName){
       goTab(firstSub.dataset.subtab);
     }
   }
-}
-
-function goSubTab(parentTab, subTab){
-  // Legacy compat - redirect to goTab which handles everything
-  goTab(subTab);
 }
 
 function resetTabFilters(){
@@ -4503,8 +4471,6 @@ function openModelRemove(marca, modelo){
   },'red');
 }
 
-// openModelMove removed - Mover Modelo feature deprecated
-
 function filterDrawerTable(searchId, tableId){
   const query=norm(document.getElementById(searchId).value);
   const table=document.getElementById(tableId);
@@ -5366,16 +5332,6 @@ function getStagingData(){
         if(idx>=0){copy[op.catFrom].brands[op.marca].splice(idx,1);copy[op.catFrom].total--;}
         if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
       }
-    } else if(op.type==='Movimentação'){
-      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
-        const idx = copy[op.catFrom].brands[op.marca].indexOf(op.modelo);
-        if(idx>=0){copy[op.catFrom].brands[op.marca].splice(idx,1);copy[op.catFrom].total--;}
-        if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
-      }
-      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
-      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
-      copy[op.catTo].brands[op.marca].push(op.modelo);
-      copy[op.catTo].total++;
     } else if(op.type==='Edição'){
       // Remove old model name, add new model name in same category
       if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
@@ -6586,7 +6542,6 @@ function loadTempReleasesFromStorage(){
 }
 
 // ========= SUPABASE INTEGRATION =========
-const APPS_SCRIPT_URL = ''; // Legacy - kept for any remaining references
 let isConnected = false;
 let isSyncing = false;
 
