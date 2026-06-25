@@ -8180,6 +8180,13 @@ function crlvNormalize(str){
   s=s.replace(/\bFLX?\b/g,'FLEX');
   s=s.replace(/\bGAS\.?\b/g,'GASOLINA');
   s=s.replace(/\bALC\.?\b/g,'ALCOOL');
+  s=s.replace(/\bSED\.?\b/g,'SEDAN');
+  s=s.replace(/\bHAT\.?\b/g,'HATCH');
+  s=s.replace(/\bSW\.?\b/g,'SW');
+  s=s.replace(/\bCD\b/g,'CABDUPLA');
+  s=s.replace(/\bCS\b/g,'CABSIMPLES');
+  s=s.replace(/\bCAB\.?\s*DUPLA\b/g,'CABDUPLA');
+  s=s.replace(/\bCAB\.?\s*SIMPLES\b/g,'CABSIMPLES');
   s=s.replace(/\bCV\b/g,'');
   s=s.replace(/\bCC\b/g,'');
   s=s.replace(/\bHP\b/g,'');
