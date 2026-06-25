@@ -8335,61 +8335,168 @@ function crlvParseFields(text){
   var fields={marcaModelo:'',chassi:'',ano:'',combustivel:'',tipo:'',potencia:''};
   if(!text) return fields;
   var fullText=text.toUpperCase().replace(/\r/g,'');
-  var lines=fullText.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
-  // --- Marca/Modelo: múltiplas estratégias ---
-  // Estratégia 1: label "MARCA/MODELO" seguido de conteúdo
-  var mmMatch=fullText.match(/MARCA\s*[\/\\]\s*MODELO[^A-Z]*([A-Z0-9][A-Z0-9\s\/\.\-\(\)]+)/);
-  if(mmMatch) fields.marcaModelo=mmMatch[1].trim().replace(/\s{2,}/g,' ').substring(0,60);
-  // Estratégia 2: procurar padrão MARCA/MODELO (ex: MMC/L200 TRITON HPE D, I/VW GOL)
+  // --- BLACKLIST de termos de carroceria (nunca são marca/modelo) ---
+  var BODY_BLACKLIST=['ABERTA','FECHADA','CABINE','DUPLA','SIMPLES','CABINE DUPLA','CABINE SIMPLES','SEDAN','HATCH','PERUA','CONVERSIVEL','CONVERSÍVEL','FURGAO','FURGÃO','BAU','BAÚ','CHASSI PLATAFORMA','PLATAFORMA','CABINA','CAPOTA'];
+  // --- WHITELIST de siglas de fabricantes ---
+  var MAKER_PREFIXES=['MMC','VW','GM','FIAT','FORD','TOYOTA','HONDA','YAMAHA','BMW','MERC','MERCEDES','HYUNDAI','KIA','RENAULT','NISSAN','CHEV','CHEVROLET','CITROEN','CITROËN','PEUGEOT','MITSU','MITSUBISHI','SUZUKI','VOLVO','SCANIA','IVECO','DAF','MAN','AGRALE','CAOA','JEEP','LAND','AUDI','PORSCHE','JAC','LIFAN','CHERY','BYD','GWM','SUBARU','DODGE','RAM','CHRYSLER','TROLLER','TAC','HAFEI','SHINERAY','AVELLOZ','BAJAJ','DAFRA','KASINSKI','TRIUMPH','DUCATI','HARLEY','KAWASAKI','KTM','APRILIA','PIAGGIO','INDIAN','TESLA','MINI','SMART','SSANGYONG','MAHINDRA'];
+  // --- MODELOS CONHECIDOS por fabricante (para busca via WMI) ---
+  var KNOWN_MODELS={'MITSUBISHI':['L200','TRITON','PAJERO','OUTLANDER','ASX','ECLIPSE','LANCER','GALANT','DAKAR','OUTDOOR','SAVANA','SPORT','HPE','GLS','GLX','GL'],'VW':['GOL','POLO','VIRTUS','TCROSS','T-CROSS','TAOS','TIGUAN','JETTA','NIVUS','SAVEIRO','AMAROK','FOX','UP','VOYAGE','PASSAT','GOLF'],'GM':['ONIX','PRISMA','CRUZE','TRACKER','S10','TRAILBLAZER','SPIN','COBALT','MONTANA','EQUINOX','BLAZER'],'FIAT':['ARGO','CRONOS','MOBI','UNO','STRADA','TORO','PULSE','FASTBACK','FIORINO','DUCATO','PALIO','SIENA','LINEA'],'FORD':['KA','RANGER','BRONCO','TERRITORY','MAVERICK','FIESTA','FOCUS','ECOSPORT','EDGE','FUSION'],'TOYOTA':['HILUX','COROLLA','YARIS','RAV4','SW4','ETIOS','CAMRY','PRIUS','CROSS'],'HONDA':['CIVIC','FIT','CITY','HRV','HR-V','WRV','WR-V','CRV','CR-V','ACCORD'],'HYUNDAI':['HB20','CRETA','TUCSON','IX35','SANTA','AZERA','ELANTRA','VELOSTER'],'RENAULT':['KWID','SANDERO','LOGAN','DUSTER','CAPTUR','OROCH','MASTER'],'BMW':['X1','X3','X5','X6','320','330','520','M3','M5','F850','R1250','G310']};
+  // --- Chassi: 17 caracteres alfanuméricos (exclui I, O, Q) ---
+  var chassiMatch=fullText.match(/[A-HJ-NPR-Z0-9]{17}/);
+  if(chassiMatch) fields.chassi=chassiMatch[0];
+  // Decodificar WMI para usar nas camadas seguintes
+  var vinBrand='';var vinTipo='';
+  if(fields.chassi){var wmi=fields.chassi.substring(0,3);if(WMI_MAP[wmi]){vinBrand=WMI_MAP[wmi].marca;vinTipo=WMI_MAP[wmi].tipo;}}
+  // ============================================================
+  // MARCA/MODELO — 5 CAMADAS
+  // ============================================================
+  // CAMADA 1: Whitelist de fabricante — procurar SIGLA/MODELO no texto
   if(!fields.marcaModelo){
-    var brandPattern=fullText.match(/\b([A-Z]{2,10})\s*\/\s*([A-Z][A-Z0-9\s\.\-]{3,40})/);
-    if(brandPattern){
-      var candidate=brandPattern[1]+'/'+brandPattern[2].trim();
-      if(candidate.length>5&&!/MODELO|MARCA|DATA|EXERC/.test(candidate)) fields.marcaModelo=candidate.substring(0,60);
+    for(var pi=0;pi<MAKER_PREFIXES.length;pi++){
+      var prefix=MAKER_PREFIXES[pi];
+      var rx=new RegExp('\\b'+prefix+'\\s*[/\\\\]\\s*([A-Z0-9][A-Z0-9\\s\\.\\-]{2,40})');
+      var m=fullText.match(rx);
+      if(m){
+        var cand=prefix+'/'+m[1].trim().replace(/\s{2,}/g,' ');
+        var isBlacklisted=false;
+        for(var bi=0;bi<BODY_BLACKLIST.length;bi++){if(cand.indexOf(BODY_BLACKLIST[bi])!==-1){isBlacklisted=true;break;}}
+        if(!isBlacklisted&&cand.length>5){fields.marcaModelo=cand.substring(0,60);break;}
+      }
     }
   }
-  // --- Chassi: 17 caracteres alfanuméricos (exclui I, O, Q) ---
-  var chassiMatch=text.toUpperCase().match(/[A-HJ-NPR-Z0-9]{17}/);
-  if(chassiMatch) fields.chassi=chassiMatch[0];
-  // --- Ano: priorizar ANO FAB/MODELO (NNNN/NNNN onde ambos < 2026) ---
-  // Buscar especificamente após labels de ano
-  var anoLabelMatch=fullText.match(/(?:ANO\s*(?:FAB|FABR?ICA[CÇ])|MODELO)[^0-9]*(\d{4})\s*[\/\s]\s*(\d{4})/);
-  if(anoLabelMatch){
-    var a1=parseInt(anoLabelMatch[1]),a2=parseInt(anoLabelMatch[2]);
-    if(a1>=1980&&a1<=2030&&a2>=1980&&a2<=2030) fields.ano=a1+'/'+a2;
+  // CAMADA 1b: Whitelist fabricante sem barra (ex: FIAT ARGO, HONDA CG 160)
+  if(!fields.marcaModelo){
+    for(var pi=0;pi<MAKER_PREFIXES.length;pi++){
+      var prefix=MAKER_PREFIXES[pi];
+      var rx=new RegExp('\\b'+prefix+'\\s+([A-Z][A-Z0-9\\s\\.\\-]{2,35})');
+      var m=fullText.match(rx);
+      if(m){
+        var cand=prefix+' '+m[1].trim().replace(/\s{2,}/g,' ');
+        var isBlacklisted=false;
+        for(var bi=0;bi<BODY_BLACKLIST.length;bi++){if(cand.indexOf(BODY_BLACKLIST[bi])!==-1){isBlacklisted=true;break;}}
+        if(!isBlacklisted&&cand.length>6){fields.marcaModelo=cand.substring(0,60);break;}
+      }
+    }
   }
-  // Fallback: qualquer NNNN/NNNN onde ambos são anos razoáveis de veículo (não 2024 de exercício)
+  // CAMADA 2: WMI do chassi + buscar modelo conhecido no texto
+  if(!fields.marcaModelo&&vinBrand){
+    var brandKey='';
+    for(var k in KNOWN_MODELS){if(KNOWN_MODELS.hasOwnProperty(k)&&vinBrand.toUpperCase().indexOf(k)!==-1){brandKey=k;break;}}
+    if(brandKey){
+      var models=KNOWN_MODELS[brandKey];var foundModels=[];
+      for(var mi=0;mi<models.length;mi++){if(fullText.indexOf(models[mi])!==-1) foundModels.push(models[mi]);}
+      if(foundModels.length>0){
+        foundModels.sort(function(a,b){return b.length-a.length;});
+        fields.marcaModelo=vinBrand+' '+foundModels.join(' ');
+        if(fields.marcaModelo.length>60) fields.marcaModelo=fields.marcaModelo.substring(0,60);
+      }
+    }
+    // Se não achou modelo especifico mas tem a marca pelo VIN
+    if(!fields.marcaModelo&&vinBrand){
+      // Procurar qualquer sequencia alfanumerica relevante proximo ao chassi
+      var chassiPos=fullText.indexOf(fields.chassi);
+      if(chassiPos>0){
+        var nearby=fullText.substring(Math.max(0,chassiPos-150),chassiPos);
+        var modelMatch=nearby.match(/([A-Z][A-Z0-9\s\.\-]{3,30})\s*$/);
+        if(modelMatch){
+          var cand=modelMatch[1].trim();
+          var isBlacklisted=false;
+          for(var bi=0;bi<BODY_BLACKLIST.length;bi++){if(cand.indexOf(BODY_BLACKLIST[bi])!==-1){isBlacklisted=true;break;}}
+          if(!isBlacklisted&&cand.length>3) fields.marcaModelo=vinBrand+' '+cand;
+        }
+      }
+    }
+  }
+  // CAMADA 3: Regex genérico XX/YYY COM blacklist de carroceria
+  if(!fields.marcaModelo){
+    var allMatches=fullText.match(/\b([A-Z]{2,10})\s*\/\s*([A-Z][A-Z0-9\s\.\-]{2,40})/g)||[];
+    for(var i=0;i<allMatches.length;i++){
+      var cand=allMatches[i].trim();
+      var isBlacklisted=false;
+      for(var bi=0;bi<BODY_BLACKLIST.length;bi++){if(cand.indexOf(BODY_BLACKLIST[bi])!==-1){isBlacklisted=true;break;}}
+      if(!isBlacklisted&&!/MODELO|MARCA|DATA|EXERC|LICEN/.test(cand)&&cand.length>5){
+        fields.marcaModelo=cand.substring(0,60);break;
+      }
+    }
+  }
+  // CAMADA 4: Texto próximo ao chassi (âncora geográfica)
+  if(!fields.marcaModelo&&fields.chassi){
+    var chassiPos=fullText.indexOf(fields.chassi);
+    if(chassiPos>0){
+      var before=fullText.substring(Math.max(0,chassiPos-200),chassiPos);
+      var after=fullText.substring(chassiPos+17,Math.min(fullText.length,chassiPos+200));
+      var combined=before+' '+after;
+      var brandMatch=null;
+      for(var pi=0;pi<MAKER_PREFIXES.length;pi++){
+        if(combined.indexOf(MAKER_PREFIXES[pi])!==-1){
+          var rx=new RegExp(MAKER_PREFIXES[pi]+'[\\s/]*([A-Z0-9][A-Z0-9\\s\\.\\-]{2,30})');
+          brandMatch=combined.match(rx);
+          if(brandMatch){fields.marcaModelo=brandMatch[0].trim().substring(0,60);break;}
+        }
+      }
+    }
+  }
+  // CAMADA 5 (fallback): label MARCA/MODELO com blacklist
+  if(!fields.marcaModelo){
+    var mmMatch=fullText.match(/MARCA\s*[\/\\]\s*MODELO[^A-Z]*([A-Z0-9][A-Z0-9\s\/\.\-\(\)]+)/);
+    if(mmMatch){
+      var cand=mmMatch[1].trim().replace(/\s{2,}/g,' ');
+      var isBlacklisted=false;
+      for(var bi=0;bi<BODY_BLACKLIST.length;bi++){if(cand.indexOf(BODY_BLACKLIST[bi])!==-1){isBlacklisted=true;break;}}
+      if(!isBlacklisted) fields.marcaModelo=cand.substring(0,60);
+    }
+  }
+  // ============================================================
+  // ANO — melhorado com múltiplas estratégias
+  // ============================================================
+  // Estratégia 1: label ANO FABRICAÇÃO/MODELO seguido de NNNN e NNNN (podem estar separados)
+  var anoLabelMatch=fullText.match(/(?:ANO\s*(?:FAB|FABR?ICA[CÇ]))[^0-9]*(\d{4})/);
+  var modeloLabelMatch=fullText.match(/\bMODELO\s*[^0-9A-Z]{0,5}(\d{4})\b/);
+  if(anoLabelMatch&&modeloLabelMatch){
+    var af=parseInt(anoLabelMatch[1]),am=parseInt(modeloLabelMatch[1]);
+    if(af>=1980&&af<=2030&&am>=1980&&am<=2030&&Math.abs(am-af)<=1){
+      fields.ano=af+'/'+am;
+    }
+  }
+  // Estratégia 2: NNNN/NNNN junto (padrão tradicional)
   if(!fields.ano){
-    var allAnos=fullText.match(/(\d{4})\s*\/\s*(\d{4})/g)||[];
+    var allAnos=fullText.match(/(\d{4})\s*[\/]\s*(\d{4})/g)||[];
     for(var i=0;i<allAnos.length;i++){
       var parts=allAnos[i].replace(/\s/g,'').split('/');
       var y1=parseInt(parts[0]),y2=parseInt(parts[1]);
-      // Ano modelo: y1 e y2 devem ser próximos (diferença <= 1) e y2 não deve ser ano corrente de exercício
       if(y1>=1980&&y2>=1980&&y2<=2030&&Math.abs(y2-y1)<=1){
-        // Evitar pegar exercício: se houver "EXERC" próximo, pular
         var pos=fullText.indexOf(allAnos[i]);
-        var context=fullText.substring(Math.max(0,pos-30),pos);
-        if(context.indexOf('EXERC')===-1&&context.indexOf('LICENCIA')===-1){
+        var ctx=fullText.substring(Math.max(0,pos-40),pos+allAnos[i].length+40);
+        if(ctx.indexOf('EXERC')===-1&&ctx.indexOf('LICENCIA')===-1&&ctx.indexOf('EMISS')===-1){
           fields.ano=y1+'/'+y2;break;
         }
       }
     }
   }
-  // Último fallback: ano isolado de 4 dígitos próximo a label "MODELO"
+  // Estratégia 3: NNNN NNNN (espaço em vez de barra, perto de label FAB/MODELO)
   if(!fields.ano){
-    var modeloAno=fullText.match(/MODELO[^0-9]{0,10}(\d{4})/);
-    if(modeloAno&&parseInt(modeloAno[1])>=1980&&parseInt(modeloAno[1])<=2030) fields.ano=modeloAno[1];
+    var spaceAnos=fullText.match(/(?:FAB|MODELO)[^0-9]{0,15}(\d{4})\s+(\d{4})/);
+    if(spaceAnos){
+      var y1=parseInt(spaceAnos[1]),y2=parseInt(spaceAnos[2]);
+      if(y1>=1980&&y2>=1980&&y2<=2030&&Math.abs(y2-y1)<=1) fields.ano=y1+'/'+y2;
+    }
   }
-  // --- Combustível ---
+  // Estratégia 4: ano isolado após "MODELO"
+  if(!fields.ano){
+    if(modeloLabelMatch&&parseInt(modeloLabelMatch[1])>=1980&&parseInt(modeloLabelMatch[1])<=2030){
+      fields.ano=modeloLabelMatch[1];
+    }
+  }
+  // ============================================================
+  // COMBUSTÍVEL
+  // ============================================================
   if(fullText.indexOf('DIESEL')!==-1) fields.combustivel='Diesel';
   else if(fullText.indexOf('FLEX')!==-1||fullText.indexOf('ALCOOL/GAS')!==-1||fullText.indexOf('ALCOOL / GAS')!==-1) fields.combustivel='Flex';
   else if(fullText.indexOf('GASOLINA')!==-1) fields.combustivel='Gasolina';
   else if(fullText.indexOf('ELETRIC')!==-1) fields.combustivel='Eletrico';
-  // --- Tipo/Espécie: mapeamento oficial CRLV → FIPE ---
-  // cars: Automóvel, Caminhonete, Camioneta, Utilitário, Especial
-  // motorcycles: Motocicleta, Motoneta, Ciclomotor
-  // trucks: Caminhão, Caminhão Trator, Micro-ônibus, Ônibus
-  // ignorar: Reboque, Semi-reboque, Triciclo, Quadriciclo
+  // ============================================================
+  // TIPO/ESPÉCIE
+  // ============================================================
   if(fullText.indexOf('CAMINHONETE')!==-1||fullText.indexOf('CAMIONETA')!==-1||fullText.indexOf('CAMIONETE')!==-1) fields.tipo='cars';
   else if(fullText.indexOf('UTILITARI')!==-1||fullText.indexOf('UTILITÁRIO')!==-1) fields.tipo='cars';
   else if(fullText.indexOf('MICRO')!==-1&&fullText.indexOf('NIBUS')!==-1) fields.tipo='trucks';
@@ -8401,8 +8508,11 @@ function crlvParseFields(text){
   else if(fullText.indexOf('CICLOMOTOR')!==-1) fields.tipo='motorcycles';
   else if(fullText.indexOf('AUTOMOVEL')!==-1||fullText.indexOf('AUTOMÓVEL')!==-1||fullText.indexOf('PASSAGEIRO')!==-1) fields.tipo='cars';
   else if(fullText.indexOf('ESPECIAL')!==-1) fields.tipo='cars';
-  // Triciclo, Quadriciclo, Reboque, Semi-reboque = ignorados (sem tipo definido)
-  // --- Potência/Cilindrada ---
+  // Se não achou tipo mas tem VIN, usar tipo do VIN
+  if(!fields.tipo&&vinTipo) fields.tipo=vinTipo;
+  // ============================================================
+  // POTÊNCIA/CILINDRADA
+  // ============================================================
   var potMatch=fullText.match(/(\d{2,4})\s*CC/);
   if(potMatch) fields.potencia=potMatch[1]+'cc';
   else{var cvMatch=fullText.match(/(\d{2,4})\s*CV/);if(cvMatch) fields.potencia=cvMatch[1]+'cv';}
