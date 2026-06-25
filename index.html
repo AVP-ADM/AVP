@@ -5503,14 +5503,14 @@ async function commitDirectAction(op){
   renderKPIs();
   updateSidebarBadges();
 
-  // 4. Save to Supabase in background
+  // 4. Save to Supabase in background (without lock for single operations)
   try{
-    const saved=await safeSave();
-    if(saved){
-      showToast('Alteracao salva com sucesso!','success');
-    }
+    await saveToDatabase();
+    await saveToDatabaseHistory(histEntry);
+    showToast('Alteracao salva com sucesso!','success');
   }catch(err){
-    showToast('Erro ao salvar: '+err.message+'. Dados salvos localmente.','error');
+    console.warn('commitDirectAction save error:', err);
+    showToast('Alteracao aplicada localmente. Sincronização pendente.','warning');
   }
 
   return true;
