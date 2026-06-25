@@ -8206,8 +8206,11 @@ function crlvResolveBrand(text,vinData){
 }
 function crlvExtractEngine(text){
   if(!text) return null;
+  // Padrão "3.2" ou "2.4" ou "1.0"
   var l=text.match(/(\d\.\d)/);if(l) return l[1];
-  var cc=text.match(/(\d{2,4})\s*cc/i);if(cc) return cc[1]+'cc';
+  // Padrão "3200cc" → converter para "3.2"
+  var cc=text.match(/(\d{3,4})\s*cc/i);if(cc){var n=parseInt(cc[1]);if(n>=500) return (n/1000).toFixed(1);}
+  // Padrão "180cv" — não é cilindrada mas pode ajudar
   var cv=text.match(/(\d{2,3})\s*cv/i);if(cv) return cv[1]+'cv';
   return null;
 }
@@ -8541,9 +8544,37 @@ function crlvParseFields(text){
   // ============================================================
   // POTÊNCIA/CILINDRADA
   // ============================================================
-  var potMatch=fullText.match(/(\d{2,4})\s*CC/);
-  if(potMatch) fields.potencia=potMatch[1]+'cc';
-  else{var cvMatch=fullText.match(/(\d{2,4})\s*CV/);if(cvMatch) fields.potencia=cvMatch[1]+'cv';}
+  // ============================================================
+  // POTÊNCIA/CILINDRADA — priorizar cilindrada (mais discriminante)
+  // ============================================================
+  // Padrão CRLV: "180CV/3200" ou "180cv/3200" — extrair AMBOS, priorizar cilindrada
+  var potCilMatch=fullText.match(/(\d{2,3})\s*CV\s*[\/\\]\s*(\d{3,4})/);
+  if(potCilMatch){
+    var cc=parseInt(potCilMatch[2]);
+    if(cc>=500) fields.potencia=(cc/1000).toFixed(1);
+    else fields.potencia=potCilMatch[2]+'cc';
+  }
+  if(!fields.potencia){
+    // Padrão inverso: "3200/180CV"
+    var cilPotMatch=fullText.match(/(\d{3,4})\s*[\/\\]\s*(\d{2,3})\s*CV/);
+    if(cilPotMatch){
+      var cc=parseInt(cilPotMatch[1]);
+      if(cc>=500) fields.potencia=(cc/1000).toFixed(1);
+      else fields.potencia=cilPotMatch[1]+'cc';
+    }
+  }
+  if(!fields.potencia){
+    var potMatch=fullText.match(/(\d{2,4})\s*CC/);
+    if(potMatch){
+      var cc=parseInt(potMatch[1]);
+      if(cc>=500) fields.potencia=(cc/1000).toFixed(1);
+      else fields.potencia=potMatch[1]+'cc';
+    }
+  }
+  if(!fields.potencia){
+    var cvMatch=fullText.match(/(\d{2,4})\s*CV/);
+    if(cvMatch) fields.potencia=cvMatch[1]+'cv';
+  }
   if(!fields.potencia){var litros=text.match(/\b(\d\.\d)\s*[^0-9]/);if(litros) fields.potencia=litros[1];}
   return fields;
 }
