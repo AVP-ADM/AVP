@@ -1120,17 +1120,9 @@ tr:hover .row-actions{opacity:1}
     </div>
     <!-- ACTION CARDS (secondary - below pending) -->
     <div class="mgmt-grid">
-      <div class="mgmt-card" onclick="showMgmtModal('add')">
-        <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Adicionar Modelo</h4>
-        <p>Inserir novo modelo em uma categoria</p>
-      </div>
       <div class="mgmt-card" onclick="showMgmtModal('remove')">
         <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><line x1="5" y1="12" x2="19" y2="12"/></svg> Remover Modelo</h4>
         <p>Remover modelo de uma categoria</p>
-      </div>
-      <div class="mgmt-card" onclick="showMgmtModal('move')">
-        <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg> Mover Modelo</h4>
-        <p>Mover modelo entre categorias</p>
       </div>
       <div class="mgmt-card" onclick="showMgmtModal('mass')">
         <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Correcao em Massa</h4>
@@ -1540,8 +1532,8 @@ function isDivergenciaIgnoradaModelo(marca, modelo){
 }
 
 async function ignorarDivergencia(marca, modelo, catOrigem, catDestino){
-  addToStaging({type:'Ignorar Divergência',marca:marca,modelo:modelo,catFrom:catOrigem,catTo:catDestino,details:'Marcar como exclusivo: '+marca+' '+modelo+' em '+catOrigem});
-  showToast('Marcação de exclusivo adicionada às pendentes','success');
+  showToast('Salvando...','warning');
+  await commitDirectAction({type:'Ignorar Divergência',marca:marca,modelo:modelo,catFrom:catOrigem,catTo:catDestino,details:'Marcar como exclusivo: '+marca+' '+modelo+' em '+catOrigem});
   renderTopDivergences();
 }
 
@@ -3560,11 +3552,11 @@ function openEditCategoryType(cat){
     if(!types.length){showToast('Selecione pelo menos um tipo','error');return;}
     const newType = types.join(',');
     if(newType === current){closeModal();return;}
-    // Add to staging instead of applying directly
-    addToStaging({type:'Alterar Tipo FIPE', marca:'—', modelo:cat, catFrom:current, catTo:newType, details:'Tipo FIPE: '+current+' → '+newType});
     closeModal();
-    showToast('Alteração de tipo adicionada às pendentes. Vá em Manutenção para aplicar.','success');
-    renderOverviewTable();
+    showToast('Salvando alteração de tipo...','warning');
+    commitDirectAction({type:'Alterar Tipo FIPE', marca:'—', modelo:cat, catFrom:current, catTo:newType, details:'Tipo FIPE: '+current+' → '+newType}).then(()=>{
+      renderOverviewTable();
+    });
   },'blue');
 }
 
@@ -3960,15 +3952,19 @@ function openAddModelToCat(categoria){
       const motivo=document.getElementById('addModel_tempMotivo').value.trim();
       if(!motivo){showToast('Preencha o motivo da liberação temporária','error');return;}
       const obs=document.getElementById('addModel_tempObs').value.trim();
-      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria,_temp:true},true);
-      addTempRelease(marca,modelo,categoria,motivo,obs);
+      closeModal();
+      showToast('Salvando adição...','warning');
+      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria,_temp:true}).then(()=>{
+        addTempRelease(marca,modelo,categoria,motivo,obs);
+        showCatDetail(categoria,'modelos');
+      });
     } else {
-      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria},true);
+      closeModal();
+      showToast('Salvando adição...','warning');
+      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria}).then(()=>{
+        showCatDetail(categoria,'modelos');
+      });
     }
-    closeModal();
-    showToast('Adição de "'+marca+' '+modelo+'"'+(isTemp?' (Temporário)':'')+' pendente em '+categoria,'success');
-    // Refresh the drawer
-    showCatDetail(categoria,'modelos');
   },'green');
   // Real-time validation
   setTimeout(()=>{
@@ -4093,10 +4089,11 @@ function openAddBrandToCat(categoria){
     if(existingBrands.some(function(b){return norm(b)===norm(marca);})){showToast('Esta marca ja esta cadastrada nesta categoria.','error');return;}
     var pendingAdd=STAGING.ops.some(function(op){return op.type==='Adição de Marca'&&norm(op.marca)===norm(marca)&&op.catTo===categoria;});
     if(pendingAdd){showToast('Ja existe uma adicao pendente para esta marca nesta categoria.','warning');return;}
-    addToStaging({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria},true);
     closeModal();
-    showToast('Adicao da marca "'+marca+'" pendente em '+categoria,'success');
-    showCatDetail(categoria,'marcas');
+    showToast('Salvando marca...','warning');
+    commitDirectAction({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria}).then(()=>{
+      showCatDetail(categoria,'marcas');
+    });
   },'green');
   setTimeout(function(){
     var input=document.getElementById('addBrand_marca');
@@ -4171,10 +4168,11 @@ function openSimpleBrandEdit(marca, categoria){
     // Validate
     const existingBrands=Object.keys(RAW[categoria].brands||{});
     if(existingBrands.some(b=>norm(b)===norm(newName))){showToast('Já existe uma marca com esse nome nesta categoria.','error');return;}
-    addToStaging({type:'Edição de Marca',marca:marca,modelo:marca+' → '+newName,catFrom:categoria,catTo:categoria,oldMarca:marca,newMarca:newName},true);
     closeModal();
-    showToast('Renomeação de "'+marca+'" → "'+newName+'" pendente','success');
-    showCatDetail(categoria,'marcas');
+    showToast('Salvando renomeação...','warning');
+    commitDirectAction({type:'Edição de Marca',marca:marca,modelo:marca+' → '+newName,catFrom:categoria,catTo:categoria,oldMarca:marca,newMarca:newName}).then(()=>{
+      showCatDetail(categoria,'marcas');
+    });
   },'blue');
   // Real-time validation
   setTimeout(()=>{
@@ -4197,22 +4195,43 @@ function confirmRemoveBrandFromCat(marca, categoria){
   }
   // Check if brand has models
   const models=RAW[categoria].brands[marca]||[];
-  if(models.length>0){
-    showToast('Existem '+models.length+' modelo(s) vinculado(s) a esta marca. Remova ou mova os modelos antes de remover a marca.','error');
-    return;
+  if(models.length===0){
+    // VAZIA: remove direto via modal simples
+    showModal('Remover marca vazia?',`<div style="line-height:1.8">
+      <strong>Marca:</strong><br>${marca}<br><br>
+      <strong>Categoria:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
+      <span style="font-size:.78rem;color:var(--text2)">Esta marca não possui modelos e será removida permanentemente.</span>
+    </div>`,function(){
+      closeModal();
+      showToast('Removendo marca...','warning');
+      commitDirectAction({type:'Remoção de Marca',marca:marca,modelo:'—',catFrom:categoria,catTo:null}).then(()=>{
+        renderOverviewTable();
+        renderKPIs();
+        showCatDetail(categoria,'marcas');
+      });
+    },'red');
+  } else {
+    // COM MODELOS: aviso de impacto → staging
+    showModal('Remover marca com conteudo?',`<div style="line-height:1.8">
+      <div style="background:var(--red-bg);border:1px solid var(--red-light);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
+        <strong style="color:var(--red)">Atenção — Marca com conteudo</strong>
+      </div>
+      <strong>Marca:</strong> ${marca}<br>
+      <strong>Categoria:</strong> <span class="tag tag-blue">${categoria}</span><br><br>
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px">
+        <span style="font-size:.82rem;font-weight:600">${models.length} modelo(s)</span>
+        <span style="font-size:.72rem;color:var(--text3)"> serão removidos junto com a marca</span>
+      </div>
+      <span style="font-size:.78rem;color:var(--text2)">Esta ação será enviada para revisão em Gestão > Manutenção antes de ser aplicada.</span>
+    </div>`,function(){
+      addToStaging({type:'Remoção de Marca',marca:marca,modelo:'('+models.length+' modelos)',catFrom:categoria,catTo:null},true);
+      closeModal();
+      renderOverviewTable();
+      renderKPIs();
+      showToast('Remoção da marca "'+marca+'" enviada para revisão','success');
+      showCatDetail(categoria,'marcas');
+    },'red','Entendi, enviar para revisão');
   }
-  showModal('Remover marca da categoria?',`<div style="line-height:1.8">
-    <strong>Marca:</strong><br>${marca}<br><br>
-    <strong>Categoria:</strong><br><span class="tag tag-blue">${categoria}</span><br><br>
-    <span style="font-size:.78rem;color:var(--text2)">A remoção será adicionada às Alterações Pendentes.</span>
-  </div>`,function(){
-    addToStaging({type:'Remoção de Marca',marca:marca,modelo:'—',catFrom:categoria,catTo:null},true);
-    closeModal();
-    renderOverviewTable();
-    renderKPIs();
-    showToast('Remoção da marca "'+marca+'" pendente','success');
-    showCatDetail(categoria,'marcas');
-  },'red');
 }
 
 // ========= MODEL DETAIL PANEL =========
@@ -4329,11 +4348,11 @@ function openModelEdit(marca, modelo, categoria){
     const newAno=document.getElementById('edit_ano_value').value.trim();
     const currentAno=ano.replace('A partir de ','');
     if(newAno===currentAno){closeModal();return;}
-    addToStaging({type:'Alterar Ano',marca:marca,modelo:modelo,catFrom:categoria,catTo:categoria,details:'Ano: '+(currentAno||'padrão')+' → '+(newAno||'padrão')});
     closeModal();
-    showToast('Alteração de ano adicionada às pendentes','success');
-    // Refresh if detail panel is open
-    showCatDetail(categoria,'modelos');
+    showToast('Salvando alteração...','warning');
+    commitDirectAction({type:'Alterar Ano',marca:marca,modelo:modelo,catFrom:categoria,catTo:categoria,details:'Ano: '+(currentAno||'padrão')+' → '+(newAno||'padrão')}).then(()=>{
+      showCatDetail(categoria,'modelos');
+    });
   },'blue');
 }
 
@@ -4494,35 +4513,7 @@ function openModelRemove(marca, modelo){
   },'red');
 }
 
-function openModelMove(marca, modelo){
-  // Block if model already has a pending change (check without specific category)
-  if(hasPendingChange(marca, modelo, null)){
-    const type = getPendingChangeType(marca, modelo, null);
-    showToast('Este registro já possui uma alteração pendente ('+type+'). Cancele ou conclua antes de realizar uma nova ação.','warning');
-    return;
-  }
-  const currentCats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
-  const fromOptions=currentCats.map(c=>`<option value="${c}">${c}</option>`).join('');
-  const toOptions=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
-  showModal('Mover de Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
-    <strong>${marca} — ${modelo}</strong>
-    <label style="font-size:.78rem;color:var(--text2)">Categoria de origem:</label>
-    <select id="move_from">${fromOptions}</select>
-    <label style="font-size:.78rem;color:var(--text2)">Categoria de destino:</label>
-    <select id="move_to">${toOptions}</select>
-    <span style="font-size:.72rem;color:var(--text3)">Será adicionado às Alterações Pendentes.</span>
-  </div>`,function(){
-    const from=document.getElementById('move_from').value;
-    const to=document.getElementById('move_to').value;
-    if(!from||!to) return;
-    if(from===to) return alert('Origem e destino devem ser diferentes');
-    addToStaging({type:'Movimentação',marca:marca,modelo:modelo,catFrom:from,catTo:to});
-    closeModal();
-    closeDrawer();
-    renderOverviewTable();
-    showToast('Movimentação adicionada às alterações pendentes','success');
-  },'blue');
-}
+// openModelMove removed - Mover Modelo feature deprecated
 
 function filterDrawerTable(searchId, tableId){
   const query=norm(document.getElementById(searchId).value);
@@ -5063,10 +5054,11 @@ function openAddCategory(){
     if(document.getElementById('newCat_trucks').checked) types.push('trucks');
     if(!types.length){showToast('Selecione pelo menos um tipo de veículo','error');return;}
     setCategoryFipeType(name, types.join(','));
-    addToStaging({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name});
     closeModal();
-    renderOverviewTable();
-    showToast('Criação de "'+name+'" adicionada às pendentes','success');
+    showToast('Criando categoria...','warning');
+    commitDirectAction({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name}).then(()=>{
+      renderOverviewTable();
+    });
   },'green');
   setTimeout(()=>{
     const input=document.getElementById('new_cat_name');
@@ -5098,10 +5090,11 @@ function openRenameCategory(cat){
     if(!newName){showToast('Digite o novo nome','error');return;}
     if(newName===cat){closeModal();return;}
     if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
-    addToStaging({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName});
     closeModal();
-    renderOverviewTable();
-    showToast('Renomeação de "'+cat+'" → "'+newName+'" pendente','success');
+    showToast('Salvando renomeação...','warning');
+    commitDirectAction({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName}).then(()=>{
+      renderOverviewTable();
+    });
   },'blue');
   setTimeout(()=>{
     const input=document.getElementById('rename_cat');
@@ -5122,24 +5115,39 @@ function openRemoveCategory(cat){
     return;
   }
   const total=CAT_TOTALS[cat]||0;
+  const brandCount=RAW[cat]?Object.keys(RAW[cat].brands||{}).length:0;
   if(total>0){
-    showModal('Não é possível remover',`<div style="line-height:1.8">
-      <strong>${cat}</strong><br><br>
-      Existem <strong>${total} modelos</strong> vinculados a esta categoria.<br><br>
-      <span style="color:var(--text2)">Remova ou mova os modelos antes de excluir a categoria.</span>
-    </div>`,function(){closeModal();},'blue');
-    setTimeout(()=>{const actions=document.getElementById('modalActions');if(actions) actions.innerHTML='<button class="btn" onclick="closeModal()">Entendi</button>';},50);
+    // COM MODELOS: aviso de impacto → staging
+    showModal('Remover categoria com conteudo?',`<div style="line-height:1.8">
+      <div style="background:var(--red-bg);border:1px solid var(--red-light);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px">
+        <strong style="color:var(--red)">Atenção — Categoria com conteudo</strong>
+      </div>
+      <strong>Categoria:</strong> ${cat}<br><br>
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px">
+        <span style="font-size:.82rem;font-weight:600">${total} modelo(s)</span>
+        <span style="font-size:.72rem;color:var(--text3)"> em </span>
+        <span style="font-size:.82rem;font-weight:600">${brandCount} marca(s)</span>
+        <br><span style="font-size:.72rem;color:var(--text3)">serão removidos permanentemente após revisão</span>
+      </div>
+      <span style="font-size:.78rem;color:var(--text2)">Esta ação será enviada para revisão em Gestão > Manutenção antes de ser aplicada.</span>
+    </div>`,function(){
+      addToStaging({type:'Remoção de Categoria',marca:'—',modelo:cat+' ('+total+' modelos, '+brandCount+' marcas)',catFrom:cat,catTo:null});
+      closeModal();
+      renderOverviewTable();
+      showToast('Remoção da categoria "'+cat+'" enviada para revisão','success');
+    },'red','Entendi, enviar para revisão');
     return;
   }
+  // VAZIA: remove direto
   showModal('Remover Categoria',`<div style="line-height:1.8">
     <strong>${cat}</strong><br><br>
-    Esta categoria está vazia e será removida.<br>
-    <span style="font-size:.78rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span>
+    Esta categoria está vazia e será removida permanentemente.
   </div>`,function(){
-    addToStaging({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null});
     closeModal();
-    renderOverviewTable();
-    showToast('Remoção da categoria "'+cat+'" pendente','success');
+    showToast('Removendo categoria...','warning');
+    commitDirectAction({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null}).then(()=>{
+      renderOverviewTable();
+    });
   },'red');
 }
 
@@ -5241,11 +5249,12 @@ function copyModelToCategory(marca, modelo, catFrom, catTo){
     showToast('Já existe uma cópia pendente para este modelo.','warning');
     return;
   }
-  addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true},true);
-  showToast(marca+' — '+modelo+' → copiado para '+catTo,'success');
-  renderDivergences();
-  renderOverviewTable();
-  renderKPIs();
+  showToast('Copiando modelo...','warning');
+  commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:catTo,_divCopy:true}).then(()=>{
+    renderDivergences();
+    renderOverviewTable();
+    renderKPIs();
+  });
 }
 
 // Copy all divergences from one side to the other (respects active filter)
@@ -5434,6 +5443,77 @@ function addToStaging(op, silent){
   renderStagingBars();
   renderStagingTable();
   if(!silent) showToast('Operacao adicionada ao staging','success');
+}
+
+// ========= COMMIT DIRECT ACTION (sem staging) =========
+// Aplica uma operação (adição/edição) diretamente ao RAW + Supabase + Histórico
+async function commitDirectAction(op){
+  if(!dataLoaded && Object.keys(RAW).length===0){
+    showToast('Aguarde o carregamento dos dados','error');
+    return false;
+  }
+
+  // 1. Apply to RAW immediately
+  if(op.type==='Adição'){
+    if(!RAW[op.catTo]) RAW[op.catTo]={total:0,brands:{}};
+    if(!RAW[op.catTo].brands[op.marca]) RAW[op.catTo].brands[op.marca]=[];
+    RAW[op.catTo].brands[op.marca].push(op.modelo);
+    RAW[op.catTo].total++;
+  } else if(op.type==='Edição'){
+    if(RAW[op.catFrom]&&RAW[op.catFrom].brands[op.marca]){
+      const idx=RAW[op.catFrom].brands[op.marca].indexOf(op.oldModelo);
+      if(idx>=0) RAW[op.catFrom].brands[op.marca].splice(idx,1);
+      RAW[op.catFrom].brands[op.marca].push(op.newModelo||op.modelo);
+    }
+  } else if(op.type==='Adição de Marca'){
+    if(!RAW[op.catTo]) RAW[op.catTo]={total:0,brands:{}};
+    if(!RAW[op.catTo].brands[op.marca]) RAW[op.catTo].brands[op.marca]=[];
+  } else if(op.type==='Edição de Marca'){
+    if(RAW[op.catFrom]&&RAW[op.catFrom].brands[op.oldMarca]){
+      RAW[op.catFrom].brands[op.newMarca]=RAW[op.catFrom].brands[op.oldMarca];
+      delete RAW[op.catFrom].brands[op.oldMarca];
+    }
+  } else if(op.type==='Criação de Categoria'){
+    if(!RAW[op.catTo]) RAW[op.catTo]={total:0,brands:{}};
+  } else if(op.type==='Edição de Categoria'||op.type==='Renomeação de Categoria'){
+    if(RAW[op.catFrom]){
+      RAW[op.catTo]=RAW[op.catFrom];
+      delete RAW[op.catFrom];
+    }
+  } else if(op.type==='Remoção de Categoria'){
+    if(RAW[op.catFrom]) delete RAW[op.catFrom];
+  } else if(op.type==='Remoção de Marca'){
+    if(RAW[op.catFrom]&&RAW[op.catFrom].brands[op.marca]){
+      const count=RAW[op.catFrom].brands[op.marca].length;
+      RAW[op.catFrom].total-=count;
+      delete RAW[op.catFrom].brands[op.marca];
+    }
+  } else if(op.type==='Alterar Ano'||op.type==='Alterar Tipo FIPE'||op.type==='Ignorar Divergência'){
+    // Metadata changes - no RAW structure change needed, just history
+  }
+
+  // 2. Record in History
+  const histEntry={...op, timestamp: new Date().toLocaleString('pt-BR'), usuario: currentUser||'Desconhecido'};
+  HISTORY.push(histEntry);
+
+  // 3. Recompute derived data
+  recomputeAll();
+  markAllDirty();
+  refreshActiveTab();
+  renderKPIs();
+  updateSidebarBadges();
+
+  // 4. Save to Supabase in background
+  try{
+    const saved=await safeSave();
+    if(saved){
+      showToast('Alteracao salva com sucesso!','success');
+    }
+  }catch(err){
+    showToast('Erro ao salvar: '+err.message+'. Dados salvos localmente.','error');
+  }
+
+  return true;
 }
 
 function removeFromStaging(idx){
@@ -5818,7 +5898,7 @@ function showMgmtModal(type){
   const catOptions = CATEGORIES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
 
   if(type==='add'){
-    // Show category picker, then call openAddModelToCat
+    // Legacy compat: redirect to category picker then openAddModelToCat
     showModal('Adicionar Modelo','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Selecione a categoria:</label><select id="mgmt_addCatPicker" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem">'+catOptions+'</select><span style="font-size:.72rem;color:var(--text3)">O modal de adicao usara a base oficial FIPE para sugestoes de marca e modelo.</span></div>',function(){
       var cat=document.getElementById('mgmt_addCatPicker').value;
       closeModal();
@@ -5848,34 +5928,10 @@ function showMgmtModal(type){
     return;
   }
 
-  if(type==='move'){
-    _mgmtSelectedCat=CATEGORIES[0]||'';
-    _mgmtSelectedBrand='';
-    showModal('Mover Modelo','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria origem:</label><select id="mgmt_catFrom" onchange="mgmtSysCatChanged(\'mgmt_catFrom\')" style="width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Marca: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_brand" placeholder="Digite para pesquisar marca..." autocomplete="off" oninput="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onfocus="mgmtSysFilterBrands(\'mgmt_brand\',\'mgmt_brandDD\',\'mgmt_brandMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_brandDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_brandDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_brandMsg" class="ac-msg"></div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Modelo: <span style="font-size:.65rem;color:var(--blue)">dados do sistema</span></label><div style="position:relative"><input id="mgmt_model" placeholder="Selecione uma marca primeiro..." autocomplete="off" disabled oninput="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onfocus="mgmtSysFilterModels(\'mgmt_model\',\'mgmt_modelDD\',\'mgmt_modelMsg\')" onblur="setTimeout(function(){document.getElementById(\'mgmt_modelDD\').style.display=\'none\'},200)" style="width:100%"><div id="mgmt_modelDD" style="position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);display:none;background:var(--surface);z-index:10;box-shadow:var(--shadow-md)"></div></div><div id="mgmt_modelMsg" class="ac-msg"></div><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria destino:</label><select id="mgmt_catTo" style="width:100%">'+catOptions+'</select><span style="font-size:.72rem;color:var(--text3)">Marca e modelo sao da categoria de origem (dados do sistema).</span></div>',function(){
-      var catFrom=document.getElementById('mgmt_catFrom').value;
-      var catTo=document.getElementById('mgmt_catTo').value;
-      var brand=document.getElementById('mgmt_brand').value.trim();
-      var model=document.getElementById('mgmt_model').value.trim();
-      if(!brand||!model){showToast('Preencha marca e modelo','error');return;}
-      if(catFrom===catTo){showToast('Origem e destino devem ser diferentes','error');return;}
-      // Validate exists in source category
-      var sysBrands=mgmtSysGetBrands(catFrom);
-      if(!sysBrands.some(function(b){return b.toLowerCase()===brand.toLowerCase();})){showToast('Marca "'+brand+'" nao encontrada na categoria de origem','error');return;}
-      var sysModels=mgmtSysGetModels(catFrom,brand);
-      if(!sysModels.some(function(m){return m.toLowerCase()===model.toLowerCase();})){showToast('Modelo "'+model+'" nao encontrado na categoria de origem','error');return;}
-      addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:catFrom,catTo:catTo});
-      closeModal();
-      renderOverviewTable();
-      showToast('Movimentação de "'+brand+' '+model+'" pendente','success');
-    },'blue');
-    return;
-  }
-
   if(type==='mass'){
-    showModal('Correcao em Massa','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de operacao:</label><select id="mgmt_massType" onchange="document.getElementById(\'mgmt_massCatTo\').style.display=this.value===\'move\'?\'block\':\'none\'"><option value="add">Adicao</option><option value="remove">Remocao</option><option value="move">Movimentacao</option></select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><select id="mgmt_cat" style="width:100%">'+catOptions+'</select><select id="mgmt_massCatTo" style="display:none;width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Lista (uma por linha: Marca | Modelo):</label><textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea><span style="font-size:.72rem;color:var(--text3)">Formato: MARCA | MODELO (uma entrada por linha)</span></div>',function(){
+    showModal('Correcao em Massa','<div style="display:flex;flex-direction:column;gap:12px"><label style="font-size:.78rem;color:var(--text2);font-weight:600">Tipo de operacao:</label><select id="mgmt_massType"><option value="add">Adicao</option><option value="remove">Remocao</option></select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Categoria:</label><select id="mgmt_cat" style="width:100%">'+catOptions+'</select><label style="font-size:.78rem;color:var(--text2);font-weight:600">Lista (uma por linha: Marca | Modelo):</label><textarea id="mgmt_list" rows="8" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem" placeholder="FIAT | ARGO&#10;VW | GOL&#10;CHEVROLET | ONIX"></textarea><span style="font-size:.72rem;color:var(--text3)">Formato: MARCA | MODELO (uma entrada por linha)</span></div>',function(){
       var massType=document.getElementById('mgmt_massType').value;
       var cat=document.getElementById('mgmt_cat').value;
-      var catTo=document.getElementById('mgmt_massCatTo').value;
       var lines=document.getElementById('mgmt_list').value.trim().split('\n').filter(function(l){return l.trim();});
       if(!lines.length){showToast('Insira pelo menos uma linha','error');return;}
       var count=0;
@@ -5887,7 +5943,6 @@ function showMgmtModal(type){
         if(!brand||!model) continue;
         if(massType==='add') addToStaging({type:'Adição',marca:brand,modelo:model,catFrom:null,catTo:cat});
         else if(massType==='remove') addToStaging({type:'Remoção',marca:brand,modelo:model,catFrom:cat,catTo:null});
-        else if(massType==='move') addToStaging({type:'Movimentação',marca:brand,modelo:model,catFrom:cat,catTo:catTo});
         count++;
       }
       closeModal();
@@ -5966,7 +6021,7 @@ function renderPagination(containerId, totalPages, current, callback){
 }
 
 // ========= MODAL SYSTEM =========
-function showModal(title, body, onConfirm, color){
+function showModal(title, body, onConfirm, color, confirmText){
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = body;
   const actions = document.getElementById('modalActions');
@@ -5974,7 +6029,7 @@ function showModal(title, body, onConfirm, color){
   if(onConfirm){
     const confirmBtn = document.createElement('button');
     confirmBtn.className = 'btn btn-'+(color||'blue');
-    confirmBtn.textContent = 'Confirmar';
+    confirmBtn.textContent = confirmText||'Confirmar';
     confirmBtn.onclick = onConfirm;
     actions.appendChild(confirmBtn);
   }
@@ -6802,13 +6857,16 @@ function openAddModelFromFipe(marca, modelo){
       const motivo=document.getElementById('fipeAdd_tempMotivo').value.trim();
       if(!motivo){showToast('Preencha o motivo da liberação temporária','error');return;}
       const obs=document.getElementById('fipeAdd_tempObs').value.trim();
-      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat,_temp:true},true);
-      addTempRelease(marca,modelo,cat,motivo,obs);
+      closeModal();
+      showToast('Salvando adição...','warning');
+      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat,_temp:true}).then(()=>{
+        addTempRelease(marca,modelo,cat,motivo,obs);
+      });
     } else {
-      addToStaging({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat},true);
+      closeModal();
+      showToast('Salvando adição...','warning');
+      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat});
     }
-    closeModal();
-    showToast('Adição de "'+marca+' '+modelo+'"'+(isTemp?' (Temporário)':'')+' pendente em '+cat,'success');
   },'green');
 }
 
