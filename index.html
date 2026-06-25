@@ -5940,6 +5940,15 @@ function showMgmtModal(type){
 }
 
 // ========= HISTORY =========
+function parseLocalDate(str){
+  // Parse "DD/MM/YYYY, HH:MM:SS" format to timestamp
+  try{
+    const parts=str.split(',');
+    const dParts=parts[0].trim().split('/');
+    const tParts=(parts[1]||'00:00:00').trim().split(':');
+    return new Date(dParts[2],dParts[1]-1,dParts[0],tParts[0]||0,tParts[1]||0,tParts[2]||0).getTime();
+  }catch(e){return 0;}
+}
 function renderHistory(){
   const filt = norm(document.getElementById('histFilter').value);
   const typeF = document.getElementById('histType').value;
@@ -5952,7 +5961,12 @@ function renderHistory(){
     }
     return true;
   });
-  items = items.slice().reverse();
+  // Sort by date descending (most recent first)
+  items = items.slice().sort((a,b)=>{
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
+    return dateB - dateA;
+  });
   const total = items.length;
   const pages = Math.ceil(total/HIST_PER_PAGE);
   if(histPage>pages) histPage=1;
