@@ -8340,6 +8340,8 @@ function crlvParseFields(text){
   var fullText=text.toUpperCase().replace(/\r/g,'');
   // --- BLACKLIST de termos de carroceria (nunca são marca/modelo) ---
   var BODY_BLACKLIST=['ABERTA','FECHADA','CABINE','DUPLA','SIMPLES','CABINE DUPLA','CABINE SIMPLES','PERUA','CONVERSIVEL','CONVERSÍVEL','FURGAO','FURGÃO','BAU','BAÚ','CHASSI PLATAFORMA','PLATAFORMA','CABINA','CAPOTA','CILINDRADA','POTENCIA','POTÊNCIA','CAPACIDADE','PESO BRUTO','LOTACAO','LOTAÇÃO','CARROCERIA','NAO APLICAVEL','NÃO APLICÁVEL','CERTIFICADO','REGISTRO','LICENCIAMENTO','RENAVAM','EXERCICIO','EXERCÍCIO','CATEGORIA','PARTICULAR'];
+  // Termos que indicam fim do nome do modelo (espécie/tipo que vem depois)
+  var MODEL_STOP_WORDS=['PASSAGEIRO','AUTOMOVEL','AUTOMÓVEL','CAMINHONETE','CAMIONETA','UTILITARIO','UTILITÁRIO','ESPECIAL','MOTOCICLETA','MOTONETA','CAMINHAO','CAMINHÃO','CARGA','MISTO','CORRIDA'];
   // --- WHITELIST de siglas de fabricantes ---
   var MAKER_PREFIXES=['MMC','VW','GM','FIAT','FORD','TOYOTA','HONDA','YAMAHA','BMW','MERC','MERCEDES','HYUNDAI','KIA','RENAULT','NISSAN','CHEV','CHEVROLET','CITROEN','CITROËN','PEUGEOT','MITSU','MITSUBISHI','SUZUKI','VOLVO','SCANIA','IVECO','DAF','MAN','AGRALE','CAOA','JEEP','LAND','AUDI','PORSCHE','JAC','LIFAN','CHERY','BYD','GWM','SUBARU','DODGE','RAM','CHRYSLER','TROLLER','TAC','HAFEI','SHINERAY','AVELLOZ','BAJAJ','DAFRA','KASINSKI','TRIUMPH','DUCATI','HARLEY','KAWASAKI','KTM','APRILIA','PIAGGIO','INDIAN','TESLA','MINI','SMART','SSANGYONG','MAHINDRA'];
   // --- MODELOS CONHECIDOS por fabricante (para busca via WMI) ---
@@ -8562,6 +8564,11 @@ function crlvParseFields(text){
   // ============================================================
   // --- LIMPEZA MARCA/MODELO ---
   if(fields.marcaModelo){
+    // Truncar no primeiro stop word (especie/tipo que o OCR grudou)
+    for(var si=0;si<MODEL_STOP_WORDS.length;si++){
+      var stopIdx=fields.marcaModelo.indexOf(MODEL_STOP_WORDS[si]);
+      if(stopIdx>3) fields.marcaModelo=fields.marcaModelo.substring(0,stopIdx).trim();
+    }
     fields.marcaModelo=fields.marcaModelo.replace(/\/1([A-Z])/g,'/L$1');
     fields.marcaModelo=fields.marcaModelo.replace(/\s1([A-Z]{2})/g,' L$1');
     fields.marcaModelo=fields.marcaModelo.replace(/[\s\.]+$/,'').replace(/\s+\d{1,2}$/,'');
