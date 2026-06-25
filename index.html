@@ -831,13 +831,13 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Resumo por Categorias</div>
       <div class="filter-row">
         <input type="text" id="ovFilter" placeholder="Filtrar categorias..." oninput="debouncedRenderOverviewTable()">
-        <select id="ovTypeFilter" onchange="renderOverviewTable()">
+        <select id="ovTypeFilter" onchange="localStorage.setItem('avp-ov-type-filter',this.value);renderOverviewTable()">
           <option value="">Todos os tipos</option>
           <option value="cars">Carros</option>
           <option value="motorcycles">Motos</option>
           <option value="trucks">Caminhões</option>
         </select>
-        <select id="ovSort" onchange="renderOverviewTable()">
+        <select id="ovSort" onchange="localStorage.setItem('avp-ov-sort',this.value);renderOverviewTable()">
           <option value="status">Status</option>
           <option value="name">A-Z</option>
           <option value="count_desc">Mais modelos</option>
@@ -2212,13 +2212,13 @@ function goSubTab(parentTab, subTab){
 }
 
 function resetTabFilters(){
-  // Overview filters
+  // Overview filters - only reset text filter, preserve sort preference
   const ovFilter=document.getElementById('ovFilter');
   if(ovFilter) ovFilter.value='';
   const ovSort=document.getElementById('ovSort');
-  if(ovSort) ovSort.value='name';
+  if(ovSort) ovSort.value=localStorage.getItem('avp-ov-sort')||'status';
   const ovTypeFilter=document.getElementById('ovTypeFilter');
-  if(ovTypeFilter) ovTypeFilter.value='';
+  if(ovTypeFilter) ovTypeFilter.value=localStorage.getItem('avp-ov-type-filter')||'';
   // Duplicates filters
   const dupBrand=document.getElementById('dupBrandFilter');
   if(dupBrand) dupBrand.value='';
@@ -8509,6 +8509,13 @@ function initApp(){
   initTheme();
   updateBaseInfo();
   updateSyncInfo();
+  // Restore overview filter preferences
+  const savedSort=localStorage.getItem('avp-ov-sort');
+  const savedType=localStorage.getItem('avp-ov-type-filter');
+  const ovSort=document.getElementById('ovSort');
+  const ovTypeFilter=document.getElementById('ovTypeFilter');
+  if(ovSort) ovSort.value=savedSort||'status';
+  if(ovTypeFilter&&savedType) ovTypeFilter.value=savedType;
   // Restore staging from localStorage
   loadStagingFromStorage();
   loadTempReleasesFromStorage();
