@@ -2733,7 +2733,6 @@ function openDrawer(cat){
         <span style="display:flex;gap:4px;flex-shrink:0">
           <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-          <button class="btn btn-sm" onclick="openModelMove('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem;background:var(--purple);color:#fff;border-color:var(--purple)${pending?';opacity:.3;pointer-events:none':''}" title="Mover"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
         </span>
       </div>`;
     }
@@ -3362,7 +3361,6 @@ function buildModelListWithActions(models, cat){
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
         <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px"${pending?' disabled':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="btn btn-sm" onclick="confirmRemoveFromCat('${eMarca}','${eModelo}','${eCat}')" title="Remover" style="padding:3px 6px"${pending?' disabled':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-        <button class="btn btn-sm" onclick="openModelMove('${eMarca}','${eModelo}')" title="Mover" style="padding:3px 6px"${pending?' disabled':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
       </div>
     </div>`;
   }
@@ -4293,20 +4291,6 @@ function openModelDetail(marca, modelo){
     html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Divergências</div>`;
     html+=divergences.map(d=>`<div style="padding:4px 0;font-size:.82rem"><span class="tag tag-amber">${d}</span></div>`).join('');
     html+=`</div>`;
-  }
-
-  // History
-  if(modelHistory.length){
-    html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Histórico</div>`;
-    html+=`<div style="font-size:.78rem">`;
-    for(const h of modelHistory.slice(-10).reverse()){
-      const htype=h.type||h.tipo||'';
-      const htimestamp=h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'';
-      const hcatFrom=h.catFrom||h.categoria||'';
-      const hcatTo=h.catTo||'';
-      html+=`<div style="padding:4px 0;border-bottom:1px solid var(--border-light)"><span class="tag ${htype.includes('Adição')||htype.includes('Criação')?'tag-green':htype.includes('Remoção')?'tag-red':'tag-blue'}">${htype||'—'}</span> ${htimestamp} ${hcatFrom?'de '+hcatFrom:''} ${hcatTo?'→ '+hcatTo:''}</div>`;
-    }
-    html+=`</div></div>`;
   }
 
   // Action buttons
