@@ -8511,11 +8511,7 @@ function crlvParseFields(text){
       fields.ano=String(filteredYears[0]);
     }
   }
-  // Estratégia 6: ano pelo VIN (posição 10)
-  if(!fields.ano&&fields.chassi&&fields.chassi.length>=10){
-    var vinYearChar=fields.chassi.charAt(9).toUpperCase();
-    if(VIN_YEAR[vinYearChar]) fields.ano=String(VIN_YEAR[vinYearChar]);
-  }
+  // (Estratégia 6 removida — validação cruzada VIN no pós-processamento cobre este caso)
   // ============================================================
   // COMBUSTÍVEL
   // ============================================================
@@ -8583,6 +8579,28 @@ function crlvParseFields(text){
     fields.marcaModelo=fields.marcaModelo.replace(/\s1([A-Z]{2})/g,' L$1');
     // Remover trailing noise (números soltos no final, pontos)
     fields.marcaModelo=fields.marcaModelo.replace(/[\s\.]+$/,'').replace(/\s+\d{1,2}$/,'');
+  }
+  // --- VALIDAÇÃO CRUZADA ANO vs VIN ---
+  // O VIN posição 10 é sempre confiável. Usar como referência.
+  var vinYear=null;
+  if(fields.chassi&&fields.chassi.length>=10){
+    var vc=fields.chassi.charAt(9).toUpperCase();
+    if(VIN_YEAR[vc]) vinYear=VIN_YEAR[vc];
+  }
+  if(vinYear){
+    if(fields.ano){
+      // Extrair ano modelo do campo (segundo número se for NNNN/NNNN, senão o único)
+      var anoParts=fields.ano.split('/');
+      var anoModelo=parseInt(anoParts[anoParts.length-1]);
+      // Validar: ano modelo deve ser igual ao VIN ou VIN-1 (tolerância para ciclo 30 anos do VIN)
+      if(anoModelo!==vinYear&&anoModelo!==(vinYear-1)&&anoModelo!==(vinYear+30)&&anoModelo!==(vinYear+29)){
+        // Ano OCR não bate com VIN → substituir pelo VIN
+        fields.ano=(vinYear-1)+'/'+vinYear;
+      }
+    } else {
+      // Sem ano do OCR → usar VIN diretamente
+      fields.ano=(vinYear-1)+'/'+vinYear;
+    }
   }
   return fields;
 }
