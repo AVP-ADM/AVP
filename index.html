@@ -5939,7 +5939,7 @@ function showMgmtModal(type){
         </div>
       </div>
       <div style="position:relative">
-        <input id="mgmt_massSearch" placeholder="Buscar marca ou modelo..." autocomplete="off" oninput="massRenderList()" style="width:100%">
+        <input id="mgmt_massSearch" placeholder="Buscar marca ou modelo..." autocomplete="off" oninput="_massVisibleCount=100;massRenderList()" style="width:100%">
         <span onclick="document.getElementById('mgmt_massSearch').value='';massRenderList()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text3);font-size:.82rem;display:none" id="mgmt_massSearchClear">&times;</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
@@ -6041,18 +6041,24 @@ function massGetItems(){
   return items;
 }
 
-function massRenderList(){
+let _massVisibleCount=100;
+
+function massRenderList(append){
   const query=norm(document.getElementById('mgmt_massSearch').value);
   const clearBtn=document.getElementById('mgmt_massSearchClear');
   if(clearBtn) clearBtn.style.display=query?'block':'none';
 
-  _massAllItems=massGetItems();
+  if(!append){
+    _massAllItems=massGetItems();
+    _massVisibleCount=100;
+  }
+
   let filtered=_massAllItems;
   if(query){
     filtered=_massAllItems.filter(item=>norm(item.marca+' '+item.modelo).includes(query));
   }
 
-  const visible=filtered.slice(0,100);
+  const visible=filtered.slice(0,_massVisibleCount);
   const listEl=document.getElementById('mgmt_massList');
   if(!listEl) return;
 
@@ -6066,11 +6072,21 @@ function massRenderList(){
         <span style="font-size:.78rem"><strong style="color:var(--text3);font-size:.68rem">${item.marca}</strong> — ${item.modelo}</span>
       </label>`;
     }).join('');
+
+    // Attach scroll listener for infinite loading
+    listEl.onscroll=function(){
+      if(listEl.scrollTop+listEl.clientHeight>=listEl.scrollHeight-20){
+        if(_massVisibleCount<filtered.length){
+          _massVisibleCount+=100;
+          massRenderList(true);
+        }
+      }
+    };
   }
 
   // Update count
   const countEl=document.getElementById('mgmt_massCount');
-  if(countEl) countEl.textContent='Mostrando '+visible.length+' de '+filtered.length+(filtered.length<_massAllItems.length?' (filtrado de '+_massAllItems.length+')':'');
+  if(countEl) countEl.textContent='Mostrando '+Math.min(visible.length,filtered.length)+' de '+filtered.length+(filtered.length<_massAllItems.length?' (filtrado de '+_massAllItems.length+')':'');
 
   // Update select all checkbox
   const selectAll=document.getElementById('mgmt_massSelectAll');
