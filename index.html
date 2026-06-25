@@ -8450,68 +8450,54 @@ function crlvParseFields(text){
     }
   }
   // ============================================================
-  // ANO — melhorado com múltiplas estratégias
+  // ANO — VIN como fonte primária, OCR como fallback
   // ============================================================
-  // Estratégia 1: label ANO FABRICAÇÃO/MODELO seguido de NNNN e NNNN (podem estar separados)
-  var anoLabelMatch=fullText.match(/(?:ANO\s*(?:FAB|FABR?ICA[CÇ]))[^0-9]*(\d{4})/);
-  var modeloLabelMatch=fullText.match(/\bMODELO\s*[^0-9A-Z]{0,5}(\d{4})\b/);
-  if(anoLabelMatch&&modeloLabelMatch){
-    var af=parseInt(anoLabelMatch[1]),am=parseInt(modeloLabelMatch[1]);
-    if(af>=1980&&af<=2030&&am>=1980&&am<=2030&&Math.abs(am-af)<=1){
-      fields.ano=af+'/'+am;
-    }
+  // FONTE PRIMÁRIA: VIN posição 10 (sempre confiável se chassi legível)
+  var vinYear=null;
+  if(fields.chassi&&fields.chassi.length>=10){
+    var vc=fields.chassi.charAt(9).toUpperCase();
+    if(VIN_YEAR[vc]) vinYear=VIN_YEAR[vc];
   }
-  // Estratégia 2: NNNN/NNNN junto (padrão tradicional)
+  if(vinYear){
+    // VIN define o ano. Fabricação = modelo-1 (padrão brasileiro)
+    fields.ano=(vinYear-1)+'/'+vinYear;
+  }
+  // FALLBACK: OCR (só se chassi ilegível/incompleto)
   if(!fields.ano){
-    var allAnos=fullText.match(/(\d{4})\s*[\/]\s*(\d{4})/g)||[];
-    for(var i=0;i<allAnos.length;i++){
-      var parts=allAnos[i].replace(/\s/g,'').split('/');
-      var y1=parseInt(parts[0]),y2=parseInt(parts[1]);
-      if(y1>=1980&&y2>=1980&&y2<=2030&&Math.abs(y2-y1)<=1){
-        var pos=fullText.indexOf(allAnos[i]);
-        var ctx=fullText.substring(Math.max(0,pos-40),pos+allAnos[i].length+40);
-        if(ctx.indexOf('EXERC')===-1&&ctx.indexOf('LICENCIA')===-1&&ctx.indexOf('EMISS')===-1){
+    // Tentar label ANO FAB + MODELO separados
+    var anoLabelMatch=fullText.match(/(?:ANO\s*(?:FAB|FABR?ICA[CÇ]))[^0-9]*(\d{4})/);
+    var modeloLabelMatch=fullText.match(/\bMODELO\s*[^0-9A-Z]{0,5}(\d{4})\b/);
+    if(anoLabelMatch&&modeloLabelMatch){
+      var af=parseInt(anoLabelMatch[1]),am=parseInt(modeloLabelMatch[1]);
+      if(af>=1980&&af<=2030&&am>=1980&&am<=2030&&Math.abs(am-af)<=1) fields.ano=af+'/'+am;
+    }
+    // Tentar NNNN/NNNN excluindo exercício
+    if(!fields.ano){
+      var allAnos=fullText.match(/(\d{4})\s*[\/]\s*(\d{4})/g)||[];
+      var currentYear=new Date().getFullYear();
+      for(var i=0;i<allAnos.length;i++){
+        var parts=allAnos[i].replace(/\s/g,'').split('/');
+        var y1=parseInt(parts[0]),y2=parseInt(parts[1]);
+        if(y1>=1980&&y2>=1980&&y2<currentYear-1&&Math.abs(y2-y1)<=1){
           fields.ano=y1+'/'+y2;break;
         }
       }
     }
-  }
-  // Estratégia 3: NNNN NNNN (espaço em vez de barra, perto de label FAB/MODELO)
-  if(!fields.ano){
-    var spaceAnos=fullText.match(/(?:FAB|MODELO)[^0-9]{0,15}(\d{4})\s+(\d{4})/);
-    if(spaceAnos){
-      var y1=parseInt(spaceAnos[1]),y2=parseInt(spaceAnos[2]);
-      if(y1>=1980&&y2>=1980&&y2<=2030&&Math.abs(y2-y1)<=1) fields.ano=y1+'/'+y2;
-    }
-  }
-  // Estratégia 4: ano isolado após "MODELO"
-  if(!fields.ano){
-    if(modeloLabelMatch&&parseInt(modeloLabelMatch[1])>=1980&&parseInt(modeloLabelMatch[1])<=2030){
-      fields.ano=modeloLabelMatch[1];
-    }
-  }
-  // Estratégia 5: encontrar par de anos (N e N+1) em qualquer lugar do texto
-  if(!fields.ano){
-    var allYears=fullText.match(/\b(19\d{2}|20[0-3]\d)\b/g)||[];
-    var yearNums=allYears.map(function(y){return parseInt(y);});
-    // Remover anos que provavelmente são exercício (ano atual, atual-1, atual+1)
-    var currentYear=new Date().getFullYear();
-    var exercYears=[currentYear-1,currentYear,currentYear+1];
-    var filteredYears=yearNums.filter(function(y){return exercYears.indexOf(y)===-1&&y>=1980&&y<currentYear-1;});
-    for(var yi=0;yi<filteredYears.length;yi++){
-      var yf=filteredYears[yi];
-      // Procurar se yf+1 também existe (no array original, pode ser exercício)
-      if(filteredYears.indexOf(yf+1)!==-1||yearNums.indexOf(yf+1)!==-1){
-        if(yf+1<currentYear-1){fields.ano=yf+'/'+(yf+1);break;}
+    // Tentar par N/N+1 em qualquer posição (excluindo exercício)
+    if(!fields.ano){
+      var allYears=fullText.match(/\b(19\d{2}|20[0-3]\d)\b/g)||[];
+      var yearNums=allYears.map(function(y){return parseInt(y);});
+      var currentYear=new Date().getFullYear();
+      var filtered=yearNums.filter(function(y){return y>=1980&&y<currentYear-1;});
+      for(var yi=0;yi<filtered.length;yi++){
+        if(filtered.indexOf(filtered[yi]+1)!==-1){fields.ano=filtered[yi]+'/'+(filtered[yi]+1);break;}
+      }
+      if(!fields.ano&&filtered.length>0){
+        filtered.sort(function(a,b){return a-b;});
+        fields.ano=String(filtered[0]);
       }
     }
-    // Se não achou par, pegar o ano mais antigo válido
-    if(!fields.ano&&filteredYears.length>0){
-      filteredYears.sort(function(a,b){return a-b;});
-      fields.ano=String(filteredYears[0]);
-    }
   }
-  // (Estratégia 6 removida — validação cruzada VIN no pós-processamento cobre este caso)
   // ============================================================
   // COMBUSTÍVEL
   // ============================================================
@@ -8573,34 +8559,11 @@ function crlvParseFields(text){
   // ============================================================
   // PÓS-PROCESSAMENTO — limpeza OCR
   // ============================================================
-  // Corrigir confusão 1/l/I em marca/modelo: após barra, '1' seguido de letra = provavelmente 'L'
+  // --- LIMPEZA MARCA/MODELO ---
   if(fields.marcaModelo){
     fields.marcaModelo=fields.marcaModelo.replace(/\/1([A-Z])/g,'/L$1');
     fields.marcaModelo=fields.marcaModelo.replace(/\s1([A-Z]{2})/g,' L$1');
-    // Remover trailing noise (números soltos no final, pontos)
     fields.marcaModelo=fields.marcaModelo.replace(/[\s\.]+$/,'').replace(/\s+\d{1,2}$/,'');
-  }
-  // --- VALIDAÇÃO CRUZADA ANO vs VIN ---
-  // O VIN posição 10 é sempre confiável. Usar como referência.
-  var vinYear=null;
-  if(fields.chassi&&fields.chassi.length>=10){
-    var vc=fields.chassi.charAt(9).toUpperCase();
-    if(VIN_YEAR[vc]) vinYear=VIN_YEAR[vc];
-  }
-  if(vinYear){
-    if(fields.ano){
-      // Extrair ano modelo do campo (segundo número se for NNNN/NNNN, senão o único)
-      var anoParts=fields.ano.split('/');
-      var anoModelo=parseInt(anoParts[anoParts.length-1]);
-      // Validar: ano modelo deve ser igual ao VIN ou VIN-1 (tolerância para ciclo 30 anos do VIN)
-      if(anoModelo!==vinYear&&anoModelo!==(vinYear-1)&&anoModelo!==(vinYear+30)&&anoModelo!==(vinYear+29)){
-        // Ano OCR não bate com VIN → substituir pelo VIN
-        fields.ano=(vinYear-1)+'/'+vinYear;
-      }
-    } else {
-      // Sem ano do OCR → usar VIN diretamente
-      fields.ano=(vinYear-1)+'/'+vinYear;
-    }
   }
   return fields;
 }
