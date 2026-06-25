@@ -5818,8 +5818,21 @@ function mgmtSysFilterModels(inputId, ddId, msgId){
   var query=input.value.trim().toLowerCase();
   var models=mgmtSysGetModels(_mgmtSelectedCat,_mgmtSelectedBrand);
   var filtered=query?models.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):models;
-  filtered=filtered.slice(0,50);
-  if(filtered.length===0){
+  window._mgmtModelFiltered=filtered;
+  window._mgmtModelVisible=100;
+  mgmtSysRenderModels(inputId, ddId, msgId);
+}
+
+function mgmtSysRenderModels(inputId, ddId, msgId){
+  var input=document.getElementById(inputId);
+  var dd=document.getElementById(ddId);
+  var msg=document.getElementById(msgId);
+  if(!input||!dd) return;
+  var query=input.value.trim().toLowerCase();
+  var filtered=window._mgmtModelFiltered||[];
+  var visibleCount=window._mgmtModelVisible||100;
+  var visible=filtered.slice(0,visibleCount);
+  if(visible.length===0){
     dd.style.display='block';
     dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhum modelo encontrado</div>';
     if(msg&&query){msg.textContent='Modelo nao encontrado no sistema';msg.className='ac-msg invalid';}
@@ -5827,13 +5840,21 @@ function mgmtSysFilterModels(inputId, ddId, msgId){
   }
   dd.style.display='block';
   var html='';
-  for(var i=0;i<filtered.length;i++){
-    var esc=filtered[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var dataEsc=filtered[i].replace(/"/g,'&quot;');
+  for(var i=0;i<visible.length;i++){
+    var esc=visible[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var dataEsc=visible[i].replace(/"/g,'&quot;');
     html+='<div class="fipe-item" data-value="'+dataEsc+'" style="padding:8px 12px;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border-light)">'+highlightMatch(esc,query)+'</div>';
   }
-  if(models.length>50&&!query) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Digite para filtrar ('+models.length+' modelos)</div>';
+  if(visible.length<filtered.length) html+='<div style="padding:6px 12px;font-size:.7rem;color:var(--text3);text-align:center">Mostrando '+visible.length+' de '+filtered.length+'</div>';
   dd.innerHTML=html;
+  dd.onscroll=function(){
+    if(dd.scrollTop+dd.clientHeight>=dd.scrollHeight-20){
+      if(window._mgmtModelVisible<filtered.length){
+        window._mgmtModelVisible+=100;
+        mgmtSysRenderModels(inputId, ddId, msgId);
+      }
+    }
+  };
   dd.onmousedown=function(e){
     e.preventDefault();
     var el=e.target;
@@ -5847,7 +5868,7 @@ function mgmtSysFilterModels(inputId, ddId, msgId){
   };
   if(msg){
     if(query){
-      var exact=models.find(function(m){return m.toLowerCase()===query;});
+      var exact=filtered.find(function(m){return m.toLowerCase()===query;});
       if(exact){msg.textContent='Modelo valido';msg.className='ac-msg valid';}
       else{msg.textContent='Selecione um modelo da lista';msg.className='ac-msg';}
     }else{msg.textContent='';msg.className='ac-msg';}
