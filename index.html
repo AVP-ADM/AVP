@@ -4020,18 +4020,16 @@ function exportBrandsXLSX(cat){
   const wb = XLSX.utils.book_new();
   const brands=Object.keys(RAW[cat].brands||{}).sort();
   const rows = [];
-  // Row 1: blank
-  rows.push(['','']);
-  // Row 2: headers
+  // Row 1: headers
   rows.push(['Marca','Qtd. Modelos']);
-  // Row 3+: data
+  // Row 2+: data
   for(const b of brands){
     rows.push([b, (RAW[cat].brands[b]||[]).length]);
   }
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=[{wch:25},{wch:14}];
-  // Style row 2 headers
-  const headerCells=['A2','B2'];
+  // Style row 1 headers
+  const headerCells=['A1','B1'];
   for(const c of headerCells){
     if(ws[c]) ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
@@ -4550,17 +4548,15 @@ function exportDrawerTable(tableId, name){
   const dataRows=Array.from(table.querySelectorAll('tbody tr')).filter(r=>r.style.display!=='none').map(r=>Array.from(r.cells).map(c=>c.textContent));
   const wb = XLSX.utils.book_new();
   const rows = [];
-  // Row 1: blank
-  rows.push(headers.map(()=>''));
-  // Row 2: headers
+  // Row 1: headers
   rows.push(headers);
-  // Row 3+: data
+  // Row 2+: data
   for(const r of dataRows) rows.push(r);
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  // Style row 2 headers - black background, white text
+  // Style row 1 headers - black background, white text
   const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   for(let i=0;i<headers.length;i++){
-    const cell=colLetters[i]+'2';
+    const cell=colLetters[i]+'1';
     if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
   // Auto column widths
@@ -4631,20 +4627,18 @@ function exportDuplicates(){
   const wb = XLSX.utils.book_new();
   const headers=['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias'];
   const rows = [];
-  // Row 1: blank
-  rows.push(headers.map(()=>''));
-  // Row 2: headers
+  // Row 1: headers
   rows.push(headers);
-  // Row 3+: data
+  // Row 2+: data
   for(const d of DUPLICATES){
     rows.push([d.marca, d.modelo, typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'', d.cats.join('; '), d.count]);
   }
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:50},{wch:16}];
-  // Style row 2 headers - black background, white text
+  // Style row 1 headers - black background, white text
   const colLetters='ABCDE';
   for(let i=0;i<headers.length;i++){
-    const cell=colLetters[i]+'2';
+    const cell=colLetters[i]+'1';
     if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
   XLSX.utils.book_append_sheet(wb, ws, 'Conflitos');
@@ -6269,17 +6263,19 @@ function downloadCSV(csv, filename){
 }
 
 // ========= XLSX STYLED EXPORTS =========
-function styledXLSX(headers, dataRows, sheetName, fileName){
+function styledXLSX(headers, dataRows, sheetName, fileName, options){
   if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+  const opts=options||{};
   const wb=XLSX.utils.book_new();
   const rows=[];
-  rows.push(headers.map(()=>'')); // Row 1: blank
-  rows.push(headers); // Row 2: headers
-  for(const r of dataRows) rows.push(r); // Row 3+: data
+  if(opts.includeBlankRow) rows.push(headers.map(()=>'')); // Row 1: blank (only when history included)
+  rows.push(headers); // Headers row
+  for(const r of dataRows) rows.push(r); // Data rows
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const headerRowIdx=opts.includeBlankRow?1:0;
   for(let i=0;i<headers.length;i++){
-    const cell=colLetters[i]+'2';
+    const cell=colLetters[i]+(headerRowIdx+1);
     if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
   ws['!cols']=headers.map((h,i)=>{
@@ -6312,14 +6308,13 @@ function exportDivergencesXLSX(){
     hasData=true;
     const headers=['Situação','Marca','Modelo'];
     const rows=[];
-    rows.push(headers.map(()=>'')); // Row 1: blank
-    rows.push(headers); // Row 2: headers
+    rows.push(headers); // Row 1: headers
     for(const m of onlyA) rows.push(['Somente em '+g.a, m.marca, m.modelo]);
     for(const m of onlyB) rows.push(['Somente em '+g.b, m.marca, m.modelo]);
     const ws=XLSX.utils.aoa_to_sheet(rows);
     const colLetters='ABC';
     for(let i=0;i<headers.length;i++){
-      const cell=colLetters[i]+'2';
+      const cell=colLetters[i]+'1';
       if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
     }
     ws['!cols']=[{wch:30},{wch:20},{wch:50}];
