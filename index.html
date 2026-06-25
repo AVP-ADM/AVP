@@ -88,6 +88,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .sidebar-item .si-text{opacity:1;transition:opacity .2s .05s;overflow:hidden}
 .app-sidebar.collapsed .si-text{opacity:0;transition:opacity .1s}
 .sidebar-item .si-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:4px;min-width:18px;text-align:center;transition:all .2s}
+.sidebar-item.has-children .si-badge{right:32px}
 .app-sidebar.collapsed .si-badge{right:6px;top:6px;transform:none;font-size:.55rem;padding:1px 4px;min-width:14px}
 .sidebar-collapse{display:none}
 .sidebar-collapse-btn{display:none}
@@ -621,17 +622,26 @@ tr:hover .row-actions{opacity:1}
 .tm-cota-val{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
 @media(max-width:900px){.tm-layout{grid-template-columns:1fr}.tm-sidebar{display:none}}
 
-/* ========= SUB-TABS ========= */
-.sub-tabs{display:flex;gap:4px;padding:0 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px}
-.sub-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:.8rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s}
-.sub-tab:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
-.sub-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
-.sub-tab .sub-tab-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);color:inherit;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:4px;min-width:18px;text-align:center}
-.sub-tab:not(.active) .sub-tab-badge{background:var(--red-light);color:var(--red)}
+/* ========= SIDEBAR SUB-ITEMS ========= */
+.sidebar-group{margin-bottom:2px}
+.sidebar-group .sidebar-item.has-children .si-expand{width:16px;height:16px;display:flex;align-items:center;justify-content:center;margin-left:auto;transition:transform .2s;flex-shrink:0}
+.sidebar-group .sidebar-item.has-children .si-expand svg{width:14px;height:14px}
+.sidebar-group.expanded .sidebar-item.has-children .si-expand{transform:rotate(90deg)}
+.sidebar-sub{max-height:0;overflow:hidden;transition:max-height .25s cubic-bezier(.4,0,.2,1)}
+.sidebar-group.expanded .sidebar-sub{max-height:200px}
+.sidebar-sub-item{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 44px;margin-bottom:1px;border-radius:var(--radius);cursor:pointer;font-size:.78rem;font-weight:500;color:var(--text3);transition:all .15s;position:relative;white-space:nowrap;border:none;background:none;width:100%;text-align:left}
+.sidebar-sub-item:hover{color:var(--text1);background:var(--surface-2)}
+.sidebar-sub-item.active{color:var(--accent);font-weight:600;background:var(--accent-light)}
+.sidebar-sub-item .si-sub-badge{font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:4px;min-width:16px;text-align:center;background:var(--red-light);color:var(--red);margin-left:auto}
+.sidebar-sub-item.active .si-sub-badge{background:rgba(27,122,61,.15);color:var(--accent)}
+[data-theme="dark"] .sidebar-sub-item:hover{background:var(--surface-2);color:var(--text1)}
+[data-theme="dark"] .sidebar-sub-item.active{background:rgba(52,208,88,.08);color:var(--accent)}
+[data-theme="dark"] .sidebar-sub-item .si-sub-badge{background:#450A0A;color:#FCA5A5}
+[data-theme="dark"] .sidebar-sub-item.active .si-sub-badge{background:rgba(52,208,88,.1);color:var(--accent)}
+.app-sidebar.collapsed .sidebar-sub{max-height:0!important}
+.app-sidebar.collapsed.hover-expanded .sidebar-group.expanded .sidebar-sub{max-height:200px}
 .sub-tab-panel{display:none}
 .sub-tab-panel.active{display:block}
-[data-theme="dark"] .sub-tab:not(.active){background:var(--surface-2);border-color:var(--border)}
-[data-theme="dark"] .sub-tab:not(.active):hover{background:var(--bg);border-color:var(--border-strong)}
 </style>
 </head>
 <body>
@@ -719,20 +729,56 @@ tr:hover .row-actions{opacity:1}
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span class="si-text">Visão Geral</span>
         </button>
-        <button class="sidebar-item" data-tab="analise" data-tooltip="Análise" onclick="goTab('analise')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-          <span class="si-text">Análise</span>
-          <span class="si-badge" id="badgeAnalise" style="display:none"></span>
-        </button>
-        <button class="sidebar-item" data-tab="gestao" data-tooltip="Gestão" onclick="goTab('gestao')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
-          <span class="si-text">Gestão</span>
-          <span class="si-badge" id="badgeGestao" style="display:none"></span>
-        </button>
-        <button class="sidebar-item" data-tab="consultas" data-tooltip="Consultas" onclick="goTab('consultas')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
-          <span class="si-text">Consultas</span>
-        </button>
+        <div class="sidebar-group" data-group="analise">
+          <button class="sidebar-item has-children" data-tab="analise" data-tooltip="Análise" onclick="toggleSidebarGroup('analise')">
+            <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+            <span class="si-text">Análise</span>
+            <span class="si-badge" id="badgeAnalise" style="display:none"></span>
+            <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </button>
+          <div class="sidebar-sub">
+            <button class="sidebar-sub-item" data-subtab="duplicates" onclick="goTab('duplicates')">
+              <span class="si-text">Conflitos</span>
+              <span class="si-sub-badge" id="subBadgeDuplicates" style="display:none"></span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="divergences" onclick="goTab('divergences')">
+              <span class="si-text">Divergências</span>
+              <span class="si-sub-badge" id="subBadgeDivergences" style="display:none"></span>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-group" data-group="gestao">
+          <button class="sidebar-item has-children" data-tab="gestao" data-tooltip="Gestão" onclick="toggleSidebarGroup('gestao')">
+            <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+            <span class="si-text">Gestão</span>
+            <span class="si-badge" id="badgeGestao" style="display:none"></span>
+            <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </button>
+          <div class="sidebar-sub">
+            <button class="sidebar-sub-item" data-subtab="management" onclick="goTab('management')">
+              <span class="si-text">Manutenção</span>
+              <span class="si-sub-badge" id="subBadgeStaging" style="display:none"></span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="history" onclick="goTab('history')">
+              <span class="si-text">Histórico</span>
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-group" data-group="consultas">
+          <button class="sidebar-item has-children" data-tab="consultas" data-tooltip="Consultas" onclick="toggleSidebarGroup('consultas')">
+            <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
+            <span class="si-text">Consultas</span>
+            <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </button>
+          <div class="sidebar-sub">
+            <button class="sidebar-sub-item" data-subtab="crlv" onclick="goTab('crlv')">
+              <span class="si-text">Consultar Veiculo</span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="planos" onclick="goTab('planos')">
+              <span class="si-text">Tabela de Planos</span>
+            </button>
+          </div>
+        </div>
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
@@ -820,10 +866,6 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: CONSULTAS (Consultar Veículo + Tabela de Planos) ========= -->
   <div class="tab-panel" id="panel-consultas">
-    <div class="sub-tabs">
-      <button class="sub-tab active" data-subtab="crlv" onclick="goSubTab('consultas','crlv')">Consultar Veiculo</button>
-      <button class="sub-tab" data-subtab="planos" onclick="goSubTab('consultas','planos')">Tabela de Planos</button>
-    </div>
 
     <div class="sub-tab-panel active" id="subpanel-crlv">
     <div class="card">
@@ -994,10 +1036,6 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: ANÁLISE (Conflitos + Divergências) ========= -->
   <div class="tab-panel" id="panel-analise">
-    <div class="sub-tabs">
-      <button class="sub-tab active" data-subtab="duplicates" onclick="goSubTab('analise','duplicates')">Conflitos <span class="sub-tab-badge" id="subBadgeDuplicates" style="display:none"></span></button>
-      <button class="sub-tab" data-subtab="divergences" onclick="goSubTab('analise','divergences')">Divergências <span class="sub-tab-badge" id="subBadgeDivergences" style="display:none"></span></button>
-    </div>
 
     <div class="sub-tab-panel active" id="subpanel-duplicates">
     <div class="card">
@@ -1038,10 +1076,6 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: GESTÃO (Manutenção + Histórico) ========= -->
   <div class="tab-panel" id="panel-gestao">
-    <div class="sub-tabs">
-      <button class="sub-tab active" data-subtab="management" onclick="goSubTab('gestao','management')">Manutenção <span class="sub-tab-badge" id="subBadgeStaging" style="display:none"></span></button>
-      <button class="sub-tab" data-subtab="history" onclick="goSubTab('gestao','history')">Histórico</button>
-    </div>
 
     <div class="sub-tab-panel active" id="subpanel-management">
     <div class="staging-bar" id="stagingBar">
@@ -2121,18 +2155,25 @@ function goTab(tab){
     const parentPanel = document.getElementById('panel-'+mainTab);
     if(parentPanel){
       parentPanel.querySelectorAll('.sub-tab-panel').forEach(p=>p.classList.remove('active'));
-      parentPanel.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
       const subPanel = document.getElementById('subpanel-'+subTab);
       if(subPanel) subPanel.classList.add('active');
-      const subBtn = parentPanel.querySelector('.sub-tab[data-subtab="'+subTab+'"]');
-      if(subBtn) subBtn.classList.add('active');
     }
   }
 
-  // Update sidebar active state
+  // Update sidebar: parent item active state
   document.querySelectorAll('.sidebar-item[data-tab]').forEach(item=>{
     item.classList.toggle('active', item.dataset.tab===mainTab);
   });
+
+  // Update sidebar: expand the correct group and highlight sub-item
+  document.querySelectorAll('.sidebar-group').forEach(g=>g.classList.remove('expanded'));
+  document.querySelectorAll('.sidebar-sub-item').forEach(s=>s.classList.remove('active'));
+  if(subTab){
+    const group = document.querySelector('.sidebar-group[data-group="'+mainTab+'"]');
+    if(group) group.classList.add('expanded');
+    const subItem = document.querySelector('.sidebar-sub-item[data-subtab="'+subTab+'"]');
+    if(subItem) subItem.classList.add('active');
+  }
 
   // Hidden tabs compat
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -2153,31 +2194,26 @@ function goTab(tab){
   if(effectiveTab==='settings'){renderSettingsUsers();}
 }
 
-function goSubTab(parentTab, subTab){
-  // Reset inactivity timer
-  resetActivityTimer();
-  // Switch sub-tab within a parent panel
-  const parentPanel = document.getElementById('panel-'+parentTab);
-  if(!parentPanel) return;
-
-  parentPanel.querySelectorAll('.sub-tab-panel').forEach(p=>p.classList.remove('active'));
-  parentPanel.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
-
-  const subPanel = document.getElementById('subpanel-'+subTab);
-  if(subPanel){
-    subPanel.classList.add('active');
-    subPanel.classList.remove('fade-in');void subPanel.offsetWidth;subPanel.classList.add('fade-in');
+function toggleSidebarGroup(groupName){
+  const group = document.querySelector('.sidebar-group[data-group="'+groupName+'"]');
+  if(!group) return;
+  const wasExpanded = group.classList.contains('expanded');
+  if(wasExpanded){
+    // Collapse - just toggle
+    group.classList.remove('expanded');
+  } else {
+    // Expand and navigate to first sub-item
+    group.classList.add('expanded');
+    const firstSub = group.querySelector('.sidebar-sub-item');
+    if(firstSub && firstSub.dataset.subtab){
+      goTab(firstSub.dataset.subtab);
+    }
   }
-  const subBtn = parentPanel.querySelector('.sub-tab[data-subtab="'+subTab+'"]');
-  if(subBtn) subBtn.classList.add('active');
+}
 
-  // Trigger renders for the sub-tab content
-  if(subTab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
-  if(subTab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
-  if(subTab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
-  if(subTab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
-  if(subTab==='crlv'){crlvLoadHistory();}
-  if(subTab==='planos'){tmInit();}
+function goSubTab(parentTab, subTab){
+  // Legacy compat - redirect to goTab which handles everything
+  goTab(subTab);
 }
 
 function resetTabFilters(){
@@ -8099,15 +8135,20 @@ function applyAccessLevels(){
   const setorEl=document.getElementById('userSetor');
   if(setorEl) setorEl.textContent=(currentProfile&&currentProfile.setor)||'';
   // Sidebar visibility based on nivel
-  const sidebarItems=document.querySelectorAll('.sidebar-item[data-tab]');
   const access={
     admin:['overview','analise','gestao','consultas','exports'],
     operador:['overview','consultas','exports']
   };
   const allowed=access[nivel]||access.operador;
-  sidebarItems.forEach(item=>{
+  // Handle direct sidebar items
+  document.querySelectorAll('.sidebar-nav > .sidebar-item[data-tab]').forEach(item=>{
     const tab=item.dataset.tab;
     if(tab) item.style.display=allowed.includes(tab)?'':'none';
+  });
+  // Handle sidebar groups
+  document.querySelectorAll('.sidebar-group[data-group]').forEach(group=>{
+    const groupName=group.dataset.group;
+    group.style.display=allowed.includes(groupName)?'':'none';
   });
   // Settings/Configurações item in dropdown - only admin
   const settingsUsersItem=document.getElementById('settingsUsersItem');
