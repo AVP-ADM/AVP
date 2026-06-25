@@ -8339,7 +8339,7 @@ function crlvParseFields(text){
   if(!text) return fields;
   var fullText=text.toUpperCase().replace(/\r/g,'');
   // --- BLACKLIST de termos de carroceria (nunca são marca/modelo) ---
-  var BODY_BLACKLIST=['ABERTA','FECHADA','CABINE','DUPLA','SIMPLES','CABINE DUPLA','CABINE SIMPLES','SEDAN','HATCH','PERUA','CONVERSIVEL','CONVERSÍVEL','FURGAO','FURGÃO','BAU','BAÚ','CHASSI PLATAFORMA','PLATAFORMA','CABINA','CAPOTA'];
+  var BODY_BLACKLIST=['ABERTA','FECHADA','CABINE','DUPLA','SIMPLES','CABINE DUPLA','CABINE SIMPLES','PERUA','CONVERSIVEL','CONVERSÍVEL','FURGAO','FURGÃO','BAU','BAÚ','CHASSI PLATAFORMA','PLATAFORMA','CABINA','CAPOTA','CILINDRADA','POTENCIA','POTÊNCIA','CAPACIDADE','PESO BRUTO','LOTACAO','LOTAÇÃO','CARROCERIA','NAO APLICAVEL','NÃO APLICÁVEL','CERTIFICADO','REGISTRO','LICENCIAMENTO','RENAVAM','EXERCICIO','EXERCÍCIO','CATEGORIA','PARTICULAR'];
   // --- WHITELIST de siglas de fabricantes ---
   var MAKER_PREFIXES=['MMC','VW','GM','FIAT','FORD','TOYOTA','HONDA','YAMAHA','BMW','MERC','MERCEDES','HYUNDAI','KIA','RENAULT','NISSAN','CHEV','CHEVROLET','CITROEN','CITROËN','PEUGEOT','MITSU','MITSUBISHI','SUZUKI','VOLVO','SCANIA','IVECO','DAF','MAN','AGRALE','CAOA','JEEP','LAND','AUDI','PORSCHE','JAC','LIFAN','CHERY','BYD','GWM','SUBARU','DODGE','RAM','CHRYSLER','TROLLER','TAC','HAFEI','SHINERAY','AVELLOZ','BAJAJ','DAFRA','KASINSKI','TRIUMPH','DUCATI','HARLEY','KAWASAKI','KTM','APRILIA','PIAGGIO','INDIAN','TESLA','MINI','SMART','SSANGYONG','MAHINDRA'];
   // --- MODELOS CONHECIDOS por fabricante (para busca via WMI) ---
@@ -8357,7 +8357,8 @@ function crlvParseFields(text){
   if(!fields.marcaModelo){
     for(var pi=0;pi<MAKER_PREFIXES.length;pi++){
       var prefix=MAKER_PREFIXES[pi];
-      var rx=new RegExp('\\b'+prefix+'\\s*[/\\\\]\\s*([A-Z0-9][A-Z0-9\\s\\.\\-]{2,40})');
+      // Aceitar: GM/CORSA, GM / CORSA, GM\nCORSA (OCR pode quebrar linha)
+      var rx=new RegExp('\\b'+prefix+'\\s*[/\\\\\\n]\\s*([A-Z0-9][A-Z0-9\\s\\.\\-]{2,40})');
       var m=fullText.match(rx);
       if(m){
         var cand=prefix+'/'+m[1].trim().replace(/\s{2,}/g,' ');
