@@ -1407,8 +1407,8 @@ tr:hover .row-actions{opacity:1}
 </div>
 
 <!-- ========= MODAL ========= -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal" id="modalBox">
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" id="modalBox" onclick="event.stopPropagation()">
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions" id="modalActions"></div>
