@@ -1052,7 +1052,7 @@ tr:hover .row-actions{opacity:1}
           <option value="3">≥ 3 categorias</option>
           <option value="4">≥ 4 categorias</option>
         </select>
-        <button class="btn btn-blue btn-sm" onclick="exportDuplicates()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
+        <button class="btn btn-blue btn-sm" onclick="exportConflitos()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
         <button class="btn btn-red btn-sm" onclick="removeSelectedDuplicates()" id="btnRemoveSelDup" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remover Selecionados</button>
       </div>
       <div id="dupCount" style="font-size:.78rem;color:var(--text2);margin-bottom:10px"></div>
@@ -1210,7 +1210,7 @@ tr:hover .row-actions{opacity:1}
         <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
         <h4>Conflitos</h4>
         <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
-        <button class="btn btn-red export-btn" onclick="exportDuplicates()">Exportar XLSX</button>
+        <button class="btn btn-red export-btn" onclick="exportConflitos()">Exportar XLSX</button>
       </div>
       <div class="export-card">
         <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
@@ -4622,7 +4622,7 @@ function renderDupTable(){
   renderPagination('dupPagination', pages, dupPage, p=>{dupPage=p;renderDupTable();});
 }
 
-function exportDuplicates(){
+function exportConflitos(){
   if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
   const wb = XLSX.utils.book_new();
   const headers=['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias'];
