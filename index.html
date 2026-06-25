@@ -8494,23 +8494,21 @@ function crlvParseFields(text){
   if(!fields.ano){
     var allYears=fullText.match(/\b(19\d{2}|20[0-3]\d)\b/g)||[];
     var yearNums=allYears.map(function(y){return parseInt(y);});
-    // Remover ano atual e próximo (provável exercício)
+    // Remover anos que provavelmente são exercício (ano atual, atual-1, atual+1)
     var currentYear=new Date().getFullYear();
-    for(var yi=0;yi<yearNums.length;yi++){
-      var yf=yearNums[yi];
-      if(yf>=currentYear) continue;
-      // Procurar se yf+1 também existe no texto
-      if(yearNums.indexOf(yf+1)!==-1){
-        fields.ano=yf+'/'+(yf+1);break;
+    var exercYears=[currentYear-1,currentYear,currentYear+1];
+    var filteredYears=yearNums.filter(function(y){return exercYears.indexOf(y)===-1&&y>=1980&&y<currentYear-1;});
+    for(var yi=0;yi<filteredYears.length;yi++){
+      var yf=filteredYears[yi];
+      // Procurar se yf+1 também existe (no array original, pode ser exercício)
+      if(filteredYears.indexOf(yf+1)!==-1||yearNums.indexOf(yf+1)!==-1){
+        if(yf+1<currentYear-1){fields.ano=yf+'/'+(yf+1);break;}
       }
     }
-    // Se não achou par, pegar o ano mais antigo (provavelmente fabricação)
-    if(!fields.ano&&yearNums.length>0){
-      var validYears=yearNums.filter(function(y){return y>=1980&&y<currentYear;});
-      if(validYears.length>0){
-        validYears.sort(function(a,b){return a-b;});
-        fields.ano=String(validYears[0]);
-      }
+    // Se não achou par, pegar o ano mais antigo válido
+    if(!fields.ano&&filteredYears.length>0){
+      filteredYears.sort(function(a,b){return a-b;});
+      fields.ano=String(filteredYears[0]);
     }
   }
   // Estratégia 6: ano pelo VIN (posição 10)
@@ -8576,6 +8574,16 @@ function crlvParseFields(text){
     if(cvMatch) fields.potencia=cvMatch[1]+'cv';
   }
   if(!fields.potencia){var litros=text.match(/\b(\d\.\d)\s*[^0-9]/);if(litros) fields.potencia=litros[1];}
+  // ============================================================
+  // PÓS-PROCESSAMENTO — limpeza OCR
+  // ============================================================
+  // Corrigir confusão 1/l/I em marca/modelo: após barra, '1' seguido de letra = provavelmente 'L'
+  if(fields.marcaModelo){
+    fields.marcaModelo=fields.marcaModelo.replace(/\/1([A-Z])/g,'/L$1');
+    fields.marcaModelo=fields.marcaModelo.replace(/\s1([A-Z]{2})/g,' L$1');
+    // Remover trailing noise (números soltos no final, pontos)
+    fields.marcaModelo=fields.marcaModelo.replace(/[\s\.]+$/,'').replace(/\s+\d{1,2}$/,'');
+  }
   return fields;
 }
 // --- Preencher campos na UI ---
