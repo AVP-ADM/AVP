@@ -620,6 +620,18 @@ tr:hover .row-actions{opacity:1}
 .tm-cota-row{font-size:.76rem;color:var(--text2);margin-bottom:4px;display:flex;align-items:baseline;gap:6px}
 .tm-cota-val{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
 @media(max-width:900px){.tm-layout{grid-template-columns:1fr}.tm-sidebar{display:none}}
+
+/* ========= SUB-TABS ========= */
+.sub-tabs{display:flex;gap:4px;padding:0 0 16px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.sub-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:.8rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s}
+.sub-tab:hover{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.sub-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.sub-tab .sub-tab-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);color:inherit;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:4px;min-width:18px;text-align:center}
+.sub-tab:not(.active) .sub-tab-badge{background:var(--red-light);color:var(--red)}
+.sub-tab-panel{display:none}
+.sub-tab-panel.active{display:block}
+[data-theme="dark"] .sub-tab:not(.active){background:var(--surface-2);border-color:var(--border)}
+[data-theme="dark"] .sub-tab:not(.active):hover{background:var(--bg);border-color:var(--border-strong)}
 </style>
 </head>
 <body>
@@ -707,36 +719,23 @@ tr:hover .row-actions{opacity:1}
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span class="si-text">Visão Geral</span>
         </button>
-        <button class="sidebar-item" data-tab="crlv" data-tooltip="Consultar Veículo" onclick="goTab('crlv')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
-          <span class="si-text">Consultar Veículo</span>
+        <button class="sidebar-item" data-tab="analise" data-tooltip="Análise" onclick="goTab('analise')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+          <span class="si-text">Análise</span>
+          <span class="si-badge" id="badgeAnalise" style="display:none"></span>
         </button>
-        <button class="sidebar-item" data-tab="duplicates" data-tooltip="Conflitos" onclick="goTab('duplicates')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
-          <span class="si-text">Conflitos</span>
-          <span class="si-badge" id="badgeDuplicates" style="display:none"></span>
-        </button>
-        <button class="sidebar-item" data-tab="divergences" data-tooltip="Divergências" onclick="goTab('divergences')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3l-7 7"/><path d="M3 3l7 7"/></svg></span>
-          <span class="si-text">Divergências</span>
-          <span class="si-badge" id="badgeDivergences" style="display:none"></span>
-        </button>
-        <button class="sidebar-item" data-tab="management" data-tooltip="Manutenção" onclick="goTab('management')">
+        <button class="sidebar-item" data-tab="gestao" data-tooltip="Gestão" onclick="goTab('gestao')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
-          <span class="si-text">Manutenção</span>
-          <span class="si-badge" id="badgeStaging" style="display:none"></span>
+          <span class="si-text">Gestão</span>
+          <span class="si-badge" id="badgeGestao" style="display:none"></span>
         </button>
-        <button class="sidebar-item" data-tab="history" data-tooltip="Histórico" onclick="goTab('history')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-          <span class="si-text">Histórico</span>
+        <button class="sidebar-item" data-tab="consultas" data-tooltip="Consultas" onclick="goTab('consultas')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
+          <span class="si-text">Consultas</span>
         </button>
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
-        </button>
-        <button class="sidebar-item" data-tab="planos" data-tooltip="Tabela de Planos" onclick="goTab('planos')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span>
-          <span class="si-text">Planos</span>
         </button>
         <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border);margin-left:-8px;margin-right:-8px;padding-left:8px;padding-right:8px"></div>
         <button class="sidebar-item" data-tooltip="Fixar menu" onclick="toggleSidebar()">
@@ -819,8 +818,14 @@ tr:hover .row-actions{opacity:1}
     </div>
   </div>
 
-  <!-- ========= TAB: CONSULTAR VEÍCULO (CRLV) ========= -->
-  <div class="tab-panel" id="panel-crlv">
+  <!-- ========= TAB: CONSULTAS (Consultar Veículo + Tabela de Planos) ========= -->
+  <div class="tab-panel" id="panel-consultas">
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-subtab="crlv" onclick="goSubTab('consultas','crlv')">Consultar Veiculo</button>
+      <button class="sub-tab" data-subtab="planos" onclick="goSubTab('consultas','planos')">Tabela de Planos</button>
+    </div>
+
+    <div class="sub-tab-panel active" id="subpanel-crlv">
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span> Consultar Veiculo (CRLV)</div>
 
@@ -932,10 +937,69 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div id="crlv_histPagination" class="pagination"></div>
     </div>
+    </div>
+
+    <div class="sub-tab-panel" id="subpanel-planos">
+    <div class="card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> Tabela de Planos</div>
+        <button class="btn btn-sm" id="tm_editBtn" onclick="tmToggleEditMode()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao</button>
+      </div>
+      <div class="filter-row" style="margin-bottom:16px">
+        <select id="tm_groupSelect" onchange="tmGroupChanged()"></select>
+        <select id="tm_catSelect" onchange="tmCatChanged()"></select>
+      </div>
+        <!-- Adjustment Panel -->
+        <div class="tm-adj-panel">
+          <span class="tm-adj-label">Ajuste</span>
+          <div class="tm-adj-toggles">
+            <button class="tm-toggle active" id="tm_btnDesc" onclick="tmSetTipo('desconto')">- Desconto</button>
+            <button class="tm-toggle" id="tm_btnAcr" onclick="tmSetTipo('acrescimo')">+ Acrescimo</button>
+          </div>
+          <div class="tm-adj-input">
+            <input type="number" id="tm_pctInput" min="0" max="100" step="0.01" placeholder="0,00" oninput="tmUpdateTable()">
+            <span>%</span>
+            <button class="tm-clear-btn" id="tm_clearBtn" onclick="tmClearPct()" style="display:none">Limpar</button>
+          </div>
+          <span class="tm-adj-badge" id="tm_adjBadge" style="display:none"></span>
+        </div>
+        <!-- Table Card -->
+        <div class="tm-table-card">
+          <div class="tm-table-header">
+            <span id="tm_tableIcon"></span>
+            <span class="tm-table-title" id="tm_tableTitle">Passeio</span>
+            <span class="tm-table-badge" id="tm_tableBadge" style="display:none"></span>
+          </div>
+          <div class="tm-edit-toolbar" id="tm_editToolbar" style="display:none">
+            <button class="btn btn-sm" onclick="tmAddRow()">+ Linha</button>
+            <button class="btn btn-sm" onclick="tmAddColumn()">+ Coluna</button>
+            <button class="btn btn-sm btn-red" onclick="tmDeleteLastRow()">- Linha</button>
+            <button class="btn btn-sm btn-red" onclick="tmDeleteLastColumn()">- Coluna</button>
+            <button class="btn btn-sm" onclick="tmEditSheetMeta()" style="margin-left:auto">Renomear</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="tm_thead"></thead>
+              <tbody id="tm_tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      <div class="tm-cota-card" id="tm_cotaCard" style="display:none">
+        <div class="tm-cota-header"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Informacoes de Cota e Adesao</div>
+        <div class="tm-cota-body" id="tm_cotaBody"></div>
+      </div>
+    </div>
+    </div>
   </div>
 
-  <!-- ========= TAB: DUPLICIDADES ========= -->
-  <div class="tab-panel" id="panel-duplicates">
+  <!-- ========= TAB: ANÁLISE (Conflitos + Divergências) ========= -->
+  <div class="tab-panel" id="panel-analise">
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-subtab="duplicates" onclick="goSubTab('analise','duplicates')">Conflitos <span class="sub-tab-badge" id="subBadgeDuplicates" style="display:none"></span></button>
+      <button class="sub-tab" data-subtab="divergences" onclick="goSubTab('analise','divergences')">Divergências <span class="sub-tab-badge" id="subBadgeDivergences" style="display:none"></span></button>
+    </div>
+
+    <div class="sub-tab-panel active" id="subpanel-duplicates">
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Modelos em Conflito (categorias incompatíveis)</div>
       <div class="filter-row">
@@ -961,8 +1025,7 @@ tr:hover .row-actions{opacity:1}
     </div>
   </div>
 
-  <!-- ========= TAB: DIVERGÊNCIAS ========= -->
-  <div class="tab-panel" id="panel-divergences">
+    <div class="sub-tab-panel" id="subpanel-divergences">
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></span> Comparação entre Categorias</div>
       <div class="comp-tabs" id="compTabs"></div>
@@ -970,10 +1033,17 @@ tr:hover .row-actions{opacity:1}
       <div id="compStats" style="display:flex;gap:12px;margin-bottom:16px"></div>
       <div class="comp-section" id="compContent"></div>
     </div>
+    </div>
   </div>
 
-  <!-- ========= TAB: MANUTENÇÃO ========= -->
-  <div class="tab-panel" id="panel-management">
+  <!-- ========= TAB: GESTÃO (Manutenção + Histórico) ========= -->
+  <div class="tab-panel" id="panel-gestao">
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-subtab="management" onclick="goSubTab('gestao','management')">Manutenção <span class="sub-tab-badge" id="subBadgeStaging" style="display:none"></span></button>
+      <button class="sub-tab" data-subtab="history" onclick="goSubTab('gestao','history')">Histórico</button>
+    </div>
+
+    <div class="sub-tab-panel active" id="subpanel-management">
     <div class="staging-bar" id="stagingBar">
       <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;color:var(--amber)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span class="count" id="stagingCount">0</span> alteracao(oes) pendente(s)</span>
       <div style="display:flex;gap:8px">
@@ -1048,10 +1118,9 @@ tr:hover .row-actions{opacity:1}
       </div>
     </div>
     <!-- FIPE DIAGNOSTICS PANEL - moved to Configurações > Base FIPE -->
-  </div>
+    </div>
 
-  <!-- ========= TAB: HISTÓRICO ========= -->
-  <div class="tab-panel" id="panel-history">
+    <div class="sub-tab-panel" id="subpanel-history">
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Histórico de Alterações</div>
       <div class="filter-row">
@@ -1070,6 +1139,7 @@ tr:hover .row-actions{opacity:1}
         </table>
       </div>
       <div id="histPagination" class="pagination"></div>
+    </div>
     </div>
   </div>
 
@@ -1118,59 +1188,6 @@ tr:hover .row-actions{opacity:1}
         <h4>Relatório de Saúde</h4>
         <p>Resumo da integridade da base: duplicidades, divergências e cobertura</p>
         <button class="btn btn-purple export-btn" onclick="exportHealthReport()">Exportar XLSX</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========= TAB: TABELA DE PLANOS ========= -->
-  <div class="tab-panel" id="panel-planos">
-    <div class="card">
-      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div style="display:flex;align-items:center;gap:10px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> Tabela de Planos</div>
-        <button class="btn btn-sm" id="tm_editBtn" onclick="tmToggleEditMode()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao</button>
-      </div>
-      <div class="filter-row" style="margin-bottom:16px">
-        <select id="tm_groupSelect" onchange="tmGroupChanged()"></select>
-        <select id="tm_catSelect" onchange="tmCatChanged()"></select>
-      </div>
-        <!-- Adjustment Panel -->
-        <div class="tm-adj-panel">
-          <span class="tm-adj-label">Ajuste</span>
-          <div class="tm-adj-toggles">
-            <button class="tm-toggle active" id="tm_btnDesc" onclick="tmSetTipo('desconto')">- Desconto</button>
-            <button class="tm-toggle" id="tm_btnAcr" onclick="tmSetTipo('acrescimo')">+ Acrescimo</button>
-          </div>
-          <div class="tm-adj-input">
-            <input type="number" id="tm_pctInput" min="0" max="100" step="0.01" placeholder="0,00" oninput="tmUpdateTable()">
-            <span>%</span>
-            <button class="tm-clear-btn" id="tm_clearBtn" onclick="tmClearPct()" style="display:none">Limpar</button>
-          </div>
-          <span class="tm-adj-badge" id="tm_adjBadge" style="display:none"></span>
-        </div>
-        <!-- Table Card -->
-        <div class="tm-table-card">
-          <div class="tm-table-header">
-            <span id="tm_tableIcon"></span>
-            <span class="tm-table-title" id="tm_tableTitle">Passeio</span>
-            <span class="tm-table-badge" id="tm_tableBadge" style="display:none"></span>
-          </div>
-          <div class="tm-edit-toolbar" id="tm_editToolbar" style="display:none">
-            <button class="btn btn-sm" onclick="tmAddRow()">+ Linha</button>
-            <button class="btn btn-sm" onclick="tmAddColumn()">+ Coluna</button>
-            <button class="btn btn-sm btn-red" onclick="tmDeleteLastRow()">- Linha</button>
-            <button class="btn btn-sm btn-red" onclick="tmDeleteLastColumn()">- Coluna</button>
-            <button class="btn btn-sm" onclick="tmEditSheetMeta()" style="margin-left:auto">Renomear</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead id="tm_thead"></thead>
-              <tbody id="tm_tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      <div class="tm-cota-card" id="tm_cotaCard" style="display:none">
-        <div class="tm-cota-header"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Informacoes de Cota e Adesao</div>
-        <div class="tm-cota-body" id="tm_cotaBody"></div>
       </div>
     </div>
   </div>
@@ -2073,31 +2090,94 @@ function goTab(tab){
   const mainEl = document.getElementById('appMain');
   if(mainEl) mainEl.scrollTo(0,0);
 
+  // Map old sub-tab names to parent tab + sub-tab
+  const subTabMap = {
+    duplicates: { parent: 'analise', sub: 'duplicates' },
+    divergences: { parent: 'analise', sub: 'divergences' },
+    management: { parent: 'gestao', sub: 'management' },
+    history: { parent: 'gestao', sub: 'history' },
+    crlv: { parent: 'consultas', sub: 'crlv' },
+    planos: { parent: 'consultas', sub: 'planos' }
+  };
+
+  let mainTab = tab;
+  let subTab = null;
+
+  if(subTabMap[tab]){
+    mainTab = subTabMap[tab].parent;
+    subTab = subTabMap[tab].sub;
+  }
+
+  // Activate main panel
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  const tabs = document.querySelectorAll('.tab');
-  const tabMap=['overview','crlv','duplicates','divergences','management','history','exports','planos','settings'];
-  const idx = tabMap.indexOf(tab);
-  if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
+  const panel = document.getElementById('panel-'+mainTab);
+  if(panel){
+    panel.classList.add('active');
+    panel.classList.remove('fade-in');void panel.offsetWidth;panel.classList.add('fade-in');
+  }
+
+  // If there's a sub-tab, activate it
+  if(subTab){
+    const parentPanel = document.getElementById('panel-'+mainTab);
+    if(parentPanel){
+      parentPanel.querySelectorAll('.sub-tab-panel').forEach(p=>p.classList.remove('active'));
+      parentPanel.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+      const subPanel = document.getElementById('subpanel-'+subTab);
+      if(subPanel) subPanel.classList.add('active');
+      const subBtn = parentPanel.querySelector('.sub-tab[data-subtab="'+subTab+'"]');
+      if(subBtn) subBtn.classList.add('active');
+    }
+  }
 
   // Update sidebar active state
   document.querySelectorAll('.sidebar-item[data-tab]').forEach(item=>{
-    item.classList.toggle('active', item.dataset.tab===tab);
+    item.classList.toggle('active', item.dataset.tab===mainTab);
   });
 
-  // Fade-in animation for content
-  const panel = document.getElementById('panel-'+tab);
-  if(panel){panel.classList.remove('fade-in');void panel.offsetWidth;panel.classList.add('fade-in');}
+  // Hidden tabs compat
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tabs = document.querySelectorAll('.tab');
+  const tabMapLegacy=['overview','crlv','duplicates','divergences','management','history','exports','planos','settings'];
+  const idx = tabMapLegacy.indexOf(tab);
+  if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
 
-  if(tab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
-  if(tab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
-  if(tab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
-  if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
-  if(tab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
-  if(tab==='crlv'){crlvLoadHistory();}
-  if(tab==='planos'){tmInit();}
-  if(tab==='settings'){renderSettingsUsers();}
+  // Trigger renders based on actual content tab
+  const effectiveTab = subTab || mainTab;
+  if(effectiveTab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
+  if(effectiveTab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(effectiveTab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
+  if(effectiveTab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
+  if(effectiveTab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
+  if(effectiveTab==='crlv'){crlvLoadHistory();}
+  if(effectiveTab==='planos'){tmInit();}
+  if(effectiveTab==='settings'){renderSettingsUsers();}
+}
+
+function goSubTab(parentTab, subTab){
+  // Reset inactivity timer
+  resetActivityTimer();
+  // Switch sub-tab within a parent panel
+  const parentPanel = document.getElementById('panel-'+parentTab);
+  if(!parentPanel) return;
+
+  parentPanel.querySelectorAll('.sub-tab-panel').forEach(p=>p.classList.remove('active'));
+  parentPanel.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+
+  const subPanel = document.getElementById('subpanel-'+subTab);
+  if(subPanel){
+    subPanel.classList.add('active');
+    subPanel.classList.remove('fade-in');void subPanel.offsetWidth;subPanel.classList.add('fade-in');
+  }
+  const subBtn = parentPanel.querySelector('.sub-tab[data-subtab="'+subTab+'"]');
+  if(subBtn) subBtn.classList.add('active');
+
+  // Trigger renders for the sub-tab content
+  if(subTab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
+  if(subTab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
+  if(subTab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
+  if(subTab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
+  if(subTab==='crlv'){crlvLoadHistory();}
+  if(subTab==='planos'){tmInit();}
 }
 
 function resetTabFilters(){
@@ -7521,42 +7601,61 @@ function closeMobileSidebar(){
 
 function updateSidebarBadges(){
   // Duplicates badge - show only REAL problematic duplicates
-  const dupBadge = document.getElementById('badgeDuplicates');
-  if(dupBadge){
-    const count = DUPLICATES_REAL?DUPLICATES_REAL.length:0;
-    if(count>0){
-      dupBadge.textContent = count>999?'999+':count.toLocaleString();
-      dupBadge.style.display='';
-      dupBadge.classList.add('badge-pulse');
-      setTimeout(()=>dupBadge.classList.remove('badge-pulse'),500);
+  const dupCount = DUPLICATES_REAL?DUPLICATES_REAL.length:0;
+  const subDupBadge = document.getElementById('subBadgeDuplicates');
+  if(subDupBadge){
+    if(dupCount>0){
+      subDupBadge.textContent = dupCount>999?'999+':dupCount.toLocaleString();
+      subDupBadge.style.display='';
     } else {
-      dupBadge.style.display='none';
+      subDupBadge.style.display='none';
     }
   }
   // Divergences badge - show errors + review
-  const divBadge = document.getElementById('badgeDivergences');
-  if(divBadge){
-    const count = (DIVERGENCES_ERRORS?DIVERGENCES_ERRORS.length:0) + (DIVERGENCES_REVIEW?DIVERGENCES_REVIEW.length:0);
-    if(count>0){
-      divBadge.textContent = count>999?'999+':count.toLocaleString();
-      divBadge.style.display='';
-      divBadge.classList.add('badge-pulse');
-      setTimeout(()=>divBadge.classList.remove('badge-pulse'),500);
+  const divCount = (DIVERGENCES_ERRORS?DIVERGENCES_ERRORS.length:0) + (DIVERGENCES_REVIEW?DIVERGENCES_REVIEW.length:0);
+  const subDivBadge = document.getElementById('subBadgeDivergences');
+  if(subDivBadge){
+    if(divCount>0){
+      subDivBadge.textContent = divCount>999?'999+':divCount.toLocaleString();
+      subDivBadge.style.display='';
     } else {
-      divBadge.style.display='none';
+      subDivBadge.style.display='none';
+    }
+  }
+  // Análise sidebar badge (unified: conflitos + divergências)
+  const analiseBadge = document.getElementById('badgeAnalise');
+  if(analiseBadge){
+    const total = dupCount + divCount;
+    if(total>0){
+      analiseBadge.textContent = total>999?'999+':total.toLocaleString();
+      analiseBadge.style.display='';
+      analiseBadge.classList.add('badge-pulse');
+      setTimeout(()=>analiseBadge.classList.remove('badge-pulse'),500);
+    } else {
+      analiseBadge.style.display='none';
     }
   }
   // Staging badge
-  const stagBadge = document.getElementById('badgeStaging');
-  if(stagBadge){
-    const count = STAGING&&STAGING.ops?STAGING.ops.length:0;
-    if(count>0){
-      stagBadge.textContent = count;
-      stagBadge.style.display='';
-      stagBadge.classList.add('badge-pulse');
-      setTimeout(()=>stagBadge.classList.remove('badge-pulse'),500);
+  const stagCount = STAGING&&STAGING.ops?STAGING.ops.length:0;
+  const subStagBadge = document.getElementById('subBadgeStaging');
+  if(subStagBadge){
+    if(stagCount>0){
+      subStagBadge.textContent = stagCount;
+      subStagBadge.style.display='';
     } else {
-      stagBadge.style.display='none';
+      subStagBadge.style.display='none';
+    }
+  }
+  // Gestão sidebar badge
+  const gestaoBadge = document.getElementById('badgeGestao');
+  if(gestaoBadge){
+    if(stagCount>0){
+      gestaoBadge.textContent = stagCount;
+      gestaoBadge.style.display='';
+      gestaoBadge.classList.add('badge-pulse');
+      setTimeout(()=>gestaoBadge.classList.remove('badge-pulse'),500);
+    } else {
+      gestaoBadge.style.display='none';
     }
   }
 }
@@ -8002,8 +8101,8 @@ function applyAccessLevels(){
   // Sidebar visibility based on nivel
   const sidebarItems=document.querySelectorAll('.sidebar-item[data-tab]');
   const access={
-    admin:['overview','crlv','duplicates','divergences','management','history','exports','planos'],
-    operador:['overview','crlv','history','exports','planos']
+    admin:['overview','analise','gestao','consultas','exports'],
+    operador:['overview','consultas','exports']
   };
   const allowed=access[nivel]||access.operador;
   sidebarItems.forEach(item=>{
