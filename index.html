@@ -5257,10 +5257,17 @@ function openEditCategory(cat){
 
 async function editCategoryAno(cat, newAno, oldAno){
   try {
-    // Find category ID
-    const catId = window._catIdMap && window._catIdMap[cat];
+    // Find category ID - try local map first, then query Supabase
+    let catId = window._catIdMap && window._catIdMap[cat];
+    if(!catId){
+      // Fallback: query Supabase directly by name
+      const rows = await supabase.select('categorias', { filter: 'nome=eq.'+encodeURIComponent(cat), select: 'id' });
+      if(rows && rows.length > 0) catId = rows[0].id;
+    }
     if(catId){
       await supabase.update('categorias', { ano_minimo: newAno }, 'id=eq.'+catId);
+    } else {
+      throw new Error('Categoria nao encontrada no banco');
     }
     // Update local cache
     CAT_ANO_MINIMO[cat] = newAno;
@@ -5272,7 +5279,7 @@ async function editCategoryAno(cat, newAno, oldAno){
     console.warn('editCategoryAno error:', e);
     // Fallback: at least update local
     CAT_ANO_MINIMO[cat] = newAno;
-    showToast('Ano atualizado localmente (erro ao salvar no servidor)', 'warning');
+    showToast('Ano atualizado localmente (erro ao salvar no servidor): '+e.message, 'warning');
     renderOverviewTable();
   }
 }
