@@ -9847,12 +9847,14 @@ const COB_STORAGE_KEY = 'avp-coberturas-data';
 const COB_DEFAULT_DATA = {
   grupos: [
     { id: 'passeio', nome: 'Passeio', icon: 'car' },
+    { id: 'start', nome: 'Start', icon: 'car' },
     { id: 'truck', nome: 'Truck', icon: 'truck' }
   ],
   planos: [
     { id: 'basico', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'passeio' },
     { id: 'vip', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'passeio' },
     { id: 'top', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'passeio' },
+    { id: 'start', nome: 'Start', cor: 'green', ordem: 1, cssClass: 'plan-default', grupo: 'start' },
     { id: 'basico_truck', nome: 'Basico Truck', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'truck' },
     { id: 'vip_truck', nome: 'VIP Truck', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'truck' },
     { id: 'top_truck', nome: 'TOP Truck', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'truck' }
@@ -9880,6 +9882,29 @@ const COB_DEFAULT_DATA = {
     { id: 'cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'passeio', valores: { basico: null, vip: 'Ate R$50.000,00 em danos materiais', top: 'Ate R$100.000,00 em danos materiais' }},
     { id: 'vidros_farois', nome: 'Cobertura Vidros e Farois', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: null, vip: '50% em vidros, farois, lanternas e retrovisores. Carencia 60 dias', top: '70% em vidros, farois, lanternas e retrovisores. Carencia 60 dias' }},
     { id: 'veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, grupo: 'passeio', valores: { basico: null, vip: null, top: 'Ate 30 dias' }},
+    // ====== START ======
+    { id: 'st_sos_pneu', nome: 'SOS Pneu', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: null }},
+    { id: 'st_guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, grupo: 'start', valores: { start: null }},
+    { id: 'st_auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Ate R$70,00' }},
+    { id: 'st_guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Em caso de colisao' }},
+    { id: 'st_auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Abertura do veiculo' }},
+    { id: 'st_assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Sim' }},
+    { id: 'st_retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Ate R$100,00 por pessoa' }},
+    { id: 'st_hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Maximo 1 dia' }},
+    { id: 'st_guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, grupo: 'start', valores: { start: 'Ate 500km total anual. 1 acionamento por mes' }},
+    { id: 'st_assistencia_funeral', nome: 'Assistencia Funeral', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: null }},
+    { id: 'st_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Ate 100% da FIPE' }},
+    { id: 'st_fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Queda de arvore e granizo' }},
+    { id: 'st_roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Ate 100% da FIPE' }},
+    { id: 'st_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Apenas decorrente de colisao' }},
+    { id: 'st_cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Sim' }},
+    { id: 'st_perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: 'Ate 100% da FIPE' }},
+    { id: 'st_clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'start', valores: { start: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'st_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'start', valores: { start: 'App exclusivo para solicitacoes, boletos e beneficios' }},
+    { id: 'st_cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'start', valores: { start: null }},
+    { id: 'st_vidros_farois', nome: 'Cobertura Vidros e Farois', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: null }},
+    { id: 'st_veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, grupo: 'start', valores: { start: null }},
+    { id: 'st_parabrisa', nome: 'Para-brisa', categoria: 'cobertura', destaque: false, grupo: 'start', valores: { start: '50% - Carencia 60 dias da afiliacao' }},
     // ====== TRUCK ======
     { id: 'tk_cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Sim', vip_truck: 'Sim', top_truck: 'Sim' }},
     { id: 'tk_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate 100% da FIPE', vip_truck: 'Ate 100% da FIPE', top_truck: 'Ate 100% da FIPE' }},
@@ -9905,6 +9930,7 @@ const COB_DEFAULT_DATA = {
   // Items that are key differentiators per group
   destaques: {
     passeio: ['guincho_pane', 'cobertura_terceiros', 'veiculo_reserva'],
+    start: ['st_guincho_pane', 'st_cobertura_terceiros', 'st_veiculo_reserva'],
     truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor']
   }
 };
