@@ -9645,7 +9645,7 @@ function tmStartEditCell(td,ri,ci,isNumeric){
   input.type=isNumeric?'number':'text';
   input.step='0.01';
   input.value=raw;
-  input.style.cssText='width:100%;padding:6px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text1);font-size:.8rem;font-family:inherit;text-align:'+(ci===0?'left':'right');
+  input.style.cssText='width:80px;max-width:100%;padding:3px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.8rem;font-family:inherit;text-align:'+(ci===0?'left;width:auto;max-width:180px':'right')+';outline:none;height:auto';
   td.innerHTML='';td.appendChild(input);
   input.focus();input.select();
   var commit=function(){
@@ -9665,7 +9665,7 @@ function tmStartEditHeader(th,ci){
   var raw=sh.colunas[ci];
   var input=document.createElement('input');
   input.type='text';input.value=raw;
-  input.style.cssText='width:100%;padding:4px 8px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);color:var(--text1);font-size:.7rem;font-family:inherit;text-align:center';
+  input.style.cssText='width:auto;max-width:100%;padding:3px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.7rem;font-family:inherit;text-align:center;outline:none;height:auto';
   th.innerHTML='';th.appendChild(input);
   input.focus();input.select();
   var commit=function(){sh.colunas[ci]=input.value||raw;tmUpdateTable();tmScheduleSave();};
