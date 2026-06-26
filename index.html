@@ -2553,18 +2553,7 @@ function renderRecentActivity(){
         <div class="activity-meta">${a.meta}${a.time?' · '+a.time:''}</div>
       </div>
     </div>
-  `).join('') + `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;border-top:1px solid var(--border-light);margin-top:8px"><a href="#" onclick="goTab('history');return false" style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:500">Ver historico completo →</a><span id="activityLibPill"></span></div>`;
-  // Render lib pill
-  setTimeout(function(){
-    const pill=document.getElementById('activityLibPill');
-    if(!pill) return;
-    const activeCount=TEMP_RELEASES.filter(t=>((t.status||'Ativa').toLowerCase()==='ativa')).length;
-    if(activeCount>0){
-      pill.innerHTML='<a href="#" onclick="goTab(\'management\');setTimeout(function(){var el=document.getElementById(\'tempReleasesCard\');if(el)el.scrollIntoView({behavior:\'smooth\'});},200);return false" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber);font-size:.72rem;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background=\'var(--amber)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--amber-bg)\';this.style.color=\'var(--amber)\'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'+activeCount+' liberacao(oes) ativa(s) →</a>';
-    } else {
-      pill.innerHTML='';
-    }
-  },10);
+  `).join('') + `<div style="text-align:center;padding:14px 0 4px;margin-top:12px"><a href="#" onclick="goTab('history');return false" style="display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--text3);text-decoration:none;font-weight:500;padding:6px 14px;border-radius:var(--radius);border:1px solid var(--border);transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historico completo</a></div>`;
 }
 
 function getModelsForCat(catName){
