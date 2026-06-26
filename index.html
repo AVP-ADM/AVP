@@ -688,6 +688,20 @@ tr:hover .row-actions{opacity:1}
 .cob-grupo-tab-count{font-size:.65rem;font-weight:500;color:var(--text3);background:var(--surface-2);padding:2px 6px;border-radius:10px}
 .cob-grupo-tab.active .cob-grupo-tab-count{background:rgba(27,122,61,.12);color:var(--accent)}
 
+/* ========= CONSULTA DE PLACA (IFRAME) ========= */
+.placafipe-wrap{position:relative;height:calc(100vh - 120px);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface);border:1px solid var(--border)}
+.placafipe-toolbar{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(var(--surface-rgb,255,255,255),.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+[data-theme="dark"] .placafipe-toolbar{background:rgba(10,22,40,.85)}
+.placafipe-toolbar-title{font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.placafipe-toolbar-actions{display:flex;align-items:center;gap:2px}
+.placafipe-toolbar-actions button,.placafipe-toolbar-actions a{background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:var(--radius);color:var(--text3);display:flex;align-items:center;transition:all .15s;text-decoration:none}
+.placafipe-toolbar-actions button:hover,.placafipe-toolbar-actions a:hover{background:var(--surface-2);color:var(--text1)}
+.placafipe-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:var(--surface);z-index:5}
+.placafipe-loading span{font-size:.82rem;color:var(--text2)}
+.placafipe-iframe-crop{width:100%;height:100%;overflow:hidden;padding-top:38px}
+.placafipe-iframe-crop iframe{width:100%;height:calc(100% + 60px);border:none;margin-top:-60px}
+[data-theme="dark"] .placafipe-iframe-crop iframe{filter:brightness(.92) contrast(1.05)}
+
 /* ========= COBERTURAS MANAGER DRAWER ========= */
 .cob-mgr-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .cob-mgr-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);transition:all .15s}
@@ -1156,38 +1170,25 @@ tr:hover .row-actions{opacity:1}
 
     <!-- ========= SUB-TAB: CONSULTA DE PLACA ========= -->
     <div class="sub-tab-panel" id="subpanel-placafipe">
-      <div class="card" style="padding:0;overflow:hidden;margin-bottom:0">
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="width:32px;height:32px;border-radius:8px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="22" height="14" rx="3"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="12" x2="12" y2="12.01"/><line x1="17" y1="12" x2="17" y2="12.01"/></svg></span>
-            <div>
-              <div style="font-size:.9rem;font-weight:700;color:var(--text1)">Consulta de Placa</div>
-              <div style="font-size:.7rem;color:var(--text3)">Consulte informacoes do veiculo pela placa</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <button class="btn btn-sm" onclick="placaFipeReload()" title="Atualizar">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Atualizar
-            </button>
-            <button class="btn btn-sm" onclick="placaFipeFullscreen()" title="Tela cheia">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-              Tela cheia
-            </button>
-            <a href="https://placafipe.com.br/" target="_blank" class="btn btn-sm" style="text-decoration:none">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              Abrir no site
-            </a>
+      <div class="placafipe-wrap">
+        <!-- Toolbar flutuante -->
+        <div class="placafipe-toolbar">
+          <span class="placafipe-toolbar-title">Consulta de Placa</span>
+          <div class="placafipe-toolbar-actions">
+            <button onclick="placaFipeReload()" title="Atualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+            <button onclick="placaFipeFullscreen()" title="Tela cheia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+            <a href="https://placafipe.com.br/" target="_blank" title="Abrir no site oficial"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
           </div>
         </div>
         <!-- Loading -->
-        <div id="placafipe_loading" style="display:flex;align-items:center;justify-content:center;padding:60px;flex-direction:column;gap:12px">
+        <div id="placafipe_loading" class="placafipe-loading">
           <div class="spinner" style="width:24px;height:24px"></div>
-          <span style="font-size:.82rem;color:var(--text2)">Carregando consulta...</span>
+          <span>Carregando consulta...</span>
         </div>
-        <!-- iframe -->
-        <iframe id="placafipe_iframe" src="" style="width:100%;height:calc(100vh - 200px);border:none;display:none" allowfullscreen></iframe>
+        <!-- iframe com crop do header -->
+        <div class="placafipe-iframe-crop">
+          <iframe id="placafipe_iframe" src="" allowfullscreen></iframe>
+        </div>
       </div>
     </div>
 
@@ -10879,7 +10880,6 @@ function placaFipeInit(){
   if(!iframe) return;
   iframe.onload = function(){
     if(loading) loading.style.display = 'none';
-    iframe.style.display = '';
   };
   iframe.src = 'https://placafipe.com.br/';
   _placaFipeLoaded = true;
@@ -10889,8 +10889,7 @@ function placaFipeReload(){
   const iframe = document.getElementById('placafipe_iframe');
   const loading = document.getElementById('placafipe_loading');
   if(!iframe) return;
-  if(loading){loading.style.display='flex';}
-  iframe.style.display='none';
+  if(loading) loading.style.display = 'flex';
   iframe.src = 'https://placafipe.com.br/';
 }
 
