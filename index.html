@@ -615,6 +615,81 @@ tr:hover .row-actions{opacity:1}
 .tm-cota-val{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
 @media(max-width:900px){.tm-layout{grid-template-columns:1fr}.tm-sidebar{display:none}}
 
+/* ========= COBERTURAS (PLANOS) STYLES ========= */
+.cob-selector{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;flex-wrap:wrap}
+.cob-selector-label{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.cob-selector-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cob-slot{position:relative;display:flex;align-items:center;gap:6px}
+.cob-slot select{padding:7px 28px 7px 10px;font-size:.78rem;font-weight:600;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--surface);color:var(--text1);cursor:pointer;appearance:none;-webkit-appearance:none;min-width:120px;transition:all .15s}
+.cob-slot select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,122,61,.1)}
+.cob-slot-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3)}
+.cob-slot-vs{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.cob-slot-remove{background:none;border:none;cursor:pointer;padding:2px;border-radius:50%;color:var(--text3);transition:all .15s;display:flex;align-items:center;justify-content:center}
+.cob-slot-remove:hover{color:var(--red);background:var(--red-bg,rgba(239,68,68,.08))}
+.cob-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px}
+.cob-hero-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden;transition:all .2s;position:relative}
+.cob-hero-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.cob-hero-card-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cob-hero-card-name{font-size:.95rem;font-weight:700;color:var(--text1)}
+.cob-hero-card-badge{font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.04em}
+.cob-hero-card.plan-basico .cob-hero-card-header{border-top:3px solid var(--blue)}
+.cob-hero-card.plan-basico .cob-hero-card-name{color:var(--blue)}
+.cob-hero-card.plan-basico .cob-hero-card-badge{background:var(--blue-bg);color:var(--blue)}
+.cob-hero-card.plan-vip .cob-hero-card-header{border-top:3px solid var(--purple)}
+.cob-hero-card.plan-vip .cob-hero-card-name{color:var(--purple)}
+.cob-hero-card.plan-vip .cob-hero-card-badge{background:var(--purple-light);color:var(--purple)}
+.cob-hero-card.plan-top .cob-hero-card-header{border-top:3px solid var(--amber)}
+.cob-hero-card.plan-top .cob-hero-card-name{color:var(--amber)}
+.cob-hero-card.plan-top .cob-hero-card-badge{background:var(--amber-bg);color:var(--amber)}
+.cob-hero-card.plan-default .cob-hero-card-header{border-top:3px solid var(--accent)}
+.cob-hero-card.plan-default .cob-hero-card-name{color:var(--accent)}
+.cob-hero-card.plan-default .cob-hero-card-badge{background:var(--green-bg);color:var(--accent)}
+.cob-hero-card-body{padding:16px 20px}
+.cob-hero-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+.cob-hero-item:last-child{border-bottom:none}
+.cob-hero-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface-2)}
+.cob-hero-item-icon svg{width:16px;height:16px}
+.cob-hero-item-info{flex:1;min-width:0}
+.cob-hero-item-label{font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.cob-hero-item-value{font-size:.88rem;font-weight:700;color:var(--text1)}
+.cob-hero-item.disabled .cob-hero-item-value{color:var(--text3);font-weight:500;font-style:italic}
+.cob-hero-item.disabled .cob-hero-item-icon{opacity:.4}
+.cob-hero-item.highlight .cob-hero-item-icon{background:var(--green-bg)}
+.cob-hero-item.highlight .cob-hero-item-icon svg{color:var(--green)}
+.cob-hero-item.highlight .cob-hero-item-value{color:var(--green)}
+.cob-table-section{margin-top:4px}
+.cob-toggle-table{width:100%;justify-content:center;padding:10px;border:1px dashed var(--border);background:var(--bg);color:var(--text2);font-weight:500}
+.cob-toggle-table:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.cob-toggle-table.expanded svg{transform:rotate(180deg)}
+.cob-full-table{margin-top:14px;animation:fadeIn .2s ease-out}
+.cob-full-table table th{position:sticky;top:0;z-index:2}
+.cob-full-table table td.cob-diff{background:var(--amber-bg);font-weight:600}
+.cob-full-table table td.cob-disabled{color:var(--text3);font-style:italic}
+.cob-full-table .cob-check{color:var(--green);display:inline-flex;align-items:center}
+.cob-full-table .cob-cross{color:var(--red);display:inline-flex;align-items:center}
+@media(max-width:768px){.cob-hero-grid{grid-template-columns:1fr}.cob-selector{flex-direction:column;align-items:flex-start}}
+
+/* ========= COBERTURAS MANAGER DRAWER ========= */
+.cob-mgr-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.cob-mgr-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);transition:all .15s}
+.cob-mgr-item:hover{border-color:var(--blue);box-shadow:var(--shadow)}
+.cob-mgr-item-color{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.cob-mgr-item-name{flex:1;font-size:.82rem;font-weight:600;color:var(--text1)}
+.cob-mgr-item-count{font-size:.7rem;color:var(--text3)}
+.cob-mgr-item-actions{display:flex;gap:4px}
+.cob-mgr-item-actions button{background:none;border:none;cursor:pointer;padding:4px;border-radius:var(--radius);color:var(--text3);transition:all .15s;display:flex;align-items:center}
+.cob-mgr-item-actions button:hover{background:var(--bg);color:var(--text1)}
+.cob-mgr-item-actions button.danger:hover{color:var(--red);background:var(--red-bg,rgba(239,68,68,.08))}
+.cob-form{display:flex;flex-direction:column;gap:14px}
+.cob-form label{font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;display:block}
+.cob-form input,.cob-form select{width:100%}
+.cob-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cob-cov-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;padding:4px 0}
+.cob-cov-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border-light);border-radius:var(--radius);background:var(--bg);font-size:.78rem}
+.cob-cov-item label{font-size:.72rem;color:var(--text2);flex:1;margin:0;text-transform:none;letter-spacing:0}
+.cob-cov-item input[type="text"]{flex:1;padding:5px 8px;font-size:.76rem;height:auto;min-width:0}
+.cob-cov-item select{padding:5px 8px;font-size:.76rem;height:auto;min-width:80px}
+
 /* ========= SIDEBAR SUB-ITEMS ========= */
 .sidebar-group{margin-bottom:2px}
 .sidebar-group .sidebar-item.has-children .si-expand{width:16px;height:16px;display:flex;align-items:center;justify-content:center;margin-left:auto;transition:transform .2s;flex-shrink:0}
@@ -772,6 +847,9 @@ tr:hover .row-actions{opacity:1}
             <button class="sidebar-sub-item" data-subtab="crlv" onclick="goTab('crlv')">
               <span class="si-text">Consultar Veiculo</span>
               <span class="si-tag-beta">BETA</span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="coberturas" onclick="goTab('coberturas')">
+              <span class="si-text">Coberturas</span>
             </button>
           </div>
         </div>
@@ -1016,6 +1094,54 @@ tr:hover .row-actions{opacity:1}
       </div>
     </div>
     </div>
+
+    <!-- ========= SUB-TAB: COBERTURAS ========= -->
+    <div class="sub-tab-panel" id="subpanel-coberturas">
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            Coberturas dos Planos
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn btn-sm btn-green" id="cob_manageBtn" onclick="cobOpenManager()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Gerenciar Planos
+            </button>
+          </div>
+        </div>
+
+        <!-- Seletor Híbrido de Planos -->
+        <div class="cob-selector" id="cob_selector">
+          <span class="cob-selector-label">Comparar:</span>
+          <div class="cob-selector-slots" id="cob_slots"></div>
+          <button class="btn btn-sm" id="cob_addSlot" onclick="cobAddSlot()" style="display:none">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar
+          </button>
+        </div>
+
+        <!-- Zona 1: Cards de Destaque (Diferenciais) -->
+        <div class="cob-hero-grid" id="cob_heroGrid"></div>
+
+        <!-- Zona 2: Tabela Comparativa Completa -->
+        <div class="cob-table-section">
+          <button class="btn btn-sm cob-toggle-table" id="cob_toggleTable" onclick="cobToggleTable()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="6 9 12 15 18 9"/></svg>
+            Ver todas as coberturas
+          </button>
+          <div class="cob-full-table" id="cob_fullTable" style="display:none">
+            <div class="table-wrap">
+              <table id="cob_compareTable">
+                <thead id="cob_thead"></thead>
+                <tbody id="cob_tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ========= TAB: ANÁLISE (Conflitos + Divergências) ========= -->
@@ -2106,7 +2232,8 @@ function goTab(tab){
     management: { parent: 'gestao', sub: 'management' },
     history: { parent: 'gestao', sub: 'history' },
     crlv: { parent: 'consultas', sub: 'crlv' },
-    planos: { parent: 'consultas', sub: 'planos' }
+    planos: { parent: 'consultas', sub: 'planos' },
+    coberturas: { parent: 'consultas', sub: 'coberturas' }
   };
 
   let mainTab = tab;
@@ -2159,6 +2286,7 @@ function goTab(tab){
   if(effectiveTab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
   if(effectiveTab==='crlv'){crlvLoadHistory();}
   if(effectiveTab==='planos'){tmInit();}
+  if(effectiveTab==='coberturas'){cobRender();}
   if(effectiveTab==='settings'){renderSettingsUsers();}
 }
 
@@ -9708,6 +9836,564 @@ function tmLoadDefaultData(){
   _tmCurrentKey='PASSEIO';
 }
 // ========= FIM TABELA MASTER =========
+
+// ========= COBERTURAS DOS PLANOS =========
+// Data storage (localStorage-based, ready for Supabase migration)
+const COB_STORAGE_KEY = 'avp-coberturas-data';
+
+// Default data based on provided plan info
+const COB_DEFAULT_DATA = {
+  planos: [
+    { id: 'basico', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico' },
+    { id: 'vip', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip' },
+    { id: 'top', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo' }
+  ],
+  coberturas: [
+    { id: 'sos_pneu', nome: 'SOS Pneu', categoria: 'assistencia', destaque: false, valores: { basico: 'Limitado 50km', vip: 'Limitado 50km', top: 'Limitado 50km' }},
+    { id: 'guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, valores: { basico: '250km (125km ida + 125km volta)', vip: '500km (250km ida + 250km volta)', top: '1.000km (500km ida + 500km volta)' }},
+    { id: 'auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate R$70,00', vip: 'Ate R$70,00', top: 'Ate R$70,00' }},
+    { id: 'guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, valores: { basico: 'Em caso de colisao', vip: 'Em caso de colisao', top: 'Em caso de colisao' }},
+    { id: 'auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, valores: { basico: 'Abertura do veiculo', vip: 'Abertura do veiculo', top: 'Abertura do veiculo' }},
+    { id: 'assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
+    { id: 'retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate R$100,00 por pessoa', vip: 'Ate R$100,00 por pessoa', top: 'Ate R$100,00 por pessoa' }},
+    { id: 'hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, valores: { basico: 'Maximo 1 dia', vip: 'Maximo 1 dia', top: 'Maximo 1 dia' }},
+    { id: 'guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate credenciada mais proxima', vip: 'Ate credenciada mais proxima', top: 'Ate credenciada mais proxima' }},
+    { id: 'assistencia_funeral', nome: 'Assistencia Funeral', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate R$2.000 (falecimento acidental)', vip: 'Ate R$2.000 (falecimento acidental)', top: 'Ate R$2.000 (falecimento acidental)' }},
+    { id: 'colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, valores: { basico: 'Queda de arvore e granizo', vip: 'Queda de arvore e granizo', top: 'Queda de arvore e granizo' }},
+    { id: 'roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, valores: { basico: 'Apenas decorrente de colisao', vip: 'Apenas decorrente de colisao', top: 'Apenas decorrente de colisao' }},
+    { id: 'cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
+    { id: 'perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, valores: { basico: 'Descontos exclusivos, cashback e parceiros locais', vip: 'Descontos exclusivos, cashback e parceiros locais', top: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, valores: { basico: 'App exclusivo para solicitacoes, boletos e beneficios', vip: 'App exclusivo para solicitacoes, boletos e beneficios', top: 'App exclusivo para solicitacoes, boletos e beneficios' }},
+    { id: 'cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, valores: { basico: null, vip: 'Ate R$50.000,00 em danos materiais', top: 'Ate R$100.000,00 em danos materiais' }},
+    { id: 'vidros_farois', nome: 'Cobertura Vidros e Farois', categoria: 'cobertura', destaque: false, valores: { basico: null, vip: '50% em vidros, farois, lanternas e retrovisores. Carencia 60 dias', top: '70% em vidros, farois, lanternas e retrovisores. Carencia 60 dias' }},
+    { id: 'veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, valores: { basico: null, vip: null, top: 'Ate 30 dias' }}
+  ],
+  // Items that are key differentiators (shown in hero cards)
+  destaques: ['guincho_pane', 'cobertura_terceiros', 'veiculo_reserva']
+};
+
+let _cobData = null;
+let _cobSelectedPlanos = [];
+let _cobTableVisible = false;
+
+function cobLoadData() {
+  try {
+    const stored = localStorage.getItem(COB_STORAGE_KEY);
+    if (stored) {
+      _cobData = JSON.parse(stored);
+      // Ensure structure integrity
+      if (!_cobData.planos || !_cobData.coberturas || !_cobData.destaques) {
+        _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
+      }
+    } else {
+      _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
+    }
+  } catch(e) {
+    _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
+  }
+}
+
+function cobSaveData() {
+  try {
+    localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
+  } catch(e) { console.warn('Coberturas save failed:', e); }
+}
+
+function cobRender() {
+  if (!_cobData) cobLoadData();
+  // Show manage button for admin users
+  const manageBtn = document.getElementById('cob_manageBtn');
+  if (manageBtn) {
+    const perfil = typeof currentProfile !== 'undefined' ? currentProfile : null;
+    const isAdmin = perfil && (perfil.nivel === 'admin' || perfil.setor === 'TI');
+    manageBtn.style.display = isAdmin ? '' : 'none';
+  }
+  // Initialize selected planos (default: all, max 4)
+  if (_cobSelectedPlanos.length === 0) {
+    _cobSelectedPlanos = _cobData.planos.slice(0, 4).map(p => p.id);
+  }
+  cobRenderSelector();
+  cobRenderHeroCards();
+  cobRenderFullTable();
+}
+
+function cobRenderSelector() {
+  const slotsEl = document.getElementById('cob_slots');
+  const addBtn = document.getElementById('cob_addSlot');
+  if (!slotsEl) return;
+
+  let html = '';
+  _cobSelectedPlanos.forEach((planoId, idx) => {
+    if (idx > 0) html += '<span class="cob-slot-vs">vs</span>';
+    html += '<div class="cob-slot">';
+    html += '<select onchange="cobChangeSlot(' + idx + ', this.value)">';
+    _cobData.planos.forEach(p => {
+      html += '<option value="' + p.id + '"' + (p.id === planoId ? ' selected' : '') + '>' + p.nome + '</option>';
+    });
+    html += '</select>';
+    html += '<span class="cob-slot-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>';
+    if (_cobSelectedPlanos.length > 1) {
+      html += '<button class="cob-slot-remove" onclick="cobRemoveSlot(' + idx + ')" title="Remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    }
+    html += '</div>';
+  });
+  slotsEl.innerHTML = html;
+
+  // Show add button if less than max and there are more planos available
+  if (addBtn) {
+    addBtn.style.display = (_cobSelectedPlanos.length < 4 && _cobSelectedPlanos.length < _cobData.planos.length) ? '' : 'none';
+  }
+}
+
+function cobChangeSlot(idx, newVal) {
+  _cobSelectedPlanos[idx] = newVal;
+  cobRenderSelector();
+  cobRenderHeroCards();
+  cobRenderFullTable();
+}
+
+function cobRemoveSlot(idx) {
+  _cobSelectedPlanos.splice(idx, 1);
+  cobRenderSelector();
+  cobRenderHeroCards();
+  cobRenderFullTable();
+}
+
+function cobAddSlot() {
+  // Find first plano not already selected
+  const available = _cobData.planos.filter(p => !_cobSelectedPlanos.includes(p.id));
+  if (available.length > 0) {
+    _cobSelectedPlanos.push(available[0].id);
+    cobRenderSelector();
+    cobRenderHeroCards();
+    cobRenderFullTable();
+  }
+}
+
+function cobGetPlano(id) {
+  return _cobData.planos.find(p => p.id === id);
+}
+
+function cobRenderHeroCards() {
+  const grid = document.getElementById('cob_heroGrid');
+  if (!grid) return;
+
+  const destaqueItems = _cobData.coberturas.filter(c => _cobData.destaques.includes(c.id));
+  const iconMap = {
+    guincho_pane: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6h5l3 5v6h-2"/><path d="M8 17H5"/><path d="M16 17h-2"/><path d="M1 1h10v14H1z"/></svg>',
+    cobertura_terceiros: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    veiculo_reserva: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+  };
+
+  let html = '';
+  _cobSelectedPlanos.forEach(planoId => {
+    const plano = cobGetPlano(planoId);
+    if (!plano) return;
+    const cssClass = plano.cssClass || 'plan-default';
+    html += '<div class="cob-hero-card ' + cssClass + '">';
+    html += '<div class="cob-hero-card-header">';
+    html += '<span class="cob-hero-card-name">' + plano.nome + '</span>';
+    if (plano.badge) {
+      html += '<span class="cob-hero-card-badge">' + plano.badge + '</span>';
+    }
+    html += '</div>';
+    html += '<div class="cob-hero-card-body">';
+
+    destaqueItems.forEach(cob => {
+      const valor = cob.valores[planoId];
+      const hasValue = valor !== null && valor !== undefined && valor !== '';
+      const isHighlight = hasValue;
+      const itemClass = hasValue ? 'highlight' : 'disabled';
+      const icon = iconMap[cob.id] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+
+      html += '<div class="cob-hero-item ' + itemClass + '">';
+      html += '<div class="cob-hero-item-icon">' + icon + '</div>';
+      html += '<div class="cob-hero-item-info">';
+      html += '<div class="cob-hero-item-label">' + cob.nome + '</div>';
+      html += '<div class="cob-hero-item-value">' + (hasValue ? valor : 'Nao incluso') + '</div>';
+      html += '</div></div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function cobToggleTable() {
+  _cobTableVisible = !_cobTableVisible;
+  const tableEl = document.getElementById('cob_fullTable');
+  const toggleBtn = document.getElementById('cob_toggleTable');
+  if (tableEl) tableEl.style.display = _cobTableVisible ? '' : 'none';
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('expanded', _cobTableVisible);
+    toggleBtn.innerHTML = (_cobTableVisible
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="18 15 12 9 6 15"/></svg> Ocultar tabela de coberturas'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="6 9 12 15 18 9"/></svg> Ver todas as coberturas');
+  }
+}
+
+function cobRenderFullTable() {
+  const thead = document.getElementById('cob_thead');
+  const tbody = document.getElementById('cob_tbody');
+  if (!thead || !tbody) return;
+
+  // Header
+  let thHtml = '<tr><th>Cobertura</th>';
+  _cobSelectedPlanos.forEach(planoId => {
+    const plano = cobGetPlano(planoId);
+    if (plano) thHtml += '<th>' + plano.nome + '</th>';
+  });
+  thHtml += '</tr>';
+  thead.innerHTML = thHtml;
+
+  // Body - group by category
+  const categories = [
+    { key: 'assistencia', label: 'Assistencias' },
+    { key: 'cobertura', label: 'Coberturas' },
+    { key: 'beneficio', label: 'Beneficios' }
+  ];
+
+  let tbHtml = '';
+  categories.forEach(cat => {
+    const items = _cobData.coberturas.filter(c => c.categoria === cat.key);
+    if (items.length === 0) return;
+    tbHtml += '<tr><td colspan="' + (_cobSelectedPlanos.length + 1) + '" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">' + cat.label + '</td></tr>';
+
+    items.forEach(cob => {
+      // Check if values differ across selected plans
+      const values = _cobSelectedPlanos.map(pid => cob.valores[pid]);
+      const allSame = values.every(v => v === values[0]);
+      const isDiff = !allSame;
+
+      tbHtml += '<tr>';
+      tbHtml += '<td style="font-weight:500;white-space:nowrap">' + cob.nome + '</td>';
+      _cobSelectedPlanos.forEach(planoId => {
+        const val = cob.valores[planoId];
+        let cellClass = '';
+        if (isDiff) cellClass = 'cob-diff';
+        if (val === null || val === undefined || val === '') cellClass += ' cob-disabled';
+
+        if (val === null || val === undefined || val === '') {
+          tbHtml += '<td class="' + cellClass.trim() + '"><span class="cob-cross"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>';
+        } else if (val === 'Sim') {
+          tbHtml += '<td class="' + cellClass.trim() + '"><span class="cob-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+        } else {
+          tbHtml += '<td class="' + cellClass.trim() + '">' + val + '</td>';
+        }
+      });
+      tbHtml += '</tr>';
+    });
+  });
+
+  tbody.innerHTML = tbHtml;
+}
+// ========= FIM COBERTURAS =========
+
+// ========= COBERTURAS MANAGER (CRUD ADMIN) =========
+let _cobEditingPlan = null; // null = list view, plan id = editing
+
+function cobOpenManager() {
+  _cobEditingPlan = null;
+  cobRenderManagerDrawer();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function cobRenderManagerDrawer() {
+  const content = document.getElementById('drawerContent');
+  if (!content) return;
+
+  if (_cobEditingPlan === null) {
+    // LIST VIEW
+    let html = '<div class="drawer-title">Gerenciar Planos</div>';
+    html += '<div class="drawer-subtitle">Criar, editar ou remover planos e suas coberturas</div>';
+    html += '<div style="margin-bottom:14px"><button class="btn btn-green btn-sm" onclick="cobNewPlan()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo Plano</button></div>';
+    html += '<div class="cob-mgr-list">';
+
+    _cobData.planos.sort((a,b) => a.ordem - b.ordem).forEach(plano => {
+      const cobCount = _cobData.coberturas.filter(c => c.valores[plano.id] !== undefined).length;
+      const corMap = { blue: 'var(--blue)', purple: 'var(--purple)', amber: 'var(--amber)', green: 'var(--green)', red: 'var(--red)' };
+      const dotColor = corMap[plano.cor] || 'var(--text3)';
+      html += '<div class="cob-mgr-item">';
+      html += '<div class="cob-mgr-item-color" style="background:' + dotColor + '"></div>';
+      html += '<span class="cob-mgr-item-name">' + plano.nome + '</span>';
+      html += '<span class="cob-mgr-item-count">' + cobCount + ' coberturas</span>';
+      html += '<div class="cob-mgr-item-actions">';
+      html += '<button onclick="cobEditPlan(\'' + plano.id + '\')" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+      html += '<button class="danger" onclick="cobDeletePlan(\'' + plano.id + '\')" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    // Manage coberturas section
+    html += '<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+    html += '<h4 style="font-size:.85rem;font-weight:600;margin:0">Coberturas Disponiveis</h4>';
+    html += '<button class="btn btn-sm" onclick="cobNewCobertura()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Cobertura</button>';
+    html += '</div>';
+    html += '<div class="cob-cov-list">';
+    _cobData.coberturas.forEach(cob => {
+      const isDestaque = _cobData.destaques.includes(cob.id);
+      html += '<div class="cob-cov-item">';
+      html += '<label>' + cob.nome + '</label>';
+      html += '<span class="badge badge-' + (cob.categoria === 'assistencia' ? 'blue' : cob.categoria === 'cobertura' ? 'green' : 'purple') + '">' + cob.categoria + '</span>';
+      if (isDestaque) html += '<span class="badge badge-amber" style="margin-left:2px">destaque</span>';
+      html += '<button class="cob-slot-remove" onclick="cobDeleteCobertura(\'' + cob.id + '\')" title="Remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    content.innerHTML = html;
+
+  } else {
+    // EDIT PLAN VIEW
+    const isNew = _cobEditingPlan === '__new__';
+    const plano = isNew ? { id: '', nome: '', cor: 'blue', ordem: _cobData.planos.length + 1, cssClass: '', badge: '' } : cobGetPlano(_cobEditingPlan);
+    if (!plano && !isNew) { _cobEditingPlan = null; cobRenderManagerDrawer(); return; }
+
+    let html = '<div style="margin-bottom:16px"><button class="btn btn-sm" onclick="cobBackToList()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Voltar</button></div>';
+    html += '<div class="drawer-title">' + (isNew ? 'Novo Plano' : 'Editar: ' + plano.nome) + '</div>';
+    html += '<div class="cob-form">';
+
+    // Plan name
+    html += '<div><label>Nome do Plano</label>';
+    html += '<input type="text" id="cob_planName" value="' + (plano.nome || '') + '" placeholder="Ex: Premium"></div>';
+
+    // Plan ID (only for new)
+    if (isNew) {
+      html += '<div><label>Identificador (slug)</label>';
+      html += '<input type="text" id="cob_planId" value="" placeholder="Ex: premium (sem espaços)" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,\'\')"></div>';
+    }
+
+    // Color and order
+    html += '<div class="cob-form-row">';
+    html += '<div><label>Cor</label><select id="cob_planCor">';
+    ['blue', 'purple', 'amber', 'green', 'red'].forEach(c => {
+      html += '<option value="' + c + '"' + (plano.cor === c ? ' selected' : '') + '>' + c.charAt(0).toUpperCase() + c.slice(1) + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div><label>Ordem</label><input type="number" id="cob_planOrdem" value="' + (plano.ordem || 1) + '" min="1"></div>';
+    html += '</div>';
+
+    // Badge
+    html += '<div><label>Badge (opcional)</label>';
+    html += '<input type="text" id="cob_planBadge" value="' + (plano.badge || '') + '" placeholder="Ex: Mais completo"></div>';
+
+    // Coberturas values for this plan
+    html += '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">';
+    html += '<label style="margin-bottom:8px;display:block">Valores das Coberturas</label>';
+    html += '<div class="cob-cov-list">';
+    _cobData.coberturas.forEach(cob => {
+      const val = isNew ? '' : (cob.valores[plano.id] || '');
+      const isNull = !isNew && (cob.valores[plano.id] === null || cob.valores[plano.id] === undefined);
+      html += '<div class="cob-cov-item">';
+      html += '<label style="min-width:120px;flex:none">' + cob.nome + '</label>';
+      html += '<select onchange="cobToggleCovValue(this, \'' + cob.id + '\')" style="min-width:90px;flex:none">';
+      html += '<option value="included"' + (!isNull ? ' selected' : '') + '>Incluso</option>';
+      html += '<option value="excluded"' + (isNull ? ' selected' : '') + '>Nao incluso</option>';
+      html += '</select>';
+      html += '<input type="text" class="cob-val-input" data-cob-id="' + cob.id + '" value="' + (isNull ? '' : val) + '" placeholder="Valor/descricao"' + (isNull ? ' disabled style="opacity:.5"' : '') + '>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    // Save button
+    html += '<div style="margin-top:16px;display:flex;gap:10px">';
+    html += '<button class="btn btn-green" onclick="cobSavePlan()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Salvar</button>';
+    html += '<button class="btn" onclick="cobBackToList()">Cancelar</button>';
+    html += '</div></div>';
+
+    content.innerHTML = html;
+  }
+}
+
+function cobToggleCovValue(selectEl, cobId) {
+  const row = selectEl.closest('.cob-cov-item');
+  const input = row.querySelector('.cob-val-input');
+  if (selectEl.value === 'excluded') {
+    input.disabled = true;
+    input.style.opacity = '.5';
+    input.value = '';
+  } else {
+    input.disabled = false;
+    input.style.opacity = '1';
+  }
+}
+
+function cobNewPlan() {
+  _cobEditingPlan = '__new__';
+  cobRenderManagerDrawer();
+}
+
+function cobEditPlan(planId) {
+  _cobEditingPlan = planId;
+  cobRenderManagerDrawer();
+}
+
+function cobBackToList() {
+  _cobEditingPlan = null;
+  cobRenderManagerDrawer();
+}
+
+function cobSavePlan() {
+  const isNew = _cobEditingPlan === '__new__';
+  const nome = document.getElementById('cob_planName').value.trim();
+  const cor = document.getElementById('cob_planCor').value;
+  const ordem = parseInt(document.getElementById('cob_planOrdem').value) || 1;
+  const badge = document.getElementById('cob_planBadge').value.trim();
+
+  if (!nome) { showToast('Informe o nome do plano', 'error'); return; }
+
+  let planId;
+  if (isNew) {
+    planId = document.getElementById('cob_planId').value.trim();
+    if (!planId) { showToast('Informe o identificador do plano', 'error'); return; }
+    if (_cobData.planos.find(p => p.id === planId)) { showToast('Ja existe um plano com esse identificador', 'error'); return; }
+  } else {
+    planId = _cobEditingPlan;
+  }
+
+  // Collect cobertura values
+  const valInputs = document.querySelectorAll('.cob-val-input');
+  const newValues = {};
+  valInputs.forEach(input => {
+    const cobId = input.dataset.cobId;
+    if (input.disabled) {
+      newValues[cobId] = null;
+    } else {
+      newValues[cobId] = input.value.trim() || 'Sim';
+    }
+  });
+
+  if (isNew) {
+    // Create new plan
+    const cssClassMap = { blue: 'plan-basico', purple: 'plan-vip', amber: 'plan-top', green: 'plan-default', red: 'plan-default' };
+    _cobData.planos.push({
+      id: planId,
+      nome: nome,
+      cor: cor,
+      ordem: ordem,
+      cssClass: 'plan-' + planId,
+      badge: badge || undefined
+    });
+    // Add values to each cobertura
+    _cobData.coberturas.forEach(cob => {
+      cob.valores[planId] = newValues[cob.id] !== undefined ? newValues[cob.id] : null;
+    });
+    // Add dynamic CSS class for the new plan color
+    cobAddDynamicPlanCSS(planId, cor);
+  } else {
+    // Update existing plan
+    const plano = cobGetPlano(planId);
+    if (plano) {
+      plano.nome = nome;
+      plano.cor = cor;
+      plano.ordem = ordem;
+      plano.badge = badge || undefined;
+      cobAddDynamicPlanCSS(planId, cor);
+    }
+    // Update cobertura values
+    _cobData.coberturas.forEach(cob => {
+      cob.valores[planId] = newValues[cob.id] !== undefined ? newValues[cob.id] : null;
+    });
+  }
+
+  cobSaveData();
+  showToast('Plano ' + (isNew ? 'criado' : 'atualizado') + ' com sucesso!', 'success');
+  _cobEditingPlan = null;
+  cobRenderManagerDrawer();
+  cobRender();
+}
+
+function cobAddDynamicPlanCSS(planId, cor) {
+  const corMap = { blue: 'var(--blue)', purple: 'var(--purple)', amber: 'var(--amber)', green: 'var(--green)', red: 'var(--red)' };
+  const bgMap = { blue: 'var(--blue-bg)', purple: 'var(--purple-light)', amber: 'var(--amber-bg)', green: 'var(--green-bg)', red: 'var(--red-bg,rgba(239,68,68,.08))' };
+  const styleId = 'cob-dynamic-' + planId;
+  let styleEl = document.getElementById(styleId);
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = '.cob-hero-card.plan-' + planId + ' .cob-hero-card-header{border-top:3px solid ' + (corMap[cor]||'var(--accent)') + '}'
+    + '.cob-hero-card.plan-' + planId + ' .cob-hero-card-name{color:' + (corMap[cor]||'var(--accent)') + '}'
+    + '.cob-hero-card.plan-' + planId + ' .cob-hero-card-badge{background:' + (bgMap[cor]||'var(--green-bg)') + ';color:' + (corMap[cor]||'var(--accent)') + '}';
+}
+
+function cobDeletePlan(planId) {
+  const plano = cobGetPlano(planId);
+  if (!plano) return;
+  showModal('Excluir Plano', '<p>Tem certeza que deseja excluir o plano <strong>' + plano.nome + '</strong>?</p><p style="font-size:.78rem;color:var(--text3)">Essa acao nao pode ser desfeita.</p>',
+    function(){ cobConfirmDeletePlan(planId); }, 'red', 'Excluir');
+}
+
+function cobConfirmDeletePlan(planId) {
+  _cobData.planos = _cobData.planos.filter(p => p.id !== planId);
+  // Remove values from coberturas
+  _cobData.coberturas.forEach(cob => { delete cob.valores[planId]; });
+  // Remove from selected
+  _cobSelectedPlanos = _cobSelectedPlanos.filter(id => id !== planId);
+  if (_cobSelectedPlanos.length === 0 && _cobData.planos.length > 0) {
+    _cobSelectedPlanos = [_cobData.planos[0].id];
+  }
+  cobSaveData();
+  closeModal();
+  showToast('Plano excluido', 'success');
+  cobRenderManagerDrawer();
+  cobRender();
+}
+
+function cobNewCobertura() {
+  const bodyHtml = '<div class="cob-form">' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input type="text" id="cob_newCovName" placeholder="Ex: Cobertura de Pneus"></div>' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Categoria</label><select id="cob_newCovCat"><option value="assistencia">Assistencia</option><option value="cobertura">Cobertura</option><option value="beneficio">Beneficio</option></select></div>' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px"><input type="checkbox" id="cob_newCovDest" style="width:auto;height:auto;margin-right:6px;vertical-align:middle">Marcar como destaque (aparece nos cards)</label></div>' +
+    '</div>';
+  showModal('Nova Cobertura', bodyHtml, function(){ cobConfirmNewCobertura(); }, 'green', 'Criar');
+}
+
+function cobConfirmNewCobertura() {
+  const nome = document.getElementById('cob_newCovName').value.trim();
+  const cat = document.getElementById('cob_newCovCat').value;
+  const isDest = document.getElementById('cob_newCovDest').checked;
+  if (!nome) { showToast('Informe o nome da cobertura', 'error'); return; }
+
+  const id = nome.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+  if (_cobData.coberturas.find(c => c.id === id)) { showToast('Ja existe uma cobertura similar', 'error'); return; }
+
+  const valores = {};
+  _cobData.planos.forEach(p => { valores[p.id] = null; });
+
+  _cobData.coberturas.push({ id, nome, categoria: cat, destaque: isDest, valores });
+  if (isDest) _cobData.destaques.push(id);
+
+  cobSaveData();
+  closeModal();
+  showToast('Cobertura criada', 'success');
+  cobRenderManagerDrawer();
+  cobRender();
+}
+
+function cobDeleteCobertura(cobId) {
+  const cob = _cobData.coberturas.find(c => c.id === cobId);
+  if (!cob) return;
+  showModal('Excluir Cobertura', '<p>Excluir <strong>' + cob.nome + '</strong> de todos os planos?</p>',
+    function(){ cobConfirmDeleteCobertura(cobId); }, 'red', 'Excluir');
+}
+
+function cobConfirmDeleteCobertura(cobId) {
+  _cobData.coberturas = _cobData.coberturas.filter(c => c.id !== cobId);
+  _cobData.destaques = _cobData.destaques.filter(d => d !== cobId);
+  cobSaveData();
+  closeModal();
+  showToast('Cobertura excluida', 'success');
+  cobRenderManagerDrawer();
+  cobRender();
+}
+// ========= FIM COBERTURAS MANAGER =========
 </script>
 </body>
 </html>
