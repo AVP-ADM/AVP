@@ -906,7 +906,7 @@ tr:hover .row-actions{opacity:1}
     <!-- RECENT ACTIVITY ROW -->
     <div style="margin-bottom:20px">
       <div class="card" id="activityCard">
-        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Ultimas Alteracoes</span><button class="btn btn-sm" id="activityLibFilter" onclick="toggleActivityLibFilter()" style="font-size:.68rem;padding:4px 10px">Liberacoes</button></div>
+        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Ultimas Alteracoes</div>
         <div id="activityContent"></div>
       </div>
     </div>
@@ -1268,6 +1268,8 @@ tr:hover .row-actions{opacity:1}
           <tbody id="tempReleasesBody"></tbody>
         </table>
       </div>
+      <div id="tempReleasesPagination" class="pagination"></div>
+      <div style="text-align:center;padding:8px;border-top:1px solid var(--border-light);margin-top:8px"><a href="#" onclick="goTab('history');return false" style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:500">Ver historico completo →</a></div>
     </div>
     <!-- FIPE DIAGNOSTICS PANEL - moved to Configurações > Base FIPE -->
     </div>
@@ -2485,17 +2487,6 @@ function toggleIntegrityDetails(btn){
   if(btn) btn.classList.toggle('active');
 }
 
-let _activityLibFilterActive = false;
-function toggleActivityLibFilter(){
-  _activityLibFilterActive = !_activityLibFilterActive;
-  const btn = document.getElementById('activityLibFilter');
-  if(btn){
-    if(_activityLibFilterActive){btn.classList.add('btn-amber');btn.style.fontWeight='700';}
-    else{btn.classList.remove('btn-amber');btn.style.fontWeight='';}
-  }
-  renderRecentActivity();
-}
-
 function renderRecentActivity(){
   const el = document.getElementById('activityContent');
   if(!el) return;
@@ -2510,13 +2501,6 @@ function renderRecentActivity(){
       const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
       return dateB - dateA;
     });
-    // Apply liberações filter
-    if(_activityLibFilterActive){
-      sorted = sorted.filter(h=>{
-        const tipo = h.tipo || h.type || '';
-        return tipo.includes('Liberacao') || tipo.includes('Resolucao') || tipo.includes('Edição Ano');
-      });
-    }
     for(const h of sorted.slice(0,5)){
       let icon='•', iconClass='edit';
       const tipo = h.tipo || h.type || '';
@@ -2569,7 +2553,18 @@ function renderRecentActivity(){
         <div class="activity-meta">${a.meta}${a.time?' · '+a.time:''}</div>
       </div>
     </div>
-  `).join('') + `<div style="text-align:center;padding:8px"><a href="#" onclick="goTab('history');return false" style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:500">Ver histórico completo →</a></div>`;
+  `).join('') + `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;border-top:1px solid var(--border-light);margin-top:8px"><a href="#" onclick="goTab('history');return false" style="font-size:.72rem;color:var(--blue);text-decoration:none;font-weight:500">Ver historico completo →</a><span id="activityLibPill"></span></div>`;
+  // Render lib pill
+  setTimeout(function(){
+    const pill=document.getElementById('activityLibPill');
+    if(!pill) return;
+    const activeCount=TEMP_RELEASES.filter(t=>(t.status||'ativa')==='ativa').length;
+    if(activeCount>0){
+      pill.innerHTML='<a href="#" onclick="goTab(\'management\');setTimeout(function(){var el=document.getElementById(\'tempReleasesCard\');if(el)el.scrollIntoView({behavior:\'smooth\'});},200);return false" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber);font-size:.72rem;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background=\'var(--amber)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--amber-bg)\';this.style.color=\'var(--amber)\'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'+activeCount+' liberacao(oes) ativa(s) →</a>';
+    } else {
+      pill.innerHTML='';
+    }
+  },10);
 }
 
 function getModelsForCat(catName){
@@ -6722,6 +6717,9 @@ function finalizeTempRelease(idx){
   },'red');
 }
 
+let _tempReleasesPage = 1;
+const TEMP_RELEASES_PER_PAGE = 10;
+
 function renderTempReleases(){
   const tbody=document.getElementById('tempReleasesBody');
   if(!tbody) return;
@@ -6730,29 +6728,34 @@ function renderTempReleases(){
   let filtered=TEMP_RELEASES;
   if(filter) filtered=filtered.filter(t=>(t.status||'ativa')===filter);
   if(typeFilter) filtered=filtered.filter(t=>(t.tipo||'modelo')===typeFilter);
-  tbody.innerHTML=filtered.map((t,i)=>{
-    const realIdx=TEMP_RELEASES.indexOf(t);
-    const isActive=(t.status||'ativa')==='ativa';
-    const statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Resolvida</span>';
-    const tipo=(t.tipo||'modelo')==='modelo'?'<span class="badge badge-blue">Modelo</span>':'<span class="badge badge-purple">Ano Cat.</span>';
-    let detalhes='';
-    if((t.tipo||'modelo')==='modelo'){
-      detalhes='<strong>'+( t.marca||'')+'</strong> '+(t.modelo||'');
-    } else {
-      detalhes='Ano: '+(t.ano_original||'?')+' → <strong>'+(t.ano_temporario||'?')+'</strong>';
-    }
-    const autorNome=t.autorizador_nome||'—';
-    const dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
-    return `<tr>
-      <td>${tipo}</td>
-      <td style="font-size:.78rem">${detalhes}${t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':''}${t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':''}</td>
-      <td><span class="tag tag-blue">${t.categoria||'—'}</span></td>
-      <td style="font-size:.75rem">${autorNome}</td>
-      <td style="font-size:.75rem">${dataStr}</td>
-      <td>${statusTag}</td>
-      <td>${isActive?'<button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')">Resolver</button>':''}</td>
-    </tr>`;
+  var total=filtered.length;
+  var totalPages=Math.ceil(total/TEMP_RELEASES_PER_PAGE)||1;
+  if(_tempReleasesPage>totalPages) _tempReleasesPage=totalPages;
+  var start=(_tempReleasesPage-1)*TEMP_RELEASES_PER_PAGE;
+  var paged=filtered.slice(start,start+TEMP_RELEASES_PER_PAGE);
+  tbody.innerHTML=paged.map(function(t,i){
+    var realIdx=TEMP_RELEASES.indexOf(t);
+    var isActive=(t.status||'ativa')==='ativa';
+    var statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Resolvida</span>';
+    var tipo=(t.tipo||'modelo')==='modelo'?'<span class="badge badge-blue">Modelo</span>':'<span class="badge badge-purple">Ano Cat.</span>';
+    var detalhes='';
+    if((t.tipo||'modelo')==='modelo'){detalhes='<strong>'+(t.marca||'')+'</strong> '+(t.modelo||'');}
+    else{detalhes='Ano: '+(t.ano_original||'?')+' &rarr; <strong>'+(t.ano_temporario||'?')+'</strong>';}
+    var autorNome=t.autorizador_nome||'—';
+    var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
+    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+(t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':'')+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')">Resolver</button>':'')+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
+  var pagEl=document.getElementById('tempReleasesPagination');
+  if(pagEl){
+    if(totalPages<=1){pagEl.innerHTML='';return;}
+    var pagHtml='<button '+(_tempReleasesPage<=1?'disabled':'')+' onclick="_tempReleasesPage--;renderTempReleases()">Anterior</button>';
+    for(var p=1;p<=totalPages;p++){
+      if(totalPages>7&&p>2&&p<totalPages-1&&Math.abs(p-_tempReleasesPage)>1){if(p===3||p===totalPages-2)pagHtml+='<button disabled>...</button>';continue;}
+      pagHtml+='<button class="'+(p===_tempReleasesPage?'active':'')+'" onclick="_tempReleasesPage='+p+';renderTempReleases()">'+p+'</button>';
+    }
+    pagHtml+='<button '+(_tempReleasesPage>=totalPages?'disabled':'')+' onclick="_tempReleasesPage++;renderTempReleases()">Proximo</button>';
+    pagEl.innerHTML=pagHtml;
+  }
 }
 
 function renderTempReleaseAlert(){
