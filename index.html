@@ -896,10 +896,17 @@ tr:hover .row-actions{opacity:1}
       <div class="kpi-grid" id="kpiGrid"></div>
     </div>
 
+    <!-- ALERT: Liberações Temporárias Ativas -->
+    <div id="overviewLibAlert" style="display:none;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius-lg);padding:14px 20px;margin-bottom:20px;display:none;align-items:center;gap:12px;cursor:pointer" onclick="goTab('management');setTimeout(function(){var el=document.getElementById('tempReleasesCard');if(el)el.scrollIntoView({behavior:'smooth'});},200)">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:var(--amber)"><span id="overviewLibAlertCount">0</span> liberacao(oes) temporaria(s) ativa(s) aguardando resolucao</div><div style="font-size:.7rem;color:var(--text3)">Clique para gerenciar</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
     <!-- RECENT ACTIVITY ROW -->
     <div style="margin-bottom:20px">
       <div class="card" id="activityCard">
-        <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Últimas Alterações</div>
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px"><span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Ultimas Alteracoes</span><button class="btn btn-sm" id="activityLibFilter" onclick="toggleActivityLibFilter()" style="font-size:.68rem;padding:4px 10px">Liberacoes</button></div>
         <div id="activityContent"></div>
       </div>
     </div>
@@ -1238,18 +1245,26 @@ tr:hover .row-actions{opacity:1}
       </div>
     </div>
     <!-- TEMP RELEASES PANEL -->
-    <div class="card" id="tempReleasesCard" style="display:none">
-      <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Liberações Temporárias</div>
+    <div class="card" id="tempReleasesCard">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <span style="display:flex;align-items:center;gap:8px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Liberacoes Temporarias</span>
+        <button class="btn btn-sm btn-green" onclick="openNewLiberacao()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Liberacao</button>
+      </div>
       <div class="filter-row">
         <select id="tempReleaseFilter" onchange="renderTempReleases()">
-          <option value="Ativa">Ativas</option>
-          <option value="Finalizada">Finalizadas</option>
+          <option value="ativa">Ativas</option>
+          <option value="resolvida">Resolvidas</option>
           <option value="">Todas</option>
+        </select>
+        <select id="tempReleaseTypeFilter" onchange="renderTempReleases()">
+          <option value="">Todos os tipos</option>
+          <option value="modelo">Modelo</option>
+          <option value="ano_categoria">Ano de Categoria</option>
         </select>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th><th>Motivo</th><th>Data</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Tipo</th><th>Detalhes</th><th>Categoria</th><th>Autorizado por</th><th>Data</th><th>Status</th><th></th></tr></thead>
           <tbody id="tempReleasesBody"></tbody>
         </table>
       </div>
@@ -1264,9 +1279,12 @@ tr:hover .row-actions{opacity:1}
         <input type="text" id="histFilter" placeholder="Buscar..." oninput="debouncedRenderHistory()">
         <select id="histType" onchange="renderHistory()">
           <option value="">Todos os tipos</option>
-          <option value="Adição">Adição</option>
-          <option value="Remoção">Remoção</option>
-          <option value="Movimentação">Movimentação</option>
+          <option value="Adição">Adicao</option>
+          <option value="Remoção">Remocao</option>
+          <option value="Movimentação">Movimentacao</option>
+          <option value="Liberacao Temporaria">Liberacoes Temporarias</option>
+          <option value="Resolucao Liberacao">Resolucoes</option>
+          <option value="Edição Ano Categoria">Edicao Ano Categoria</option>
         </select>
       </div>
       <div class="table-wrap">
@@ -1336,6 +1354,7 @@ tr:hover .row-actions{opacity:1}
       <!-- Settings Sub-tabs -->
       <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px">
         <button class="comp-tab active" id="settingsTab_users" onclick="switchSettingsTab('users')">Usuarios</button>
+        <button class="comp-tab" id="settingsTab_autorizadores" onclick="switchSettingsTab('autorizadores')">Autorizadores</button>
         <button class="comp-tab" id="settingsTab_system" onclick="switchSettingsTab('system')">Sistema</button>
         <button class="comp-tab" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">Base FIPE</button>
       </div>
@@ -1350,6 +1369,23 @@ tr:hover .row-actions{opacity:1}
           <table>
             <thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Setor</th><th>Status</th><th style="width:100px">Ações</th></tr></thead>
             <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Autorizadores -->
+      <div id="settingsPanel_autorizadores" style="display:none;margin-top:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <h4 style="font-size:.9rem;font-weight:600;color:var(--text1)">Autorizadores</h4>
+            <p style="font-size:.72rem;color:var(--text3);margin:2px 0 0">Pessoas que podem autorizar liberacoes temporarias</p>
+          </div>
+          <button class="btn btn-sm btn-green" onclick="openCreateAutorizador()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo Autorizador</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Cargo</th><th>Status</th><th style="width:100px">Acoes</th></tr></thead>
+            <tbody id="autorizadoresTableBody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Carregando...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2206,7 +2242,7 @@ function getActiveTab(){
 
 function refreshActiveTab(){
   const tab=getActiveTab();
-  if(tab==='overview'){renderKPIs();renderOverviewTable();_dirtyTabs.overview=false;}
+  if(tab==='overview'){renderKPIs();renderOverviewTable();renderTempReleaseAlert();_dirtyTabs.overview=false;}
   if(tab==='duplicates'){renderDupTable();_dirtyTabs.duplicates=false;}
   if(tab==='divergences'){renderDivergences();_dirtyTabs.divergences=false;}
   if(tab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
@@ -2281,7 +2317,7 @@ function goTab(tab){
 
   // Trigger renders based on actual content tab
   const effectiveTab = subTab || mainTab;
-  if(effectiveTab==='overview'&&_dirtyTabs.overview){renderOverviewTable();_dirtyTabs.overview=false;}
+  if(effectiveTab==='overview'&&_dirtyTabs.overview){renderOverviewTable();renderTempReleaseAlert();_dirtyTabs.overview=false;}
   if(effectiveTab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
   if(effectiveTab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
   if(effectiveTab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
@@ -2449,6 +2485,17 @@ function toggleIntegrityDetails(btn){
   if(btn) btn.classList.toggle('active');
 }
 
+let _activityLibFilterActive = false;
+function toggleActivityLibFilter(){
+  _activityLibFilterActive = !_activityLibFilterActive;
+  const btn = document.getElementById('activityLibFilter');
+  if(btn){
+    if(_activityLibFilterActive){btn.classList.add('btn-amber');btn.style.fontWeight='700';}
+    else{btn.classList.remove('btn-amber');btn.style.fontWeight='';}
+  }
+  renderRecentActivity();
+}
+
 function renderRecentActivity(){
   const el = document.getElementById('activityContent');
   if(!el) return;
@@ -2457,12 +2504,19 @@ function renderRecentActivity(){
 
   // Only from confirmed HISTORY (not from pending STAGING)
   if(HISTORY && HISTORY.length){
-    // Sort by date DESC and take 5 most recent
-    const sorted = HISTORY.slice().sort((a,b)=>{
+    // Sort by date DESC and take recent
+    let sorted = HISTORY.slice().sort((a,b)=>{
       const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
       const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
       return dateB - dateA;
     });
+    // Apply liberações filter
+    if(_activityLibFilterActive){
+      sorted = sorted.filter(h=>{
+        const tipo = h.tipo || h.type || '';
+        return tipo.includes('Liberacao') || tipo.includes('Resolucao') || tipo.includes('Edição Ano');
+      });
+    }
     for(const h of sorted.slice(0,5)){
       let icon='•', iconClass='edit';
       const tipo = h.tipo || h.type || '';
@@ -2677,7 +2731,7 @@ function renderOverviewTable(){
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
           <div class="row-menu">
-            <div class="row-menu-item${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRenameCategory('${cat.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Renomear</div>
+            <div class="row-menu-item${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openEditCategory('${cat.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</div>
             <div class="row-menu-item" onclick="event.stopPropagation();closeAllRowMenus();openEditCategoryType('${cat.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Tipo FIPE</div>
             <div class="row-menu-item danger${catPending?' style="opacity:.4;pointer-events:none"':''}" onclick="event.stopPropagation();closeAllRowMenus();openRemoveCategory('${cat.replace(/'/g,"\\'")}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remover</div>
           </div>
@@ -5154,41 +5208,82 @@ function openAddCategory(){
   },50);
 }
 
-function openRenameCategory(cat){
+function openEditCategory(cat){
   // Block if category already has a pending change
   if(hasPendingCategoryChange(cat)){
     showToast('Esta categoria já possui uma alteração pendente.','warning');
     return;
   }
-  showModal('Renomear Categoria',`<div style="display:flex;flex-direction:column;gap:10px">
-    <label style="font-size:.78rem;color:var(--text2)">Categoria atual:</label>
-    <div style="font-weight:600;font-size:.9rem;padding:8px 12px;background:var(--bg);border-radius:var(--radius)">${cat}</div>
-    <label style="font-size:.78rem;color:var(--text2);font-weight:600">Novo nome:</label>
-    <input id="rename_cat" value="${cat}">
-    <div id="rename_cat_msg" class="ac-msg"></div>
-    <span style="font-size:.72rem;color:var(--text3)">A renomeação será adicionada às Alterações Pendentes.</span>
+  const anoAtual = getAnoMinimoCat(cat);
+  showModal('Editar Categoria',`<div style="display:flex;flex-direction:column;gap:12px">
+    <div>
+      <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome da Categoria</label>
+      <input id="edit_cat_name" value="${cat.replace(/"/g,'&quot;')}">
+      <div id="edit_cat_msg" class="ac-msg"></div>
+    </div>
+    <div>
+      <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Ano Minimo de Aceitacao</label>
+      <input id="edit_cat_ano" type="number" value="${anoAtual}" min="1990" max="2030">
+      <span style="font-size:.68rem;color:var(--text3);margin-top:2px;display:block">Veiculos a partir deste ano serao aceitos nesta categoria.</span>
+    </div>
+    <span style="font-size:.72rem;color:var(--text3)">Alteracoes no nome serao adicionadas as Pendencias. Alteracoes no ano sao aplicadas imediatamente.</span>
   </div>`,function(){
-    const newName=document.getElementById('rename_cat').value.trim();
-    if(!newName){showToast('Digite o novo nome','error');return;}
-    if(newName===cat){closeModal();return;}
-    if(CATEGORIES.includes(newName)){showToast('Já existe uma categoria com esse nome!','error');return;}
+    const newName=document.getElementById('edit_cat_name').value.trim();
+    const newAno=parseInt(document.getElementById('edit_cat_ano').value)||anoAtual;
+    if(!newName){showToast('Digite o nome da categoria','error');return;}
+    if(newName!==cat && CATEGORIES.includes(newName)){showToast('Ja existe uma categoria com esse nome!','error');return;}
+
     closeModal();
-    showToast('Salvando renomeação...','warning');
-    commitDirectAction({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName}).then(()=>{
-      renderOverviewTable();
-    });
-  },'blue');
+
+    // Handle name change (via pending system)
+    if(newName!==cat){
+      showToast('Salvando renomeacao...','warning');
+      commitDirectAction({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName}).then(()=>{
+        renderOverviewTable();
+      });
+    }
+
+    // Handle ano change (immediate via Supabase)
+    if(newAno!==anoAtual){
+      editCategoryAno(cat, newAno, anoAtual);
+    }
+  },'blue','Salvar');
   setTimeout(()=>{
-    const input=document.getElementById('rename_cat');
+    const input=document.getElementById('edit_cat_name');
     if(input) input.oninput=function(){
-      const msg=document.getElementById('rename_cat_msg');
+      const msg=document.getElementById('edit_cat_msg');
       const val=this.value.trim();
       if(!val||val===cat){msg.textContent='';msg.className='ac-msg';return;}
-      if(CATEGORIES.includes(val)){msg.textContent='✕ Nome já existe';msg.className='ac-msg invalid';}
-      else{msg.textContent='✓ Nome disponível';msg.className='ac-msg valid';}
+      if(CATEGORIES.includes(val)){msg.textContent='Nome ja existe';msg.className='ac-msg invalid';}
+      else{msg.textContent='Nome disponivel';msg.className='ac-msg valid';}
     };
   },50);
 }
+
+async function editCategoryAno(cat, newAno, oldAno){
+  try {
+    // Find category ID
+    const catId = window._catIdMap && window._catIdMap[cat];
+    if(catId){
+      await supabase.update('categorias', { ano_minimo: newAno }, 'id=eq.'+catId);
+    }
+    // Update local cache
+    CAT_ANO_MINIMO[cat] = newAno;
+    // Save to history
+    await supabase.insert('historico', { tipo: 'Edição Ano Categoria', marca: '—', modelo: cat, cat_origem: oldAno+'', cat_destino: newAno+'', usuario: currentUser||'admin' });
+    showToast('Ano de aceitacao atualizado: '+cat+' → '+newAno+'+', 'success');
+    renderOverviewTable();
+  } catch(e){
+    console.warn('editCategoryAno error:', e);
+    // Fallback: at least update local
+    CAT_ANO_MINIMO[cat] = newAno;
+    showToast('Ano atualizado localmente (erro ao salvar no servidor)', 'warning');
+    renderOverviewTable();
+  }
+}
+
+// Keep old name as alias for any external references
+function openRenameCategory(cat){ openEditCategory(cat); }
 
 function openRemoveCategory(cat){
   // Block if category already has a pending change
@@ -6628,36 +6723,244 @@ function finalizeTempRelease(idx){
 }
 
 function renderTempReleases(){
-  const card=document.getElementById('tempReleasesCard');
-  if(!card) return;
-  const activeCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
-  card.style.display=(TEMP_RELEASES.length>0)?'':'none';
-  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'Ativa';
-  const filtered=filter?TEMP_RELEASES.filter(t=>t.status===filter):TEMP_RELEASES;
   const tbody=document.getElementById('tempReleasesBody');
   if(!tbody) return;
+  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'ativa';
+  const typeFilter=(document.getElementById('tempReleaseTypeFilter')||{}).value||'';
+  let filtered=TEMP_RELEASES;
+  if(filter) filtered=filtered.filter(t=>(t.status||'ativa')===filter);
+  if(typeFilter) filtered=filtered.filter(t=>(t.tipo||'modelo')===typeFilter);
   tbody.innerHTML=filtered.map((t,i)=>{
     const realIdx=TEMP_RELEASES.indexOf(t);
-    const statusTag=t.status==='Ativa'?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Finalizada</span>';
+    const isActive=(t.status||'ativa')==='ativa';
+    const statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Resolvida</span>';
+    const tipo=(t.tipo||'modelo')==='modelo'?'<span class="badge badge-blue">Modelo</span>':'<span class="badge badge-purple">Ano Cat.</span>';
+    let detalhes='';
+    if((t.tipo||'modelo')==='modelo'){
+      detalhes='<strong>'+( t.marca||'')+'</strong> '+(t.modelo||'');
+    } else {
+      detalhes='Ano: '+(t.ano_original||'?')+' → <strong>'+(t.ano_temporario||'?')+'</strong>';
+    }
+    const autorNome=t.autorizador_nome||'—';
+    const dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
     return `<tr>
-      <td><strong>${t.marca}</strong></td>
-      <td>${t.modelo}</td>
-      <td><span class="tag tag-blue">${t.categoria}</span></td>
-      <td style="font-size:.75rem">${t.motivo}</td>
-      <td style="font-size:.75rem">${t.dataCriacao}</td>
+      <td>${tipo}</td>
+      <td style="font-size:.78rem">${detalhes}${t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':''}${t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':''}</td>
+      <td><span class="tag tag-blue">${t.categoria||'—'}</span></td>
+      <td style="font-size:.75rem">${autorNome}</td>
+      <td style="font-size:.75rem">${dataStr}</td>
       <td>${statusTag}</td>
-      <td>${t.status==='Ativa'?'<button class="btn btn-red btn-sm" onclick="finalizeTempRelease('+realIdx+')">Finalizar</button>':''}</td>
+      <td>${isActive?'<button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')">Resolver</button>':''}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberação encontrada</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
 }
 
 function renderTempReleaseAlert(){
+  const activeCount=TEMP_RELEASES.filter(t=>(t.status||'ativa')==='ativa').length;
+  // Management tab alert
   const el=document.getElementById('tempReleaseAlert');
   const countEl=document.getElementById('tempReleaseAlertCount');
-  if(!el||!countEl) return;
-  const activeCount=TEMP_RELEASES.filter(t=>t.status==='Ativa').length;
-  if(activeCount>0){el.style.display='';countEl.textContent=activeCount;}
-  else{el.style.display='none';}
+  if(el&&countEl){
+    if(activeCount>0){el.style.display='';countEl.textContent=activeCount;}
+    else{el.style.display='none';}
+  }
+  // Overview alert banner
+  const ovEl=document.getElementById('overviewLibAlert');
+  const ovCount=document.getElementById('overviewLibAlertCount');
+  if(ovEl&&ovCount){
+    if(activeCount>0){ovEl.style.display='flex';ovCount.textContent=activeCount;}
+    else{ovEl.style.display='none';}
+  }
+}
+
+async function openNewLiberacao(){
+  const autorizadores=await loadAutorizadoresForSelect();
+  const autOpts=autorizadores.map(a=>'<option value="'+a.id+'" data-nome="'+a.nome+'">'+a.nome+(a.cargo?' ('+a.cargo+')':'')+'</option>').join('');
+  const catOpts=CATEGORIES.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+  const content=document.getElementById('drawerContent');
+  if(!content) return;
+  content.innerHTML=`<div class="drawer-title">Nova Liberacao Temporaria</div>
+    <div class="cob-form">
+      <div><label>Tipo de Liberacao</label>
+        <select id="lib_tipo" onchange="libToggleTipo()">
+          <option value="modelo">Modelo (veiculo fora do ano)</option>
+          <option value="ano_categoria">Ano de Categoria (alterar ano temporariamente)</option>
+        </select>
+      </div>
+      <div><label>Categoria</label><select id="lib_categoria">${catOpts}</select></div>
+      <div id="lib_modeloFields">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label>Marca</label><input id="lib_marca" placeholder="Ex: FIAT"></div>
+          <div><label>Modelo</label><input id="lib_modelo" placeholder="Ex: Uno Fire 1.0"></div>
+        </div>
+      </div>
+      <div id="lib_anoFields" style="display:none">
+        <div><label>Novo Ano Minimo Temporario</label><input id="lib_anoTemp" type="number" min="1990" max="2030" placeholder="Ex: 2004"></div>
+      </div>
+      <div><label>Autorizado por</label>
+        <select id="lib_autorizador"><option value="">Selecione...</option>${autOpts}</select>
+        ${autorizadores.length===0?'<span style="font-size:.68rem;color:var(--amber)">Nenhum autorizador cadastrado. Cadastre em Configuracoes > Autorizadores.</span>':''}
+      </div>
+      <div><label>Observacoes (opcional)</label><textarea id="lib_obs" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);resize:vertical" placeholder="Motivo da liberacao, contexto..."></textarea></div>
+      <div><label>Anexo - Imagem da Autorizacao (opcional)</label>
+        <input type="file" id="lib_anexo" accept="image/*" style="font-size:.78rem">
+        <span style="font-size:.68rem;color:var(--text3);display:block;margin-top:4px">A imagem sera comprimida automaticamente antes do envio.</span>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-green" onclick="salvarLiberacao()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Salvar Liberacao</button>
+        <button class="btn" onclick="closeDrawer()">Cancelar</button>
+      </div>
+    </div>`;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+
+function libToggleTipo(){
+  const tipo=document.getElementById('lib_tipo').value;
+  document.getElementById('lib_modeloFields').style.display=(tipo==='modelo')?'':'none';
+  document.getElementById('lib_anoFields').style.display=(tipo==='ano_categoria')?'':'none';
+}
+
+async function compressImage(file, maxWidth=1200, quality=0.7){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const img=new Image();
+      img.onload=function(){
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>maxWidth){h=Math.round(h*(maxWidth/w));w=maxWidth;}
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        canvas.toBlob(resolve,'image/jpeg',quality);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadAnexo(file){
+  try{
+    const compressed=await compressImage(file);
+    const fileName='lib_'+Date.now()+'_'+Math.random().toString(36).substr(2,6)+'.jpg';
+    const resp=await fetch(SUPABASE_URL+'/storage/v1/object/liberacoes/'+fileName,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(supabase.getToken()||SUPABASE_ANON_KEY),'Content-Type':'image/jpeg'},
+      body:compressed
+    });
+    if(!resp.ok) throw new Error('Upload failed: '+resp.status);
+    return SUPABASE_URL+'/storage/v1/object/public/liberacoes/'+fileName;
+  }catch(e){console.warn('uploadAnexo error:',e);return null;}
+}
+
+async function salvarLiberacao(){
+  const tipo=document.getElementById('lib_tipo').value;
+  const categoria=document.getElementById('lib_categoria').value;
+  const autSelect=document.getElementById('lib_autorizador');
+  const autId=autSelect.value;
+  const autNome=autSelect.selectedOptions[0]?autSelect.selectedOptions[0].dataset.nome||autSelect.selectedOptions[0].textContent:'';
+  const obs=document.getElementById('lib_obs').value.trim();
+  const fileInput=document.getElementById('lib_anexo');
+
+  if(!autId){showToast('Selecione o autorizador','error');return;}
+
+  let marca='',modelo='',anoTemp=null,anoOrig=null;
+  if(tipo==='modelo'){
+    marca=document.getElementById('lib_marca').value.trim();
+    modelo=document.getElementById('lib_modelo').value.trim();
+    if(!marca||!modelo){showToast('Informe marca e modelo','error');return;}
+  } else {
+    anoTemp=parseInt(document.getElementById('lib_anoTemp').value);
+    anoOrig=getAnoMinimoCat(categoria);
+    if(!anoTemp){showToast('Informe o ano temporario','error');return;}
+  }
+
+  showToast('Salvando liberacao...','warning');
+
+  // Upload image if provided
+  let anexoUrl=null;
+  if(fileInput&&fileInput.files&&fileInput.files[0]){
+    anexoUrl=await uploadAnexo(fileInput.files[0]);
+  }
+
+  const record={
+    tipo:tipo,
+    marca:marca||null,
+    modelo:modelo||null,
+    categoria:categoria,
+    motivo:obs||null,
+    observacao:obs||null,
+    status:'ativa',
+    usuario_criacao:currentUser||'admin',
+    autorizador_id:autId,
+    autorizador_nome:autNome,
+    ano_temporario:anoTemp,
+    ano_original:anoOrig,
+    anexo_url:anexoUrl,
+    created_at:new Date().toISOString()
+  };
+
+  try{
+    await supabase.insert('liberacoes_temporarias',record);
+    // If tipo is ano_categoria, apply the temporary ano change
+    if(tipo==='ano_categoria'){
+      CAT_ANO_MINIMO[categoria]=anoTemp;
+    }
+    // Add to local array
+    TEMP_RELEASES.push(record);
+    saveTempReleasesToStorage();
+    // Save to history
+    const histDesc=tipo==='modelo'?'Lib. Modelo: '+marca+' '+modelo+' → '+categoria:'Lib. Ano: '+categoria+' '+anoOrig+' → '+anoTemp;
+    await supabase.insert('historico',{tipo:'Liberacao Temporaria',marca:marca||'—',modelo:histDesc,cat_origem:categoria,cat_destino:tipo,usuario:currentUser||'admin'});
+    closeDrawer();
+    showToast('Liberacao criada com sucesso!','success');
+    renderTempReleases();
+    renderTempReleaseAlert();
+    renderOverviewTable();
+  }catch(e){
+    showToast('Erro ao salvar: '+e.message,'error');
+  }
+}
+
+async function resolverLiberacao(idx){
+  const t=TEMP_RELEASES[idx];
+  if(!t) return;
+  const tipoLabel=(t.tipo||'modelo')==='modelo'?'Modelo: '+(t.marca||'')+' '+(t.modelo||''):'Ano Categoria: '+(t.categoria||'')+' ('+t.ano_temporario+')';
+  showModal('Resolver Liberacao','<p>Resolver a liberacao: <strong>'+tipoLabel+'</strong>?</p><p style="font-size:.78rem;color:var(--text2)">'+(
+    (t.tipo||'modelo')==='modelo'?'O modelo sera removido da categoria (voltara a nao ser aceito).':'O ano da categoria voltara ao valor padrao ('+(t.ano_original||'?')+').'
+  )+'</p>',async function(){
+    closeModal();
+    showToast('Resolvendo...','warning');
+    try{
+      // Update in Supabase
+      if(t.id){
+        await supabase.update('liberacoes_temporarias',{status:'resolvida',resolvido_em:new Date().toISOString(),resolvido_por:currentUser||'admin'},'id=eq.'+t.id);
+      }
+      // Apply resolution
+      if((t.tipo||'modelo')==='modelo'){
+        // Could remove model from category here if needed
+      } else {
+        // Restore original ano
+        if(t.ano_original && t.categoria){
+          CAT_ANO_MINIMO[t.categoria]=t.ano_original;
+          const catId=window._catIdMap&&window._catIdMap[t.categoria];
+          if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
+        }
+      }
+      // Update local
+      t.status='resolvida';
+      t.resolvido_em=new Date().toISOString();
+      saveTempReleasesToStorage();
+      // History
+      await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,cat_origem:t.categoria,cat_destino:'resolvida',usuario:currentUser||'admin'});
+      showToast('Liberacao resolvida!','success');
+      renderTempReleases();
+      renderTempReleaseAlert();
+      renderOverviewTable();
+    }catch(e){showToast('Erro: '+e.message,'error');}
+  },'red','Resolver');
 }
 
 function saveTempReleasesToStorage(){
@@ -6669,6 +6972,20 @@ function loadTempReleasesFromStorage(){
     const saved=localStorage.getItem('avp-temp-releases');
     if(saved) TEMP_RELEASES=JSON.parse(saved);
   }catch(e){}
+}
+
+async function loadTempReleasesFromSupabase(){
+  try{
+    const rows=await supabase.select('liberacoes_temporarias',{order:'created_at.desc'});
+    if(rows&&rows.length>0){
+      TEMP_RELEASES=rows;
+      saveTempReleasesToStorage();
+      // Apply active ano_categoria liberations
+      rows.filter(r=>r.tipo==='ano_categoria'&&(r.status||'ativa')==='ativa').forEach(r=>{
+        if(r.categoria&&r.ano_temporario) CAT_ANO_MINIMO[r.categoria]=r.ano_temporario;
+      });
+    }
+  }catch(e){console.warn('loadTempReleasesFromSupabase:',e);}
 }
 
 // ========= SUPABASE INTEGRATION =========
@@ -7522,13 +7839,14 @@ function togglePassField(id){
 let _settingsCurrentTab='users';
 function switchSettingsTab(tab){
   _settingsCurrentTab=tab;
-  ['users','system','fipe'].forEach(t=>{
+  ['users','autorizadores','system','fipe'].forEach(t=>{
     const panel=document.getElementById('settingsPanel_'+t);
     const btn=document.getElementById('settingsTab_'+t);
     if(panel) panel.style.display=(t===tab)?'':'none';
     if(btn) btn.classList.toggle('active',t===tab);
   });
   if(tab==='users') renderSettingsUsers();
+  if(tab==='autorizadores') renderAutorizadores();
   if(tab==='system') renderSettingsSystem();
   if(tab==='fipe') renderSettingsFipe();
 }
@@ -7778,6 +8096,94 @@ async function renderSettingsUsers(){
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--red)">Erro ao carregar usuários: '+e.message+'</td></tr>';
   }
 }
+
+// ========= AUTORIZADORES CRUD =========
+let _autorizadoresCache = [];
+
+async function renderAutorizadores() {
+  const tbody = document.getElementById('autorizadoresTableBody');
+  if (!tbody) return;
+  if (!currentProfile || currentProfile.nivel !== 'admin') {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Apenas administradores podem gerenciar autorizadores.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></td></tr>';
+  try {
+    const rows = await supabase.select('autorizadores', { order: 'nome.asc' });
+    _autorizadoresCache = rows || [];
+    if (!_autorizadoresCache.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Nenhum autorizador cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = _autorizadoresCache.map(a => {
+      const statusHtml = a.ativo !== false ? '<span style="color:var(--green);font-weight:500;font-size:.75rem">Ativo</span>' : '<span style="color:var(--red);font-weight:500;font-size:.75rem">Inativo</span>';
+      return `<tr style="${a.ativo === false ? 'opacity:.5' : ''}">
+        <td style="font-weight:500">${a.nome || ''}</td>
+        <td style="font-size:.75rem;color:var(--text2)">${a.cargo || '—'}</td>
+        <td>${statusHtml}</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick="openEditAutorizador('${a.id}')" title="Editar" style="padding:3px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="btn btn-sm ${a.ativo !== false ? 'btn-red' : ''}" onclick="toggleAutorizadorStatus('${a.id}',${a.ativo !== false ? 'false' : 'true'})" title="${a.ativo !== false ? 'Desativar' : 'Reativar'}" style="padding:3px 6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${a.ativo !== false ? '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' : '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'}</svg></button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--red)">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+function openCreateAutorizador() {
+  showModal('Novo Autorizador', `<div style="display:flex;flex-direction:column;gap:12px">
+    <div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="aut_nome" placeholder="Nome completo"></div>
+    <div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cargo (opcional)</label><input id="aut_cargo" placeholder="Ex: Gerente, Diretor"></div>
+  </div>`, async function () {
+    const nome = document.getElementById('aut_nome').value.trim();
+    if (!nome) { showToast('Informe o nome', 'error'); return; }
+    closeModal();
+    try {
+      await supabase.insert('autorizadores', { nome, cargo: document.getElementById('aut_cargo').value.trim() || null });
+      showToast('Autorizador criado', 'success');
+      renderAutorizadores();
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  }, 'green', 'Criar');
+}
+
+function openEditAutorizador(id) {
+  const a = _autorizadoresCache.find(x => x.id === id);
+  if (!a) return;
+  showModal('Editar Autorizador', `<div style="display:flex;flex-direction:column;gap:12px">
+    <div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="aut_nome" value="${(a.nome || '').replace(/"/g, '&quot;')}"></div>
+    <div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cargo (opcional)</label><input id="aut_cargo" value="${(a.cargo || '').replace(/"/g, '&quot;')}"></div>
+  </div>`, async function () {
+    const nome = document.getElementById('aut_nome').value.trim();
+    if (!nome) { showToast('Informe o nome', 'error'); return; }
+    closeModal();
+    try {
+      await supabase.update('autorizadores', { nome, cargo: document.getElementById('aut_cargo').value.trim() || null }, 'id=eq.' + id);
+      showToast('Autorizador atualizado', 'success');
+      renderAutorizadores();
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  }, 'blue', 'Salvar');
+}
+
+async function toggleAutorizadorStatus(id, newStatus) {
+  try {
+    await supabase.update('autorizadores', { ativo: newStatus }, 'id=eq.' + id);
+    showToast(newStatus ? 'Autorizador reativado' : 'Autorizador desativado', 'success');
+    renderAutorizadores();
+  } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+}
+
+async function loadAutorizadoresForSelect() {
+  try {
+    const rows = await supabase.select('autorizadores', { filter: 'ativo=eq.true', order: 'nome.asc' });
+    _autorizadoresCache = rows || [];
+  } catch (e) { console.warn('loadAutorizadores error:', e); }
+  return _autorizadoresCache.filter(a => a.ativo !== false);
+}
+// ========= FIM AUTORIZADORES =========
 
 function openMyProfileModal(){
   const profile=currentProfile||{};
@@ -8650,6 +9056,7 @@ function initApp(){
   // Restore staging from localStorage
   loadStagingFromStorage();
   loadTempReleasesFromStorage();
+  loadTempReleasesFromSupabase();
   loadFipeBaseFromStorage();
   loadFipeRequestsFromStorage();
   loadFipeCategoryMap();
@@ -9940,13 +10347,13 @@ let _cobExpandedGrupos = {}; // { grupo_id: boolean }
 let _cobTableVisibleByGrupo = {}; // { grupo_id: boolean }
 
 function cobLoadData() {
+  // First load from localStorage as immediate cache
   try {
     const stored = localStorage.getItem(COB_STORAGE_KEY);
     if (stored) {
       _cobData = JSON.parse(stored);
       if (!_cobData.planos || !_cobData.coberturas || !_cobData.destaques || !_cobData.grupos) {
         _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
-        cobSaveData();
       }
     } else {
       _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
@@ -9954,12 +10361,39 @@ function cobLoadData() {
   } catch(e) {
     _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
   }
+  // Then async load from Supabase (will re-render if data differs)
+  cobLoadFromSupabase();
+}
+
+async function cobLoadFromSupabase() {
+  try {
+    const rows = await supabase.select('coberturas_config', { filter: 'id=eq.default' });
+    if (rows && rows.length > 0 && rows[0].data) {
+      const remote = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+      if (remote.planos && remote.coberturas && remote.destaques && remote.grupos) {
+        _cobData = remote;
+        localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
+        cobRenderAccordions();
+      }
+    } else {
+      // No data in Supabase yet — seed it with defaults
+      await cobSaveToSupabase();
+    }
+  } catch(e) { console.warn('cobLoadFromSupabase error:', e); }
 }
 
 function cobSaveData() {
   try {
     localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
-  } catch(e) { console.warn('Coberturas save failed:', e); }
+  } catch(e) { console.warn('Coberturas localStorage save failed:', e); }
+  // Also save to Supabase async
+  cobSaveToSupabase();
+}
+
+async function cobSaveToSupabase() {
+  try {
+    await supabase.insert('coberturas_config', [{ id: 'default', data: _cobData, updated_by: currentUser || 'admin', updated_at: new Date().toISOString() }], { upsert: true });
+  } catch(e) { console.warn('cobSaveToSupabase error:', e); }
 }
 
 function cobRender() {
