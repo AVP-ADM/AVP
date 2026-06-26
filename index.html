@@ -669,6 +669,16 @@ tr:hover .row-actions{opacity:1}
 .cob-full-table .cob-cross{color:var(--red);display:inline-flex;align-items:center}
 @media(max-width:768px){.cob-hero-grid{grid-template-columns:1fr}.cob-selector{flex-direction:column;align-items:flex-start}}
 
+/* Grupo Tabs */
+.cob-grupo-tabs{display:flex;gap:8px;margin-bottom:14px}
+.cob-grupo-tab{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--radius);font-size:.8rem;font-weight:600;cursor:pointer;background:var(--bg);border:1px solid var(--border);color:var(--text2);transition:all .15s}
+.cob-grupo-tab:hover{border-color:var(--accent);color:var(--text1);background:var(--surface)}
+.cob-grupo-tab.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.cob-grupo-tab-icon{display:flex;align-items:center}
+.cob-grupo-tab-icon svg{width:16px;height:16px}
+.cob-grupo-tab-count{font-size:.65rem;font-weight:500;color:var(--text3);background:var(--surface-2);padding:2px 6px;border-radius:10px}
+.cob-grupo-tab.active .cob-grupo-tab-count{background:rgba(27,122,61,.12);color:var(--accent)}
+
 /* ========= COBERTURAS MANAGER DRAWER ========= */
 .cob-mgr-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .cob-mgr-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);transition:all .15s}
@@ -9843,40 +9853,73 @@ const COB_STORAGE_KEY = 'avp-coberturas-data';
 
 // Default data based on provided plan info
 const COB_DEFAULT_DATA = {
+  grupos: [
+    { id: 'passeio', nome: 'Passeio', icon: 'car' },
+    { id: 'truck', nome: 'Truck', icon: 'truck' }
+  ],
   planos: [
-    { id: 'basico', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico' },
-    { id: 'vip', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip' },
-    { id: 'top', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo' }
+    { id: 'basico', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'passeio' },
+    { id: 'vip', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'passeio' },
+    { id: 'top', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'passeio' },
+    { id: 'basico_truck', nome: 'Basico Truck', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'truck' },
+    { id: 'vip_truck', nome: 'VIP Truck', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'truck' },
+    { id: 'top_truck', nome: 'TOP Truck', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'truck' }
   ],
   coberturas: [
-    { id: 'sos_pneu', nome: 'SOS Pneu', categoria: 'assistencia', destaque: false, valores: { basico: 'Limitado 50km', vip: 'Limitado 50km', top: 'Limitado 50km' }},
-    { id: 'guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, valores: { basico: '250km (125km ida + 125km volta)', vip: '500km (250km ida + 250km volta)', top: '1.000km (500km ida + 500km volta)' }},
-    { id: 'auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate R$70,00', vip: 'Ate R$70,00', top: 'Ate R$70,00' }},
-    { id: 'guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, valores: { basico: 'Em caso de colisao', vip: 'Em caso de colisao', top: 'Em caso de colisao' }},
-    { id: 'auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, valores: { basico: 'Abertura do veiculo', vip: 'Abertura do veiculo', top: 'Abertura do veiculo' }},
-    { id: 'assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
-    { id: 'retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate R$100,00 por pessoa', vip: 'Ate R$100,00 por pessoa', top: 'Ate R$100,00 por pessoa' }},
-    { id: 'hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, valores: { basico: 'Maximo 1 dia', vip: 'Maximo 1 dia', top: 'Maximo 1 dia' }},
-    { id: 'guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, valores: { basico: 'Ate credenciada mais proxima', vip: 'Ate credenciada mais proxima', top: 'Ate credenciada mais proxima' }},
-    { id: 'assistencia_funeral', nome: 'Assistencia Funeral', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate R$2.000 (falecimento acidental)', vip: 'Ate R$2.000 (falecimento acidental)', top: 'Ate R$2.000 (falecimento acidental)' }},
-    { id: 'colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
-    { id: 'fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, valores: { basico: 'Queda de arvore e granizo', vip: 'Queda de arvore e granizo', top: 'Queda de arvore e granizo' }},
-    { id: 'roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
-    { id: 'incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, valores: { basico: 'Apenas decorrente de colisao', vip: 'Apenas decorrente de colisao', top: 'Apenas decorrente de colisao' }},
-    { id: 'cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
-    { id: 'perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
-    { id: 'clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, valores: { basico: 'Descontos exclusivos, cashback e parceiros locais', vip: 'Descontos exclusivos, cashback e parceiros locais', top: 'Descontos exclusivos, cashback e parceiros locais' }},
-    { id: 'app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, valores: { basico: 'App exclusivo para solicitacoes, boletos e beneficios', vip: 'App exclusivo para solicitacoes, boletos e beneficios', top: 'App exclusivo para solicitacoes, boletos e beneficios' }},
-    { id: 'cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, valores: { basico: null, vip: 'Ate R$50.000,00 em danos materiais', top: 'Ate R$100.000,00 em danos materiais' }},
-    { id: 'vidros_farois', nome: 'Cobertura Vidros e Farois', categoria: 'cobertura', destaque: false, valores: { basico: null, vip: '50% em vidros, farois, lanternas e retrovisores. Carencia 60 dias', top: '70% em vidros, farois, lanternas e retrovisores. Carencia 60 dias' }},
-    { id: 'veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, valores: { basico: null, vip: null, top: 'Ate 30 dias' }}
+    // ====== PASSEIO ======
+    { id: 'sos_pneu', nome: 'SOS Pneu', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Limitado 50km', vip: 'Limitado 50km', top: 'Limitado 50km' }},
+    { id: 'guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, grupo: 'passeio', valores: { basico: '250km (125km ida + 125km volta)', vip: '500km (250km ida + 250km volta)', top: '1.000km (500km ida + 500km volta)' }},
+    { id: 'auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Ate R$70,00', vip: 'Ate R$70,00', top: 'Ate R$70,00' }},
+    { id: 'guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Em caso de colisao', vip: 'Em caso de colisao', top: 'Em caso de colisao' }},
+    { id: 'auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Abertura do veiculo', vip: 'Abertura do veiculo', top: 'Abertura do veiculo' }},
+    { id: 'assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
+    { id: 'retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Ate R$100,00 por pessoa', vip: 'Ate R$100,00 por pessoa', top: 'Ate R$100,00 por pessoa' }},
+    { id: 'hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Maximo 1 dia', vip: 'Maximo 1 dia', top: 'Maximo 1 dia' }},
+    { id: 'guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, grupo: 'passeio', valores: { basico: 'Ate credenciada mais proxima', vip: 'Ate credenciada mais proxima', top: 'Ate credenciada mais proxima' }},
+    { id: 'assistencia_funeral', nome: 'Assistencia Funeral', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Ate R$2.000 (falecimento acidental)', vip: 'Ate R$2.000 (falecimento acidental)', top: 'Ate R$2.000 (falecimento acidental)' }},
+    { id: 'colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Queda de arvore e granizo', vip: 'Queda de arvore e granizo', top: 'Queda de arvore e granizo' }},
+    { id: 'roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Apenas decorrente de colisao', vip: 'Apenas decorrente de colisao', top: 'Apenas decorrente de colisao' }},
+    { id: 'cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Sim', vip: 'Sim', top: 'Sim' }},
+    { id: 'perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: 'Ate 100% da FIPE', vip: 'Ate 100% da FIPE', top: 'Ate 100% da FIPE' }},
+    { id: 'clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'passeio', valores: { basico: 'Descontos exclusivos, cashback e parceiros locais', vip: 'Descontos exclusivos, cashback e parceiros locais', top: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'passeio', valores: { basico: 'App exclusivo para solicitacoes, boletos e beneficios', vip: 'App exclusivo para solicitacoes, boletos e beneficios', top: 'App exclusivo para solicitacoes, boletos e beneficios' }},
+    { id: 'cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'passeio', valores: { basico: null, vip: 'Ate R$50.000,00 em danos materiais', top: 'Ate R$100.000,00 em danos materiais' }},
+    { id: 'vidros_farois', nome: 'Cobertura Vidros e Farois', categoria: 'cobertura', destaque: false, grupo: 'passeio', valores: { basico: null, vip: '50% em vidros, farois, lanternas e retrovisores. Carencia 60 dias', top: '70% em vidros, farois, lanternas e retrovisores. Carencia 60 dias' }},
+    { id: 'veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, grupo: 'passeio', valores: { basico: null, vip: null, top: 'Ate 30 dias' }},
+    // ====== TRUCK ======
+    { id: 'tk_cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Sim', vip_truck: 'Sim', top_truck: 'Sim' }},
+    { id: 'tk_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate 100% da FIPE', vip_truck: 'Ate 100% da FIPE', top_truck: 'Ate 100% da FIPE' }},
+    { id: 'tk_fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Queda de arvore e granizo', vip_truck: 'Queda de arvore e granizo', top_truck: 'Queda de arvore e granizo' }},
+    { id: 'tk_roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate 100% da FIPE', vip_truck: 'Ate 100% da FIPE', top_truck: 'Ate 100% da FIPE' }},
+    { id: 'tk_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Apenas decorrente de colisao', vip_truck: 'Apenas decorrente de colisao', top_truck: 'Apenas decorrente de colisao' }},
+    { id: 'tk_perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate 100% da FIPE', vip_truck: 'Ate 100% da FIPE', top_truck: 'Ate 100% da FIPE' }},
+    { id: 'tk_assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Sim', vip_truck: 'Sim', top_truck: 'Sim' }},
+    { id: 'tk_auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate R$70,00', vip_truck: 'Ate R$70,00', top_truck: 'Ate R$70,00' }},
+    { id: 'tk_hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Maximo 1 dia', vip_truck: 'Maximo 1 dia', top_truck: 'Maximo 1 dia' }},
+    { id: 'tk_guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Em caso de colisao', vip_truck: 'Em caso de colisao', top_truck: 'Em caso de colisao' }},
+    { id: 'tk_retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate R$100,00 por pessoa', vip_truck: 'Ate R$100,00 por pessoa', top_truck: 'Ate R$100,00 por pessoa' }},
+    { id: 'tk_auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Abertura do veiculo', vip_truck: 'Abertura do veiculo', top_truck: 'Abertura do veiculo' }},
+    { id: 'tk_auxilio_destombamento', nome: 'Auxilio Destombamento', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: 'Limitado a R$2.000,00', vip_truck: 'Limitado a R$2.000,00', top_truck: 'Limitado a R$2.000,00' }},
+    { id: 'tk_guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, grupo: 'truck', valores: { basico_truck: '100km (50km ida + 50km volta)', vip_truck: '200km (100km ida + 100km volta)', top_truck: '400km (200km ida + 200km volta)' }},
+    { id: 'tk_guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, grupo: 'truck', valores: { basico_truck: '100km (50km ida + 50km volta)', vip_truck: '200km (100km ida + 100km volta)', top_truck: '400km (200km ida + 200km volta)' }},
+    { id: 'tk_clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'truck', valores: { basico_truck: 'Descontos exclusivos, cashback e parceiros locais', vip_truck: 'Descontos exclusivos, cashback e parceiros locais', top_truck: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'tk_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'truck', valores: { basico_truck: 'App exclusivo para solicitacoes, boletos e beneficios', vip_truck: 'App exclusivo para solicitacoes, boletos e beneficios', top_truck: 'App exclusivo para solicitacoes, boletos e beneficios' }},
+    { id: 'tk_cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'truck', valores: { basico_truck: null, vip_truck: 'Ate R$50.000,00 em danos materiais', top_truck: 'Ate R$100.000,00 em danos materiais' }},
+    { id: 'tk_parabrisa_retrovisor', nome: 'Para-brisa / Retrovisor', categoria: 'cobertura', destaque: true, grupo: 'truck', valores: { basico_truck: null, vip_truck: null, top_truck: '50% - Carencia 60 dias da afiliacao' }},
+    { id: 'tk_parabrisa', nome: 'Para-brisa', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: null, vip_truck: '50% - Carencia 60 dias da afiliacao', top_truck: null }}
   ],
-  // Items that are key differentiators (shown in hero cards)
-  destaques: ['guincho_pane', 'cobertura_terceiros', 'veiculo_reserva']
+  // Items that are key differentiators per group
+  destaques: {
+    passeio: ['guincho_pane', 'cobertura_terceiros', 'veiculo_reserva'],
+    truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor']
+  }
 };
 
 let _cobData = null;
 let _cobSelectedPlanos = [];
+let _cobSelectedGrupo = 'passeio';
 let _cobTableVisible = false;
 
 function cobLoadData() {
@@ -9884,9 +9927,10 @@ function cobLoadData() {
     const stored = localStorage.getItem(COB_STORAGE_KEY);
     if (stored) {
       _cobData = JSON.parse(stored);
-      // Ensure structure integrity
-      if (!_cobData.planos || !_cobData.coberturas || !_cobData.destaques) {
+      // Ensure structure integrity - check for new grupo-based structure
+      if (!_cobData.planos || !_cobData.coberturas || !_cobData.destaques || !_cobData.grupos) {
         _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
+        cobSaveData();
       }
     } else {
       _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
@@ -9911,10 +9955,58 @@ function cobRender() {
     const isAdmin = perfil && (perfil.nivel === 'admin' || perfil.setor === 'TI');
     manageBtn.style.display = isAdmin ? '' : 'none';
   }
-  // Initialize selected planos (default: all, max 4)
-  if (_cobSelectedPlanos.length === 0) {
-    _cobSelectedPlanos = _cobData.planos.slice(0, 4).map(p => p.id);
+  // Initialize selected planos based on current group
+  const grupoPlanos = _cobData.planos.filter(p => p.grupo === _cobSelectedGrupo);
+  if (_cobSelectedPlanos.length === 0 || !grupoPlanos.find(p => _cobSelectedPlanos.includes(p.id))) {
+    _cobSelectedPlanos = grupoPlanos.slice(0, 4).map(p => p.id);
   }
+  cobRenderGrupoTabs();
+  cobRenderSelector();
+  cobRenderHeroCards();
+  cobRenderFullTable();
+}
+
+function cobRenderGrupoTabs() {
+  const selectorEl = document.getElementById('cob_selector');
+  if (!selectorEl) return;
+  // Insert grupo tabs before the selector content
+  let grupoTabsEl = document.getElementById('cob_grupoTabs');
+  if (!grupoTabsEl) {
+    grupoTabsEl = document.createElement('div');
+    grupoTabsEl.id = 'cob_grupoTabs';
+    grupoTabsEl.className = 'cob-grupo-tabs';
+    selectorEl.parentNode.insertBefore(grupoTabsEl, selectorEl);
+  }
+  const iconMap = {
+    car: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    truck: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+  };
+  let html = '';
+  _cobData.grupos.forEach(g => {
+    const isActive = g.id === _cobSelectedGrupo;
+    const count = _cobData.planos.filter(p => p.grupo === g.id).length;
+    html += '<button class="cob-grupo-tab' + (isActive ? ' active' : '') + '" onclick="cobSwitchGrupo(\'' + g.id + '\')">';
+    html += '<span class="cob-grupo-tab-icon">' + (iconMap[g.icon] || '') + '</span>';
+    html += '<span>' + g.nome + '</span>';
+    html += '<span class="cob-grupo-tab-count">' + count + ' planos</span>';
+    html += '</button>';
+  });
+  grupoTabsEl.innerHTML = html;
+}
+
+function cobSwitchGrupo(grupoId) {
+  _cobSelectedGrupo = grupoId;
+  const grupoPlanos = _cobData.planos.filter(p => p.grupo === grupoId);
+  _cobSelectedPlanos = grupoPlanos.slice(0, 4).map(p => p.id);
+  _cobTableVisible = false;
+  const tableEl = document.getElementById('cob_fullTable');
+  if (tableEl) tableEl.style.display = 'none';
+  const toggleBtn = document.getElementById('cob_toggleTable');
+  if (toggleBtn) {
+    toggleBtn.classList.remove('expanded');
+    toggleBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="6 9 12 15 18 9"/></svg> Ver todas as coberturas';
+  }
+  cobRenderGrupoTabs();
   cobRenderSelector();
   cobRenderHeroCards();
   cobRenderFullTable();
@@ -9925,12 +10017,14 @@ function cobRenderSelector() {
   const addBtn = document.getElementById('cob_addSlot');
   if (!slotsEl) return;
 
+  const grupoPlanos = _cobData.planos.filter(p => p.grupo === _cobSelectedGrupo);
+
   let html = '';
   _cobSelectedPlanos.forEach((planoId, idx) => {
     if (idx > 0) html += '<span class="cob-slot-vs">vs</span>';
     html += '<div class="cob-slot">';
     html += '<select onchange="cobChangeSlot(' + idx + ', this.value)">';
-    _cobData.planos.forEach(p => {
+    grupoPlanos.forEach(p => {
       html += '<option value="' + p.id + '"' + (p.id === planoId ? ' selected' : '') + '>' + p.nome + '</option>';
     });
     html += '</select>';
@@ -9944,7 +10038,7 @@ function cobRenderSelector() {
 
   // Show add button if less than max and there are more planos available
   if (addBtn) {
-    addBtn.style.display = (_cobSelectedPlanos.length < 4 && _cobSelectedPlanos.length < _cobData.planos.length) ? '' : 'none';
+    addBtn.style.display = (_cobSelectedPlanos.length < 4 && _cobSelectedPlanos.length < grupoPlanos.length) ? '' : 'none';
   }
 }
 
@@ -9963,8 +10057,9 @@ function cobRemoveSlot(idx) {
 }
 
 function cobAddSlot() {
-  // Find first plano not already selected
-  const available = _cobData.planos.filter(p => !_cobSelectedPlanos.includes(p.id));
+  // Find first plano not already selected (within current grupo)
+  const grupoPlanos = _cobData.planos.filter(p => p.grupo === _cobSelectedGrupo);
+  const available = grupoPlanos.filter(p => !_cobSelectedPlanos.includes(p.id));
   if (available.length > 0) {
     _cobSelectedPlanos.push(available[0].id);
     cobRenderSelector();
@@ -9981,11 +10076,16 @@ function cobRenderHeroCards() {
   const grid = document.getElementById('cob_heroGrid');
   if (!grid) return;
 
-  const destaqueItems = _cobData.coberturas.filter(c => _cobData.destaques.includes(c.id));
+  const grupoDestaques = Array.isArray(_cobData.destaques) ? _cobData.destaques : (_cobData.destaques[_cobSelectedGrupo] || []);
+  const grupoCoberturas = _cobData.coberturas.filter(c => c.grupo === _cobSelectedGrupo);
+  const destaqueItems = grupoCoberturas.filter(c => grupoDestaques.includes(c.id));
   const iconMap = {
-    guincho_pane: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6h5l3 5v6h-2"/><path d="M8 17H5"/><path d="M16 17h-2"/><path d="M1 1h10v14H1z"/></svg>',
+    guincho_pane: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    tk_guincho_pane: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
     cobertura_terceiros: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-    veiculo_reserva: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+    tk_cobertura_terceiros: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    veiculo_reserva: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    tk_parabrisa_retrovisor: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>'
   };
 
   let html = '';
@@ -10050,16 +10150,17 @@ function cobRenderFullTable() {
   thHtml += '</tr>';
   thead.innerHTML = thHtml;
 
-  // Body - group by category
+  // Body - group by category, filtered by current grupo
+  const grupoCoberturas = _cobData.coberturas.filter(c => c.grupo === _cobSelectedGrupo);
   const categories = [
-    { key: 'assistencia', label: 'Assistencias' },
     { key: 'cobertura', label: 'Coberturas' },
+    { key: 'assistencia', label: 'Assistencias' },
     { key: 'beneficio', label: 'Beneficios' }
   ];
 
   let tbHtml = '';
   categories.forEach(cat => {
-    const items = _cobData.coberturas.filter(c => c.categoria === cat.key);
+    const items = grupoCoberturas.filter(c => c.categoria === cat.key);
     if (items.length === 0) return;
     tbHtml += '<tr><td colspan="' + (_cobSelectedPlanos.length + 1) + '" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">' + cat.label + '</td></tr>';
 
@@ -10112,22 +10213,28 @@ function cobRenderManagerDrawer() {
     let html = '<div class="drawer-title">Gerenciar Planos</div>';
     html += '<div class="drawer-subtitle">Criar, editar ou remover planos e suas coberturas</div>';
     html += '<div style="margin-bottom:14px"><button class="btn btn-green btn-sm" onclick="cobNewPlan()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo Plano</button></div>';
-    html += '<div class="cob-mgr-list">';
 
-    _cobData.planos.sort((a,b) => a.ordem - b.ordem).forEach(plano => {
-      const cobCount = _cobData.coberturas.filter(c => c.valores[plano.id] !== undefined).length;
-      const corMap = { blue: 'var(--blue)', purple: 'var(--purple)', amber: 'var(--amber)', green: 'var(--green)', red: 'var(--red)' };
-      const dotColor = corMap[plano.cor] || 'var(--text3)';
-      html += '<div class="cob-mgr-item">';
-      html += '<div class="cob-mgr-item-color" style="background:' + dotColor + '"></div>';
-      html += '<span class="cob-mgr-item-name">' + plano.nome + '</span>';
-      html += '<span class="cob-mgr-item-count">' + cobCount + ' coberturas</span>';
-      html += '<div class="cob-mgr-item-actions">';
-      html += '<button onclick="cobEditPlan(\'' + plano.id + '\')" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-      html += '<button class="danger" onclick="cobDeletePlan(\'' + plano.id + '\')" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+    // Group planos by grupo
+    _cobData.grupos.forEach(grupo => {
+      const grupoPlanos = _cobData.planos.filter(p => p.grupo === grupo.id).sort((a,b) => a.ordem - b.ordem);
+      html += '<div style="margin-bottom:16px">';
+      html += '<div style="font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:8px">' + grupo.nome + ' <span style="font-weight:400">(' + grupoPlanos.length + ')</span></div>';
+      html += '<div class="cob-mgr-list">';
+      grupoPlanos.forEach(plano => {
+        const cobCount = _cobData.coberturas.filter(c => c.grupo === grupo.id).length;
+        const corMap = { blue: 'var(--blue)', purple: 'var(--purple)', amber: 'var(--amber)', green: 'var(--green)', red: 'var(--red)' };
+        const dotColor = corMap[plano.cor] || 'var(--text3)';
+        html += '<div class="cob-mgr-item">';
+        html += '<div class="cob-mgr-item-color" style="background:' + dotColor + '"></div>';
+        html += '<span class="cob-mgr-item-name">' + plano.nome + '</span>';
+        html += '<span class="cob-mgr-item-count">' + cobCount + ' coberturas</span>';
+        html += '<div class="cob-mgr-item-actions">';
+        html += '<button onclick="cobEditPlan(\'' + plano.id + '\')" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+        html += '<button class="danger" onclick="cobDeletePlan(\'' + plano.id + '\')" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+        html += '</div></div>';
+      });
       html += '</div></div>';
     });
-    html += '</div>';
 
     // Manage coberturas section
     html += '<div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px">';
@@ -10135,24 +10242,33 @@ function cobRenderManagerDrawer() {
     html += '<h4 style="font-size:.85rem;font-weight:600;margin:0">Coberturas Disponiveis</h4>';
     html += '<button class="btn btn-sm" onclick="cobNewCobertura()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Cobertura</button>';
     html += '</div>';
-    html += '<div class="cob-cov-list">';
-    _cobData.coberturas.forEach(cob => {
-      const isDestaque = _cobData.destaques.includes(cob.id);
-      html += '<div class="cob-cov-item">';
-      html += '<label>' + cob.nome + '</label>';
-      html += '<span class="badge badge-' + (cob.categoria === 'assistencia' ? 'blue' : cob.categoria === 'cobertura' ? 'green' : 'purple') + '">' + cob.categoria + '</span>';
-      if (isDestaque) html += '<span class="badge badge-amber" style="margin-left:2px">destaque</span>';
-      html += '<button class="cob-slot-remove" onclick="cobDeleteCobertura(\'' + cob.id + '\')" title="Remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+
+    _cobData.grupos.forEach(grupo => {
+      const grupoCobs = _cobData.coberturas.filter(c => c.grupo === grupo.id);
+      const grupoDestaques = (typeof _cobData.destaques === 'object' && !Array.isArray(_cobData.destaques)) ? (_cobData.destaques[grupo.id] || []) : _cobData.destaques;
+      html += '<div style="font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">' + grupo.nome + ' (' + grupoCobs.length + ')</div>';
+      html += '<div class="cob-cov-list">';
+      grupoCobs.forEach(cob => {
+        const isDestaque = grupoDestaques.includes(cob.id);
+        html += '<div class="cob-cov-item">';
+        html += '<label>' + cob.nome + '</label>';
+        html += '<span class="badge badge-' + (cob.categoria === 'assistencia' ? 'blue' : cob.categoria === 'cobertura' ? 'green' : 'purple') + '">' + cob.categoria + '</span>';
+        if (isDestaque) html += '<span class="badge badge-amber" style="margin-left:2px">destaque</span>';
+        html += '<button class="cob-slot-remove" onclick="cobDeleteCobertura(\'' + cob.id + '\')" title="Remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+        html += '</div>';
+      });
       html += '</div>';
     });
-    html += '</div></div>';
+    html += '</div>';
     content.innerHTML = html;
 
   } else {
     // EDIT PLAN VIEW
     const isNew = _cobEditingPlan === '__new__';
-    const plano = isNew ? { id: '', nome: '', cor: 'blue', ordem: _cobData.planos.length + 1, cssClass: '', badge: '' } : cobGetPlano(_cobEditingPlan);
+    const plano = isNew ? { id: '', nome: '', cor: 'blue', ordem: _cobData.planos.length + 1, cssClass: '', badge: '', grupo: _cobSelectedGrupo } : cobGetPlano(_cobEditingPlan);
     if (!plano && !isNew) { _cobEditingPlan = null; cobRenderManagerDrawer(); return; }
+
+    const planoGrupo = plano.grupo || _cobSelectedGrupo;
 
     let html = '<div style="margin-bottom:16px"><button class="btn btn-sm" onclick="cobBackToList()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Voltar</button></div>';
     html += '<div class="drawer-title">' + (isNew ? 'Novo Plano' : 'Editar: ' + plano.nome) + '</div>';
@@ -10167,6 +10283,13 @@ function cobRenderManagerDrawer() {
       html += '<div><label>Identificador (slug)</label>';
       html += '<input type="text" id="cob_planId" value="" placeholder="Ex: premium (sem espaços)" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,\'\')"></div>';
     }
+
+    // Grupo
+    html += '<div><label>Grupo</label><select id="cob_planGrupo">';
+    _cobData.grupos.forEach(g => {
+      html += '<option value="' + g.id + '"' + (planoGrupo === g.id ? ' selected' : '') + '>' + g.nome + '</option>';
+    });
+    html += '</select></div>';
 
     // Color and order
     html += '<div class="cob-form-row">';
@@ -10184,9 +10307,10 @@ function cobRenderManagerDrawer() {
 
     // Coberturas values for this plan
     html += '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">';
-    html += '<label style="margin-bottom:8px;display:block">Valores das Coberturas</label>';
+    html += '<label style="margin-bottom:8px;display:block">Valores das Coberturas (' + ((_cobData.grupos.find(g=>g.id===planoGrupo)||{}).nome||planoGrupo) + ')</label>';
     html += '<div class="cob-cov-list">';
-    _cobData.coberturas.forEach(cob => {
+    const editCoberturas = _cobData.coberturas.filter(c => c.grupo === planoGrupo);
+    editCoberturas.forEach(cob => {
       const val = isNew ? '' : (cob.valores[plano.id] || '');
       const isNull = !isNew && (cob.valores[plano.id] === null || cob.valores[plano.id] === undefined);
       html += '<div class="cob-cov-item">';
@@ -10244,6 +10368,7 @@ function cobSavePlan() {
   const cor = document.getElementById('cob_planCor').value;
   const ordem = parseInt(document.getElementById('cob_planOrdem').value) || 1;
   const badge = document.getElementById('cob_planBadge').value.trim();
+  const grupo = document.getElementById('cob_planGrupo').value;
 
   if (!nome) { showToast('Informe o nome do plano', 'error'); return; }
 
@@ -10270,17 +10395,17 @@ function cobSavePlan() {
 
   if (isNew) {
     // Create new plan
-    const cssClassMap = { blue: 'plan-basico', purple: 'plan-vip', amber: 'plan-top', green: 'plan-default', red: 'plan-default' };
     _cobData.planos.push({
       id: planId,
       nome: nome,
       cor: cor,
       ordem: ordem,
       cssClass: 'plan-' + planId,
-      badge: badge || undefined
+      badge: badge || undefined,
+      grupo: grupo
     });
-    // Add values to each cobertura
-    _cobData.coberturas.forEach(cob => {
+    // Add values to each cobertura in this grupo
+    _cobData.coberturas.filter(c => c.grupo === grupo).forEach(cob => {
       cob.valores[planId] = newValues[cob.id] !== undefined ? newValues[cob.id] : null;
     });
     // Add dynamic CSS class for the new plan color
@@ -10293,10 +10418,11 @@ function cobSavePlan() {
       plano.cor = cor;
       plano.ordem = ordem;
       plano.badge = badge || undefined;
+      plano.grupo = grupo;
       cobAddDynamicPlanCSS(planId, cor);
     }
     // Update cobertura values
-    _cobData.coberturas.forEach(cob => {
+    _cobData.coberturas.filter(c => c.grupo === grupo).forEach(cob => {
       cob.valores[planId] = newValues[cob.id] !== undefined ? newValues[cob.id] : null;
     });
   }
@@ -10347,8 +10473,13 @@ function cobConfirmDeletePlan(planId) {
 }
 
 function cobNewCobertura() {
+  let grupoOpts = '';
+  _cobData.grupos.forEach(g => {
+    grupoOpts += '<option value="' + g.id + '"' + (g.id === _cobSelectedGrupo ? ' selected' : '') + '>' + g.nome + '</option>';
+  });
   const bodyHtml = '<div class="cob-form">' +
     '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input type="text" id="cob_newCovName" placeholder="Ex: Cobertura de Pneus"></div>' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Grupo</label><select id="cob_newCovGrupo">' + grupoOpts + '</select></div>' +
     '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Categoria</label><select id="cob_newCovCat"><option value="assistencia">Assistencia</option><option value="cobertura">Cobertura</option><option value="beneficio">Beneficio</option></select></div>' +
     '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px"><input type="checkbox" id="cob_newCovDest" style="width:auto;height:auto;margin-right:6px;vertical-align:middle">Marcar como destaque (aparece nos cards)</label></div>' +
     '</div>';
@@ -10358,17 +10489,23 @@ function cobNewCobertura() {
 function cobConfirmNewCobertura() {
   const nome = document.getElementById('cob_newCovName').value.trim();
   const cat = document.getElementById('cob_newCovCat').value;
+  const grupo = document.getElementById('cob_newCovGrupo').value;
   const isDest = document.getElementById('cob_newCovDest').checked;
   if (!nome) { showToast('Informe o nome da cobertura', 'error'); return; }
 
-  const id = nome.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+  const id = (grupo === 'passeio' ? '' : grupo.substring(0,2) + '_') + nome.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
   if (_cobData.coberturas.find(c => c.id === id)) { showToast('Ja existe uma cobertura similar', 'error'); return; }
 
   const valores = {};
-  _cobData.planos.forEach(p => { valores[p.id] = null; });
+  _cobData.planos.filter(p => p.grupo === grupo).forEach(p => { valores[p.id] = null; });
 
-  _cobData.coberturas.push({ id, nome, categoria: cat, destaque: isDest, valores });
-  if (isDest) _cobData.destaques.push(id);
+  _cobData.coberturas.push({ id, nome, categoria: cat, destaque: isDest, grupo: grupo, valores });
+  if (isDest) {
+    if (typeof _cobData.destaques === 'object' && !Array.isArray(_cobData.destaques)) {
+      if (!_cobData.destaques[grupo]) _cobData.destaques[grupo] = [];
+      _cobData.destaques[grupo].push(id);
+    }
+  }
 
   cobSaveData();
   closeModal();
@@ -10385,8 +10522,16 @@ function cobDeleteCobertura(cobId) {
 }
 
 function cobConfirmDeleteCobertura(cobId) {
+  const cob = _cobData.coberturas.find(c => c.id === cobId);
   _cobData.coberturas = _cobData.coberturas.filter(c => c.id !== cobId);
-  _cobData.destaques = _cobData.destaques.filter(d => d !== cobId);
+  // Remove from destaques (handle both array and object format)
+  if (typeof _cobData.destaques === 'object' && !Array.isArray(_cobData.destaques)) {
+    Object.keys(_cobData.destaques).forEach(g => {
+      _cobData.destaques[g] = _cobData.destaques[g].filter(d => d !== cobId);
+    });
+  } else if (Array.isArray(_cobData.destaques)) {
+    _cobData.destaques = _cobData.destaques.filter(d => d !== cobId);
+  }
   cobSaveData();
   closeModal();
   showToast('Cobertura excluida', 'success');
