@@ -870,6 +870,9 @@ tr:hover .row-actions{opacity:1}
             <button class="sidebar-sub-item" data-subtab="coberturas" onclick="goTab('coberturas')">
               <span class="si-text">Coberturas</span>
             </button>
+            <button class="sidebar-sub-item" data-subtab="placafipe" onclick="goTab('placafipe')">
+              <span class="si-text">Consulta de Placa</span>
+            </button>
           </div>
         </div>
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
@@ -1149,6 +1152,43 @@ tr:hover .row-actions{opacity:1}
 
       <!-- Accordion Sections (rendered by JS) -->
       <div id="cob_accordionContainer"></div>
+    </div>
+
+    <!-- ========= SUB-TAB: CONSULTA DE PLACA ========= -->
+    <div class="sub-tab-panel" id="subpanel-placafipe">
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:0">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:32px;height:32px;border-radius:8px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="22" height="14" rx="3"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="12" x2="12" y2="12.01"/><line x1="17" y1="12" x2="17" y2="12.01"/></svg></span>
+            <div>
+              <div style="font-size:.9rem;font-weight:700;color:var(--text1)">Consulta de Placa</div>
+              <div style="font-size:.7rem;color:var(--text3)">Consulte informacoes do veiculo pela placa</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="btn btn-sm" onclick="placaFipeReload()" title="Atualizar">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Atualizar
+            </button>
+            <button class="btn btn-sm" onclick="placaFipeFullscreen()" title="Tela cheia">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              Tela cheia
+            </button>
+            <a href="https://placafipe.com.br/" target="_blank" class="btn btn-sm" style="text-decoration:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Abrir no site
+            </a>
+          </div>
+        </div>
+        <!-- Loading -->
+        <div id="placafipe_loading" style="display:flex;align-items:center;justify-content:center;padding:60px;flex-direction:column;gap:12px">
+          <div class="spinner" style="width:24px;height:24px"></div>
+          <span style="font-size:.82rem;color:var(--text2)">Carregando consulta...</span>
+        </div>
+        <!-- iframe -->
+        <iframe id="placafipe_iframe" src="" style="width:100%;height:calc(100vh - 200px);border:none;display:none" allowfullscreen></iframe>
+      </div>
     </div>
 
   </div>
@@ -2273,7 +2313,8 @@ function goTab(tab){
     history: { parent: 'gestao', sub: 'history' },
     crlv: { parent: 'consultas', sub: 'crlv' },
     planos: { parent: 'consultas', sub: 'planos' },
-    coberturas: { parent: 'consultas', sub: 'coberturas' }
+    coberturas: { parent: 'consultas', sub: 'coberturas' },
+    placafipe: { parent: 'consultas', sub: 'placafipe' }
   };
 
   let mainTab = tab;
@@ -2327,6 +2368,7 @@ function goTab(tab){
   if(effectiveTab==='crlv'){crlvLoadHistory();}
   if(effectiveTab==='planos'){tmInit();}
   if(effectiveTab==='coberturas'){cobRender();}
+  if(effectiveTab==='placafipe'){placaFipeInit();}
   if(effectiveTab==='settings'){renderSettingsUsers();}
 }
 
@@ -10826,6 +10868,40 @@ function cobConfirmDeleteCobertura(cobId) {
   cobRender();
 }
 // ========= FIM COBERTURAS MANAGER =========
+
+// ========= CONSULTA DE PLACA (IFRAME) =========
+let _placaFipeLoaded = false;
+
+function placaFipeInit(){
+  if(_placaFipeLoaded) return;
+  const iframe = document.getElementById('placafipe_iframe');
+  const loading = document.getElementById('placafipe_loading');
+  if(!iframe) return;
+  iframe.onload = function(){
+    if(loading) loading.style.display = 'none';
+    iframe.style.display = '';
+  };
+  iframe.src = 'https://placafipe.com.br/';
+  _placaFipeLoaded = true;
+}
+
+function placaFipeReload(){
+  const iframe = document.getElementById('placafipe_iframe');
+  const loading = document.getElementById('placafipe_loading');
+  if(!iframe) return;
+  if(loading){loading.style.display='flex';}
+  iframe.style.display='none';
+  iframe.src = 'https://placafipe.com.br/';
+}
+
+function placaFipeFullscreen(){
+  const iframe = document.getElementById('placafipe_iframe');
+  if(!iframe) return;
+  if(iframe.requestFullscreen) iframe.requestFullscreen();
+  else if(iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+  else if(iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+}
+// ========= FIM CONSULTA DE PLACA =========
 </script>
 </body>
 </html>
