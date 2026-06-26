@@ -616,16 +616,6 @@ tr:hover .row-actions{opacity:1}
 @media(max-width:900px){.tm-layout{grid-template-columns:1fr}.tm-sidebar{display:none}}
 
 /* ========= COBERTURAS (PLANOS) STYLES ========= */
-.cob-selector{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;flex-wrap:wrap}
-.cob-selector-label{font-size:.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
-.cob-selector-slots{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.cob-slot{position:relative;display:flex;align-items:center;gap:6px}
-.cob-slot select{padding:7px 28px 7px 10px;font-size:.78rem;font-weight:600;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--surface);color:var(--text1);cursor:pointer;appearance:none;-webkit-appearance:none;min-width:120px;transition:all .15s}
-.cob-slot select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,122,61,.1)}
-.cob-slot-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3)}
-.cob-slot-vs{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
-.cob-slot-remove{background:none;border:none;cursor:pointer;padding:2px;border-radius:50%;color:var(--text3);transition:all .15s;display:flex;align-items:center;justify-content:center}
-.cob-slot-remove:hover{color:var(--red);background:var(--red-bg,rgba(239,68,68,.08))}
 .cob-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px}
 .cob-hero-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;overflow:hidden;transition:all .2s;position:relative}
 .cob-hero-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
@@ -667,7 +657,7 @@ tr:hover .row-actions{opacity:1}
 .cob-full-table table td.cob-disabled{color:var(--text3);font-style:italic}
 .cob-full-table .cob-check{color:var(--green);display:inline-flex;align-items:center}
 .cob-full-table .cob-cross{color:var(--red);display:inline-flex;align-items:center}
-@media(max-width:768px){.cob-hero-grid{grid-template-columns:1fr}.cob-selector{flex-direction:column;align-items:flex-start}}
+@media(max-width:768px){.cob-hero-grid{grid-template-columns:1fr}}
 
 /* Accordion Sections */
 .cob-accordion{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;background:var(--surface);transition:box-shadow .2s}
@@ -9918,7 +9908,6 @@ const COB_DEFAULT_DATA = {
 };
 
 let _cobData = null;
-let _cobSelectedByGrupo = {}; // { grupo_id: [selected_plan_ids] }
 let _cobExpandedGrupos = {}; // { grupo_id: boolean }
 let _cobTableVisibleByGrupo = {}; // { grupo_id: boolean }
 
@@ -9954,13 +9943,9 @@ function cobRender() {
     const isAdmin = perfil && (perfil.nivel === 'admin' || perfil.setor === 'TI');
     manageBtn.style.display = isAdmin ? '' : 'none';
   }
-  // Initialize selections per grupo
+  // Initialize state per grupo
   _cobData.grupos.forEach(g => {
-    if (!_cobSelectedByGrupo[g.id]) {
-      const grupoPlanos = _cobData.planos.filter(p => p.grupo === g.id);
-      _cobSelectedByGrupo[g.id] = grupoPlanos.slice(0, 4).map(p => p.id);
-    }
-    if (_cobExpandedGrupos[g.id] === undefined) _cobExpandedGrupos[g.id] = true;
+    if (_cobExpandedGrupos[g.id] === undefined) _cobExpandedGrupos[g.id] = false;
     if (_cobTableVisibleByGrupo[g.id] === undefined) _cobTableVisibleByGrupo[g.id] = false;
   });
   cobRenderAccordions();
@@ -9975,36 +9960,20 @@ function cobRenderAccordions() {
   var html='';
   _cobData.grupos.forEach(function(grupo){
     var isExp=_cobExpandedGrupos[grupo.id];
-    var gPlanos=_cobData.planos.filter(function(p){return p.grupo===grupo.id;});
-    var sel=_cobSelectedByGrupo[grupo.id]||[];
+    var gPlanos=_cobData.planos.filter(function(p){return p.grupo===grupo.id;}).sort(function(a,b){return a.ordem-b.ordem;});
+    var sel=gPlanos.map(function(p){return p.id;});
     var tblVis=_cobTableVisibleByGrupo[grupo.id]||false;
     var gCobs=_cobData.coberturas.filter(function(c){return c.grupo===grupo.id;});
     var gDest=(typeof _cobData.destaques==='object'&&!Array.isArray(_cobData.destaques))?(_cobData.destaques[grupo.id]||[]):_cobData.destaques;
     var destItems=gCobs.filter(function(c){return gDest.includes(c.id);});
-    // Accordion wrapper
     html+='<div class="cob-accordion'+(isExp?' expanded':'')+'" data-grupo="'+grupo.id+'">';
-    // Header
     html+='<div class="cob-accordion-header" onclick="cobToggleAccordion(\''+grupo.id+'\')">';
     html+='<div class="cob-accordion-icon">'+(iconMap[grupo.icon]||'')+'</div>';
     html+='<span class="cob-accordion-title">'+grupo.nome+'</span>';
     html+='<span class="cob-accordion-count">'+gPlanos.length+' planos</span>';
     html+='<span class="cob-accordion-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>';
-    // Body
     html+='<div class="cob-accordion-body">';
-    // Selector row
-    html+='<div class="cob-selector"><span class="cob-selector-label">Comparar:</span><div class="cob-selector-slots">';
-    sel.forEach(function(pid,idx){
-      if(idx>0)html+='<span class="cob-slot-vs">vs</span>';
-      html+='<div class="cob-slot"><select onchange="cobChangeSlot(\''+grupo.id+'\','+idx+',this.value)">';
-      gPlanos.forEach(function(p){html+='<option value="'+p.id+'"'+(p.id===pid?' selected':'')+'>'+p.nome+'</option>';});
-      html+='</select><span class="cob-slot-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>';
-      if(sel.length>1)html+='<button class="cob-slot-remove" onclick="cobRemoveSlot(\''+grupo.id+'\','+idx+')" title="Remover"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
-      html+='</div>';
-    });
-    html+='</div>';
-    if(sel.length<4&&sel.length<gPlanos.length)html+='<button class="btn btn-sm" onclick="cobAddSlot(\''+grupo.id+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Adicionar</button>';
-    html+='</div>';
-    // Hero Cards
+    // Hero Cards - always show ALL plans in group
     html+='<div class="cob-hero-grid">';
     sel.forEach(function(pid){
       var pl=cobGetPlano(pid);if(!pl)return;
@@ -10048,9 +10017,6 @@ function cobRenderAccordions() {
 function cobToggleAccordion(gid){_cobExpandedGrupos[gid]=!_cobExpandedGrupos[gid];var el=document.querySelector('.cob-accordion[data-grupo="'+gid+'"]');if(el)el.classList.toggle('expanded',_cobExpandedGrupos[gid]);}
 function cobExpandAll(){_cobData.grupos.forEach(function(g){_cobExpandedGrupos[g.id]=true;});document.querySelectorAll('.cob-accordion').forEach(function(el){el.classList.add('expanded');});}
 function cobCollapseAll(){_cobData.grupos.forEach(function(g){_cobExpandedGrupos[g.id]=false;});document.querySelectorAll('.cob-accordion').forEach(function(el){el.classList.remove('expanded');});}
-function cobChangeSlot(gid,idx,val){_cobSelectedByGrupo[gid][idx]=val;cobRenderAccordions();}
-function cobRemoveSlot(gid,idx){_cobSelectedByGrupo[gid].splice(idx,1);cobRenderAccordions();}
-function cobAddSlot(gid){var gp=_cobData.planos.filter(function(p){return p.grupo===gid;}),sel=_cobSelectedByGrupo[gid]||[],av=gp.filter(function(p){return !sel.includes(p.id);});if(av.length>0){_cobSelectedByGrupo[gid].push(av[0].id);cobRenderAccordions();}}
 function cobGetPlano(id){return _cobData.planos.find(function(p){return p.id===id;});}
 function cobToggleTable(gid){_cobTableVisibleByGrupo[gid]=!_cobTableVisibleByGrupo[gid];cobRenderAccordions();}
 // ========= FIM COBERTURAS =========
@@ -10322,14 +10288,7 @@ function cobConfirmDeletePlan(planId) {
   // Remove values from coberturas
   _cobData.coberturas.forEach(cob => { delete cob.valores[planId]; });
   // Remove from selected
-  // Remove from selected in all grupos
-  Object.keys(_cobSelectedByGrupo).forEach(function(gid){
-    _cobSelectedByGrupo[gid] = (_cobSelectedByGrupo[gid]||[]).filter(function(id){return id!==planId;});
-    if(_cobSelectedByGrupo[gid].length===0){
-      var gp=_cobData.planos.filter(function(p){return p.grupo===gid;});
-      if(gp.length>0) _cobSelectedByGrupo[gid]=[gp[0].id];
-    }
-  });
+  // No selection state to update since we always show all plans
   cobSaveData();
   closeModal();
   showToast('Plano excluido', 'success');
