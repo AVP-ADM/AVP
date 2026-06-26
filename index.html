@@ -179,6 +179,8 @@ td{padding:10px 14px;border-bottom:1px solid var(--border-light)}
 tr:hover{background:var(--surface-2)}
 tr:last-child td{border-bottom:none}
 .clickable-row{cursor:pointer}
+.cat-ano-badge{font-size:.62rem;font-weight:600;padding:2px 6px;border-radius:4px;background:var(--surface-2);color:var(--text3);margin-left:6px;vertical-align:middle;letter-spacing:.02em}
+[data-theme="dark"] .cat-ano-badge{background:rgba(255,255,255,.06)}
 
 /* ========= BADGES & TAGS ========= */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600}
@@ -2666,7 +2668,7 @@ function renderOverviewTable(){
       </tr>`;
     }
     return `<tr class="clickable-row" onclick="showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')"${catPending?' style="opacity:.6"':''}>
-      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
+      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong> <span class="cat-ano-badge" title="Ano minimo de aceitacao">${getAnoMinimoCat(cat)}+</span>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
