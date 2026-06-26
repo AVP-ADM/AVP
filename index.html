@@ -6897,11 +6897,11 @@ async function salvarLiberacao(){
 
   const record={
     tipo:tipo,
-    marca:marca||null,
-    modelo:modelo||null,
+    marca:marca||'—',
+    modelo:modelo||'—',
     categoria:categoria,
-    motivo:obs||null,
-    observacao:obs||null,
+    motivo:obs||'',
+    observacao:obs||'',
     status:'ativa',
     usuario_criacao:currentUser||'admin',
     autorizador_id:autId,
