@@ -1252,8 +1252,8 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="filter-row">
         <select id="tempReleaseFilter" onchange="renderTempReleases()">
-          <option value="ativa">Ativas</option>
-          <option value="resolvida">Resolvidas</option>
+          <option value="Ativa">Ativas</option>
+          <option value="Finalizada">Finalizadas</option>
           <option value="">Todas</option>
         </select>
         <select id="tempReleaseTypeFilter" onchange="renderTempReleases()">
@@ -2558,7 +2558,7 @@ function renderRecentActivity(){
   setTimeout(function(){
     const pill=document.getElementById('activityLibPill');
     if(!pill) return;
-    const activeCount=TEMP_RELEASES.filter(t=>(t.status||'ativa')==='ativa').length;
+    const activeCount=TEMP_RELEASES.filter(t=>((t.status||'Ativa').toLowerCase()==='ativa')).length;
     if(activeCount>0){
       pill.innerHTML='<a href="#" onclick="goTab(\'management\');setTimeout(function(){var el=document.getElementById(\'tempReleasesCard\');if(el)el.scrollIntoView({behavior:\'smooth\'});},200);return false" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber);font-size:.72rem;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background=\'var(--amber)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--amber-bg)\';this.style.color=\'var(--amber)\'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'+activeCount+' liberacao(oes) ativa(s) →</a>';
     } else {
@@ -6730,10 +6730,10 @@ const TEMP_RELEASES_PER_PAGE = 10;
 function renderTempReleases(){
   const tbody=document.getElementById('tempReleasesBody');
   if(!tbody) return;
-  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'ativa';
+  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'Ativa';
   const typeFilter=(document.getElementById('tempReleaseTypeFilter')||{}).value||'';
   let filtered=TEMP_RELEASES;
-  if(filter) filtered=filtered.filter(t=>(t.status||'ativa')===filter);
+  if(filter) filtered=filtered.filter(t=>(t.status||'Ativa').toLowerCase()===filter.toLowerCase());
   if(typeFilter) filtered=filtered.filter(t=>(t.tipo||'modelo')===typeFilter);
   var total=filtered.length;
   var totalPages=Math.ceil(total/TEMP_RELEASES_PER_PAGE)||1;
@@ -6742,8 +6742,8 @@ function renderTempReleases(){
   var paged=filtered.slice(start,start+TEMP_RELEASES_PER_PAGE);
   tbody.innerHTML=paged.map(function(t,i){
     var realIdx=TEMP_RELEASES.indexOf(t);
-    var isActive=(t.status||'ativa')==='ativa';
-    var statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Resolvida</span>';
+    var isActive=((t.status||'Ativa').toLowerCase()==='ativa');
+    var statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Finalizada</span>';
     var tipo=(t.tipo||'modelo')==='modelo'?'<span class="badge badge-blue">Modelo</span>':'<span class="badge badge-purple">Ano Cat.</span>';
     var detalhes='';
     if((t.tipo||'modelo')==='modelo'){detalhes='<strong>'+(t.marca||'')+'</strong> '+(t.modelo||'');}
@@ -6766,7 +6766,7 @@ function renderTempReleases(){
 }
 
 function renderTempReleaseAlert(){
-  const activeCount=TEMP_RELEASES.filter(t=>(t.status||'ativa')==='ativa').length;
+  const activeCount=TEMP_RELEASES.filter(t=>((t.status||'Ativa').toLowerCase()==='ativa')).length;
   // Management tab alert
   const el=document.getElementById('tempReleaseAlert');
   const countEl=document.getElementById('tempReleaseAlertCount');
@@ -6902,7 +6902,7 @@ async function salvarLiberacao(){
     categoria:categoria,
     motivo:obs||'',
     observacao:obs||'',
-    status:'ativa',
+    status:'Ativa',
     usuario_criacao:currentUser||'admin',
     autorizador_id:autId,
     autorizador_nome:autNome,
@@ -6946,7 +6946,7 @@ async function resolverLiberacao(idx){
     try{
       // Update in Supabase
       if(t.id){
-        await supabase.update('liberacoes_temporarias',{status:'resolvida',resolvido_em:new Date().toISOString(),resolvido_por:currentUser||'admin'},'id=eq.'+t.id);
+        await supabase.update('liberacoes_temporarias',{status:'Finalizada',resolvido_em:new Date().toISOString(),resolvido_por:currentUser||'admin'},'id=eq.'+t.id);
       }
       // Apply resolution
       if((t.tipo||'modelo')==='modelo'){
@@ -6960,7 +6960,7 @@ async function resolverLiberacao(idx){
         }
       }
       // Update local
-      t.status='resolvida';
+      t.status='Finalizada';
       t.resolvido_em=new Date().toISOString();
       saveTempReleasesToStorage();
       // History
