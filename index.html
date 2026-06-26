@@ -5272,7 +5272,7 @@ async function editCategoryAno(cat, newAno, oldAno){
     // Update local cache
     CAT_ANO_MINIMO[cat] = newAno;
     // Save to history
-    await supabase.insert('historico', { tipo: 'Edição Ano Categoria', marca: '—', modelo: cat, cat_origem: oldAno+'', cat_destino: newAno+'', usuario: currentUser||'admin' });
+    await supabase.insert('historico', { tipo: 'Edição Ano Categoria', marca: '—', modelo: cat, categoria: cat, detalhes: JSON.stringify({type:'Edição Ano Categoria',anoOriginal:oldAno,anoNovo:newAno,categoria:cat}), usuario_nome: currentUser||'admin' });
     showToast('Ano de aceitacao atualizado: '+cat+' → '+newAno+'+', 'success');
     renderOverviewTable();
   } catch(e){
@@ -6904,7 +6904,7 @@ async function salvarLiberacao(){
     observacao:obs||'',
     status:'Ativa',
     usuario_criacao:currentUser||'admin',
-    autorizador_id:autId,
+    autorizador_id:autId||null,
     autorizador_nome:autNome,
     ano_temporario:anoTemp,
     ano_original:anoOrig,
@@ -6921,9 +6921,11 @@ async function salvarLiberacao(){
     // Add to local array
     TEMP_RELEASES.push(record);
     saveTempReleasesToStorage();
-    // Save to history
+    // Save to history (non-blocking)
     const histDesc=tipo==='modelo'?'Lib. Modelo: '+marca+' '+modelo+' → '+categoria:'Lib. Ano: '+categoria+' '+anoOrig+' → '+anoTemp;
-    await supabase.insert('historico',{tipo:'Liberacao Temporaria',marca:marca||'—',modelo:histDesc,cat_origem:categoria,cat_destino:tipo,usuario:currentUser||'admin'});
+    try{
+      await supabase.insert('historico',{tipo:'Liberacao Temporaria',marca:marca||'—',modelo:histDesc,categoria:categoria,detalhes:JSON.stringify({type:'Liberacao Temporaria',tipo:tipo,marca:marca,modelo:modelo,categoria:categoria,anoTemp:anoTemp,autorizador:autNome}),usuario_nome:currentUser||'admin'});
+    }catch(he){console.warn('Historico insert warning:',he);}
     closeDrawer();
     showToast('Liberacao criada com sucesso!','success');
     renderTempReleases();
@@ -6963,8 +6965,8 @@ async function resolverLiberacao(idx){
       t.status='Finalizada';
       t.resolvido_em=new Date().toISOString();
       saveTempReleasesToStorage();
-      // History
-      await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,cat_origem:t.categoria,cat_destino:'resolvida',usuario:currentUser||'admin'});
+      // History (non-blocking)
+      try{await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,categoria:t.categoria||'—',detalhes:JSON.stringify({type:'Resolucao Liberacao',tipoLib:t.tipo,categoria:t.categoria}),usuario_nome:currentUser||'admin'});}catch(he){console.warn('Historico warning:',he);}
       showToast('Liberacao resolvida!','success');
       renderTempReleases();
       renderTempReleaseAlert();
