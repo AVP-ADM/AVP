@@ -6926,69 +6926,49 @@ async function resolverLiberacao(idx){
   const t=TEMP_RELEASES[idx];
   if(!t) return;
   const tipoLabel=(t.tipo||'modelo')==='modelo'?'Modelo: '+(t.marca||'')+' '+(t.modelo||''):'Ano Categoria: '+(t.categoria||'')+' ('+t.ano_temporario+')';
-  showModal('Resolver Liberacao','<p>Resolver a liberacao: <strong>'+tipoLabel+'</strong>?</p><p style="font-size:.78rem;color:var(--text2)">'+(
-    (t.tipo||'modelo')==='modelo'?'O modelo sera removido da categoria (voltara a nao ser aceito).':'O ano da categoria voltara ao valor padrao ('+(t.ano_original||'?')+').'
-  )+'</p>',async function(){
-    closeModal();
-    showToast('Resolvendo...','warning');
-    try{
-      // Update in Supabase
-      if(t.id){
-        await supabase.update('liberacoes_temporarias',{status:'Finalizada',resolvido_em:new Date().toISOString(),resolvido_por:currentUser||'admin'},'id=eq.'+t.id);
+  showToast('Resolvendo...','warning');
+  try{
+    if(t.id){
+      await supabase.update('liberacoes_temporarias',{status:'Finalizada',resolvido_em:new Date().toISOString(),resolvido_por:currentUser||'admin'},'id=eq.'+t.id);
+    }
+    if((t.tipo||'modelo')!=='modelo'){
+      if(t.ano_original && t.categoria){
+        CAT_ANO_MINIMO[t.categoria]=t.ano_original;
+        const catId=window._catIdMap&&window._catIdMap[t.categoria];
+        if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
       }
-      // Apply resolution
-      if((t.tipo||'modelo')==='modelo'){
-        // Could remove model from category here if needed
-      } else {
-        // Restore original ano
-        if(t.ano_original && t.categoria){
-          CAT_ANO_MINIMO[t.categoria]=t.ano_original;
-          const catId=window._catIdMap&&window._catIdMap[t.categoria];
-          if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
-        }
-      }
-      // Update local
-      t.status='Finalizada';
-      t.resolvido_em=new Date().toISOString();
-      saveTempReleasesToStorage();
-      // History (non-blocking)
-      try{await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,categoria:t.categoria||'—',detalhes:JSON.stringify({type:'Resolucao Liberacao',tipoLib:t.tipo,categoria:t.categoria}),usuario_nome:currentUser||'admin'});}catch(he){console.warn('Historico warning:',he);}
-      showToast('Liberacao resolvida!','success');
-      renderTempReleases();
-      renderTempReleaseAlert();
-      renderOverviewTable();
-    }catch(e){showToast('Erro: '+e.message,'error');}
-  },'red','Resolver');
+    }
+    t.status='Finalizada';
+    t.resolvido_em=new Date().toISOString();
+    saveTempReleasesToStorage();
+    try{await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,categoria:t.categoria||'—',detalhes:JSON.stringify({type:'Resolucao Liberacao',tipoLib:t.tipo,categoria:t.categoria}),usuario_nome:currentUser||'admin'});}catch(he){}
+    showToast('Liberacao resolvida!','success');
+    renderTempReleases();
+    renderTempReleaseAlert();
+    renderOverviewTable();
+  }catch(e){showToast('Erro: '+e.message,'error');}
 }
 
 async function cancelarLiberacao(idx){
   var t=TEMP_RELEASES[idx];
   if(!t) return;
-  var tipoLabel=(t.tipo||'modelo')==='modelo'?'Modelo: '+(t.marca||'')+' '+(t.modelo||''):'Ano Categoria: '+(t.categoria||'')+' ('+t.ano_temporario+')';
-  showModal('Cancelar Liberacao','<p>Cancelar a liberacao: <strong>'+tipoLabel+'</strong>?</p><p style="font-size:.78rem;color:var(--text2)">A liberacao sera removida completamente, como se nunca tivesse existido. Nao ficara no historico.</p>'+((t.tipo||'modelo')==='ano_categoria'?'<p style="font-size:.78rem;color:var(--amber)">O ano da categoria voltara ao valor padrao ('+(t.ano_original||'?')+').</p>':''),async function(){
-    closeModal();
-    showToast('Cancelando...','warning');
-    try{
-      // Delete from Supabase
-      if(t.id){
-        await supabase.delete('liberacoes_temporarias','id=eq.'+t.id);
-      }
-      // If ano_categoria, restore original ano
-      if((t.tipo||'modelo')==='ano_categoria'&&t.ano_original&&t.categoria){
-        CAT_ANO_MINIMO[t.categoria]=t.ano_original;
-        var catId=window._catIdMap&&window._catIdMap[t.categoria];
-        if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
-      }
-      // Remove from local array
-      TEMP_RELEASES.splice(idx,1);
-      saveTempReleasesToStorage();
-      // No history entry (cancelled = never existed)
-      showToast('Liberacao cancelada','success');
-      renderTempReleases();
-      renderTempReleaseAlert();
-      renderOverviewTable();
-    }catch(e){showToast('Erro: '+e.message,'error');}
-  },'red','Cancelar');
+  showToast('Cancelando...','warning');
+  try{
+    if(t.id){
+      await supabase.delete('liberacoes_temporarias','id=eq.'+t.id);
+    }
+    if((t.tipo||'modelo')==='ano_categoria'&&t.ano_original&&t.categoria){
+      CAT_ANO_MINIMO[t.categoria]=t.ano_original;
+      var catId=window._catIdMap&&window._catIdMap[t.categoria];
+      if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
+    }
+    TEMP_RELEASES.splice(idx,1);
+    saveTempReleasesToStorage();
+    showToast('Liberacao cancelada','success');
+    renderTempReleases();
+    renderTempReleaseAlert();
+    renderOverviewTable();
+  }catch(e){showToast('Erro: '+e.message,'error');}
 }
 
 function saveTempReleasesToStorage(){
