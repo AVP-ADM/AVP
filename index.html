@@ -6964,6 +6964,15 @@ async function cancelarLiberacao(idx){
   if(!t) return;
   showToast('Cancelando...','warning');
   try{
+    // Delete image from Storage if exists
+    if(t.anexo_url){
+      try{
+        var fileName=t.anexo_url.split('/liberacoes/').pop();
+        if(fileName){
+          await fetch(SUPABASE_URL+'/storage/v1/object/liberacoes/'+fileName,{method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(supabase.getToken()||SUPABASE_ANON_KEY)}});
+        }
+      }catch(e){console.warn('delete anexo error:',e);}
+    }
     if(t.id){
       await supabase.delete('liberacoes_temporarias','id=eq.'+t.id);
     }
