@@ -6852,7 +6852,12 @@ function libFilterBrands(){
   if(!input||!dd) return;
   var query=input.value.trim().toLowerCase();
   var cat=libGetCategory();
-  var brands=isFipeBaseLoaded()?getFipeBrandsForCategory(cat):ALL_BRANDS;
+  // Get brands from FIPE + fallback to RAW brands for this category
+  var fipeBrands=isFipeBaseLoaded()?getFipeBrandsForCategory(cat):[];
+  var rawBrands=RAW[cat]&&RAW[cat].brands?Object.keys(RAW[cat].brands):[];
+  var allBrandsSet=new Set(fipeBrands.concat(rawBrands));
+  var brands=Array.from(allBrandsSet).sort();
+  if(brands.length===0) brands=ALL_BRANDS;
   var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
   var totalAvailable=filtered.length;
   if(totalAvailable===0){
@@ -6902,10 +6907,10 @@ function libFilterModels(){
   var query=input.value.trim().toLowerCase();
   var cat=libGetCategory();
   var allModels=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_libSelectedBrand,cat):[];
-  // Excluir modelos ja cadastrados nesta categoria
-  var registered=RAW[cat]&&RAW[cat].brands&&RAW[cat].brands[_libSelectedBrand]?RAW[cat].brands[_libSelectedBrand]:[];
-  var regSet=new Set(registered.map(function(m){return m.toLowerCase();}));
-  var available=allModels.filter(function(m){return !regSet.has(m.toLowerCase());});
+  // Also include RAW models for this brand/category as fallback
+  var rawModels=RAW[cat]&&RAW[cat].brands&&RAW[cat].brands[_libSelectedBrand]?RAW[cat].brands[_libSelectedBrand]:[];
+  var allModelsSet=new Set(allModels.concat(rawModels));
+  var available=Array.from(allModelsSet).sort();
   var filtered=query?available.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):available;
   var totalAvailable=filtered.length;
   if(totalAvailable===0){
