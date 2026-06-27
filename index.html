@@ -6753,9 +6753,16 @@ async function uploadAnexo(file){
       headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(supabase.getToken()||SUPABASE_ANON_KEY),'Content-Type':'image/jpeg'},
       body:compressed
     });
-    if(!resp.ok) throw new Error('Upload failed: '+resp.status);
+    if(!resp.ok){
+      var errText=await resp.text().catch(function(){return '';});
+      throw new Error('Status '+resp.status+(errText?' - '+errText:''));
+    }
     return SUPABASE_URL+'/storage/v1/object/public/liberacoes/'+fileName;
-  }catch(e){console.warn('uploadAnexo error:',e);return null;}
+  }catch(e){
+    console.warn('uploadAnexo error:',e);
+    showToast('Falha no upload da imagem: '+e.message,'error');
+    return null;
+  }
 }
 
 async function salvarLiberacao(){
@@ -6784,8 +6791,10 @@ async function salvarLiberacao(){
 
   // Upload image if provided
   let anexoUrl=null;
+  let anexoFalhou=false;
   if(fileInput&&fileInput.files&&fileInput.files[0]){
     anexoUrl=await uploadAnexo(fileInput.files[0]);
+    if(!anexoUrl) anexoFalhou=true;
   }
 
   const record={
@@ -6820,7 +6829,7 @@ async function salvarLiberacao(){
       await supabase.insert('historico',{tipo:'Liberacao Temporaria',marca:marca||'—',modelo:histDesc,categoria:categoria,detalhes:JSON.stringify({type:'Liberacao Temporaria',tipo:tipo,marca:marca,modelo:modelo,categoria:categoria,anoTemp:anoTemp,autorizador:autNome}),usuario_nome:currentUser||'admin'});
     }catch(he){console.warn('Historico insert warning:',he);}
     closeDrawer();
-    showToast('Liberacao criada com sucesso!','success');
+    showToast(anexoFalhou?'Liberacao criada (imagem nao foi anexada - falha no upload)':'Liberacao criada com sucesso!',anexoFalhou?'warning':'success');
     renderTempReleases();
     renderTempReleaseAlert();
     renderOverviewTable();
