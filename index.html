@@ -1255,6 +1255,7 @@ tr:hover .row-actions{opacity:1}
       <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px">
         <button class="comp-tab active" id="settingsTab_users" onclick="switchSettingsTab('users')">Usuarios</button>
         <button class="comp-tab" id="settingsTab_autorizadores" onclick="switchSettingsTab('autorizadores')">Autorizadores</button>
+        <button class="comp-tab" id="settingsTab_regras" onclick="switchSettingsTab('regras')">Regras de Aceitacao</button>
         <button class="comp-tab" id="settingsTab_system" onclick="switchSettingsTab('system')">Sistema</button>
         <button class="comp-tab" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">Base FIPE</button>
       </div>
@@ -1287,6 +1288,24 @@ tr:hover .row-actions{opacity:1}
             <thead><tr><th>Nome</th><th>Cargo</th><th>Status</th><th style="width:100px">Acoes</th></tr></thead>
             <tbody id="autorizadoresTableBody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Carregando...</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Sub-tab: Regras de Aceitacao -->
+      <div id="settingsPanel_regras" style="display:none">
+        <div style="margin-bottom:16px">
+          <h4 style="font-size:.9rem;font-weight:600;color:var(--text1);margin-bottom:4px">Regras de Aceitacao</h4>
+          <p style="font-size:.72rem;color:var(--text3);margin:0">Define quantos anos cada categoria aceita. O ano minimo e calculado automaticamente (ano atual - X).</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Categoria</th><th style="width:80px">Anos</th><th style="width:100px">Ano Minimo</th></tr></thead>
+            <tbody id="regrasTableBody"><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text3)">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.7rem;color:var(--text3)">Ano base: <strong id="regrasAnoBase">2026</strong> (atualiza automaticamente)</span>
+          <button class="btn btn-green btn-sm" onclick="salvarRegrasAceitacao()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Salvar Alteracoes</button>
         </div>
       </div>
 
@@ -6996,7 +7015,7 @@ async function loadFromDatabase(){
         ANOS_ACEITACAO[catName+'|||'+m.marca+'|||'+m.modelo] = m.ano_aceitacao;
       }
     }
-    recomputeAll();initAnos();
+    recomputeAll();initAnos();aplicarRegrasAceitacao();
     try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
     try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
     isConnected=true;
@@ -7061,7 +7080,7 @@ async function safeSave(){
           showToast('Recarregando dados...','warning');
           await loadFromDatabase();
           await loadFromDatabaseHistory();
-          recomputeAll();initAnos();
+          recomputeAll();initAnos();aplicarRegrasAceitacao();
           refreshActiveTab();
           renderKPIs();renderOverviewTable();
           showToast('Dados recarregados. Suas pendências foram mantidas.','success');
@@ -7818,7 +7837,7 @@ function togglePassField(id){
 let _settingsCurrentTab='users';
 function switchSettingsTab(tab){
   _settingsCurrentTab=tab;
-  ['users','autorizadores','system','fipe'].forEach(t=>{
+  ['users','autorizadores','regras','system','fipe'].forEach(t=>{
     const panel=document.getElementById('settingsPanel_'+t);
     const btn=document.getElementById('settingsTab_'+t);
     if(panel) panel.style.display=(t===tab)?'':'none';
@@ -7826,6 +7845,7 @@ function switchSettingsTab(tab){
   });
   if(tab==='users') renderSettingsUsers();
   if(tab==='autorizadores') renderAutorizadores();
+  if(tab==='regras') renderRegrasAceitacao();
   if(tab==='system') renderSettingsSystem();
   if(tab==='fipe') renderSettingsFipe();
 }
@@ -8163,6 +8183,106 @@ async function loadAutorizadoresForSelect() {
   return _autorizadoresCache.filter(a => a.ativo !== false);
 }
 // ========= FIM AUTORIZADORES =========
+
+// ========= REGRAS DE ACEITACAO =========
+const CAT_REGRAS_DEFAULT = {
+  'Passeio - Nacional': 20,
+  'Passeio - Importado': 20,
+  'SUV|Caminhonete|Utilitário': 20,
+  'SUV | Caminhonete | Utilitário - Importado': 20,
+  'Automóvel Premium': 10,
+  'Elétrico | Híbrido': 10,
+  'Start': 30,
+  'ELITE 125 | FLUO 125 | NEO': 20,
+  'Motocicletas - Avelloz | Shineray | Bajaj': 20,
+  'Motocicletas - Honda': 20,
+  'Motocicletas - Yamaha': 20,
+  'Motocicletas Especiais': 20,
+  'PCX 150 | NMAX 160 | ADV 150': 20,
+  'PCX 160 | XMAX 250 | ADV 160': 20,
+  'Truck Leve (até 14t)': 30,
+  'Truck Pesado (a partir de 14t)': 30
+};
+
+function getAnoBase(){ return new Date().getFullYear(); }
+
+function getRegrasFromStorage(){
+  try{
+    var saved=localStorage.getItem('avp-regras-aceitacao');
+    if(saved) return JSON.parse(saved);
+  }catch(e){}
+  return null;
+}
+
+function saveRegrasToStorage(regras){
+  try{localStorage.setItem('avp-regras-aceitacao',JSON.stringify(regras));}catch(e){}
+}
+
+function aplicarRegrasAceitacao(){
+  var regras=getRegrasFromStorage()||CAT_REGRAS_DEFAULT;
+  var anoBase=getAnoBase();
+  for(var cat in regras){
+    CAT_ANO_MINIMO[cat]=anoBase-regras[cat];
+  }
+}
+
+function renderRegrasAceitacao(){
+  var tbody=document.getElementById('regrasTableBody');
+  var anoBaseEl=document.getElementById('regrasAnoBase');
+  if(!tbody) return;
+  var anoBase=getAnoBase();
+  if(anoBaseEl) anoBaseEl.textContent=anoBase;
+  var regras=getRegrasFromStorage()||CAT_REGRAS_DEFAULT;
+  var cats=CATEGORIES&&CATEGORIES.length>0?CATEGORIES:Object.keys(CAT_ANO_MINIMO);
+  tbody.innerHTML=cats.map(function(cat){
+    var anos=regras[cat]!==undefined?regras[cat]:20;
+    var anoMin=anoBase-anos;
+    return '<tr><td style="font-weight:500;font-size:.82rem">'+cat+'</td><td><input type="number" class="regra-anos-input" data-cat="'+cat.replace(/"/g,'&quot;')+'" value="'+anos+'" min="1" max="50" style="width:60px;text-align:center;padding:5px 8px;font-size:.82rem" oninput="previewRegraAno(this)"></td><td style="font-size:.82rem;color:var(--text2)" id="regra_preview_'+cat.replace(/[^a-zA-Z0-9]/g,'_')+'">= '+anoMin+'</td></tr>';
+  }).join('')||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma categoria encontrada</td></tr>';
+}
+
+function previewRegraAno(input){
+  var cat=input.dataset.cat;
+  var anos=parseInt(input.value)||20;
+  var anoMin=getAnoBase()-anos;
+  var previewEl=document.getElementById('regra_preview_'+cat.replace(/[^a-zA-Z0-9]/g,'_'));
+  if(previewEl) previewEl.textContent='= '+anoMin;
+}
+
+async function salvarRegrasAceitacao(){
+  var inputs=document.querySelectorAll('.regra-anos-input');
+  var regras={};
+  inputs.forEach(function(input){
+    var cat=input.dataset.cat;
+    var anos=parseInt(input.value)||20;
+    regras[cat]=anos;
+  });
+  // Save to localStorage
+  saveRegrasToStorage(regras);
+  // Apply immediately
+  var anoBase=getAnoBase();
+  for(var cat in regras){
+    CAT_ANO_MINIMO[cat]=anoBase-regras[cat];
+  }
+  // Save to Supabase (update each category's ano_minimo)
+  var errors=0;
+  for(var cat in regras){
+    var anoMin=anoBase-regras[cat];
+    var catId=window._catIdMap&&window._catIdMap[cat];
+    if(catId){
+      try{await supabase.update('categorias',{ano_minimo:anoMin},'id=eq.'+catId);}catch(e){errors++;}
+    } else {
+      try{
+        var rows=await supabase.select('categorias',{filter:'nome=eq.'+encodeURIComponent(cat),select:'id'});
+        if(rows&&rows.length>0) await supabase.update('categorias',{ano_minimo:anoMin},'id=eq.'+rows[0].id);
+      }catch(e){errors++;}
+    }
+  }
+  if(errors>0) showToast('Regras salvas ('+errors+' erro(s) no servidor)','warning');
+  else showToast('Regras de aceitacao salvas com sucesso!','success');
+  renderOverviewTable();
+}
+// ========= FIM REGRAS DE ACEITACAO =========
 
 function openMyProfileModal(){
   const profile=currentProfile||{};
