@@ -6630,7 +6630,7 @@ function renderTempReleases(){
     else{detalhes='Ano: '+(t.ano_original||'?')+' &rarr; <strong>'+(t.ano_temporario||'?')+'</strong>';}
     var autorNome=t.autorizador_nome||'—';
     var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
-    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+(t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':'')+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')">Resolver</button>':'')+'</td></tr>';
+    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+(t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':'')+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
   var pagEl=document.getElementById('tempReleasesPagination');
   if(pagEl){
@@ -6959,6 +6959,36 @@ async function resolverLiberacao(idx){
       renderOverviewTable();
     }catch(e){showToast('Erro: '+e.message,'error');}
   },'red','Resolver');
+}
+
+async function cancelarLiberacao(idx){
+  var t=TEMP_RELEASES[idx];
+  if(!t) return;
+  var tipoLabel=(t.tipo||'modelo')==='modelo'?'Modelo: '+(t.marca||'')+' '+(t.modelo||''):'Ano Categoria: '+(t.categoria||'')+' ('+t.ano_temporario+')';
+  showModal('Cancelar Liberacao','<p>Cancelar a liberacao: <strong>'+tipoLabel+'</strong>?</p><p style="font-size:.78rem;color:var(--text2)">A liberacao sera removida completamente, como se nunca tivesse existido. Nao ficara no historico.</p>'+((t.tipo||'modelo')==='ano_categoria'?'<p style="font-size:.78rem;color:var(--amber)">O ano da categoria voltara ao valor padrao ('+(t.ano_original||'?')+').</p>':''),async function(){
+    closeModal();
+    showToast('Cancelando...','warning');
+    try{
+      // Delete from Supabase
+      if(t.id){
+        await supabase.delete('liberacoes_temporarias','id=eq.'+t.id);
+      }
+      // If ano_categoria, restore original ano
+      if((t.tipo||'modelo')==='ano_categoria'&&t.ano_original&&t.categoria){
+        CAT_ANO_MINIMO[t.categoria]=t.ano_original;
+        var catId=window._catIdMap&&window._catIdMap[t.categoria];
+        if(catId){try{await supabase.update('categorias',{ano_minimo:t.ano_original},'id=eq.'+catId);}catch(e){}}
+      }
+      // Remove from local array
+      TEMP_RELEASES.splice(idx,1);
+      saveTempReleasesToStorage();
+      // No history entry (cancelled = never existed)
+      showToast('Liberacao cancelada','success');
+      renderTempReleases();
+      renderTempReleaseAlert();
+      renderOverviewTable();
+    }catch(e){showToast('Erro: '+e.message,'error');}
+  },'red','Cancelar');
 }
 
 function saveTempReleasesToStorage(){
