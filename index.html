@@ -10034,8 +10034,9 @@ function tmLoadFromStorage(){
   try{
     var sheets=localStorage.getItem('avp-tm-sheets');
     var groups=localStorage.getItem('avp-tm-groups');
-    if(sheets&&groups){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
-    else{tmLoadDefaultData();}
+    var ver=localStorage.getItem('avp-tm-version');
+    if(sheets&&groups&&ver==='2'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
+    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','2');}
   }catch(e){tmLoadDefaultData();}
 }
 
