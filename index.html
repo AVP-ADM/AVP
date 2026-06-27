@@ -6630,7 +6630,8 @@ function renderTempReleases(){
     else{detalhes='Ano: '+(t.ano_original||'?')+' &rarr; <strong>'+(t.ano_temporario||'?')+'</strong>';}
     var autorNome=t.autorizador_nome||'—';
     var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
-    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+(t.anexo_url?'<br><a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':'')+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
+    var anexoHtml=t.anexo_url?'<a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a>':'<button class="btn btn-sm" onclick="anexarFotoLiberacao('+realIdx+')" title="Anexar imagem de autorizacao" style="font-size:.65rem;padding:2px 6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Anexar</button>';
+    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+'<br>'+anexoHtml+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
   var pagEl=document.getElementById('tempReleasesPagination');
   if(pagEl){
@@ -6982,6 +6983,31 @@ async function cancelarLiberacao(idx){
 
 function saveTempReleasesToStorage(){
   try{localStorage.setItem('avp-temp-releases',JSON.stringify(TEMP_RELEASES));}catch(e){}
+}
+
+function anexarFotoLiberacao(idx){
+  var t=TEMP_RELEASES[idx];
+  if(!t) return;
+  // Create hidden file input and trigger
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.onchange=async function(){
+    if(!input.files||!input.files[0]) return;
+    showToast('Enviando imagem...','warning');
+    var url=await uploadAnexo(input.files[0]);
+    if(!url){return;}
+    // Update local
+    t.anexo_url=url;
+    saveTempReleasesToStorage();
+    // Update Supabase
+    if(t.id){
+      try{await supabase.update('liberacoes_temporarias',{anexo_url:url},'id=eq.'+t.id);}catch(e){console.warn('update anexo error:',e);}
+    }
+    showToast('Imagem anexada com sucesso!','success');
+    renderTempReleases();
+  };
+  input.click();
 }
 
 function loadTempReleasesFromStorage(){
