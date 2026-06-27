@@ -1807,14 +1807,18 @@ async function updateFipeBase(){
     for(const brand of brands){
       await delay(300);
       progress++;
-      try{
-        const modResp=await fipeFetch('/cars/brands/'+brand.code+'/models');
-        if(modResp.ok){
-          const models=await modResp.json();
-          FIPE_BASE.models[brand.code]=models;
-          totalModels+=models.length;
-        }
-      }catch(e){/* skip failed brand */}
+      let retries=0;
+      while(retries<3){
+        try{
+          const modResp=await fipeFetch('/cars/brands/'+brand.code+'/models');
+          if(modResp.ok){
+            const models=await modResp.json();
+            FIPE_BASE.models[brand.code]=models;
+            totalModels+=models.length;
+            break;
+          } else { retries++; await delay(500); }
+        }catch(e){ retries++; await delay(500); }
+      }
       // Update progress every 10 brands
       if(progress%10===0){
         showToast('Carregando marcas... '+progress+'/'+brands.length,'warning');
@@ -1823,6 +1827,7 @@ async function updateFipeBase(){
 
     // 3. Also get motorcycle brands
     await delay(300);
+    showToast('Carregando motos...','warning');
     const motoBrandsResp=await fipeFetch('/motorcycles/brands');
     if(motoBrandsResp.ok){
       const motoBrands=await motoBrandsResp.json();
@@ -1835,20 +1840,25 @@ async function updateFipeBase(){
       // Get moto models
       for(const mb of motoBrands){
         await delay(300);
-        try{
-          const modResp=await fipeFetch('/motorcycles/brands/'+mb.code+'/models');
-          if(modResp.ok){
-            const models=await modResp.json();
-            const key='moto_'+mb.code;
-            FIPE_BASE.models[key]=models;
-            totalModels+=models.length;
-          }
-        }catch(e){}
+        let retries=0;
+        while(retries<3){
+          try{
+            const modResp=await fipeFetch('/motorcycles/brands/'+mb.code+'/models');
+            if(modResp.ok){
+              const models=await modResp.json();
+              const key='moto_'+mb.code;
+              FIPE_BASE.models[key]=models;
+              totalModels+=models.length;
+              break;
+            } else { retries++; await delay(500); }
+          }catch(e){ retries++; await delay(500); }
+        }
       }
     }
 
     // 4. Also get truck brands
     await delay(300);
+    showToast('Carregando caminhoes...','warning');
     const truckBrandsResp=await fipeFetch('/trucks/brands');
     if(truckBrandsResp.ok){
       const truckBrands=await truckBrandsResp.json();
@@ -1859,15 +1869,19 @@ async function updateFipeBase(){
       }
       for(const tb of truckBrands){
         await delay(300);
-        try{
-          const modResp=await fipeFetch('/trucks/brands/'+tb.code+'/models');
-          if(modResp.ok){
-            const models=await modResp.json();
-            const key='truck_'+tb.code;
-            FIPE_BASE.models[key]=models;
-            totalModels+=models.length;
-          }
-        }catch(e){}
+        let retries=0;
+        while(retries<3){
+          try{
+            const modResp=await fipeFetch('/trucks/brands/'+tb.code+'/models');
+            if(modResp.ok){
+              const models=await modResp.json();
+              const key='truck_'+tb.code;
+              FIPE_BASE.models[key]=models;
+              totalModels+=models.length;
+              break;
+            } else { retries++; await delay(500); }
+          }catch(e){ retries++; await delay(500); }
+        }
       }
     }
 
