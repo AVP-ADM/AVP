@@ -1803,45 +1803,49 @@ async function updateFipeBase(){
     let totalModels=0;
     let progress=0;
 
-    // 2. Get models for each brand (with 300ms delay between calls)
+    // 2. Get models for each brand (with backoff retry)
+    let failedCars=0;
     for(const brand of brands){
       await delay(300);
       progress++;
       let retries=0;
-      while(retries<3){
+      let success=false;
+      while(retries<3&&!success){
         try{
           const modResp=await fipeFetch('/cars/brands/'+brand.code+'/models');
           if(modResp.ok){
             const models=await modResp.json();
             FIPE_BASE.models[brand.code]=models;
             totalModels+=models.length;
-            break;
-          } else { retries++; await delay(500); }
-        }catch(e){ retries++; await delay(500); }
+            success=true;
+          } else { retries++; await delay(300*(retries+1)); }
+        }catch(e){ retries++; await delay(300*(retries+1)); }
       }
-      // Update progress every 10 brands
+      if(!success) failedCars++;
       if(progress%10===0){
-        showToast('Carregando marcas... '+progress+'/'+brands.length,'warning');
+        showToast('Carros: '+progress+'/'+brands.length+(failedCars?' ('+failedCars+' falhas)':''),'warning');
       }
     }
 
     // 3. Also get motorcycle brands
     await delay(300);
     showToast('Carregando motos...','warning');
+    let failedMotos=0;
     const motoBrandsResp=await fipeFetch('/motorcycles/brands');
     if(motoBrandsResp.ok){
       const motoBrands=await motoBrandsResp.json();
-      // Add moto brands (always add even if name exists in cars — different vehicle type)
       for(const mb of motoBrands){
         if(!FIPE_BASE.brands.find(b=>b.name.toLowerCase()===mb.name.toLowerCase()&&b._type==='moto')){
           FIPE_BASE.brands.push({...mb, _type:'moto'});
         }
       }
-      // Get moto models
+      let motoProgress=0;
       for(const mb of motoBrands){
         await delay(300);
+        motoProgress++;
         let retries=0;
-        while(retries<3){
+        let success=false;
+        while(retries<3&&!success){
           try{
             const modResp=await fipeFetch('/motorcycles/brands/'+mb.code+'/models');
             if(modResp.ok){
@@ -1849,9 +1853,13 @@ async function updateFipeBase(){
               const key='moto_'+mb.code;
               FIPE_BASE.models[key]=models;
               totalModels+=models.length;
-              break;
-            } else { retries++; await delay(500); }
-          }catch(e){ retries++; await delay(500); }
+              success=true;
+            } else { retries++; await delay(300*(retries+1)); }
+          }catch(e){ retries++; await delay(300*(retries+1)); }
+        }
+        if(!success) failedMotos++;
+        if(motoProgress%10===0){
+          showToast('Motos: '+motoProgress+'/'+motoBrands.length+(failedMotos?' ('+failedMotos+' falhas)':''),'warning');
         }
       }
     }
@@ -1859,6 +1867,7 @@ async function updateFipeBase(){
     // 4. Also get truck brands
     await delay(300);
     showToast('Carregando caminhoes...','warning');
+    let failedTrucks=0;
     const truckBrandsResp=await fipeFetch('/trucks/brands');
     if(truckBrandsResp.ok){
       const truckBrands=await truckBrandsResp.json();
@@ -1867,10 +1876,13 @@ async function updateFipeBase(){
           FIPE_BASE.brands.push({...tb, _type:'truck'});
         }
       }
+      let truckProgress=0;
       for(const tb of truckBrands){
         await delay(300);
+        truckProgress++;
         let retries=0;
-        while(retries<3){
+        let success=false;
+        while(retries<3&&!success){
           try{
             const modResp=await fipeFetch('/trucks/brands/'+tb.code+'/models');
             if(modResp.ok){
@@ -1878,9 +1890,13 @@ async function updateFipeBase(){
               const key='truck_'+tb.code;
               FIPE_BASE.models[key]=models;
               totalModels+=models.length;
-              break;
-            } else { retries++; await delay(500); }
-          }catch(e){ retries++; await delay(500); }
+              success=true;
+            } else { retries++; await delay(300*(retries+1)); }
+          }catch(e){ retries++; await delay(300*(retries+1)); }
+        }
+        if(!success) failedTrucks++;
+        if(truckProgress%10===0){
+          showToast('Caminhoes: '+truckProgress+'/'+truckBrands.length+(failedTrucks?' ('+failedTrucks+' falhas)':''),'warning');
         }
       }
     }
@@ -1897,6 +1913,14 @@ async function updateFipeBase(){
     }catch(e){}
     _fipeNewTableAvailable=false;
     _fipeNewTableMonth='';
+
+    // 6. Summary
+    const totalFailed=failedCars+failedMotos+failedTrucks;
+    if(totalFailed>0){
+      showToast('Base atualizada com '+totalFailed+' falha(s): '+failedCars+' carros, '+failedMotos+' motos, '+failedTrucks+' caminhoes. Total: '+totalModels+' modelos.','warning');
+    } else {
+      showToast('Base FIPE atualizada com sucesso! '+FIPE_BASE.totalBrands+' marcas, '+totalModels+' modelos.','success');
+    }
 
     // Save FIPE base to Supabase for cross-device access
     saveFipeBaseRemote();
