@@ -6683,14 +6683,14 @@ async function openNewLiberacao(){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label>Marca</label>
             <div class="ac-wrap">
-              <input id="lib_marca" class="ac-input" placeholder="Digite para pesquisar..." autocomplete="off" oninput="libFilterBrands()" onfocus="libFilterBrands()">
+              <input id="lib_marca" class="ac-input" placeholder="Digite para pesquisar..." autocomplete="off" oninput="libFilterBrands()" onfocus="libFilterBrands()" onblur="setTimeout(function(){var dd=document.getElementById(\'lib_marcaDropdown\');if(dd)dd.style.display=\'none\';},200)">
               <div id="lib_marcaDropdown" class="ac-dropdown"></div>
               <div id="lib_marcaMsg" class="ac-msg"></div>
             </div>
           </div>
           <div><label>Modelo</label>
             <div class="ac-wrap">
-              <input id="lib_modelo" class="ac-input" placeholder="Selecione marca primeiro..." disabled autocomplete="off" oninput="libFilterModels()" onfocus="libFilterModels()">
+              <input id="lib_modelo" class="ac-input" placeholder="Selecione marca primeiro..." disabled autocomplete="off" oninput="libFilterModels()" onfocus="libFilterModels()" onblur="setTimeout(function(){var dd=document.getElementById(\'lib_modeloDropdown\');if(dd)dd.style.display=\'none\';},200)">
               <div id="lib_modeloDropdown" class="ac-dropdown"></div>
               <div id="lib_modeloMsg" class="ac-msg"></div>
             </div>
