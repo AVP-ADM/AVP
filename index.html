@@ -10035,8 +10035,8 @@ function tmLoadFromStorage(){
     var sheets=localStorage.getItem('avp-tm-sheets');
     var groups=localStorage.getItem('avp-tm-groups');
     var ver=localStorage.getItem('avp-tm-version');
-    if(sheets&&groups&&ver==='2'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
-    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','2');}
+    if(sheets&&groups&&ver==='3'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
+    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','3');}
   }catch(e){tmLoadDefaultData();}
 }
 
