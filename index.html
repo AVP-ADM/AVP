@@ -1150,9 +1150,9 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="filter-row">
         <select id="tempReleaseFilter" onchange="renderTempReleases()">
+          <option value="">Todas</option>
           <option value="Ativa">Ativas</option>
           <option value="Finalizada">Finalizadas</option>
-          <option value="">Todas</option>
         </select>
         <select id="tempReleaseTypeFilter" onchange="renderTempReleases()">
           <option value="">Todos os tipos</option>
@@ -1182,8 +1182,6 @@ tr:hover .row-actions{opacity:1}
           <option value="Adição">Adicao</option>
           <option value="Remoção">Remocao</option>
           <option value="Movimentação">Movimentacao</option>
-          <option value="Liberacao Temporaria">Liberacoes Temporarias</option>
-          <option value="Resolucao Liberacao">Resolucoes</option>
           <option value="Edição Ano Categoria">Edicao Ano Categoria</option>
         </select>
       </div>
@@ -6610,7 +6608,7 @@ const TEMP_RELEASES_PER_PAGE = 10;
 function renderTempReleases(){
   const tbody=document.getElementById('tempReleasesBody');
   if(!tbody) return;
-  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'Ativa';
+  const filter=(document.getElementById('tempReleaseFilter')||{}).value||'';
   const typeFilter=(document.getElementById('tempReleaseTypeFilter')||{}).value||'';
   let filtered=TEMP_RELEASES;
   if(filter) filtered=filtered.filter(t=>(t.status||'Ativa').toLowerCase()===filter.toLowerCase());
@@ -6824,11 +6822,6 @@ async function salvarLiberacao(){
     // Add to local array
     TEMP_RELEASES.push(record);
     saveTempReleasesToStorage();
-    // Save to history (non-blocking)
-    const histDesc=tipo==='modelo'?'Lib. Modelo: '+marca+' '+modelo+' → '+categoria:'Lib. Ano: '+categoria+' '+anoOrig+' → '+anoTemp;
-    try{
-      await supabase.insert('historico',{tipo:'Liberacao Temporaria',marca:marca||'—',modelo:histDesc,categoria:categoria,detalhes:JSON.stringify({type:'Liberacao Temporaria',tipo:tipo,marca:marca,modelo:modelo,categoria:categoria,anoTemp:anoTemp,autorizador:autNome}),usuario_nome:currentUser||'admin'});
-    }catch(he){console.warn('Historico insert warning:',he);}
     closeDrawer();
     showToast(anexoFalhou?'Liberacao criada (imagem nao foi anexada - falha no upload)':'Liberacao criada com sucesso!',anexoFalhou?'warning':'success');
     renderTempReleases();
@@ -6951,7 +6944,6 @@ async function resolverLiberacao(idx){
     t.status='Finalizada';
     t.resolvido_em=new Date().toISOString();
     saveTempReleasesToStorage();
-    try{await supabase.insert('historico',{tipo:'Resolucao Liberacao',marca:t.marca||'—',modelo:tipoLabel,categoria:t.categoria||'—',detalhes:JSON.stringify({type:'Resolucao Liberacao',tipoLib:t.tipo,categoria:t.categoria}),usuario_nome:currentUser||'admin'});}catch(he){}
     showToast('Liberacao resolvida!','success');
     renderTempReleases();
     renderTempReleaseAlert();
