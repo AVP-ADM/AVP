@@ -768,6 +768,7 @@ tr:hover .row-actions{opacity:1}
 .login-btn{margin-top:16px;padding:13px;background:linear-gradient(135deg,#1B7A3D,#22944A);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s ease;box-shadow:0 4px 15px rgba(27,122,61,.25);letter-spacing:.2px}
 .login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(27,122,61,.35);background:linear-gradient(135deg,#1f8a45,#28a552)}
 .login-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(27,122,61,.2)}
+.login-btn:disabled{opacity:.7;cursor:not-allowed;transform:none;box-shadow:0 2px 8px rgba(27,122,61,.15)}
 .login-error{font-size:.78rem;color:#F87171;display:none;margin-top:2px;padding:6px 10px;background:rgba(248,113,113,.08);border-radius:6px;border:1px solid rgba(248,113,113,.15)}
 .login-pass-wrap{position:relative}
 .login-pass-wrap input{padding-right:42px}
@@ -8984,8 +8985,12 @@ async function doLogin(){
   const user=document.getElementById('loginUser').value.trim();
   const pass=document.getElementById('loginPass').value;
   const errEl=document.getElementById('loginError');
+  const btn=document.querySelector('.login-btn');
   if(!user||!pass){errEl.textContent='Preencha usuário e senha';errEl.style.display='block';return;}
   errEl.style.display='none';
+
+  // Loading state
+  if(btn){btn.disabled=true;btn.dataset.origText=btn.textContent;btn.innerHTML='<span style="display:inline-flex;align-items:center;gap:8px"><span class="spinner" style="width:14px;height:14px;border-width:2px"></span>Entrando...</span>';}
 
   try{
     // Supabase Auth - email/password sign in
@@ -9009,11 +9014,15 @@ async function doLogin(){
       const msg=result.error_description||result.msg||result.error?.message||'Usuário ou senha incorretos';
       errEl.textContent=msg;
       errEl.style.display='block';
+      // Reset button
+      if(btn){btn.disabled=false;btn.textContent=btn.dataset.origText||'Entrar';}
     }
   }catch(e){
     errEl.textContent='Erro de conexão. Verifique sua internet.';
     errEl.style.display='block';
     console.error('Login error:',e);
+    // Reset button
+    if(btn){btn.disabled=false;btn.textContent=btn.dataset.origText||'Entrar';}
   }
 }
 
