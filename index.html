@@ -6854,15 +6854,32 @@ function libFilterBrands(){
   var cat=libGetCategory();
   var brands=isFipeBaseLoaded()?getFipeBrandsForCategory(cat):ALL_BRANDS;
   var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
-  filtered=filtered.slice(0,50);
-  if(filtered.length===0){
+  var totalAvailable=filtered.length;
+  if(totalAvailable===0){
     dd.style.display='block';dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
     return;
   }
+  var showAll=!!query;
+  var toShow=showAll?filtered:filtered.slice(0,50);
   dd.style.display='block';
-  dd.innerHTML=filtered.map(function(b){return '<div class="ac-option" data-value="'+b.replace(/"/g,'&quot;')+'">'+b+'</div>';}).join('');
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}el=el.parentElement;}};
+  var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+totalAvailable+' marca'+(totalAvailable!==1?'s':'')+' disponive'+(totalAvailable!==1?'is':'l')+'</div>';
+  var itemsHtml=toShow.map(function(b){return '<div class="ac-option" data-value="'+b.replace(/"/g,'&quot;')+'">'+b+'</div>';}).join('');
+  var moreHtml='';
+  if(!showAll&&totalAvailable>50){
+    moreHtml='<div class="ac-option" data-action="show-all-brands" style="text-align:center;color:var(--blue);font-weight:600;font-size:.75rem;border-top:1px solid var(--border-light)">Mostrar todas (+' +(totalAvailable-50)+ ')</div>';
+  }
+  dd.innerHTML=countHtml+itemsHtml+moreHtml;
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all-brands'){libShowAllBrands(filtered);return;}el=el.parentElement;}};
   if(msg){if(query&&brands.find(function(b){return b.toLowerCase()===query;})){msg.textContent='Marca valida';msg.className='ac-msg valid';}else if(query){msg.textContent='';msg.className='ac-msg';}else{msg.textContent='';msg.className='ac-msg';}}
+}
+
+function libShowAllBrands(filtered){
+  var dd=document.getElementById('lib_marcaDropdown');
+  if(!dd) return;
+  var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+filtered.length+' marca'+(filtered.length!==1?'s':'')+' disponive'+(filtered.length!==1?'is':'l')+'</div>';
+  var itemsHtml=filtered.map(function(b){return '<div class="ac-option" data-value="'+b.replace(/"/g,'&quot;')+'">'+b+'</div>';}).join('');
+  dd.innerHTML=countHtml+itemsHtml;
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}el=el.parentElement;}};
 }
 
 function libSelectBrand(brand){
