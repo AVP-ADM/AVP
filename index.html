@@ -6863,15 +6863,34 @@ function libFilterModels(){
   var regSet=new Set(registered.map(function(m){return m.toLowerCase();}));
   var available=allModels.filter(function(m){return !regSet.has(m.toLowerCase());});
   var filtered=query?available.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):available;
-  filtered=filtered.slice(0,50);
-  if(filtered.length===0){
+  var totalAvailable=filtered.length;
+  if(totalAvailable===0){
     dd.style.display='block';dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">'+(available.length===0?'Todos os modelos desta marca ja estao cadastrados':'Nenhum modelo encontrado')+'</div>';
     return;
   }
+  // Se digitando: mostra todos os filtrados (busca reduz quantidade)
+  // Se NAO digitando: mostra 50 + botao "Mostrar todos"
+  var showAll=!!query;
+  var toShow=showAll?filtered:filtered.slice(0,50);
   dd.style.display='block';
-  dd.innerHTML=filtered.map(function(m){return '<div class="ac-option" data-value="'+m.replace(/"/g,'&quot;')+'">'+m+'</div>';}).join('');
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}el=el.parentElement;}};
+  var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+totalAvailable+' modelo'+(totalAvailable!==1?'s':'')+' disponive'+(totalAvailable!==1?'is':'l')+'</div>';
+  var itemsHtml=toShow.map(function(m){return '<div class="ac-option" data-value="'+m.replace(/"/g,'&quot;')+'">'+m+'</div>';}).join('');
+  var moreHtml='';
+  if(!showAll&&totalAvailable>50){
+    moreHtml='<div class="ac-option" data-action="show-all" style="text-align:center;color:var(--blue);font-weight:600;font-size:.75rem;border-top:1px solid var(--border-light)">Mostrar todos (+' +(totalAvailable-50)+ ')</div>';
+  }
+  dd.innerHTML=countHtml+itemsHtml+moreHtml;
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all'){libShowAllModels(filtered);return;}el=el.parentElement;}};
   if(msg){if(query&&available.find(function(m){return m.toLowerCase()===query;})){msg.textContent='Modelo valido';msg.className='ac-msg valid';}else{msg.textContent='';msg.className='ac-msg';}}
+}
+
+function libShowAllModels(filtered){
+  var dd=document.getElementById('lib_modeloDropdown');
+  if(!dd) return;
+  var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+filtered.length+' modelo'+(filtered.length!==1?'s':'')+' disponive'+(filtered.length!==1?'is':'l')+'</div>';
+  var itemsHtml=filtered.map(function(m){return '<div class="ac-option" data-value="'+m.replace(/"/g,'&quot;')+'">'+m+'</div>';}).join('');
+  dd.innerHTML=countHtml+itemsHtml;
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}el=el.parentElement;}};
 }
 
 function libSelectModel(model){
