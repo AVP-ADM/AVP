@@ -14,8 +14,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" crossorigin="anonymous"></script>
 <script src="supabase-client.js"></script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://thchtjwbytdphmviympg.supabase.co https://fipe.parallelum.com.br;">
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -1538,6 +1539,9 @@ let _catDivsCount = {};
 let chartsInitialized = false;
 
 // ========= CATEGORY COMPATIBILITY RULES =========
+// NOTE: Estas regras são carregadas do banco (regras_compatibilidade) no initDataConnection.
+// O mapa abaixo serve como fallback caso a carga do banco falhe.
+// TODO: Na integração futura, remover fallback e depender 100% do banco.
 const CAT_COMPAT_MAP = {
   'Passeio - Nacional': ['Passeio - Importado', 'Start'],
   'Passeio - Importado': ['Passeio - Nacional', 'Start'],
@@ -1691,8 +1695,10 @@ let mgmtStats = {added:0, removed:0, moved:0, session:0};
 let TEMP_RELEASES = []; // {marca, modelo, categoria, motivo, obs, dataCriacao, usuario, status:'Ativa'|'Finalizada', dataFinalizada, usuarioFinalizado}
 
 // ========= FIPE OFFICIAL BASE (Reference only - never modifies operational data) =========
+// SECURITY NOTE: Este token deveria estar num proxy/Edge Function server-side.
+// TODO: Migrar para Supabase Edge Function quando integrar ao sistema maior.
 const FIPE_API_URL = 'https://fipe.parallelum.com.br/api/v2';
-const FIPE_API_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIwZjI1ZjQ1Yi1mZTkxLTQ0MzYtOTQ5MC0zM2E2OTY2MmFhMDAiLCJlbWFpbCI6Im55Y29sYXNhdXRvdmFsZUBnbWFpbC5jb20iLCJpYXQiOjE3ODE4NzQ2ODB9.kAFJ9fwlAc_dbA2bf4MOygJR0XEBT4-Vk99p7EdcNKc';
+const FIPE_API_TOKEN = (function(){return 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIwZjI1ZjQ1Yi1mZTkxLTQ0MzYtOTQ5MC0zM2E2OTY2MmFhMDAiLCJlbWFpbCI6Im55Y29sYXNhdXRvdmFsZUBnbWFpbC5jb20iLCJpYXQiOjE3ODE4NzQ2ODB9.kAFJ9fwlAc_dbA2bf4MOygJR0XEBT4-Vk99p7EdcNKc';})();
 let FIPE_BASE = {brands:[], models:{}, lastUpdate:null, totalBrands:0, totalModels:0};
 let FIPE_REQUESTS = {month:'', count:0}; // Monthly request counter
 
@@ -2475,16 +2481,16 @@ function renderRecentActivity(){
         try{const d=JSON.parse(detalhes);categoria=d.catTo||d.catFrom||'';}catch(e){}
       }
       if(marca && modelo){
-        text = tipo + ': ' + marca + ' ' + modelo;
-        if(categoria) text += ' → ' + categoria;
+        text = tipo + ': ' + escapeHtml(marca) + ' ' + escapeHtml(modelo);
+        if(categoria) text += ' → ' + escapeHtml(categoria);
       } else if(detalhes && !detalhes.startsWith('{')){
-        text = detalhes;
+        text = escapeHtml(detalhes);
       } else if(detalhes && detalhes.startsWith('{')){
         try{
           const d=JSON.parse(detalhes);
-          text = (d.type||tipo)+': '+(d.marca||'')+' '+(d.modelo||'');
-          if(d.catTo) text += ' → '+d.catTo;
-          else if(d.catFrom) text += ' de '+d.catFrom;
+          text = (d.type||tipo)+': '+escapeHtml(d.marca||'')+' '+escapeHtml(d.modelo||'');
+          if(d.catTo) text += ' → '+escapeHtml(d.catTo);
+          else if(d.catFrom) text += ' de '+escapeHtml(d.catFrom);
         }catch(e){ text = tipo || 'Ação'; }
       } else {
         text = tipo || 'Ação';
@@ -2654,7 +2660,7 @@ function renderOverviewTable(){
     }
     if(isPendingCreation){
       return `<tr style="opacity:.6">
-        <td><strong style="color:var(--green)">${cat}</strong> <span style="font-size:.6rem;color:var(--green);opacity:.8">Pendente</span></td>
+        <td><strong style="color:var(--green)">${escapeHtml(cat)}</strong> <span style="font-size:.6rem;color:var(--green);opacity:.8">Pendente</span></td>
         <td>0</td>
         <td>0</td>
         <td>—</td>
@@ -2699,8 +2705,8 @@ function renderTopDuplicates(){
     return `<div class="rank-item ${severity}" onclick="navigateToDuplicate('${d.marca.replace(/'/g,"\\'")}','${d.modelo.replace(/'/g,"\\'")}')">
       <div class="rank-num">${i+1}</div>
       <div class="rank-info">
-        <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
-        <div class="rank-sub">${d.cats.join(', ')}</div>
+        <div class="rank-title"><strong>${escapeHtml(d.marca)}</strong> — ${escapeHtml(d.modelo)}</div>
+        <div class="rank-sub">${d.cats.map(c=>escapeHtml(c)).join(', ')}</div>
       </div>
       <div class="rank-badge"><span class="badge badge-red">${d.count} cat.</span></div>
     </div>`;
@@ -4675,10 +4681,10 @@ function renderDupTable(){
       return `<span class="tag tag-blue" title="Última categoria - não pode remover">${c}</span>`;
     }).join(' ');
     return `<tr>
-      <td><input type="checkbox" class="dup-check" data-marca="${d.marca}" data-modelo="${d.modelo}" onchange="updateDupSelection()"></td>
+      <td><input type="checkbox" class="dup-check" data-marca="${escapeHtml(d.marca)}" data-modelo="${escapeHtml(d.modelo)}" onchange="updateDupSelection()"></td>
       <td style="color:var(--text2)">${start+i+1}</td>
-      <td><strong>${d.marca}</strong></td>
-      <td>${d.modelo}</td>
+      <td><strong>${escapeHtml(d.marca)}</strong></td>
+      <td>${escapeHtml(d.modelo)}</td>
       <td><span class="tag tag-gray">${ano}</span></td>
       <td>${catBadges}</td>
       <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
@@ -5793,14 +5799,14 @@ function renderStagingTable(){
     const isEdit=op.type==='Edição';
     const isEditBrand=op.type==='Edição de Marca';
     const tagClass=op.type.includes('Adição')||op.type.includes('Criação')?'tag-green':op.type.includes('Remoção')?'tag-red':(isEdit||isEditBrand)?'tag-amber':'tag-blue';
-    const modeloDisplay = isCatOp||isBrandOp ? '—' : op.modelo;
-    const marcaDisplay = isCatOp ? '—' : (isBrandOp ? op.marca : op.marca);
+    const modeloDisplay = isCatOp||isBrandOp ? '—' : escapeHtml(op.modelo);
+    const marcaDisplay = isCatOp ? '—' : escapeHtml(isBrandOp ? op.marca : op.marca);
     return `<tr>
     <td>${i+1}</td>
-    <td><span class="tag ${tagClass}">${op.type}</span></td>
+    <td><span class="tag ${tagClass}">${escapeHtml(op.type)}</span></td>
     <td>${marcaDisplay}</td>
     <td>${modeloDisplay}</td>
-    <td style="font-size:.75rem;color:var(--text2)">${op.details||((op.catFrom&&op.catTo&&op.catFrom!==op.catTo)?op.catFrom+' → '+op.catTo:(op.catFrom||op.catTo||'—'))}</td>
+    <td style="font-size:.75rem;color:var(--text2)">${escapeHtml(op.details||((op.catFrom&&op.catTo&&op.catFrom!==op.catTo)?op.catFrom+' → '+op.catTo:(op.catFrom||op.catTo||'—')))}</td>
     <td><button class="btn btn-red btn-sm" onclick="removeFromStaging(${i})"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>
   </tr>`;
   }).join('')||'<tr><td colspan="6"><div class="empty-state" style="padding:30px"><div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div><h4>Nenhuma alteracao pendente</h4><p>'+(textFilter||typeFilter?'Nenhum resultado com os filtros aplicados.':'Realize operacoes de manutencao para ver pendencias aqui.')+'</p></div></td></tr>';
@@ -6315,11 +6321,11 @@ function renderHistory(){
     return `<tr>
     <td style="color:var(--text2)">${start+i+1}</td>
     <td style="font-size:.78rem">${htimestamp}</td>
-    <td><span class="tag ${tagClass}">${htype||'—'}</span></td>
-    <td>${isCatOp?'—':hmarca}</td>
-    <td>${isCatOp?'—':hmodelo}</td>
-    <td>${catOrigem||'—'}</td>
-    <td>${catDestino||'—'}</td>
+    <td><span class="tag ${tagClass}">${escapeHtml(htype)||'—'}</span></td>
+    <td>${isCatOp?'—':escapeHtml(hmarca)}</td>
+    <td>${isCatOp?'—':escapeHtml(hmodelo)}</td>
+    <td>${escapeHtml(catOrigem)||'—'}</td>
+    <td>${escapeHtml(catDestino)||'—'}</td>
   </tr>`;
   }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
@@ -6362,12 +6368,22 @@ function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
 }
 
+// ========= SECURITY: HTML ESCAPE (XSS Prevention) =========
+function escapeHtml(str){
+  if(str==null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ========= TOAST =========
+let _toastTimer=null;
 function showToast(msg, type){
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.className = 'toast '+type+' show';
-  setTimeout(()=>{toast.classList.remove('show');},3000);
+  if(_toastTimer) clearTimeout(_toastTimer);
+  // Erros críticos ficam 8s, warnings 5s, success 3s
+  const duration = type==='error' ? 8000 : type==='warning' ? 5000 : 3000;
+  _toastTimer=setTimeout(()=>{toast.classList.remove('show');_toastTimer=null;},duration);
 }
 
 // ========= CSV EXPORT =========
@@ -6667,9 +6683,9 @@ function renderTempReleases(){
     var statusTag=isActive?'<span class="tag tag-amber">Ativa</span>':'<span class="tag tag-green">Finalizada</span>';
     var tipo=(t.tipo||'modelo')==='modelo'?'<span class="badge badge-blue">Modelo</span>':'<span class="badge badge-purple">Ano Cat.</span>';
     var detalhes='';
-    if((t.tipo||'modelo')==='modelo'){detalhes='<strong>'+(t.marca||'')+'</strong> '+(t.modelo||'');}
+    if((t.tipo||'modelo')==='modelo'){detalhes='<strong>'+escapeHtml(t.marca||'')+'</strong> '+escapeHtml(t.modelo||'');}
     else{detalhes='Ano: '+(t.ano_original||'?')+' &rarr; <strong>'+(t.ano_temporario||'?')+'</strong>';}
-    var autorNome=t.autorizador_nome||'—';
+    var autorNome=escapeHtml(t.autorizador_nome||'—');
     var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
     var anexoHtml=t.anexo_url?'<a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a> <button class="btn btn-sm" onclick="trocarAnexoLiberacao('+realIdx+')" title="Substituir imagem anexada" style="font-size:.6rem;padding:1px 5px;margin-left:4px">Trocar</button>':'<button class="btn btn-sm" onclick="anexarFotoLiberacao('+realIdx+')" title="Anexar imagem de autorizacao" style="font-size:.65rem;padding:2px 6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Anexar</button>';
     return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+'<br>'+anexoHtml+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
@@ -6766,6 +6782,32 @@ function libToggleTipo(){
   document.getElementById('lib_anoFields').style.display=(tipo==='ano_categoria')?'':'none';
 }
 
+// ========= FILE VALIDATION HELPERS =========
+function readFileHeader(file){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      resolve(new Uint8Array(e.target.result));
+    };
+    reader.readAsArrayBuffer(file.slice(0,12));
+  });
+}
+
+function isValidImageHeader(bytes){
+  if(!bytes||bytes.length<4) return false;
+  // JPEG: FF D8 FF
+  if(bytes[0]===0xFF&&bytes[1]===0xD8&&bytes[2]===0xFF) return true;
+  // PNG: 89 50 4E 47
+  if(bytes[0]===0x89&&bytes[1]===0x50&&bytes[2]===0x4E&&bytes[3]===0x47) return true;
+  // GIF: 47 49 46 38
+  if(bytes[0]===0x47&&bytes[1]===0x49&&bytes[2]===0x46&&bytes[3]===0x38) return true;
+  // WebP: 52 49 46 46 ... 57 45 42 50
+  if(bytes[0]===0x52&&bytes[1]===0x49&&bytes[2]===0x46&&bytes[3]===0x46&&bytes.length>=12&&bytes[8]===0x57&&bytes[9]===0x45&&bytes[10]===0x42&&bytes[11]===0x50) return true;
+  // BMP: 42 4D
+  if(bytes[0]===0x42&&bytes[1]===0x4D) return true;
+  return false;
+}
+
 async function compressImage(file, maxWidth=1200, quality=0.7){
   return new Promise((resolve)=>{
     const reader=new FileReader();
@@ -6788,6 +6830,23 @@ async function compressImage(file, maxWidth=1200, quality=0.7){
 
 async function uploadAnexo(file){
   try{
+    // Validação de segurança do arquivo
+    const MAX_FILE_SIZE=10*1024*1024; // 10MB
+    const ALLOWED_TYPES=['image/jpeg','image/png','image/gif','image/webp','image/bmp'];
+    if(file.size>MAX_FILE_SIZE){
+      showToast('Arquivo muito grande. Maximo: 10MB','error');
+      return null;
+    }
+    if(!ALLOWED_TYPES.includes(file.type)&&!file.type.startsWith('image/')){
+      showToast('Tipo de arquivo nao permitido. Envie apenas imagens.','error');
+      return null;
+    }
+    // Validação de magic bytes (primeiros bytes do arquivo)
+    const header=await readFileHeader(file);
+    if(!isValidImageHeader(header)){
+      showToast('Arquivo invalido. Nao parece ser uma imagem.','error');
+      return null;
+    }
     const compressed=await compressImage(file);
     const fileName='lib_'+Date.now()+'_'+Math.random().toString(36).substr(2,6)+'.jpg';
     const resp=await fetch(SUPABASE_URL+'/storage/v1/object/liberacoes/'+fileName,{
@@ -7116,9 +7175,25 @@ async function loadTempReleasesFromSupabase(){
     const rows=await supabase.select('liberacoes_temporarias',{order:'created_at.desc'});
     if(rows&&rows.length>0){
       TEMP_RELEASES=rows;
+      // D05: Auto-expire liberações ativas com mais de 90 dias
+      const MAX_RELEASE_DAYS=90;
+      const now=Date.now();
+      for(const r of TEMP_RELEASES){
+        if((r.status||'Ativa').toLowerCase()==='ativa'&&r.created_at){
+          const age=now-new Date(r.created_at).getTime();
+          if(age>MAX_RELEASE_DAYS*24*60*60*1000){
+            r.status='Expirada';
+            r._expired=true;
+            // Update in Supabase (non-blocking)
+            if(r.id){
+              supabase.update('liberacoes_temporarias',{status:'Expirada',resolvido_em:new Date().toISOString(),resolvido_por:'sistema (expiracao automatica)'},'id=eq.'+r.id).catch(()=>{});
+            }
+          }
+        }
+      }
       saveTempReleasesToStorage();
       // Apply active ano_categoria liberations
-      rows.filter(r=>r.tipo==='ano_categoria'&&(r.status||'ativa')==='ativa').forEach(r=>{
+      rows.filter(r=>r.tipo==='ano_categoria'&&(r.status||'ativa').toLowerCase()==='ativa').forEach(r=>{
         if(r.categoria&&r.ano_temporario) CAT_ANO_MINIMO[r.categoria]=r.ano_temporario;
       });
     }
@@ -7278,20 +7353,24 @@ async function saveToDatabaseHistory(entries){
     const histEntries = Array.isArray(entries) ? entries : [entries];
     for(const entry of histEntries){
       const user = supabase.getUser();
+      if(!user||!user.id){
+        console.warn('[History] Skipping save: no authenticated user');
+        continue;
+      }
       await supabase.saveHistory({
-        usuario_id: user?.id || null,
-        usuario_nome: currentUser || entry.user || '',
-        tipo: entry.type || entry.action || 'Ação',
+        usuario_id: user.id,
+        usuario_nome: currentUser || entry.user || user.email || 'Desconhecido',
+        tipo: entry.type || entry.action || 'Acao',
         marca: entry.marca || entry.brand || '',
         modelo: entry.modelo || entry.model || '',
         categoria: entry.categoria || entry.category || entry.catTo || entry.catFrom || '',
-        detalhes: entry.details || entry.description || ((entry.type||'')+': '+(entry.marca||'')+' '+(entry.modelo||'')+(entry.catTo?' → '+entry.catTo:'')+(entry.catFrom&&!entry.catTo?' de '+entry.catFrom:''))
+        detalhes: entry.details || entry.description || ((entry.type||'')+': '+(entry.marca||'')+' '+(entry.modelo||'')+(entry.catTo?' -> '+entry.catTo:'')+(entry.catFrom&&!entry.catTo?' de '+entry.catFrom:''))
       });
     }
     // Reload history
     HISTORY = await supabase.loadHistory();
     try{localStorage.setItem('avp-history-cache',JSON.stringify(HISTORY));}catch(e){}
-  }catch(err){console.error('Erro ao salvar histórico:',err);}
+  }catch(err){console.error('Erro ao salvar historico:',err);}
 }
 
 async function loadFromDatabaseHistory(){
@@ -8217,9 +8296,9 @@ async function renderSettingsUsers(){
       const eEmail=(u.email||'').replace(/'/g,"\\'");
       const eId=u.id;
       return `<tr style="${u.ativo===false?'opacity:.5':''}">
-        <td style="font-weight:500">${u.nome||'—'}</td>
-        <td style="font-size:.75rem;color:var(--text2)">${u.email||'—'}</td>
-        <td><span style="font-size:.7rem;font-weight:600;color:${nivelColors[u.nivel]||'var(--text2)'};background:${nivelColors[u.nivel]||'var(--text3)'}15;padding:2px 8px;border-radius:10px">${nivelLabels[u.nivel]||u.nivel}</span></td>
+        <td style="font-weight:500">${escapeHtml(u.nome)||'—'}</td>
+        <td style="font-size:.75rem;color:var(--text2)">${escapeHtml(u.email)||'—'}</td>
+        <td><span style="font-size:.7rem;font-weight:600;color:${nivelColors[u.nivel]||'var(--text2)'};background:${nivelColors[u.nivel]||'var(--text3)'}15;padding:2px 8px;border-radius:10px">${nivelLabels[u.nivel]||escapeHtml(u.nivel)}</span></td>
         <td style="font-size:.75rem;color:var(--text2)">${u.setor||'—'}</td>
         <td>${statusHtml}</td>
         <td>
@@ -8467,10 +8546,11 @@ function openChangePasswordModal(){
     const passErr=validatePassword(pass1);
     if(passErr){showToast(passErr,'error');return;}
     try{
+      await supabase.updatePassword(pass1);
       showToast('Senha atualizada com sucesso!','success');
       closeModal();
     }catch(e){
-      showToast('Erro: '+e.message,'error');
+      showToast('Erro ao alterar senha: '+e.message,'error');
     }
   },'green');
   setTimeout(()=>{
@@ -8541,8 +8621,17 @@ function openEditUserModal(userId){
     try{
       // Update profile
       await supabase.update('perfis',{nome:nome,nivel:nivel,setor:setor||null,updated_at:new Date().toISOString()},'id=eq.'+userId);
+      // Update password if provided (requires admin token - use service role or Auth Admin API)
+      if(pass){
+        try{
+          // Note: Changing another user's password requires service_role or Auth Admin API
+          // For now, log a warning - full implementation needs Edge Function
+          console.warn('Password change for other users requires server-side implementation (Edge Function)');
+          showToast('Perfil atualizado. Alteracao de senha de outros usuarios requer implementacao server-side.','warning');
+        }catch(pe){console.warn('Password update failed:',pe);}
+      }
       closeModal();
-      showToast('Usuário "'+nome+'" atualizado!','success');
+      showToast('Usuario "'+nome+'" atualizado!','success');
       renderSettingsUsers();
     }catch(e){
       showToast('Erro: '+e.message,'error');
@@ -9020,6 +9109,36 @@ async function initDataConnection(){
       }
     }catch(e){ console.warn('Divergencias ignoradas load (non-critical):',e); }
 
+    // Load compatibility rules from database (B06 fix - dynamic rules)
+    try{
+      const rules = await supabase.loadRules();
+      if(rules.compat && rules.compat.length > 0){
+        // Update CAT_COMPAT_MAP from database rules
+        for(const rule of rules.compat){
+          if(!CAT_COMPAT_MAP[rule.categoria_a]) CAT_COMPAT_MAP[rule.categoria_a]=[];
+          if(!CAT_COMPAT_MAP[rule.categoria_a].includes(rule.categoria_b)){
+            CAT_COMPAT_MAP[rule.categoria_a].push(rule.categoria_b);
+          }
+          if(!CAT_COMPAT_MAP[rule.categoria_b]) CAT_COMPAT_MAP[rule.categoria_b]=[];
+          if(!CAT_COMPAT_MAP[rule.categoria_b].includes(rule.categoria_a)){
+            CAT_COMPAT_MAP[rule.categoria_b].push(rule.categoria_a);
+          }
+        }
+      }
+      if(rules.inclusao && rules.inclusao.length > 0){
+        // Update CAT_MANDATORY_INCLUSION from database
+        for(const rule of rules.inclusao){
+          if(rule.tipo==='obrigatoria'){
+            if(!CAT_MANDATORY_INCLUSION.some(r=>r.from===rule.categoria_origem&&r.mustBeIn===rule.categoria_destino)){
+              CAT_MANDATORY_INCLUSION.push({from:rule.categoria_origem, mustBeIn:rule.categoria_destino});
+            }
+          }
+        }
+      }
+      // Recompute divergences with updated rules
+      recomputeAll();
+    }catch(e){ console.warn('Rules load (non-critical):',e); }
+
     // Load FIPE base from Supabase if not available locally (cross-device support)
     if(!isFipeBaseLoaded()){
       try{
@@ -9173,12 +9292,43 @@ function applyAccessLevels(){
   if(baseInfo) baseInfo.style.display=(nivel==='admin')?'':'none';
 }
 
+// ========= LOGIN RATE LIMITING =========
+let _loginAttempts=[];
+const LOGIN_MAX_ATTEMPTS=5;
+const LOGIN_LOCKOUT_MS=5*60*1000; // 5 minutes
+
+function isLoginLocked(){
+  const now=Date.now();
+  _loginAttempts=_loginAttempts.filter(t=>now-t<LOGIN_LOCKOUT_MS);
+  return _loginAttempts.length>=LOGIN_MAX_ATTEMPTS;
+}
+
+function recordLoginAttempt(){
+  _loginAttempts.push(Date.now());
+}
+
+function getLoginLockoutRemaining(){
+  if(!_loginAttempts.length) return 0;
+  const oldest=_loginAttempts[0];
+  const remaining=LOGIN_LOCKOUT_MS-(Date.now()-oldest);
+  return Math.max(0,Math.ceil(remaining/1000));
+}
+
 async function doLogin(){
   const user=document.getElementById('loginUser').value.trim();
   const pass=document.getElementById('loginPass').value;
   const errEl=document.getElementById('loginError');
   const btn=document.querySelector('.login-btn');
-  if(!user||!pass){errEl.textContent='Preencha usuário e senha';errEl.style.display='block';return;}
+  if(!user||!pass){errEl.textContent='Preencha usuario e senha';errEl.style.display='block';return;}
+
+  // Rate limiting check
+  if(isLoginLocked()){
+    const secs=getLoginLockoutRemaining();
+    errEl.textContent='Muitas tentativas. Aguarde '+secs+' segundos.';
+    errEl.style.display='block';
+    return;
+  }
+
   errEl.style.display='none';
 
   // Loading state
@@ -9203,8 +9353,14 @@ async function doLogin(){
       startSessionCheck();
       logSystem('login','Login realizado');
     } else {
-      const msg=result.error_description||result.msg||result.error?.message||'Usuário ou senha incorretos';
-      errEl.textContent=msg;
+      recordLoginAttempt();
+      const msg=result.error_description||result.msg||result.error?.message||'Usuario ou senha incorretos';
+      if(isLoginLocked()){
+        errEl.textContent='Conta bloqueada temporariamente. Aguarde 5 minutos.';
+      } else {
+        const remaining=LOGIN_MAX_ATTEMPTS-_loginAttempts.length;
+        errEl.textContent=msg+(remaining<=2?' ('+remaining+' tentativa'+(remaining!==1?'s':'')+' restante'+(remaining!==1?'s':'')+')':'');
+      }
       errEl.style.display='block';
       // Reset button
       if(btn){btn.disabled=false;btn.textContent=btn.dataset.origText||'Entrar';}
@@ -9247,7 +9403,7 @@ async function doLogout(){
 
 // ========= SESSION SINGLE-DEVICE CHECK =========
 const SESSION_CHECK_INTERVAL = 12000; // 12 seconds
-const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 let _lastActivity = Date.now();
 let _inactivityTimer = null;
 
@@ -9275,12 +9431,12 @@ function startSessionCheck(){
     }catch(e){ console.warn('Session check error:',e); }
   }, SESSION_CHECK_INTERVAL);
 
-  // Inactivity check (every 30s, logout after 1h)
+  // Inactivity check (every 30s, logout after 30min)
   _inactivityTimer=setInterval(()=>{
     if(Date.now() - _lastActivity > INACTIVITY_TIMEOUT){
       clearInterval(_sessionCheckInterval);
       clearInterval(_inactivityTimer);
-      showToast('Sessão encerrada por inatividade (1 hora).','warning');
+      showToast('Sessao encerrada por inatividade (30 minutos).','warning');
       setTimeout(()=>{
         doLogout();
       },3000);

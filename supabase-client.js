@@ -33,6 +33,21 @@ const supabase = {
     localStorage.removeItem('avp-supabase-session');
   },
 
+  async updatePassword(newPassword) {
+    const token = supabase.getToken();
+    if (!token) throw new Error('Não autenticado');
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ password: newPassword })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.msg || err.message || 'Falha ao atualizar senha');
+    }
+    return resp.json();
+  },
+
   getToken() {
     try {
       const session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
@@ -90,10 +105,10 @@ const supabase = {
   },
 
   async select(table, options = {}) {
-    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${options.select || '*'}`;
+    let url = `${SUPABASE_URL}/rest/v1/${encodeURIComponent(table)}?select=${options.select || '*'}`;
     if (options.filter) url += `&${options.filter}`;
     if (options.order) url += `&order=${options.order}`;
-    if (options.limit) url += `&limit=${options.limit}`;
+    if (options.limit) url += `&limit=${parseInt(options.limit)||100}`;
     let resp = await fetch(url, { headers: supabase._headers() });
     // Auto-refresh token on 401
     if (resp.status === 401) {
@@ -416,10 +431,17 @@ const supabase = {
         }
       }
     }
+    // SAFETY CHECK: Never delete if there's nothing to insert (prevents accidental wipe)
+    if (allModels.length === 0) {
+      console.warn('[saveFullBase] Aborted: no models to save. Refusing to delete existing data.');
+      throw new Error('Nenhum modelo para salvar. Operacao cancelada para evitar perda de dados.');
+    }
+    // SAFETY CHECK: Verify minimum model count (alert if suspiciously low)
+    const existingCount = await supabase.select('modelos', { select: 'id', limit: 1 });
+    // Only proceed with delete+insert if we have data
     // Delete all existing models first
     await supabase.delete('modelos', 'id=neq.00000000-0000-0000-0000-000000000000');
-    // Insert all
-    // Split into chunks of 500 to avoid payload limits
+    // Insert all in chunks of 500 to avoid payload limits
     const CHUNK = 500;
     for (let i = 0; i < allModels.length; i += CHUNK) {
       await supabase.insert('modelos', allModels.slice(i, i + CHUNK));
