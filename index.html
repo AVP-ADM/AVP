@@ -4103,17 +4103,6 @@ function openAddModelToCat(categoria){
 
     <div id="addModel_msg" class="ac-msg"></div>
 
-    <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:8px 12px;background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius)">
-      <input type="checkbox" id="addModel_temp" onchange="document.getElementById('addModel_tempFields').style.display=this.checked?'flex':'none'">
-      <span>Liberação Temporária</span>
-    </label>
-    <div id="addModel_tempFields" style="display:none;flex-direction:column;gap:8px">
-      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Motivo da liberação:</label>
-      <input id="addModel_tempMotivo" placeholder="Ex: Autorização da diretoria...">
-      <label style="font-size:.78rem;color:var(--text2);font-weight:600">Observações (opcional):</label>
-      <input id="addModel_tempObs" placeholder="Observações adicionais...">
-    </div>
-
     <span style="font-size:.72rem;color:var(--text3)">${isFipeBaseLoaded()?'Selecione apenas marcas e modelos da base oficial FIPE.':'Base FIPE não carregada — campo livre habilitado.'}</span>
   </div>`,function(){
     const marca=document.getElementById('addModel_marca').value.trim();
@@ -4131,25 +4120,11 @@ function openAddModelToCat(categoria){
     // Check if there's already a pending addition for the same model
     const pendingAdd=STAGING.ops.some(op=>op.type==='Adição'&&norm(op.marca)===norm(marca)&&norm(op.modelo)===norm(modelo)&&op.catTo===categoria);
     if(pendingAdd){showToast('Já existe uma adição pendente para este modelo nesta categoria.','warning');return;}
-    // Check if temp release
-    const isTemp=document.getElementById('addModel_temp').checked;
-    if(isTemp){
-      const motivo=document.getElementById('addModel_tempMotivo').value.trim();
-      if(!motivo){showToast('Preencha o motivo da liberação temporária','error');return;}
-      const obs=document.getElementById('addModel_tempObs').value.trim();
-      closeModal();
-      showToast('Salvando adição...','warning');
-      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria,_temp:true}).then(()=>{
-        addTempRelease(marca,modelo,categoria,motivo,obs);
-        showCatDetail(categoria,'modelos');
-      });
-    } else {
-      closeModal();
-      showToast('Salvando adição...','warning');
-      commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria}).then(()=>{
-        showCatDetail(categoria,'modelos');
-      });
-    }
+    closeModal();
+    showToast('Salvando adição...','warning');
+    commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria}).then(()=>{
+      showCatDetail(categoria,'modelos');
+    });
   },'green');
   // Real-time validation
   setTimeout(()=>{
@@ -6831,11 +6806,23 @@ async function openNewLiberacao(){
           <option value="ano_categoria">Ano de Categoria (alterar ano temporariamente)</option>
         </select>
       </div>
-      <div><label>Categoria</label><select id="lib_categoria">${catOpts}</select></div>
+      <div><label>Categoria</label><select id="lib_categoria" onchange="_libSelectedBrand='';var mi=document.getElementById('lib_modelo');if(mi){mi.value='';mi.disabled=true;mi.placeholder='Selecione marca primeiro...';}var mai=document.getElementById('lib_marca');if(mai)mai.value='';">${catOpts}</select></div>
       <div id="lib_modeloFields">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label>Marca</label><input id="lib_marca" placeholder="Ex: FIAT"></div>
-          <div><label>Modelo</label><input id="lib_modelo" placeholder="Ex: Uno Fire 1.0"></div>
+          <div><label>Marca</label>
+            <div class="ac-wrap">
+              <input id="lib_marca" class="ac-input" placeholder="Digite para pesquisar..." autocomplete="off" oninput="libFilterBrands()" onfocus="libFilterBrands()">
+              <div id="lib_marcaDropdown" class="ac-dropdown"></div>
+              <div id="lib_marcaMsg" class="ac-msg"></div>
+            </div>
+          </div>
+          <div><label>Modelo</label>
+            <div class="ac-wrap">
+              <input id="lib_modelo" class="ac-input" placeholder="Selecione marca primeiro..." disabled autocomplete="off" oninput="libFilterModels()" onfocus="libFilterModels()">
+              <div id="lib_modeloDropdown" class="ac-dropdown"></div>
+              <div id="lib_modeloMsg" class="ac-msg"></div>
+            </div>
+          </div>
         </div>
       </div>
       <div id="lib_anoFields" style="display:none">
@@ -6855,11 +6842,16 @@ async function openNewLiberacao(){
         <button class="btn" onclick="closeDrawer()">Cancelar</button>
       </div>
     </div>`;
+  _libSelectedBrand='';
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
 }
 
 function libToggleTipo(){
+  const tipo=document.getElementById('lib_tipo').value;
+  document.getElementById('lib_modeloFields').style.display=(tipo==='modelo')?'':'none';
+  document.getElementById('lib_anoFields').style.display=(tipo==='ano_categoria')?'':'none';
+}
   const tipo=document.getElementById('lib_tipo').value;
   document.getElementById('lib_modeloFields').style.display=(tipo==='modelo')?'':'none';
   document.getElementById('lib_anoFields').style.display=(tipo==='ano_categoria')?'':'none';
@@ -6969,6 +6961,80 @@ async function salvarLiberacao(){
     showToast('Erro ao salvar: '+e.message,'error');
   }
 }
+
+// ========= LIBERACAO FIPE AUTOCOMPLETE =========
+let _libSelectedBrand='';
+
+function libGetCategory(){
+  var sel=document.getElementById('lib_categoria');
+  return sel?sel.value:'';
+}
+
+function libFilterBrands(){
+  var input=document.getElementById('lib_marca');
+  var dd=document.getElementById('lib_marcaDropdown');
+  var msg=document.getElementById('lib_marcaMsg');
+  if(!input||!dd) return;
+  var query=input.value.trim().toLowerCase();
+  var cat=libGetCategory();
+  var brands=isFipeBaseLoaded()?getFipeBrandsForCategory(cat):ALL_BRANDS;
+  var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
+  filtered=filtered.slice(0,50);
+  if(filtered.length===0){
+    dd.style.display='block';dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">Nenhuma marca encontrada</div>';
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML=filtered.map(function(b){return '<div class="ac-option" data-value="'+b.replace(/"/g,'&quot;')+'">'+b+'</div>';}).join('');
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}el=el.parentElement;}};
+  if(msg){if(query&&brands.find(function(b){return b.toLowerCase()===query;})){msg.textContent='Marca valida';msg.className='ac-msg valid';}else if(query){msg.textContent='';msg.className='ac-msg';}else{msg.textContent='';msg.className='ac-msg';}}
+}
+
+function libSelectBrand(brand){
+  _libSelectedBrand=brand;
+  var input=document.getElementById('lib_marca');
+  var dd=document.getElementById('lib_marcaDropdown');
+  var msg=document.getElementById('lib_marcaMsg');
+  var modelInput=document.getElementById('lib_modelo');
+  if(input) input.value=brand;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent=brand;msg.className='ac-msg valid';}
+  if(modelInput){modelInput.disabled=false;modelInput.placeholder='Digite para pesquisar modelo...';modelInput.value='';modelInput.focus();}
+}
+
+function libFilterModels(){
+  var input=document.getElementById('lib_modelo');
+  var dd=document.getElementById('lib_modeloDropdown');
+  var msg=document.getElementById('lib_modeloMsg');
+  if(!input||!dd||!_libSelectedBrand) return;
+  var query=input.value.trim().toLowerCase();
+  var cat=libGetCategory();
+  var allModels=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_libSelectedBrand,cat):[];
+  // Excluir modelos ja cadastrados nesta categoria
+  var registered=RAW[cat]&&RAW[cat].brands&&RAW[cat].brands[_libSelectedBrand]?RAW[cat].brands[_libSelectedBrand]:[];
+  var regSet=new Set(registered.map(function(m){return m.toLowerCase();}));
+  var available=allModels.filter(function(m){return !regSet.has(m.toLowerCase());});
+  var filtered=query?available.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):available;
+  filtered=filtered.slice(0,50);
+  if(filtered.length===0){
+    dd.style.display='block';dd.innerHTML='<div style="padding:8px 12px;font-size:.78rem;color:var(--text3)">'+(available.length===0?'Todos os modelos desta marca ja estao cadastrados':'Nenhum modelo encontrado')+'</div>';
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML=filtered.map(function(m){return '<div class="ac-option" data-value="'+m.replace(/"/g,'&quot;')+'">'+m+'</div>';}).join('');
+  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}el=el.parentElement;}};
+  if(msg){if(query&&available.find(function(m){return m.toLowerCase()===query;})){msg.textContent='Modelo valido';msg.className='ac-msg valid';}else{msg.textContent='';msg.className='ac-msg';}}
+}
+
+function libSelectModel(model){
+  var input=document.getElementById('lib_modelo');
+  var dd=document.getElementById('lib_modeloDropdown');
+  var msg=document.getElementById('lib_modeloMsg');
+  if(input) input.value=model;
+  if(dd) dd.style.display='none';
+  if(msg){msg.textContent=model;msg.className='ac-msg valid';}
+}
+// ========= FIM LIBERACAO FIPE AUTOCOMPLETE =========
 
 async function resolverLiberacao(idx){
   const t=TEMP_RELEASES[idx];
