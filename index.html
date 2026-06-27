@@ -2237,7 +2237,7 @@ function goTab(tab){
   if(effectiveTab==='duplicates'&&_dirtyTabs.duplicates){renderDupTable();_dirtyTabs.duplicates=false;}
   if(effectiveTab==='divergences'&&_dirtyTabs.divergences){renderDivergences();_dirtyTabs.divergences=false;}
   if(effectiveTab==='management'){renderStagingBars();renderStagingTable();renderMgmtKpis();renderTempReleases();renderTempReleaseAlert();}
-  if(effectiveTab==='history'&&_dirtyTabs.history){renderHistory();_dirtyTabs.history=false;}
+  if(effectiveTab==='history'){renderHistory();_dirtyTabs.history=false;}
   if(effectiveTab==='planos'){tmInit();}
   if(effectiveTab==='coberturas'){cobRender();}
   if(effectiveTab==='placafipe'){placaFipeInit();}
