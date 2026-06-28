@@ -192,10 +192,10 @@ tr:last-child td{border-bottom:none}
 .badge-purple{background:var(--purple-light);color:var(--purple)}
 .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:500;margin:1px 2px}
 .tag-blue{background:var(--blue-light);color:var(--blue);position:relative;padding-right:8px;transition:padding .15s}
-.tag-blue.removable{cursor:default;padding-right:22px}
+.tag-blue.removable{cursor:default}
 .tag-blue.removable:hover{padding-right:22px}
-.tag-blue .tag-remove{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:0;transition:opacity .15s;pointer-events:none}
-.tag-blue.removable:hover .tag-remove{opacity:.8;pointer-events:auto}
+.tag-blue .tag-remove{display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:.8;transition:opacity .15s}
+.tag-blue.removable:hover .tag-remove{display:inline-block}
 .tag-blue .tag-remove:hover{opacity:1}
 .tag-green{background:var(--green-light);color:var(--green)}
 .tag-dup,.tag-red{background:var(--red-light);color:var(--red)}
@@ -1077,7 +1077,7 @@ tr:hover .row-actions{opacity:1}
       <div id="dupCount" style="font-size:.78rem;color:var(--text2);margin-bottom:10px"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th><input type="checkbox" id="dupSelectAll" onchange="toggleDupSelectAll()"></th><th>#</th><th>Marca</th><th>Modelo</th><th>Ano Aceitação</th><th>Categorias</th><th>Qtd.</th></tr></thead>
+          <thead><tr><th><input type="checkbox" id="dupSelectAll" onchange="toggleDupSelectAll()"></th><th>#</th><th>Marca</th><th>Modelo</th><th>Categorias</th><th>Qtd.</th></tr></thead>
           <tbody id="dupTableBody"></tbody>
         </table>
       </div>
@@ -4772,7 +4772,6 @@ function renderDupTable(){
 
   const tbody = document.getElementById('dupTableBody');
   tbody.innerHTML = page.map((d,i)=>{
-    const ano = typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'—';
     const catBadges = d.cats.map(c=>{
       const canRemove = d.cats.length > 1;
       const escapedCat = c.replace(/'/g,"\\'");
@@ -4792,11 +4791,10 @@ function renderDupTable(){
       <td style="color:var(--text2)">${start+i+1}</td>
       <td><strong>${escapeHtml(d.marca)}</strong></td>
       <td>${escapeHtml(d.modelo)}</td>
-      <td><span class="tag tag-gray">${ano}</span></td>
       <td>${catBadges}</td>
       <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado encontrado</h4><p>Todos os modelos estão em categorias únicas ou o filtro não retornou resultados.</p></div></td></tr>';
+  }).join('')||'<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado encontrado</h4><p>Todos os modelos estão em categorias únicas ou o filtro não retornou resultados.</p></div></td></tr>';
 
   renderPagination('dupPagination', pages, dupPage, p=>{dupPage=p;renderDupTable();});
 }
