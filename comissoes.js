@@ -298,8 +298,8 @@ function comRenderTable() {
   const pageItems = filtered.slice(start, start + _comPageSize);
 
 
-  // Helper to get field from dados JSONB or direct column
-  const g = (o, field) => (o.dados && o.dados[field] !== undefined) ? o.dados[field] : o[field];
+  // Helper to get field - direct column or fallback to dados JSONB
+  const g = (o, field) => o[field] !== undefined && o[field] !== null ? o[field] : (o.dados && o.dados[field]);
 
   if (pageItems.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma operacao encontrada</td></tr>';
@@ -311,8 +311,8 @@ function comRenderTable() {
       const tipoColors = { adesao: 'var(--green)', troca_titularidade: 'var(--amber)', troca_placa: 'var(--blue)', troca_plano: 'var(--purple,#8b5cf6)' };
       const tipoLabel = tipoLabels[o.tipo] || o.tipo;
       const tipoColor = tipoColors[o.tipo] || 'var(--text2)';
-      const assocName = escapeHtml(g(o, 'associado') || g(o, 'novo_titular') || '—');
-      const placa = escapeHtml(g(o, 'placa') || g(o, 'placa_nova') || '—');
+      const assocName = escapeHtml(g(o, 'associado') || '—');
+      const placa = escapeHtml(g(o, 'placa') || '—');
       const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? 'R$ ' + comFormatMoney(parseFloat(g(o, 'valor')) || 0) : '—';
       const dataStr = o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '—';
       const opStatus = g(o, 'status') || 'pendente';
@@ -425,10 +425,7 @@ function comOpenDetalhe(id) {
 
 async function comConfirmarOperacao(id) {
   try {
-    // Update dados.status inside JSONB
-    const op = _comOperacoes.find(o => o.id === id);
-    const dados = (op && op.dados) ? { ...op.dados, status: 'confirmado' } : { status: 'confirmado' };
-    await supabase.update('operacoes', { dados: dados }, 'id=eq.' + id);
+    await supabase.update('operacoes', { status: 'confirmado', confirmado_at: new Date().toISOString() }, 'id=eq.' + id);
     showToast('Operacao confirmada', 'success');
     closeDrawer();
     comRender();
@@ -588,30 +585,26 @@ async function comSalvarNovaOperacao() {
     dados.solicitado_por = gv('novaOp_solicitado_por');
   }
 
-  // Detectar colunas disponíveis e inserir de forma adaptativa
+  // Insert usando colunas diretas da tabela operacoes
+  const insertData = {
+    tipo: tipo,
+    usuario_id: currentProfile ? currentProfile.id : null,
+    usuario_nome: currentProfile ? currentProfile.nome : null,
+    sede_id: dados.sede_id || null,
+    associado: dados.associado || null,
+    placa: dados.placa || null,
+    valor: dados.valor || 0,
+    status: 'pendente',
+    dados: dados
+  };
+
   try {
-    // Tenta primeiro com campo JSONB 'dados'
-    const insertData = { tipo, usuario_id: currentProfile ? currentProfile.id : null, dados };
     await supabase.insert('operacoes', insertData);
     showToast('Operacao registrada com sucesso!', 'success');
     closeDrawer();
     comRender();
   } catch (e) {
-    const msg = (e.message || '').toLowerCase();
-    if (msg.includes('dados') && msg.includes('could not find')) {
-      // Tabela não tem coluna 'dados', inserir flat (cada campo como coluna)
-      try {
-        const flatData = { tipo, usuario_id: currentProfile ? currentProfile.id : null, ...dados };
-        await supabase.insert('operacoes', flatData);
-        showToast('Operacao registrada com sucesso!', 'success');
-        closeDrawer();
-        comRender();
-      } catch (e2) {
-        showToast('Erro ao salvar: ' + e2.message, 'error');
-      }
-    } else {
-      showToast('Erro ao salvar: ' + e.message, 'error');
-    }
+    showToast('Erro ao salvar: ' + e.message, 'error');
   }
 }
 
@@ -903,10 +896,8 @@ async function comCheckConfirmacaoToken() {
       showToast('Link expirado', 'error');
       return;
     }
-    // Confirm the operation - update dados.status
-    const opRows = await supabase.select('operacoes', { filter: 'id=eq.' + tokenData.operacao_id });
-    const opData = (opRows && opRows[0] && opRows[0].dados) ? { ...opRows[0].dados, status: 'confirmado' } : { status: 'confirmado' };
-    await supabase.update('operacoes', { dados: opData }, 'id=eq.' + tokenData.operacao_id);
+    // Confirm the operation
+    await supabase.update('operacoes', { status: 'confirmado', confirmado_at: new Date().toISOString() }, 'id=eq.' + tokenData.operacao_id);
     await supabase.update('confirmacao_tokens', { usado: true }, 'id=eq.' + tokenData.id);
     showToast('Pagamento confirmado com sucesso!', 'success');
     // Clean URL
