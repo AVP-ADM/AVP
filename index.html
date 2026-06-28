@@ -2580,6 +2580,10 @@ function renderRecentActivity(){
       if(marca && modelo){
         text = tipo + ': ' + escapeHtml(marca) + ' ' + escapeHtml(modelo);
         if(categoria) text += ' → ' + escapeHtml(categoria);
+        // Para Alterar Ano, adicionar o detalhe (ex: "Ano: 2006 → 2008")
+        if(tipo==='Alterar Ano' && detalhes && !detalhes.startsWith('{')){
+          text += ' (' + escapeHtml(detalhes) + ')';
+        }
       } else if(detalhes && !detalhes.startsWith('{')){
         text = escapeHtml(detalhes);
       } else if(detalhes && detalhes.startsWith('{')){
