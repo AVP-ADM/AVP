@@ -421,13 +421,17 @@ const supabase = {
   async saveFullBase(rawData, categoriasMap) {
     // rawData = {catName: {brands: {brand: [model1, model2]}}}
     // categoriasMap = {catName: catId}
+    const anosCache = {};
+    try{ const a=localStorage.getItem('avp-anos-cache'); if(a) Object.assign(anosCache,JSON.parse(a)); }catch(e){}
     const allModels = [];
     for (const [catName, catData] of Object.entries(rawData)) {
       const catId = categoriasMap[catName];
       if (!catId) continue;
       for (const [brand, models] of Object.entries(catData.brands || {})) {
         for (const model of models) {
-          allModels.push({ categoria_id: catId, marca: brand, modelo: model });
+          const key = catName+'|||'+brand+'|||'+model;
+          const ano = anosCache[key] || null;
+          allModels.push({ categoria_id: catId, marca: brand, modelo: model, ano_aceitacao: ano });
         }
       }
     }

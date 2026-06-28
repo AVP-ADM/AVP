@@ -5681,6 +5681,28 @@ async function commitDirectAction(op){
     }
   } else if(op.type==='Alterar Ano'||op.type==='Alterar Tipo FIPE'||op.type==='Ignorar Divergência'){
     // Metadata changes - no RAW structure change needed, just history
+    // Alterar Ano: update ano_aceitacao in ANOS_ACEITACAO + Supabase
+    if(op.type==='Alterar Ano'){
+      const key=op.catFrom+'|||'+op.marca+'|||'+op.modelo;
+      const newAno=(op.details||'').split('→').pop().trim();
+      if(newAno&&newAno!=='padrão'){
+        ANOS_ACEITACAO[key]=newAno;
+      } else {
+        delete ANOS_ACEITACAO[key];
+      }
+      try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
+      // Update in Supabase modelos table
+      (async function(){
+        try{
+          const catIdMap=window._catIdMap||{};
+          const catId=catIdMap[op.catFrom];
+          if(catId){
+            const anoVal=(newAno&&newAno!=='padrão')?newAno:null;
+            await supabase.update('modelos',{ano_aceitacao:anoVal},'categoria_id=eq.'+catId+'&marca=eq.'+encodeURIComponent(op.marca)+'&modelo=eq.'+encodeURIComponent(op.modelo));
+          }
+        }catch(e){console.warn('Erro ao atualizar ano no Supabase:',e);}
+      })();
+    }
   }
 
   // 2. Record in History
