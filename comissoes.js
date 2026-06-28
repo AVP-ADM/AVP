@@ -826,40 +826,166 @@ function comExportXLSX() {
   const mesLabel = (document.getElementById('comMesFilter') || {}).selectedOptions
     ? document.getElementById('comMesFilter').selectedOptions[0].text : 'Periodo';
 
-  // Prepare data
-  const rows = _comOperacoes.map(o => {
-    const user = _comUsersCache.find(u => u.id === o.usuario_id);
-    const d = o.dados || {};
-    const sede = _comSedes.find(s => s.id === (d.sede_id || o.sede_id));
-    const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
-    return {
-      'Tipo': tipoLabels[o.tipo] || o.tipo,
-      'Associado': d.associado || o.associado || d.novo_titular || '',
-      'Placa': d.placa || o.placa || d.placa_nova || '',
-      'Valor (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(d.valor) || parseFloat(o.valor) || 0) : '',
-      'Comissao (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? comCalcularComissao(o) : '',
-      'Colaborador': user ? user.nome : (d.usuario_nome || ''),
-      'Sede': sede ? sede.nome : '',
-      'Data': o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '',
-      'Status': (d.status || 'pendente') === 'confirmado' ? 'Confirmado' : 'Pendente'
-    };
+  // === STYLES ===
+  const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '1B2A4A' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '4A5568' } } } };
+  const titleStyle = { font: { bold: true, sz: 16, color: { rgb: '1B2A4A' } }, alignment: { horizontal: 'left' } };
+  const subtitleStyle = { font: { bold: false, sz: 10, color: { rgb: '718096' } }, alignment: { horizontal: 'left' } };
+  const kpiLabelStyle = { font: { bold: true, sz: 9, color: { rgb: '718096' } }, alignment: { horizontal: 'center' } };
+  const kpiValueGreen = { font: { bold: true, sz: 14, color: { rgb: '16A34A' } }, alignment: { horizontal: 'center' } };
+  const kpiValueAmber = { font: { bold: true, sz: 14, color: { rgb: 'D97706' } }, alignment: { horizontal: 'center' } };
+  const kpiValueBlue = { font: { bold: true, sz: 14, color: { rgb: '2563EB' } }, alignment: { horizontal: 'center' } };
+  const kpiValueDefault = { font: { bold: true, sz: 14, color: { rgb: '1B2A4A' } }, alignment: { horizontal: 'center' } };
+  const moneyStyle = { font: { sz: 10 }, numFmt: '#,##0.00', alignment: { horizontal: 'right' } };
+  const cellStyle = { font: { sz: 10, color: { rgb: '2D3748' } }, alignment: { vertical: 'center' } };
+  const cellCenterStyle = { font: { sz: 10, color: { rgb: '2D3748' } }, alignment: { horizontal: 'center', vertical: 'center' } };
+  const confirmadoStyle = { font: { bold: true, sz: 9, color: { rgb: '16A34A' } }, alignment: { horizontal: 'center' } };
+  const pendenteStyle = { font: { bold: true, sz: 9, color: { rgb: 'D97706' } }, alignment: { horizontal: 'center' } };
+  const sectionStyle = { font: { bold: true, sz: 12, color: { rgb: '1B2A4A' } }, border: { bottom: { style: 'medium', color: { rgb: '2563EB' } } } };
+  const footerStyle = { font: { italic: true, sz: 8, color: { rgb: 'A0AEC0' } } };
+
+  // === HELPER: get field from op ===
+  const g = (o, field) => {
+    if (o[field] !== undefined && o[field] !== null) return o[field];
+    return (o.dados && o.dados[field]) || null;
+  };
+
+  // === DATA PREPARATION ===
+  const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
+  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+  const totalGerado = comissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
+  const totalComissoes = comCalcularTotalComissoes(comissionaveis);
+  const liquidoAVP = totalGerado - totalComissoes;
+  const totalOps = _comOperacoes.length;
+  const totalAdesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
+  const totalTrocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade').length;
+  const totalConfirmadas = _comOperacoes.filter(o => (g(o, 'status') || 'pendente') === 'confirmado').length;
+  const totalPendentes = totalOps - totalConfirmadas;
+
+  // Group by sede
+  const bySede = {};
+  _comOperacoes.forEach(o => {
+    const sedeId = g(o, 'sede_id') || '_sem_sede';
+    if (!bySede[sedeId]) bySede[sedeId] = [];
+    bySede[sedeId].push(o);
   });
 
-
-  const comissionaveis2 = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const totalGerado2 = comissionaveis2.reduce((s, o) => { const d2 = o.dados || {}; return s + (parseFloat(d2.valor) || parseFloat(o.valor) || 0); }, 0);
-  const totalComissoes2 = comCalcularTotalComissoes(comissionaveis2);
-  rows.push({});
-  rows.push({ 'Tipo': 'RESUMO', 'Associado': '', 'Placa': '', 'Valor (R$)': totalGerado2, 'Comissao (R$)': totalComissoes2, 'Colaborador': '', 'Sede': '', 'Data': '', 'Status': 'Liquido AVP: R$ ' + comFormatMoney(totalGerado2 - totalComissoes2) });
+  // Group by user for ranking
+  const byUser = {};
+  comissionaveis.forEach(o => {
+    const uid = o.usuario_id || 'unknown';
+    if (!byUser[uid]) byUser[uid] = { nome: '', total: 0, comissao: 0, ops: 0 };
+    const user = _comUsersCache.find(u => u.id === uid);
+    byUser[uid].nome = user ? user.nome : (g(o, 'usuario_nome') || 'Desconhecido');
+    byUser[uid].total += parseFloat(g(o, 'valor')) || 0;
+    byUser[uid].comissao += comCalcularComissao(o);
+    byUser[uid].ops++;
+  });
+  const ranking = Object.values(byUser).sort((a, b) => b.total - a.total);
 
   try {
-    const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Comissoes');
 
-    // Auto width
-    const colWidths = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(k.length + 2, 14) }));
-    ws['!cols'] = colWidths;
+    // ============================
+    // ABA 1: DASHBOARD (Resumo)
+    // ============================
+    const dashData = [];
+    // Title
+    dashData.push([{ v: 'AVP - Relatorio de Comissoes', s: titleStyle }]);
+    dashData.push([{ v: mesLabel + ' | Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' as ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), s: subtitleStyle }]);
+    dashData.push([]);
+    // KPIs section
+    dashData.push([{ v: 'RESUMO FINANCEIRO', s: sectionStyle }, '', '', '', '']);
+    dashData.push([]);
+    dashData.push([{ v: 'Total Gerado', s: kpiLabelStyle }, '', { v: 'Total Comissoes', s: kpiLabelStyle }, '', { v: 'Liquido AVP', s: kpiLabelStyle }]);
+    dashData.push([{ v: totalGerado, s: kpiValueGreen }, '', { v: totalComissoes, s: kpiValueAmber }, '', { v: liquidoAVP, s: kpiValueBlue }]);
+    dashData.push([]);
+    dashData.push([{ v: 'INDICADORES', s: sectionStyle }, '', '', '', '']);
+    dashData.push([]);
+    dashData.push([{ v: 'Total Operacoes', s: kpiLabelStyle }, { v: 'Adesoes', s: kpiLabelStyle }, { v: 'Troca Titular', s: kpiLabelStyle }, { v: 'Confirmadas', s: kpiLabelStyle }, { v: 'Pendentes', s: kpiLabelStyle }]);
+    dashData.push([{ v: totalOps, s: kpiValueDefault }, { v: totalAdesoes, s: kpiValueGreen }, { v: totalTrocaTit, s: kpiValueAmber }, { v: totalConfirmadas, s: kpiValueGreen }, { v: totalPendentes, s: kpiValueAmber }]);
+    dashData.push([]);
+    // Ranking
+    dashData.push([{ v: 'RANKING POR FATURAMENTO', s: sectionStyle }, '', '', '', '']);
+    dashData.push([]);
+    dashData.push([{ v: '#', s: headerStyle }, { v: 'Colaborador', s: headerStyle }, { v: 'Operacoes', s: headerStyle }, { v: 'Faturamento (R$)', s: headerStyle }, { v: 'Comissao (R$)', s: headerStyle }]);
+    ranking.forEach((r, i) => {
+      dashData.push([{ v: i + 1, s: cellCenterStyle }, { v: r.nome, s: cellStyle }, { v: r.ops, s: cellCenterStyle }, { v: r.total, s: moneyStyle }, { v: r.comissao, s: moneyStyle }]);
+    });
+    dashData.push([]);
+    // Per-sede summary
+    dashData.push([{ v: 'RESUMO POR SEDE', s: sectionStyle }, '', '', '', '']);
+    dashData.push([]);
+    dashData.push([{ v: 'Sede', s: headerStyle }, { v: 'Operacoes', s: headerStyle }, { v: 'Faturamento (R$)', s: headerStyle }, { v: 'Comissoes (R$)', s: headerStyle }, { v: 'Liquido (R$)', s: headerStyle }]);
+    Object.entries(bySede).forEach(([sedeId, ops]) => {
+      const sede = _comSedes.find(s => s.id === sedeId);
+      const sedeName = sede ? sede.nome : 'Sem sede';
+      const sedeComissionaveis = ops.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+      const sedeTotalGerado = sedeComissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
+      const sedeTotalCom = comCalcularTotalComissoes(sedeComissionaveis);
+      dashData.push([{ v: sedeName, s: cellStyle }, { v: ops.length, s: cellCenterStyle }, { v: sedeTotalGerado, s: moneyStyle }, { v: sedeTotalCom, s: moneyStyle }, { v: sedeTotalGerado - sedeTotalCom, s: moneyStyle }]);
+    });
+    dashData.push([]);
+    dashData.push([{ v: 'AutoVale Prevencoes - Documento gerado automaticamente', s: footerStyle }]);
+
+    const wsDash = XLSX.utils.aoa_to_sheet(dashData);
+    wsDash['!cols'] = [{ wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 20 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsDash, 'Dashboard');
+
+    // ============================
+    // ABAS POR SEDE
+    // ============================
+    Object.entries(bySede).forEach(([sedeId, ops]) => {
+      const sede = _comSedes.find(s => s.id === sedeId);
+      const sedeName = sede ? sede.nome : 'Sem sede';
+      const sheetName = sedeName.substring(0, 28); // Excel limit 31 chars
+
+      const sedeData = [];
+      sedeData.push([{ v: sedeName, s: titleStyle }]);
+      sedeData.push([{ v: mesLabel, s: subtitleStyle }]);
+      sedeData.push([]);
+
+      // Sede summary
+      const sedeComissionaveis = ops.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+      const sedeTotalGerado = sedeComissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
+      const sedeTotalCom = comCalcularTotalComissoes(sedeComissionaveis);
+      sedeData.push([{ v: 'Faturamento', s: kpiLabelStyle }, { v: 'Comissoes', s: kpiLabelStyle }, { v: 'Liquido', s: kpiLabelStyle }, { v: 'Operacoes', s: kpiLabelStyle }]);
+      sedeData.push([{ v: sedeTotalGerado, s: kpiValueGreen }, { v: sedeTotalCom, s: kpiValueAmber }, { v: sedeTotalGerado - sedeTotalCom, s: kpiValueBlue }, { v: ops.length, s: kpiValueDefault }]);
+      sedeData.push([]);
+
+      // Table header
+      sedeData.push([
+        { v: 'Tipo', s: headerStyle },
+        { v: 'Associado', s: headerStyle },
+        { v: 'Placa', s: headerStyle },
+        { v: 'Valor (R$)', s: headerStyle },
+        { v: 'Comissao (R$)', s: headerStyle },
+        { v: 'Colaborador', s: headerStyle },
+        { v: 'Data', s: headerStyle },
+        { v: 'Status', s: headerStyle }
+      ]);
+
+      // Table rows
+      ops.forEach(o => {
+        const user = _comUsersCache.find(u => u.id === o.usuario_id);
+        const opStatus = g(o, 'status') || 'pendente';
+        const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(g(o, 'valor')) || 0) : 0;
+        const comissao = comCalcularComissao(o);
+        sedeData.push([
+          { v: tipoLabels[o.tipo] || o.tipo, s: cellCenterStyle },
+          { v: g(o, 'associado') || '', s: cellStyle },
+          { v: g(o, 'placa') || '', s: cellCenterStyle },
+          { v: valor, s: moneyStyle },
+          { v: comissao, s: moneyStyle },
+          { v: user ? user.nome : (g(o, 'usuario_nome') || ''), s: cellStyle },
+          { v: o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '', s: cellCenterStyle },
+          { v: opStatus === 'confirmado' ? 'Confirmado' : 'Pendente', s: opStatus === 'confirmado' ? confirmadoStyle : pendenteStyle }
+        ]);
+      });
+
+      const wsSede = XLSX.utils.aoa_to_sheet(sedeData);
+      wsSede['!cols'] = [{ wch: 18 }, { wch: 24 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 22 }, { wch: 12 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, wsSede, sheetName);
+    });
 
     XLSX.writeFile(wb, 'AVP_Comissoes_' + mesLabel.replace(/\s/g, '_') + '.xlsx');
     showToast('Exportacao concluida!', 'success');
