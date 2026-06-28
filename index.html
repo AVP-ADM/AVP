@@ -4406,7 +4406,7 @@ function confirmRemoveBrandFromCat(marca, categoria){
 }
 
 // ========= MODEL DETAIL PANEL =========
-function openModelDetail(marca, modelo){
+function openModelDetail(marca, modelo, selectedCat){
   // Find all occurrences of this model
   const occurrences=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo);
   if(!occurrences.length) return;
@@ -4415,8 +4415,9 @@ function openModelDetail(marca, modelo){
   const isDup=modelStatus[key]==='Duplicado';
   const dupInfo=isDup?DUPLICATES.find(d=>norm(d.marca)===norm(marca)&&norm(d.modelo)===norm(modelo)):null;
   // Se múltiplas categorias, mostrar ano por categoria
+  const primaryCat = selectedCat || cats[0];
   const anosPerCat = cats.map(c => ({ cat: c, ano: typeof getAno==='function'?getAno(c,marca,modelo):'' }));
-  const anoDisplay = anosPerCat.length === 1 ? anosPerCat[0].ano : anosPerCat.map(a => a.cat.substring(0,25) + ': ' + a.ano).join('\n');
+  const primaryAno = typeof getAno==='function'?getAno(primaryCat,marca,modelo):'';
   // Check divergences
   let divergences=[];
   for(const g of COMP_GROUPS){
@@ -4451,7 +4452,7 @@ function openModelDetail(marca, modelo){
   html+=`<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;line-height:2">`;
   html+=`<span style="color:var(--text2);font-weight:600">Marca:</span><span>${marca}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Modelo:</span><span>${modelo}</span>`;
-  html+=`<span style="color:var(--text2);font-weight:600">Ano:</span><span>${anosPerCat.length===1?anosPerCat[0].ano:'Ver por categoria abaixo'}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Ano:</span><span>${primaryAno}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Status:</span><span class="tag ${statusClass}">${status}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Ocorrências:</span><span>${cats.length} categoria(s)</span>`;
   html+=`</div></div>`;
@@ -4460,7 +4461,9 @@ function openModelDetail(marca, modelo){
   html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Categorias</div>`;
   html+=cats.map(c=>{
     const catAno=typeof getAno==='function'?getAno(c,marca,modelo):'';
-    return `<div style="padding:4px 0;font-size:.82rem;display:flex;align-items:center;gap:8px"><span class="tag tag-blue">${c}</span><span style="font-size:.7rem;color:var(--text3)">${catAno}</span></div>`;
+    const isSelected = c === primaryCat;
+    const style = isSelected ? 'font-weight:600' : 'opacity:.7';
+    return `<div style="padding:5px 0;font-size:.82rem;display:flex;align-items:center;gap:8px;${style}"><span class="tag tag-blue">${c}</span><span style="font-size:.72rem;color:var(--text3)">${catAno}</span>${isSelected?'<span style="font-size:.6rem;color:var(--green);font-weight:600">← selecionada</span>':''}</div>`;
   }).join('');
   html+=`</div>`;
 
@@ -7890,7 +7893,7 @@ function searchModelos(query){
       html+='<div style="padding:8px 18px;font-size:.72rem;font-weight:700;color:var(--green);border-bottom:1px solid var(--border);background:var(--bg)">Cadastrados ('+results.length+')</div>';
       html+='<table class="search-result-table"><thead><tr><th>Marca</th><th>Modelo</th><th>Categoria</th></tr></thead><tbody>';
       for(const r of results){
-        html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
+        html+=`<tr onclick="closeGlobalSearch();openModelDetail('${r.marca.replace(/'/g,"\\'")}','${r.modelo.replace(/'/g,"\\'")}','${r.categoria.replace(/'/g,"\\'")}')"><td><strong>${r.marca}</strong></td><td>${r.modelo}</td><td><span class="tag tag-blue">${r.categoria}</span></td></tr>`;
       }
       html+='</tbody></table>';
     } else if(filterVal==='base'){
