@@ -588,20 +588,30 @@ async function comSalvarNovaOperacao() {
     dados.solicitado_por = gv('novaOp_solicitado_por');
   }
 
-  // Insert com apenas colunas que certamente existem: tipo, usuario_id, dados
-  const insertData = {
-    tipo: tipo,
-    usuario_id: currentProfile ? currentProfile.id : null,
-    dados: dados
-  };
-
+  // Detectar colunas disponíveis e inserir de forma adaptativa
   try {
+    // Tenta primeiro com campo JSONB 'dados'
+    const insertData = { tipo, usuario_id: currentProfile ? currentProfile.id : null, dados };
     await supabase.insert('operacoes', insertData);
     showToast('Operacao registrada com sucesso!', 'success');
     closeDrawer();
     comRender();
   } catch (e) {
-    showToast('Erro ao salvar: ' + e.message, 'error');
+    const msg = (e.message || '').toLowerCase();
+    if (msg.includes('dados') && msg.includes('could not find')) {
+      // Tabela não tem coluna 'dados', inserir flat (cada campo como coluna)
+      try {
+        const flatData = { tipo, usuario_id: currentProfile ? currentProfile.id : null, ...dados };
+        await supabase.insert('operacoes', flatData);
+        showToast('Operacao registrada com sucesso!', 'success');
+        closeDrawer();
+        comRender();
+      } catch (e2) {
+        showToast('Erro ao salvar: ' + e2.message, 'error');
+      }
+    } else {
+      showToast('Erro ao salvar: ' + e.message, 'error');
+    }
   }
 }
 
