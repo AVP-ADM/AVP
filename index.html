@@ -6952,8 +6952,11 @@ function libFilterBrands(){
   // Get brands from FIPE + fallback to RAW brands for this category
   var fipeBrands=isFipeBaseLoaded()?getFipeBrandsForCategory(cat):[];
   var rawBrands=RAW[cat]&&RAW[cat].brands?Object.keys(RAW[cat].brands):[];
-  var allBrandsSet=new Set(fipeBrands.concat(rawBrands));
-  var brands=Array.from(allBrandsSet).sort();
+  // Deduplicate case-insensitive (prefer RAW name if exists, otherwise FIPE name)
+  var brandMap={};
+  for(var i=0;i<rawBrands.length;i++){brandMap[rawBrands[i].toLowerCase()]=rawBrands[i];}
+  for(var i=0;i<fipeBrands.length;i++){if(!brandMap[fipeBrands[i].toLowerCase()])brandMap[fipeBrands[i].toLowerCase()]=fipeBrands[i];}
+  var brands=Object.values(brandMap).sort();
   if(brands.length===0) brands=ALL_BRANDS;
   var filtered=query?brands.filter(function(b){return b.toLowerCase().indexOf(query)!==-1;}):brands;
   var totalAvailable=filtered.length;
@@ -7006,8 +7009,11 @@ function libFilterModels(){
   var allModels=isFipeBaseLoaded()?getFipeModelsForBrandAndCategory(_libSelectedBrand,cat):[];
   // Also include RAW models for this brand/category as fallback
   var rawModels=RAW[cat]&&RAW[cat].brands&&RAW[cat].brands[_libSelectedBrand]?RAW[cat].brands[_libSelectedBrand]:[];
-  var allModelsSet=new Set(allModels.concat(rawModels));
-  var available=Array.from(allModelsSet).sort();
+  // Deduplicate case-insensitive (prefer RAW name if exists)
+  var modelMap={};
+  for(var i=0;i<rawModels.length;i++){modelMap[rawModels[i].toLowerCase()]=rawModels[i];}
+  for(var i=0;i<allModels.length;i++){if(!modelMap[allModels[i].toLowerCase()])modelMap[allModels[i].toLowerCase()]=allModels[i];}
+  var available=Object.values(modelMap).sort();
   var filtered=query?available.filter(function(m){return m.toLowerCase().indexOf(query)!==-1;}):available;
   var totalAvailable=filtered.length;
   if(totalAvailable===0){
