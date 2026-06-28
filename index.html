@@ -5672,6 +5672,13 @@ async function commitDirectAction(op){
     if(!RAW[op.catTo].brands[op.marca]) RAW[op.catTo].brands[op.marca]=[];
     RAW[op.catTo].brands[op.marca].push(op.modelo);
     RAW[op.catTo].total++;
+  } else if(op.type==='Remoção'){
+    const cat=op.catFrom||op.catTo;
+    if(RAW[cat]&&RAW[cat].brands[op.marca]){
+      const idx=RAW[cat].brands[op.marca].indexOf(op.modelo);
+      if(idx>=0){RAW[cat].brands[op.marca].splice(idx,1);RAW[cat].total--;}
+      if(RAW[cat].brands[op.marca].length===0) delete RAW[cat].brands[op.marca];
+    }
   } else if(op.type==='Edição'){
     if(RAW[op.catFrom]&&RAW[op.catFrom].brands[op.marca]){
       const idx=RAW[op.catFrom].brands[op.marca].indexOf(op.oldModelo);
