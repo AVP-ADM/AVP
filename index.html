@@ -5684,24 +5684,22 @@ async function commitDirectAction(op){
     // Alterar Ano: update ano_aceitacao in ANOS_ACEITACAO + Supabase
     if(op.type==='Alterar Ano'){
       const key=op.catFrom+'|||'+op.marca+'|||'+op.modelo;
-      const newAno=(op.details||'').split('→').pop().trim();
+      const newAno=(op.details||'').split('\u2192').pop().trim();
       if(newAno&&newAno!=='padrão'){
         ANOS_ACEITACAO[key]=newAno;
       } else {
         delete ANOS_ACEITACAO[key];
       }
       try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
-      // Update in Supabase modelos table
-      (async function(){
-        try{
-          const catIdMap=window._catIdMap||{};
-          const catId=catIdMap[op.catFrom];
-          if(catId){
-            const anoVal=(newAno&&newAno!=='padrão')?newAno:null;
-            await supabase.update('modelos',{ano_aceitacao:anoVal},'categoria_id=eq.'+catId+'&marca=eq.'+encodeURIComponent(op.marca)+'&modelo=eq.'+encodeURIComponent(op.modelo));
-          }
-        }catch(e){console.warn('Erro ao atualizar ano no Supabase:',e);}
-      })();
+      // Update in Supabase modelos table (awaited)
+      try{
+        const catIdMap=window._catIdMap||{};
+        const catId=catIdMap[op.catFrom];
+        if(catId){
+          const anoVal=(newAno&&newAno!=='padrão')?newAno:null;
+          await supabase.update('modelos',{ano_aceitacao:anoVal},'categoria_id=eq.'+catId+'&marca=eq.'+encodeURIComponent(op.marca)+'&modelo=eq.'+encodeURIComponent(op.modelo));
+        }
+      }catch(e){console.warn('Erro ao atualizar ano no Supabase:',e);}
     }
   }
 
@@ -5718,7 +5716,10 @@ async function commitDirectAction(op){
 
   // 4. Save to Supabase in background (without lock for single operations)
   try{
-    await saveToDatabase();
+    // Para Alterar Ano, não precisa salvar base inteira (já fez update direto)
+    if(op.type!=='Alterar Ano'){
+      await saveToDatabase();
+    }
     await saveToDatabaseHistory(histEntry);
     showToast('Alteracao salva com sucesso!','success');
   }catch(err){
