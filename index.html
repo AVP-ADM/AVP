@@ -9109,10 +9109,13 @@ async function initDataConnection(){
     }catch(e){ console.warn('Divergencias ignoradas load (non-critical):',e); }
 
     // Load compatibility rules from database (B06 fix - dynamic rules)
+    // NOTE: Regras do banco COMPLEMENTAM as hardcoded, mas NAO substituem.
+    // Apenas regras de compatibilidade (compat) sao carregadas para evitar
+    // inflar divergencias com regras de inclusao incorretas no banco.
     try{
       const rules = await supabase.loadRules();
       if(rules.compat && rules.compat.length > 0){
-        // Update CAT_COMPAT_MAP from database rules
+        // Update CAT_COMPAT_MAP from database rules (only adds new pairs)
         for(const rule of rules.compat){
           if(!CAT_COMPAT_MAP[rule.categoria_a]) CAT_COMPAT_MAP[rule.categoria_a]=[];
           if(!CAT_COMPAT_MAP[rule.categoria_a].includes(rule.categoria_b)){
@@ -9124,18 +9127,8 @@ async function initDataConnection(){
           }
         }
       }
-      if(rules.inclusao && rules.inclusao.length > 0){
-        // Update CAT_MANDATORY_INCLUSION from database
-        for(const rule of rules.inclusao){
-          if(rule.tipo==='obrigatoria'){
-            if(!CAT_MANDATORY_INCLUSION.some(r=>r.from===rule.categoria_origem&&r.mustBeIn===rule.categoria_destino)){
-              CAT_MANDATORY_INCLUSION.push({from:rule.categoria_origem, mustBeIn:rule.categoria_destino});
-            }
-          }
-        }
-      }
-      // Recompute divergences with updated rules
-      recomputeAll();
+      // NOTE: CAT_MANDATORY_INCLUSION e CAT_REVIEW_RULES ficam como hardcoded.
+      // O banco regras_inclusao sera usado apenas quando migrar para arquitetura modular.
     }catch(e){ console.warn('Rules load (non-critical):',e); }
 
     // Load FIPE base from Supabase if not available locally (cross-device support)
