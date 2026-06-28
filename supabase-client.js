@@ -99,11 +99,6 @@ const supabase = {
     return headers;
   },
 
-  _serviceHeaders() {
-    // Kept for potential server-side use; browser operations use _headers() with user token
-    return supabase._headers();
-  },
-
   async select(table, options = {}) {
     let url = `${SUPABASE_URL}/rest/v1/${encodeURIComponent(table)}?select=${options.select || '*'}`;
     if (options.filter) url += `&${options.filter}`;
@@ -285,23 +280,6 @@ const supabase = {
     return data?.[0] || null;
   },
 
-  // Save model (insert or update)
-  async saveModel(categoriaId, marca, modelo, anoAceitacao) {
-    return supabase.insert('modelos', { categoria_id: categoriaId, marca, modelo, ano_aceitacao: anoAceitacao || null }, { upsert: true });
-  },
-
-  // Delete model
-  async deleteModel(categoriaId, marca, modelo) {
-    return supabase.delete('modelos', `categoria_id=eq.${categoriaId}&marca=eq.${encodeURIComponent(marca)}&modelo=eq.${encodeURIComponent(modelo)}`);
-  },
-
-  // Bulk insert models for a category
-  async bulkInsertModels(models) {
-    // models = [{categoria_id, marca, modelo, ano_aceitacao}, ...]
-    if (!models.length) return true;
-    return supabase.insert('modelos', models, { upsert: true });
-  },
-
   // Divergências ignoradas
   async loadDivergenciasIgnoradas() {
     return supabase.select('divergencias_ignoradas');
@@ -355,13 +333,13 @@ const supabase = {
 
     // Clean up old chunks that are no longer needed
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=chave`, { headers: supabase._serviceHeaders() });
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=chave`, { headers: supabase._headers() });
       const allCache = resp.ok ? await resp.json() : [];
       const validKeys = new Set(['fipe_metadata', 'fipe_brands', 'fipe_models_manifest', 'fipe_requests', ...chunkManifest]);
       for (const row of allCache) {
         if (row.chave.startsWith('fipe_models_chunk_') && !validKeys.has(row.chave)) {
           await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?chave=eq.${encodeURIComponent(row.chave)}`, {
-            method: 'DELETE', headers: supabase._serviceHeaders()
+            method: 'DELETE', headers: supabase._headers()
           });
         }
       }
@@ -373,7 +351,7 @@ const supabase = {
   // Load FIPE base from Supabase cache (uses service_role for guaranteed access)
   async loadFipeCache() {
     try {
-      const svcHeaders = supabase._serviceHeaders();
+      const svcHeaders = supabase._headers();
       const fetchCache = async (filter) => {
         const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=chave,valor&${filter}`, { headers: svcHeaders });
         if (!resp.ok) return [];
@@ -427,7 +405,7 @@ const supabase = {
   // Load FIPE requests counter from Supabase
   async loadFipeRequestsCache() {
     try {
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=valor&chave=eq.fipe_requests`, { headers: supabase._serviceHeaders() });
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?select=valor&chave=eq.fipe_requests`, { headers: supabase._headers() });
       if (!resp.ok) return null;
       const rows = await resp.json();
       if (rows && rows.length > 0) return rows[0].valor;

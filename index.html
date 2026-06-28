@@ -3643,7 +3643,6 @@ function loadFipeCategoryMap(){
 
 async function loadFipeBaseRemote(){
   try{
-    console.log('[FIPE] Tentando carregar base do Supabase...');
     const cached = await supabase.loadFipeCache();
     if(cached && cached.brands && cached.brands.length > 0){
       FIPE_BASE.brands = cached.brands;
@@ -3653,10 +3652,8 @@ async function loadFipeBaseRemote(){
       FIPE_BASE.totalModels = cached.totalModels || 0;
       // Also save to localStorage for faster load next time on this device
       saveFipeBaseToStorage();
-      console.log('[FIPE] Base carregada do Supabase: '+FIPE_BASE.totalBrands+' marcas, '+FIPE_BASE.totalModels+' modelos');
       return true;
     }
-    console.log('[FIPE] Nenhum cache encontrado no Supabase');
     return false;
   }catch(e){
     console.warn('[FIPE] Erro ao carregar base do Supabase:', e);
@@ -3682,7 +3679,6 @@ async function loadFipeRequestsRemote(){
         }
       }
       saveFipeRequestsToStorage();
-      console.log('[FIPE] Requests counter sincronizado:', FIPE_REQUESTS.count);
     }
   }catch(e){
     console.warn('[FIPE] Erro ao carregar requests do Supabase:', e);
@@ -3691,9 +3687,7 @@ async function loadFipeRequestsRemote(){
 
 async function saveFipeBaseRemote(){
   try{
-    console.log('[FIPE] Salvando base no Supabase...');
     await supabase.saveFipeCache(FIPE_BASE);
-    console.log('[FIPE] Base salva no Supabase com sucesso');
     return true;
   }catch(e){
     console.warn('[FIPE] Erro ao salvar base no Supabase:', e);
@@ -4662,8 +4656,6 @@ function acCloseAllDropdowns(){
 function acCloseAll(e){
   if(!e.target.closest('.ac-wrap')){acCloseAllDropdowns();}
 }
-
-// saveModelEdit - removed (legacy, replaced by openModelEdit with ano-only editing)
 
 function openModelRemove(marca, modelo){
   const cats=ALL_RECORDS.filter(r=>r.marca===marca&&r.modelo===modelo).map(r=>r.categoria);
@@ -9657,7 +9649,6 @@ async function initDataConnection(){
     // Load FIPE base from Supabase if not available locally (cross-device support)
     if(!isFipeBaseLoaded()){
       try{
-        console.log('[FIPE] Base não encontrada no localStorage, tentando Supabase...');
         const loaded = await loadFipeBaseRemote();
         if(loaded){
           showToast('Base FIPE carregada do servidor ('+FIPE_BASE.totalBrands+' marcas, '+FIPE_BASE.totalModels+' modelos)','success');
