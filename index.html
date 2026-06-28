@@ -16,6 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" crossorigin="anonymous"></script>
 <script src="supabase-client.js"></script>
+<script src="comissoes.js"></script>
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -2385,6 +2386,7 @@ function goTab(tab){
   if(effectiveTab==='planos'){tmInit();}
   if(effectiveTab==='coberturas'){cobRender();}
   if(effectiveTab==='placafipe'){placaFipeInit();}
+  if(effectiveTab==='comissoes'){comInit();}
   if(effectiveTab==='settings'){renderSettingsUsers();}
 }
 
@@ -8299,7 +8301,7 @@ function togglePassField(id){
 let _settingsCurrentTab='users';
 function switchSettingsTab(tab){
   _settingsCurrentTab=tab;
-  ['users','autorizadores','regras','system','fipe'].forEach(t=>{
+  ['users','autorizadores','regras','system','fipe','sedes','comissao'].forEach(t=>{
     const panel=document.getElementById('settingsPanel_'+t);
     const btn=document.getElementById('settingsTab_'+t);
     if(panel) panel.style.display=(t===tab)?'':'none';
@@ -8310,6 +8312,8 @@ function switchSettingsTab(tab){
   if(tab==='regras') renderRegrasAceitacao();
   if(tab==='system') renderSettingsSystem();
   if(tab==='fipe') renderSettingsFipe();
+  if(tab==='sedes') renderSedes();
+  if(tab==='comissao'){ comLoadUsersCache().then(()=>{ renderComissaoEspecificas(); }); comLoadSedes(); }
 }
 
 function renderSettingsFipe(){
@@ -9688,6 +9692,8 @@ function initApp(){
   initTheme();
   updateBaseInfo();
   updateSyncInfo();
+  // Check for external confirmation token in URL
+  comCheckConfirmacaoToken();
   // Restore overview filter preferences
   const savedSort=localStorage.getItem('avp-ov-sort');
   const savedType=localStorage.getItem('avp-ov-type-filter');
