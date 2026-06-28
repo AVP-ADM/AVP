@@ -837,6 +837,10 @@ async function deleteComissaoEspecifica(id) {
 
 // ========= EXPORTACAO XLSX =========
 function comExportXLSX() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Biblioteca de exportacao nao carregou. Recarregue a pagina e tente novamente.', 'error');
+    return;
+  }
   if (!_comOperacoes.length) { showToast('Sem dados para exportar', 'error'); return; }
 
   const mesLabel = (document.getElementById('comMesFilter') || {}).selectedOptions

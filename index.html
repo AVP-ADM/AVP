@@ -5959,6 +5959,9 @@ function commitStaging(){
 async function commitStagingSingle(idx){
   const op=STAGING.ops[idx];
   if(!op) return;
+  // Desabilitar botões de staging durante save
+  const btns=document.querySelectorAll('.staging-action-btn');
+  btns.forEach(b=>{b.disabled=true;b.style.opacity='.5';});
   showToast('Salvando...','warning');
   try{
     await commitDirectAction(op);
@@ -5971,6 +5974,7 @@ async function commitStagingSingle(idx){
     renderStagingTable();
     renderKPIs();
   }catch(e){showToast('Erro: '+e.message,'error');}
+  finally{ btns.forEach(b=>{b.disabled=false;b.style.opacity='';}); }
 }
 
 // Aceitar alterações selecionadas (checkbox)
@@ -5978,6 +5982,9 @@ async function commitStagingSelected(){
   const checks=document.querySelectorAll('.staging-check:checked');
   if(!checks.length){showToast('Selecione ao menos uma alteracao','error');return;}
   const indices=[...checks].map(cb=>parseInt(cb.dataset.idx)).sort((a,b)=>b-a);
+  // Desabilitar botão durante processamento
+  const btnSave=document.getElementById('btnSaveSelected');
+  if(btnSave){btnSave.disabled=true;btnSave.textContent='Salvando...';}
   showToast('Salvando '+indices.length+' alteracao(oes)...','warning');
   try{
     for(const idx of indices){
@@ -5996,6 +6003,7 @@ async function commitStagingSelected(){
     renderKPIs();
     showToast(indices.length+' alteracao(oes) aplicada(s)!','success');
   }catch(e){showToast('Erro: '+e.message,'error');}
+  finally{ if(btnSave){btnSave.disabled=false;btnSave.textContent='Salvar Selecionados';} }
 }
 
 function toggleStagingSelectAll(){
@@ -7851,7 +7859,22 @@ async function saveToDatabaseHistory(entries){
     for(const entry of histEntries){
       const user = supabase.getUser();
       if(!user||!user.id){
-        console.warn('[History] Skipping save: no authenticated user');
+        // Tentar aguardar 1s e verificar novamente (timing de carregamento do profile)
+        await new Promise(r=>setTimeout(r,1000));
+        const retryUser = supabase.getUser();
+        if(!retryUser||!retryUser.id){
+          console.warn('[History] Skipping save: no authenticated user after retry');
+          continue;
+        }
+        await supabase.saveHistory({
+          usuario_id: retryUser.id,
+          usuario_nome: currentUser || entry.user || retryUser.email || 'Desconhecido',
+          tipo: entry.type || entry.action || 'Acao',
+          marca: entry.marca || entry.brand || '',
+          modelo: entry.modelo || entry.model || '',
+          categoria: entry.categoria || entry.category || entry.catTo || entry.catFrom || '',
+          detalhes: entry.details || entry.description || ((entry.type||'')+': '+(entry.marca||'')+' '+(entry.modelo||'')+(entry.catTo?' -> '+entry.catTo:'')+(entry.catFrom&&!entry.catTo?' de '+entry.catFrom:''))
+        });
         continue;
       }
       await supabase.saveHistory({
