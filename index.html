@@ -4414,7 +4414,9 @@ function openModelDetail(marca, modelo){
   const key=norm(marca)+'|||'+norm(modelo);
   const isDup=modelStatus[key]==='Duplicado';
   const dupInfo=isDup?DUPLICATES.find(d=>norm(d.marca)===norm(marca)&&norm(d.modelo)===norm(modelo)):null;
-  const ano=typeof getAno==='function'?getAno(cats[0],marca,modelo):'Ano da categoria';
+  // Se múltiplas categorias, mostrar ano por categoria
+  const anosPerCat = cats.map(c => ({ cat: c, ano: typeof getAno==='function'?getAno(c,marca,modelo):'' }));
+  const anoDisplay = anosPerCat.length === 1 ? anosPerCat[0].ano : anosPerCat.map(a => a.cat.substring(0,25) + ': ' + a.ano).join('\n');
   // Check divergences
   let divergences=[];
   for(const g of COMP_GROUPS){
@@ -4449,14 +4451,17 @@ function openModelDetail(marca, modelo){
   html+=`<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.82rem;line-height:2">`;
   html+=`<span style="color:var(--text2);font-weight:600">Marca:</span><span>${marca}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Modelo:</span><span>${modelo}</span>`;
-  html+=`<span style="color:var(--text2);font-weight:600">Ano:</span><span>${ano}</span>`;
+  html+=`<span style="color:var(--text2);font-weight:600">Ano:</span><span>${anosPerCat.length===1?anosPerCat[0].ano:''}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Status:</span><span class="tag ${statusClass}">${status}</span>`;
   html+=`<span style="color:var(--text2);font-weight:600">Ocorrências:</span><span>${cats.length} categoria(s)</span>`;
   html+=`</div></div>`;
 
   // Categories
   html+=`<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Categorias</div>`;
-  html+=cats.map(c=>`<div style="padding:4px 0;font-size:.82rem"><span class="tag tag-blue">${c}</span></div>`).join('');
+  html+=cats.map(c=>{
+    const catAno=typeof getAno==='function'?getAno(c,marca,modelo):'';
+    return `<div style="padding:4px 0;font-size:.82rem;display:flex;align-items:center;gap:8px"><span class="tag tag-blue">${c}</span><span style="font-size:.7rem;color:var(--text3)">${catAno}</span></div>`;
+  }).join('');
   html+=`</div>`;
 
   // Divergences
