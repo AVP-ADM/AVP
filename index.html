@@ -4801,26 +4801,37 @@ function renderDupTable(){
 
 function exportConflitos(){
   if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX não carregada','error');return;}
+
+  // Aplicar os mesmos filtros da tela
+  const bf = norm(document.getElementById('dupBrandFilter').value);
+  const mf = norm(document.getElementById('dupModelFilter').value);
+  const cf = parseInt(document.getElementById('dupCountFilter').value)||0;
+
+  let filtered = DUPLICATES_REAL.filter(d=>{
+    if(bf && !norm(d.marca).includes(bf)) return false;
+    if(mf && !norm(d.modelo).includes(mf)) return false;
+    if(d.count < cf) return false;
+    return true;
+  });
+
+  if(!filtered.length){showToast('Sem dados para exportar','error');return;}
+
   const wb = XLSX.utils.book_new();
-  const headers=['Marca','Modelo','Ano Aceitação','Categorias','Qtd. Categorias'];
-  const rows = [];
-  // Row 1: headers
-  rows.push(headers);
-  // Row 2+: data
-  for(const d of DUPLICATES){
-    rows.push([d.marca, d.modelo, typeof getAno==='function'?getAno(d.cats[0],d.marca,d.modelo):'', d.cats.join('; '), d.count]);
-  }
+  const headers=['#','Marca','Modelo','Categorias','Qtd.'];
+  const rows = [headers];
+  filtered.forEach((d,i)=>{
+    rows.push([i+1, d.marca, d.modelo, d.cats.join('; '), d.count]);
+  });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:50},{wch:16}];
-  // Style row 1 headers - black background, white text
+  ws['!cols']=[{wch:5},{wch:20},{wch:45},{wch:60},{wch:6}];
   const colLetters='ABCDE';
   for(let i=0;i<headers.length;i++){
     const cell=colLetters[i]+'1';
     if(ws[cell]) ws[cell].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
   }
   XLSX.utils.book_append_sheet(wb, ws, 'Conflitos');
-  XLSX.writeFile(wb, 'duplicados_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  showToast('Conflitos exportados com sucesso!','success');
+  XLSX.writeFile(wb, 'conflitos_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast(filtered.length+' conflitos exportados!','success');
 }
 
 function toggleDupSelectAll(){
