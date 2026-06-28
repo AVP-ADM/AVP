@@ -6755,11 +6755,7 @@ async function openNewLiberacao(){
         </div>
       </div>
       <div id="lib_anoFields" style="display:none">
-        <div id="lib_anoAtualInfo" style="padding:8px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:8px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Ano minimo atual: <strong id="lib_anoAtualValor">—</strong></span>
-        </div>
-        <div><label>Novo Ano Minimo Temporario</label><input id="lib_anoTemp" type="number" min="1990" max="2030" placeholder="Ex: 2004" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        <div><label style="display:flex;align-items:center;justify-content:space-between">Novo Ano Minimo Temporario<span id="lib_anoAtualInfo" style="font-size:.68rem;font-weight:400;color:var(--text3);display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Atual: <strong id="lib_anoAtualValor" style="color:var(--text2)">—</strong></span></label><input id="lib_anoTemp" type="number" min="1990" max="2030" placeholder="Ex: 2004" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
       </div>
       <div><label>Autorizado por</label>
         <select id="lib_autorizador"><option value="">Selecione...</option>${autOpts}</select>
