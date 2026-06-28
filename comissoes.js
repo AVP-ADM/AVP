@@ -456,14 +456,15 @@ function comRenderFormFields() {
   const el = document.getElementById('novaOp_fields');
   if (!el) return;
 
-  const mkField = (id, label, type, placeholder, required) => {
+  const mkField = (id, label, type, placeholder, required, maxlength) => {
     const req = required ? ' required' : '';
+    const maxl = maxlength ? ' maxlength="' + maxlength + '"' : '';
     if (type === 'select_sede') {
       let opts = '<option value="">Selecione...</option>';
       _comSedes.filter(s => s.ativo !== false).forEach(s => { opts += '<option value="' + s.id + '">' + escapeHtml(s.nome) + '</option>'; });
       return '<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">' + label + '</label><select id="' + id + '"' + req + '>' + opts + '</select></div>';
     }
-    return '<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">' + label + '</label><input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '"' + req + '></div>';
+    return '<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">' + label + '</label><input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '"' + req + maxl + '></div>';
   };
 
   let html = '';
@@ -472,13 +473,13 @@ function comRenderFormFields() {
 
   if (tipo === 'adesao') {
     html += mkField('novaOp_associado', 'Nome do Associado', 'text', 'Nome completo', true);
-    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true);
+    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7);
     html += mkField('novaOp_data_ativacao', 'Data de Ativacao', 'date', '', true);
     html += mkField('novaOp_origem_lead', 'Origem do Lead', 'text', 'Ex: Indicacao, Instagram...', false);
     html += mkField('novaOp_valor_adesao', 'Valor da Adesao (R$)', 'number', '0.00', true);
     html += mkField('novaOp_valor_mensalidade', 'Valor Mensalidade (R$)', 'number', '0.00', false);
   } else if (tipo === 'troca_titularidade') {
-    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true);
+    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7);
     html += mkField('novaOp_antigo_titular', 'Antigo Titular', 'text', 'Nome completo', true);
     html += mkField('novaOp_novo_titular', 'Novo Titular', 'text', 'Nome completo', true);
     html += mkField('novaOp_data_efetuado', 'Data Efetuado', 'date', '', true);
@@ -487,8 +488,8 @@ function comRenderFormFields() {
     html += mkField('novaOp_situacao', 'Situacao', 'text', 'Ex: Concluido, Pendente', false);
   } else if (tipo === 'troca_placa') {
     html += mkField('novaOp_associado', 'Associado', 'text', 'Nome completo', true);
-    html += mkField('novaOp_placa_antiga', 'Placa Antiga', 'text', 'ABC1D23', true);
-    html += mkField('novaOp_placa_nova', 'Placa Nova', 'text', 'ABC1D23', true);
+    html += mkField('novaOp_placa_antiga', 'Placa Antiga', 'text', 'ABC1D23', true, 7);
+    html += mkField('novaOp_placa_nova', 'Placa Nova', 'text', 'ABC1D23', true, 7);
     html += mkField('novaOp_data_vencimento', 'Data de Vencimento', 'date', '', false);
     html += mkField('novaOp_valor_antigo_veiculo', 'Valor Antigo Veiculo (R$)', 'number', '0.00', false);
     html += mkField('novaOp_valor_novo_veiculo', 'Valor Novo Veiculo (R$)', 'number', '0.00', false);
