@@ -9505,8 +9505,8 @@ function applyAccessLevels(){
   if(setorEl) setorEl.textContent=(currentProfile&&currentProfile.setor)||'';
   // Sidebar visibility based on nivel
   const access={
-    admin:['overview','analise','gestao','consultas','exports'],
-    operador:['overview','consultas','exports']
+    admin:['overview','analise','gestao','consultas','exports','comissoes'],
+    operador:['overview','consultas','exports','comissoes']
   };
   const allowed=access[nivel]||access.operador;
   // Handle direct sidebar items
