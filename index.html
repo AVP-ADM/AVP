@@ -6735,7 +6735,7 @@ async function openNewLiberacao(){
           <option value="ano_categoria">Ano de Categoria (alterar ano temporariamente)</option>
         </select>
       </div>
-      <div><label>Categoria</label><select id="lib_categoria" onchange="_libSelectedBrand='';var mi=document.getElementById('lib_modelo');if(mi){mi.value='';mi.disabled=true;mi.placeholder='Selecione marca primeiro...';}var mai=document.getElementById('lib_marca');if(mai)mai.value='';">${catOpts}</select></div>
+      <div><label>Categoria</label><select id="lib_categoria" onchange="_libSelectedBrand='';var mi=document.getElementById('lib_modelo');if(mi){mi.value='';mi.disabled=true;mi.placeholder='Selecione marca primeiro...';}var mai=document.getElementById('lib_marca');if(mai)mai.value='';libAtualizarAnoAtual();">${catOpts}</select></div>
       <div id="lib_modeloFields">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label>Marca</label>
@@ -6755,7 +6755,11 @@ async function openNewLiberacao(){
         </div>
       </div>
       <div id="lib_anoFields" style="display:none">
-        <div><label>Novo Ano Minimo Temporario</label><input id="lib_anoTemp" type="number" min="1990" max="2030" placeholder="Ex: 2004"></div>
+        <div id="lib_anoAtualInfo" style="padding:8px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Ano minimo atual: <strong id="lib_anoAtualValor">—</strong></span>
+        </div>
+        <div><label>Novo Ano Minimo Temporario</label><input id="lib_anoTemp" type="number" min="1990" max="2030" placeholder="Ex: 2004" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
       </div>
       <div><label>Autorizado por</label>
         <select id="lib_autorizador"><option value="">Selecione...</option>${autOpts}</select>
@@ -6780,6 +6784,14 @@ function libToggleTipo(){
   const tipo=document.getElementById('lib_tipo').value;
   document.getElementById('lib_modeloFields').style.display=(tipo==='modelo')?'':'none';
   document.getElementById('lib_anoFields').style.display=(tipo==='ano_categoria')?'':'none';
+  if(tipo==='ano_categoria') libAtualizarAnoAtual();
+}
+
+function libAtualizarAnoAtual(){
+  const cat=document.getElementById('lib_categoria').value;
+  const anoAtual=getAnoMinimoCat(cat);
+  const el=document.getElementById('lib_anoAtualValor');
+  if(el) el.textContent=anoAtual+'+';
 }
 
 // ========= FILE VALIDATION HELPERS =========
