@@ -141,13 +141,18 @@ function comRenderKpis() {
   const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado');
   const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado');
 
-  el.innerHTML = comKpiCard('Total Operacoes', totalOps, 'var(--blue)') +
-    comKpiCard('Adesoes', adesoes.length, 'var(--green)') +
-    comKpiCard('Troca Titular', trocaTit.length, 'var(--amber)') +
-    comKpiCard('Troca Placa', trocaPlaca.length, 'var(--text2)') +
-    comKpiCard('Troca Plano', trocaPlano.length, 'var(--text2)') +
-    comKpiCard('Confirmadas', confirmadas.length, 'var(--green)') +
-    comKpiCard('Pendentes', pendentes.length, 'var(--amber)');
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px">' +
+      comKpiCard('Total Operacoes', totalOps, 'var(--blue)') +
+      comKpiCard('Adesoes', adesoes.length, 'var(--green)') +
+      comKpiCard('Troca Titular', trocaTit.length, 'var(--amber)') +
+      comKpiCard('Troca Placa', trocaPlaca.length, 'var(--text2)') +
+      comKpiCard('Troca Plano', trocaPlano.length, 'var(--text2)') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+      comKpiCard('Confirmadas', confirmadas.length, 'var(--green)') +
+      comKpiCard('Pendentes', pendentes.length, 'var(--amber)') +
+    '</div>';
 }
 
 function comKpiCard(label, value, color) {
