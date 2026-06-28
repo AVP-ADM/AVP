@@ -1694,10 +1694,9 @@ let mgmtStats = {added:0, removed:0, moved:0, session:0};
 let TEMP_RELEASES = []; // {marca, modelo, categoria, motivo, obs, dataCriacao, usuario, status:'Ativa'|'Finalizada', dataFinalizada, usuarioFinalizado}
 
 // ========= FIPE OFFICIAL BASE (Reference only - never modifies operational data) =========
-// SECURITY NOTE: Este token deveria estar num proxy/Edge Function server-side.
-// TODO: Migrar para Supabase Edge Function quando integrar ao sistema maior.
+// FIPE requests are proxied through Supabase Edge Function (token stored server-side)
 const FIPE_API_URL = 'https://fipe.parallelum.com.br/api/v2';
-const FIPE_API_TOKEN = (function(){return 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIwZjI1ZjQ1Yi1mZTkxLTQ0MzYtOTQ5MC0zM2E2OTY2MmFhMDAiLCJlbWFpbCI6Im55Y29sYXNhdXRvdmFsZUBnbWFpbC5jb20iLCJpYXQiOjE3ODE4NzQ2ODB9.kAFJ9fwlAc_dbA2bf4MOygJR0XEBT4-Vk99p7EdcNKc';})();
+const FIPE_PROXY_URL = SUPABASE_URL+'/functions/v1/fipe-proxy';
 let FIPE_BASE = {brands:[], models:{}, lastUpdate:null, totalBrands:0, totalModels:0};
 let FIPE_REQUESTS = {month:'', count:0}; // Monthly request counter
 
@@ -1726,9 +1725,12 @@ function trackFipeRequest(qty){
   saveFipeRequestsRemote();
 }
 
-// Fetch from FIPE API with tracking
+// Fetch from FIPE API via Edge Function proxy (token stored server-side)
 async function fipeFetch(endpoint){
-  const resp=await fetch(FIPE_API_URL+endpoint,{headers:{'X-Subscription-Token':FIPE_API_TOKEN}});
+  const token=supabase.getToken()||SUPABASE_ANON_KEY;
+  const resp=await fetch(FIPE_PROXY_URL+'?endpoint='+encodeURIComponent(endpoint),{
+    headers:{'Authorization':'Bearer '+token,'apikey':SUPABASE_ANON_KEY}
+  });
   trackFipeRequest(1);
   return resp;
 }
@@ -1791,7 +1793,6 @@ function isFipeValidModel(brandName, modelName){
 
 // Update FIPE base from API (with rate limiting)
 async function updateFipeBase(){
-  if(!FIPE_API_TOKEN){showToast('Token da API FIPE não configurado','error');return;}
   if(isFipeBaseValid()){
     showToast('Base oficial ainda está válida. Atualização será liberada após 30 dias ou quando nova tabela FIPE for detectada.','warning');
     return;
