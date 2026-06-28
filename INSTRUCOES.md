@@ -1,41 +1,34 @@
-# INSTRUÇÕES FINAIS - Dashboard AVP com Google Sheets
+# AVP — AutoVale Prevencoes
 
-## Você tem 2 arquivos prontos:
+## Arquitetura Atual
 
-### 1. google-apps-script.js
-→ Cole INTEIRO no Google Apps Script (Extensões > Apps Script na planilha)
-→ Depois: Implantar > Gerenciar implantações > Editar > Nova versão > Implantar
+- **Frontend:** `index.html` (SPA monolito com CSS + JS inline)
+- **Backend:** Supabase (PostgreSQL + Auth + Storage + REST API)
+- **Client API:** `supabase-client.js` (wrapper fetch puro sem SDK)
+- **Deploy:** GitHub Pages (branch dashboard-v2)
 
-### 2. sheets-integration.js  
-→ Cole INTEIRO no final do HTML (antes do </script> final)
-→ Substitua 'COLE_SUA_URL_AQUI' pela sua URL do Apps Script
+## Credenciais
 
----
+- Login: usuario + senha via Supabase Auth
+- Dominio de email interno: `@avpbase.local`
+- API FIPE: Token JWT configurado no index.html (migrar para Edge Function no futuro)
 
-## ÚNICA alteração manual no HTML:
+## Como Rodar Localmente
 
-No HTML, procure esta linha (na seção de duplicados):
+1. Clone o repositorio
+2. Abra `index.html` no navegador (nao precisa de servidor)
+3. Login com credenciais do Supabase Auth
 
-```html
-<th>#</th><th>Marca</th><th>Modelo</th><th>Categorias</th><th>Qtd. Categorias</th>
-```
+## Banco de Dados
 
-Substitua por:
+- Schema completo em `supabase_setup.sql`
+- RLS habilitado em todas as tabelas
+- Functions SECURITY DEFINER para controle de sessao
 
-```html
-<th>#</th><th>Marca</th><th>Modelo</th><th>Ano Aceitação</th><th>Categorias</th><th>Qtd. Categorias</th>
-```
+## Notas de Seguranca
 
-Isso adiciona o cabeçalho da coluna "Ano Aceitação" na tabela de duplicados.
-
----
-
-## Pronto! O que vai funcionar:
-
-- Visão Geral: mostra o ano ao lado de cada modelo
-- Duplicados: coluna "Ano Aceitação" na tabela
-- Busca: mostra o ano abaixo do modelo (📅 Ano da categoria)
-- Por Marca: mostra o ano na tabela
-- Exportar CSV: inclui coluna "Ano de Aceitação"
-- Google Sheets: coluna "Ano de Aceitação" editável
-- Se editar o ano na planilha, o dashboard mostra o ano editado
+- Todas as entradas de usuario sao escapadas com `escapeHtml()` antes de renderizar
+- Upload de imagens validado com magic bytes
+- Rate limiting no login (5 tentativas / 5 min)
+- Sessao expira apos 30 minutos de inatividade
+- Controle de sessao unica por dispositivo

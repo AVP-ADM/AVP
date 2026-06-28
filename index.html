@@ -2668,7 +2668,7 @@ function renderOverviewTable(){
       </tr>`;
     }
     return `<tr class="clickable-row" onclick="showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')"${catPending?' style="opacity:.6"':''}>
-      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${cat}</strong> <span class="cat-ano-badge" title="Ano minimo de aceitacao">${getAnoMinimoCat(cat)}+</span>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
+      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${escapeHtml(cat)}</strong> <span class="cat-ano-badge" title="Ano minimo de aceitacao">${getAnoMinimoCat(cat)}+</span>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
       <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
       <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
       <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
@@ -2737,8 +2737,8 @@ function renderTopDivergences(){
       <div class="rank-item critical" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
         <div class="rank-num">${i+1}</div>
         <div class="rank-info">
-          <div class="rank-title"><strong>${d.marca}</strong> — ${d.modelo}</div>
-          <div class="rank-sub">Em ${d.from} · Falta em ${d.missing}</div>
+          <div class="rank-title"><strong>${escapeHtml(d.marca)}</strong> — ${escapeHtml(d.modelo)}</div>
+          <div class="rank-sub">Em ${escapeHtml(d.from)} · Falta em ${escapeHtml(d.missing)}</div>
         </div>
       </div>
     `).join('');
@@ -2753,8 +2753,8 @@ function renderTopDivergences(){
       return `<div class="rank-item warning" style="position:relative;${pending?'opacity:.6':''}">
         <div class="rank-num" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')"">${i+1}</div>
         <div class="rank-info" onclick="navigateToDivergence(${groupIdx},'${d.modelo.replace(/'/g,"\\'")}')">
-          <div class="rank-title" style="${pending?'color:var(--amber)':''}"><strong>${d.marca}</strong> — ${d.modelo}${pending?' <span style="font-size:.6rem;vertical-align:middle;opacity:.8">Pendente</span>':''}</div>
-          <div class="rank-sub">${d.label} · Nao esta em ${d.notIn}</div>
+          <div class="rank-title" style="${pending?'color:var(--amber)':''}"><strong>${escapeHtml(d.marca)}</strong> — ${escapeHtml(d.modelo)}${pending?' <span style="font-size:.6rem;vertical-align:middle;opacity:.8">Pendente</span>':''}</div>
+          <div class="rank-sub">${escapeHtml(d.label)} · Nao esta em ${escapeHtml(d.notIn)}</div>
         </div>
         ${pending?'<span onclick="event.stopPropagation();cancelPendingIgnore(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;flex-shrink:0;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':'<button class="btn btn-sm" onclick="event.stopPropagation();ignorarDivergencia(\''+d.marca.replace(/'/g,"\\'")+'\',\''+d.modelo.replace(/'/g,"\\'")+'\',\''+d.onlyIn.replace(/'/g,"\\'")+'\',\''+d.notIn.replace(/'/g,"\\'")+'\');renderTopDivergences()" title="Marcar como exclusivo" style="padding:2px 8px;font-size:.65rem">Ignorar</button>'}
       </div>`;
@@ -2816,7 +2816,7 @@ function openDrawer(cat){
   const brands = RAW[cat]?RAW[cat].brands||{}:{};
   const brandNames = Object.keys(brands).sort();
   const effectiveTotal = getEffectiveCatTotal(cat);
-  let html = `<div class="drawer-title">${cat}</div>`;
+  let html = `<div class="drawer-title">${escapeHtml(cat)}</div>`;
   html += `<div style="display:flex;gap:10px;margin-bottom:20px">
     <span class="badge badge-blue">${effectiveTotal} modelos</span>
     <span class="badge badge-green">${brandNames.length} marcas</span>
@@ -2825,7 +2825,7 @@ function openDrawer(cat){
     // Filter out models with pending removal
     const visibleModels = brands[b].filter(m=>!isPendingRemoval(b, m, cat));
     if(visibleModels.length===0) continue;
-    html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${b} <span style="color:var(--text3);font-weight:400">(${visibleModels.length})</span></div>`;
+    html += `<div style="margin-bottom:16px"><div style="font-weight:600;font-size:.88rem;margin-bottom:6px">${escapeHtml(b)} <span style="color:var(--text3);font-weight:400">(${visibleModels.length})</span></div>`;
     for(const m of visibleModels){
       const ano = typeof getAno==='function'?getAno(cat,b,m):'';
       const key = norm(b)+'|||'+norm(m);
@@ -2833,7 +2833,7 @@ function openDrawer(cat){
       const pending = hasPendingChange(b, m, cat);
       const pendingType = pending ? getPendingChangeType(b, m, cat) : null;
       html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-light)${pending?';opacity:.6':''}">
-        <span style="font-size:.82rem;flex:1;cursor:pointer${pending?';color:'+getPendingColor(pendingType):''}" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${m}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:'+getPendingColor(pendingType)+';opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
+        <span style="font-size:.82rem;flex:1;cursor:pointer${pending?';color:'+getPendingColor(pendingType):''}" onclick="openModelDetail('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}')">${escapeHtml(m)}${ano?' <span style="color:var(--text3);font-size:.7rem">· '+ano+'</span>':''}${isDup?' <span class="tag tag-dup" style="font-size:.6rem">DUP</span>':''}${pending?' <span style="font-size:.6rem;color:'+getPendingColor(pendingType)+';opacity:.8">'+(pendingType||'Pendente')+'</span>':''}</span>
         <span style="display:flex;gap:4px;flex-shrink:0">
           <button class="btn btn-sm" onclick="openModelEdit('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Editar"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="btn btn-sm btn-red" onclick="confirmRemoveFromCat('${b.replace(/'/g,"\\'")}','${m.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="padding:2px 5px;font-size:.65rem${pending?';opacity:.3;pointer-events:none':''}" title="Remover"${pending?' disabled':''}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
@@ -3459,8 +3459,8 @@ function buildModelListWithActions(models, cat){
     }
     html+=`<div class="model-action-row" data-search="${norm(m.marca+' '+m.modelo)}" style="${pending?'opacity:.6':''}">
       <div class="model-action-info" onclick="openModelDetail('${eMarca}','${eModelo}')">
-        <span class="model-action-brand">${m.marca}</span>
-        <span class="model-action-name">${m.modelo}${isTemp?' <span class="tag tag-amber" style="font-size:.55rem;vertical-align:middle">Temporario</span>':''}${isDivergenciaIgnoradaModelo(m.marca,m.modelo)?' <span class="tag tag-gray" style="font-size:.55rem;vertical-align:middle">Exclusivo</span>':''}${pendingBadge}</span>
+        <span class="model-action-brand">${escapeHtml(m.marca)}</span>
+        <span class="model-action-name">${escapeHtml(m.modelo)}${isTemp?' <span class="tag tag-amber" style="font-size:.55rem;vertical-align:middle">Temporario</span>':''}${isDivergenciaIgnoradaModelo(m.marca,m.modelo)?' <span class="tag tag-gray" style="font-size:.55rem;vertical-align:middle">Exclusivo</span>':''}${pendingBadge}</span>
       </div>
       <div class="model-action-btns"${pending?' style="opacity:.3;pointer-events:none"':''}>
         <button class="btn btn-sm" onclick="openSimpleModelEdit('${eMarca}','${eModelo}','${eCat}')" title="Editar nome" style="padding:3px 6px"${pending?' disabled':''}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -3658,7 +3658,7 @@ function openEditCategoryType(cat){
     showToast('Salvando alteração de tipo...','warning');
     commitDirectAction({type:'Alterar Tipo FIPE', marca:'—', modelo:cat, catFrom:current, catTo:newType, details:'Tipo FIPE: '+current+' → '+newType}).then(()=>{
       renderOverviewTable();
-    });
+    }).catch(e=>{showToast("Erro: "+e.message,"error");});
   },'blue');
 }
 
@@ -4041,7 +4041,7 @@ function openAddModelToCat(categoria){
     showToast('Salvando adição...','warning');
     commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:categoria}).then(()=>{
       showCatDetail(categoria,'modelos');
-    });
+    }).catch(e=>{showToast('Erro: '+e.message,'error');});
   },'green');
   // Real-time validation
   setTimeout(()=>{
@@ -4168,7 +4168,7 @@ function openAddBrandToCat(categoria){
     showToast('Salvando marca...','warning');
     commitDirectAction({type:'Adição de Marca',marca:marca,modelo:'—',catFrom:null,catTo:categoria}).then(()=>{
       showCatDetail(categoria,'marcas');
-    });
+    }).catch(e=>{showToast('Erro: '+e.message,'error');});
   },'green');
   setTimeout(function(){
     var input=document.getElementById('addBrand_marca');
@@ -4247,7 +4247,7 @@ function openSimpleBrandEdit(marca, categoria){
     showToast('Salvando renomeação...','warning');
     commitDirectAction({type:'Edição de Marca',marca:marca,modelo:marca+' → '+newName,catFrom:categoria,catTo:categoria,oldMarca:marca,newMarca:newName}).then(()=>{
       showCatDetail(categoria,'marcas');
-    });
+    }).catch(e=>{showToast('Erro: '+e.message,'error');});
   },'blue');
   // Real-time validation
   setTimeout(()=>{
@@ -4283,7 +4283,7 @@ function confirmRemoveBrandFromCat(marca, categoria){
         renderOverviewTable();
         renderKPIs();
         showCatDetail(categoria,'marcas');
-      });
+      }).catch(e=>{showToast('Erro: '+e.message,'error');});
     },'red');
   } else {
     // COM MODELOS: aviso de impacto → staging
@@ -4415,7 +4415,7 @@ function openModelEdit(marca, modelo, categoria){
     showToast('Salvando alteração...','warning');
     commitDirectAction({type:'Alterar Ano',marca:marca,modelo:modelo,catFrom:categoria,catTo:categoria,details:'Ano: '+(currentAno||'padrão')+' → '+(newAno||'padrão')}).then(()=>{
       showCatDetail(categoria,'modelos');
-    });
+    }).catch(e=>{showToast('Erro: '+e.message,'error');});
   },'blue');
 }
 
@@ -5115,7 +5115,7 @@ function openAddCategory(){
     showToast('Criando categoria...','warning');
     commitDirectAction({type:'Criação de Categoria',marca:'—',modelo:name,catFrom:null,catTo:name}).then(()=>{
       renderOverviewTable();
-    });
+    }).catch(e=>{showToast("Erro: "+e.message,"error");});
   },'green');
   setTimeout(()=>{
     const input=document.getElementById('new_cat_name');
@@ -5160,8 +5160,8 @@ function openEditCategory(cat){
     if(newName!==cat){
       showToast('Salvando renomeacao...','warning');
       commitDirectAction({type:'Renomeação de Categoria',marca:'—',modelo:cat+' → '+newName,catFrom:cat,catTo:newName}).then(()=>{
-        renderOverviewTable();
-      });
+      renderOverviewTable();
+    }).catch(e=>{showToast("Erro: "+e.message,"error");});
     }
 
     // Handle ano change (immediate via Supabase)
@@ -5252,7 +5252,7 @@ function openRemoveCategory(cat){
     showToast('Removendo categoria...','warning');
     commitDirectAction({type:'Remoção de Categoria',marca:'—',modelo:cat,catFrom:cat,catTo:null}).then(()=>{
       renderOverviewTable();
-    });
+    }).catch(e=>{showToast("Erro: "+e.message,"error");});
   },'red');
 }
 
@@ -5296,8 +5296,8 @@ function renderDivergences(){
         const em=m.marca.replace(/'/g,"\\'");
         const emo=m.modelo.replace(/'/g,"\\'");
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
-          <input type="checkbox" class="div-check-a" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('A')">
-          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <input type="checkbox" class="div-check-a" data-marca="${escapeHtml(m.marca)}" data-modelo="${escapeHtml(m.modelo)}" onchange="updateDivSelection('A')">
+          <span style="flex:1"><strong>${escapeHtml(m.marca)}</strong> — ${escapeHtml(m.modelo)}</span>
           <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eA}','${eB}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.b}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
         </div>`;
       }).join('')||'<div>Nenhum</div>'}</div>
@@ -5312,8 +5312,8 @@ function renderDivergences(){
         const em=m.marca.replace(/'/g,"\\'");
         const emo=m.modelo.replace(/'/g,"\\'");
         return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-light)">
-          <input type="checkbox" class="div-check-b" data-marca="${m.marca}" data-modelo="${m.modelo}" onchange="updateDivSelection('B')">
-          <span style="flex:1"><strong>${m.marca}</strong> — ${m.modelo}</span>
+          <input type="checkbox" class="div-check-b" data-marca="${escapeHtml(m.marca)}" data-modelo="${escapeHtml(m.modelo)}" onchange="updateDivSelection('B')">
+          <span style="flex:1"><strong>${escapeHtml(m.marca)}</strong> — ${escapeHtml(m.modelo)}</span>
           <button class="btn btn-sm" onclick="copyModelToCategory('${em}','${emo}','${eB}','${eA}')" style="padding:2px 6px;font-size:.65rem;white-space:nowrap" title="Copiar para ${g.a}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
         </div>`;
       }).join('')||'<div>Nenhum</div>'}</div>
@@ -5359,7 +5359,7 @@ function copyModelToCategory(marca, modelo, catFrom, catTo){
     renderDivergences();
     renderOverviewTable();
     renderKPIs();
-  });
+  }).catch(e=>{showToast("Erro: "+e.message,"error");});
 }
 
 // Copy all divergences from one side to the other (respects active filter)
@@ -7697,7 +7697,7 @@ function openAddModelFromFipe(marca, modelo){
       showToast('Salvando adição...','warning');
       commitDirectAction({type:'Adição',marca:marca,modelo:modelo,catFrom:null,catTo:cat,_temp:true}).then(()=>{
         addTempRelease(marca,modelo,cat,motivo,obs);
-      });
+      }).catch(e=>{showToast('Erro: '+e.message,'error');});
     } else {
       closeModal();
       showToast('Salvando adição...','warning');
