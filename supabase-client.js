@@ -141,11 +141,23 @@ const supabase = {
   async insert(table, data, options = {}) {
     const headers = { ...supabase._headers(), 'Prefer': options.upsert ? 'resolution=merge-duplicates' : 'return=minimal' };
     if (options.returnData) headers['Prefer'] = 'return=representation';
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    let resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(data)
     });
+    // Bug 10 fix: auto-refresh token on 401
+    if (resp.status === 401) {
+      const refreshed = await supabase.refreshSession();
+      if (refreshed) {
+        const retryHeaders = { ...supabase._headers(), 'Prefer': headers['Prefer'] };
+        resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+          method: 'POST',
+          headers: retryHeaders,
+          body: JSON.stringify(data)
+        });
+      }
+    }
     if (!resp.ok) {
       const err = await resp.text();
       throw new Error(`Insert ${table} failed: ${err}`);
@@ -155,20 +167,41 @@ const supabase = {
   },
 
   async update(table, data, filter) {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+    let resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
       method: 'PATCH',
       headers: { ...supabase._headers(), 'Prefer': 'return=minimal' },
       body: JSON.stringify(data)
     });
+    // Bug 10 fix: auto-refresh token on 401
+    if (resp.status === 401) {
+      const refreshed = await supabase.refreshSession();
+      if (refreshed) {
+        resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+          method: 'PATCH',
+          headers: { ...supabase._headers(), 'Prefer': 'return=minimal' },
+          body: JSON.stringify(data)
+        });
+      }
+    }
     if (!resp.ok) throw new Error(`Update ${table} failed: ${resp.status}`);
     return true;
   },
 
   async delete(table, filter) {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+    let resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
       method: 'DELETE',
       headers: supabase._headers()
     });
+    // Bug 10 fix: auto-refresh token on 401
+    if (resp.status === 401) {
+      const refreshed = await supabase.refreshSession();
+      if (refreshed) {
+        resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+          method: 'DELETE',
+          headers: supabase._headers()
+        });
+      }
+    }
     if (!resp.ok) throw new Error(`Delete ${table} failed: ${resp.status}`);
     return true;
   },
@@ -418,6 +451,7 @@ const supabase = {
   },
 
   // Save full base (replaces all models for given categories)
+  // Bug 3 fix: backup antes de deletar + restauração em caso de falha
   async saveFullBase(rawData, categoriasMap) {
     // rawData = {catName: {brands: {brand: [model1, model2]}}}
     // categoriasMap = {catName: catId}
@@ -440,15 +474,47 @@ const supabase = {
       console.warn('[saveFullBase] Aborted: no models to save. Refusing to delete existing data.');
       throw new Error('Nenhum modelo para salvar. Operacao cancelada para evitar perda de dados.');
     }
-    // SAFETY CHECK: Verify minimum model count (alert if suspiciously low)
-    const existingCount = await supabase.select('modelos', { select: 'id', limit: 1 });
-    // Only proceed with delete+insert if we have data
+
+    // Bug 3 fix: fazer backup em memória antes de deletar
+    let backupModelos = null;
+    try {
+      backupModelos = await supabase.select('modelos', { select: 'categoria_id,marca,modelo,ano_aceitacao' });
+    } catch(e) {
+      console.warn('[saveFullBase] Backup failed, proceeding without rollback capability:', e.message);
+    }
+
     // Delete all existing models first
-    await supabase.delete('modelos', 'id=neq.00000000-0000-0000-0000-000000000000');
+    try {
+      await supabase.delete('modelos', 'id=neq.00000000-0000-0000-0000-000000000000');
+    } catch(delErr) {
+      throw new Error('Falha ao limpar base antes de salvar: ' + delErr.message);
+    }
+
     // Insert all in chunks of 500 to avoid payload limits
     const CHUNK = 500;
-    for (let i = 0; i < allModels.length; i += CHUNK) {
-      await supabase.insert('modelos', allModels.slice(i, i + CHUNK));
+    try {
+      for (let i = 0; i < allModels.length; i += CHUNK) {
+        await supabase.insert('modelos', allModels.slice(i, i + CHUNK));
+      }
+    } catch(insertErr) {
+      // Bug 3 fix: restaurar backup se insert falhar
+      console.error('[saveFullBase] INSERT FALHOU - tentando restaurar backup:', insertErr.message);
+      if (backupModelos && backupModelos.length > 0) {
+        try {
+          // Limpar o que foi inserido parcialmente
+          await supabase.delete('modelos', 'id=neq.00000000-0000-0000-0000-000000000000');
+          // Restaurar backup em chunks
+          for (let i = 0; i < backupModelos.length; i += CHUNK) {
+            await supabase.insert('modelos', backupModelos.slice(i, i + CHUNK));
+          }
+          throw new Error('Falha ao salvar modelos. Base restaurada ao estado anterior. Tente novamente. (' + insertErr.message + ')');
+        } catch(restoreErr) {
+          if (restoreErr.message.includes('Base restaurada')) throw restoreErr;
+          throw new Error('FALHA CRITICA: Nao foi possivel restaurar backup. Contate o administrador. (' + restoreErr.message + ')');
+        }
+      } else {
+        throw new Error('Falha ao salvar modelos e backup indisponivel. (' + insertErr.message + ')');
+      }
     }
     return true;
   },

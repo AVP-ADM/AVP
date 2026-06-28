@@ -72,6 +72,7 @@ async function comLoadSedes() {
 
 // ========= MAIN RENDER =========
 async function comRender() {
+  _comPage = 1; // Bug 11 fix: sempre resetar paginação ao recarregar/trocar filtro
   await comLoadSedes();
   await comLoadOperacoes();
   comRenderKpis();
@@ -526,7 +527,10 @@ function comRenderFormFields() {
 }
 
 
+let _comSaving = false; // Bug 6 fix: guard contra double-click
+
 async function comSalvarNovaOperacao() {
+  if (_comSaving) return; // Bug 6: prevenir duplo submit
   const tipo = (document.getElementById('novaOp_tipo') || {}).value;
   // Admin pode escolher sede no select; operador usa a sede do próprio cadastro
   let sedeId = null;
@@ -613,6 +617,11 @@ async function comSalvarNovaOperacao() {
     dados: dados
   };
 
+  // Bug 6 fix: desabilitar botão durante save
+  _comSaving = true;
+  const saveBtn = document.querySelector('#novaOp_fields ~ .btn-green, #novaOp_fields + .btn-green');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Salvando...'; }
+
   try {
     await supabase.insert('operacoes', insertData);
     showToast('Operacao registrada com sucesso!', 'success');
@@ -620,6 +629,9 @@ async function comSalvarNovaOperacao() {
     comRender();
   } catch (e) {
     showToast('Erro ao salvar: ' + e.message, 'error');
+  } finally {
+    _comSaving = false;
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Salvar Operacao'; }
   }
 }
 
@@ -685,10 +697,14 @@ function openCreateSede() {
 function openEditSede(id) {
   const s = _comSedes.find(x => x.id === id);
   if (!s) return;
+  // Bug 9 fix: usar escapeHtml completo em vez de só escapar aspas duplas
+  const safeNome = escapeHtml(s.nome || '');
+  const safeCidade = escapeHtml(s.cidade || '');
+  const safeEstado = escapeHtml(s.estado || '');
   showModal('Editar Sede', '<div style="display:flex;flex-direction:column;gap:12px">' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="sede_nome" value="' + (s.nome || '').replace(/"/g, '&quot;') + '"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cidade</label><input id="sede_cidade" value="' + (s.cidade || '').replace(/"/g, '&quot;') + '"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Estado</label><input id="sede_estado" value="' + (s.estado || '').replace(/"/g, '&quot;') + '" maxlength="2"></div>' +
+    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="sede_nome" value="' + safeNome + '"></div>' +
+    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cidade</label><input id="sede_cidade" value="' + safeCidade + '"></div>' +
+    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Estado</label><input id="sede_estado" value="' + safeEstado + '" maxlength="2"></div>' +
     '</div>', async function () {
     const nome = document.getElementById('sede_nome').value.trim();
     if (!nome) { showToast('Informe o nome', 'error'); return; }
@@ -958,7 +974,16 @@ function comExportXLSX() {
 // ========= LINK EXTERNO CONFIRMACAO FINANCEIRO =========
 async function comGerarLinkConfirmacao(operacaoId) {
   try {
-    const token = crypto.randomUUID ? crypto.randomUUID() : 'tok_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Bug 7 fix: fallback criptograficamente seguro quando crypto.randomUUID não existe
+    let token;
+    if (crypto.randomUUID) {
+      token = crypto.randomUUID();
+    } else {
+      const arr = new Uint8Array(16);
+      crypto.getRandomValues(arr);
+      token = Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+      token = token.slice(0,8)+'-'+token.slice(8,12)+'-'+token.slice(12,16)+'-'+token.slice(16,20)+'-'+token.slice(20);
+    }
     await supabase.insert('confirmacao_tokens', {
       operacao_id: operacaoId,
       token: token,
@@ -987,8 +1012,17 @@ async function comCheckConfirmacaoToken() {
   const token = params.get('confirmar');
   if (!token) return;
 
+  // Bug 4 fix: Validar formato do token antes de usar no filtro REST (previne injection)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const tokRegex = /^tok_\d+_[a-z0-9]+$/i;
+  if (!uuidRegex.test(token) && !tokRegex.test(token)) {
+    showToast('Link invalido', 'error');
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+
   try {
-    const rows = await supabase.select('confirmacao_tokens', { filter: 'token=eq.' + token + '&usado=eq.false' });
+    const rows = await supabase.select('confirmacao_tokens', { filter: 'token=eq.' + encodeURIComponent(token) + '&usado=eq.false' });
     if (!rows || rows.length === 0) {
       showToast('Link invalido ou ja utilizado', 'error');
       return;

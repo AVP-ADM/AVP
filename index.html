@@ -5690,11 +5690,17 @@ function addToStaging(op, silent){
 
 // ========= COMMIT DIRECT ACTION (sem staging) =========
 // Aplica uma operação (adição/edição) diretamente ao RAW + Supabase + Histórico
+let _isCommittingDirect = false; // Bug 12 fix: guard contra execuções simultâneas
+
 async function commitDirectAction(op){
+  if(_isCommittingDirect) return false; // Bug 12: prevenir execução concorrente
   if(!dataLoaded && Object.keys(RAW).length===0){
     showToast('Aguarde o carregamento dos dados','error');
     return false;
   }
+
+  _isCommittingDirect = true;
+  try {
 
   // 1. Apply to RAW immediately
   if(op.type==='Adição'){
@@ -5819,6 +5825,7 @@ async function commitDirectAction(op){
   }
 
   return true;
+  } finally { _isCommittingDirect = false; } // Bug 12: liberar guard
 }
 
 function removeFromStaging(idx){
@@ -5869,7 +5876,10 @@ function clearStaging(){
   },'red');
 }
 
+let _isCommitting = false; // Bug 5 fix: guard contra double-click no commitStaging
+
 function commitStaging(){
+  if(_isCommitting) return; // Bug 5: prevenir dupla execução
   if(!hasStagingChanges()) return alert('Nenhuma alteração pendente.');
   // Validate: check for contradictory operations
   const conflicts=[];
@@ -5890,6 +5900,9 @@ function commitStaging(){
     return;
   }
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',async ()=>{
+    if(_isCommitting) return; // Bug 5: guard dentro do callback
+    _isCommitting = true;
+    try {
     // 1. Apply changes to RAW immediately
     const d = getStagingData();
     const deletedCats = getStagingDeletedCategories();
@@ -5938,6 +5951,7 @@ function commitStaging(){
       refreshActiveTab();
       showToast('Erro ao salvar: '+err.message+'. Dados salvos localmente.','error');
     }
+    } finally { _isCommitting = false; } // Bug 5: liberar guard
   },'green');
 }
 
@@ -7678,28 +7692,59 @@ async function loadFromDatabase(){
 // ========= CONCURRENCY CONTROL =========
 let _dataLoadTimestamp=null; // When data was last loaded
 
+// Bug 2 fix: lock de concorrência real via Supabase
 async function acquireLock(){
   try{
-    // Supabase migration: lock not needed (PostgreSQL handles concurrency)
-    return true;
-    const result=await resp.json();
-    return result;
-  }catch(e){return {success:false,error:e.message};}
+    const user = supabase.getUser();
+    if(!user) return {success:true}; // sem user, não trava
+    const result = await supabase.rpc('adquirir_lock_edicao', {
+      p_usuario_id: user.id,
+      p_usuario_nome: currentUser || user.email || 'Desconhecido'
+    });
+    // RPC retorna jsonb com {success, lockedBy?}
+    if(result && typeof result === 'object') return result;
+    return {success:true};
+  }catch(e){
+    // Fallback: se RPC não existe ainda, continua sem lock (backwards-compatible)
+    console.warn('[Lock] acquireLock fallback (RPC indisponivel):', e.message);
+    return {success:true};
+  }
 }
 
 async function releaseLock(){
   try{
-    // Supabase migration: lock not needed
-  }catch(e){}
+    const user = supabase.getUser();
+    if(!user) return;
+    await supabase.rpc('liberar_lock_edicao', { p_usuario_id: user.id });
+  }catch(e){ console.warn('[Lock] releaseLock fallback:', e.message); }
 }
 
 async function checkTimestamp(){
   try{
-    // Supabase migration: timestamp handled by database
-    return {success:true,timestamp:Date.now()};
-    const result=await resp.json();
-    return result;
-  }catch(e){return {success:false};}
+    // Buscar último save timestamp da tabela meta_sync
+    const rows = await supabase.select('meta_sync', { filter: 'chave=eq.last_save', limit: 1 });
+    if(rows && rows.length > 0){
+      const serverTs = new Date(rows[0].valor).getTime();
+      return {success:true, timestamp:serverTs, lastUser:rows[0].usuario, lastDate:rows[0].updated_at};
+    }
+    return {success:true, timestamp:0};
+  }catch(e){
+    // Fallback: se tabela não existe, continua sem verificação
+    console.warn('[Lock] checkTimestamp fallback:', e.message);
+    return {success:true, timestamp:0};
+  }
+}
+
+async function updateSaveTimestamp(){
+  try{
+    const user = supabase.getUser();
+    await supabase.insert('meta_sync', {
+      chave: 'last_save',
+      valor: new Date().toISOString(),
+      usuario: currentUser || (user && user.email) || 'Desconhecido',
+      updated_at: new Date().toISOString()
+    }, { upsert: true });
+  }catch(e){ console.warn('[Lock] updateSaveTimestamp fallback:', e.message); }
 }
 
 async function safeSave(){
@@ -7741,9 +7786,9 @@ async function safeSave(){
   // 3. Save
   try{
     await saveToDatabase();
-    // 4. Update timestamp
-    // Supabase migration: timestamp handled by database
+    // 4. Update timestamp (local + remoto)
     _dataLoadTimestamp=Date.now();
+    await updateSaveTimestamp(); // Bug 2: persistir timestamp no banco
   }catch(e){
     await releaseLock();
     throw e;
@@ -9599,11 +9644,20 @@ async function initDataConnection(){
     // Load FIPE requests from Supabase (always sync to get cross-device total)
     try{ await loadFipeRequestsRemote(); }catch(e){}
 
-    // Load pending changes (non-critical)
+    // Load pending changes (non-critical) — Bug 1 fix: merge com localStorage em vez de sobrescrever
     try{
       const pending = await supabase.loadPendingChanges();
       if(pending && pending.length > 0){
-        STAGING.ops = pending.map(p=>({type:p.tipo, marca:p.marca, modelo:p.modelo, catFrom:p.categoria_origem, catTo:p.categoria_destino, details:p.detalhes, id:p.id}));
+        const remoteOps = pending.map(p=>({type:p.tipo, marca:p.marca, modelo:p.modelo, catFrom:p.categoria_origem, catTo:p.categoria_destino, details:p.detalhes, id:p.id}));
+        // Merge: adicionar apenas ops remotas que não existem localmente (por id)
+        const existingIds = new Set(STAGING.ops.filter(o=>o.id).map(o=>o.id));
+        for(const rop of remoteOps){
+          if(!rop.id || !existingIds.has(rop.id)){
+            STAGING.ops.push(rop);
+          }
+        }
+        STAGING.data = null;
+        rebuildPendingIndex();
       }
     }catch(e){ console.warn('Pending changes load (non-critical):',e); }
 
@@ -9862,7 +9916,9 @@ function resetActivityTimer(){
 }
 
 function startSessionCheck(){
-  if(_sessionCheckInterval) clearInterval(_sessionCheckInterval);
+  // Bug 8 fix: limpar AMBOS os intervals antes de criar novos (evita leak)
+  if(_sessionCheckInterval){ clearInterval(_sessionCheckInterval); _sessionCheckInterval=null; }
+  if(_inactivityTimer){ clearInterval(_inactivityTimer); _inactivityTimer=null; }
   
   // Session uniqueness check (every 12s)
   _sessionCheckInterval=setInterval(async()=>{
