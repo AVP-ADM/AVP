@@ -16,7 +16,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" crossorigin="anonymous"></script>
 <script src="supabase-client.js"></script>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://thchtjwbytdphmviympg.supabase.co https://fipe.parallelum.com.br;">
 <style>
 /* ========= RESET & VARIABLES ========= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -9399,6 +9398,9 @@ async function doLogout(){
   document.getElementById('appContainer').style.display='none';
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
+  // Reset login button state
+  const btn=document.querySelector('.login-btn');
+  if(btn){btn.disabled=false;btn.textContent='Entrar';}
 }
 
 // ========= SESSION SINGLE-DEVICE CHECK =========
