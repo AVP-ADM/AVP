@@ -192,10 +192,10 @@ tr:last-child td{border-bottom:none}
 .badge-purple{background:var(--purple-light);color:var(--purple)}
 .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:500;margin:1px 2px}
 .tag-blue{background:var(--blue-light);color:var(--blue);position:relative;padding-right:8px;transition:padding .15s}
-.tag-blue.removable{cursor:default}
+.tag-blue.removable{cursor:default;padding-right:22px}
 .tag-blue.removable:hover{padding-right:22px}
-.tag-blue .tag-remove{display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:.8;transition:opacity .15s}
-.tag-blue.removable:hover .tag-remove{display:inline-block}
+.tag-blue .tag-remove{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:8px;line-height:14px;text-align:center;cursor:pointer;font-weight:700;opacity:0;transition:opacity .15s;pointer-events:none}
+.tag-blue.removable:hover .tag-remove{opacity:.8;pointer-events:auto}
 .tag-blue .tag-remove:hover{opacity:1}
 .tag-green{background:var(--green-light);color:var(--green)}
 .tag-dup,.tag-red{background:var(--red-light);color:var(--red)}
