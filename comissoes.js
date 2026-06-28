@@ -484,8 +484,10 @@ function comRenderFormFields() {
   };
 
   let html = '';
-  const sedeRequired = currentProfile && currentProfile.nivel !== 'admin';
-  html += mkField('novaOp_sede', 'Sede' + (sedeRequired ? ' *' : ''), 'select_sede', '', sedeRequired);
+  // Só admin vê o campo sede (operador puxa do cadastro automaticamente)
+  if (currentProfile && currentProfile.nivel === 'admin') {
+    html += mkField('novaOp_sede', 'Sede', 'select_sede', '', false);
+  }
 
 
   if (tipo === 'adesao') {
@@ -526,12 +528,19 @@ function comRenderFormFields() {
 
 async function comSalvarNovaOperacao() {
   const tipo = (document.getElementById('novaOp_tipo') || {}).value;
-  const sedeId = (document.getElementById('novaOp_sede') || {}).value || null;
+  // Admin pode escolher sede no select; operador usa a sede do próprio cadastro
+  let sedeId = null;
+  if (currentProfile && currentProfile.nivel === 'admin') {
+    sedeId = (document.getElementById('novaOp_sede') || {}).value || null;
+  } else {
+    // Puxar sede do perfil do operador
+    sedeId = (currentProfile && currentProfile.sede) || null;
+  }
   const gv = (id) => (document.getElementById(id) || {}).value || '';
 
-  // Operador DEVE selecionar uma sede; admin pode deixar sem
+  // Operador DEVE ter sede no cadastro
   if (!sedeId && currentProfile && currentProfile.nivel !== 'admin') {
-    showToast('Selecione uma sede', 'error'); return;
+    showToast('Sua conta nao tem sede vinculada. Peca ao admin para configurar.', 'error'); return;
   }
 
   // Montar todos os campos no JSONB 'dados' para evitar erros de coluna inexistente
