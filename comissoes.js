@@ -827,169 +827,131 @@ function comExportXLSX() {
     ? document.getElementById('comMesFilter').selectedOptions[0].text : 'Periodo';
 
   // === STYLES ===
-  const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, fill: { fgColor: { rgb: '1B2A4A' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '4A5568' } } } };
-  const titleStyle = { font: { bold: true, sz: 16, color: { rgb: '1B2A4A' } }, alignment: { horizontal: 'left' } };
-  const subtitleStyle = { font: { bold: false, sz: 10, color: { rgb: '718096' } }, alignment: { horizontal: 'left' } };
-  const kpiLabelStyle = { font: { bold: true, sz: 9, color: { rgb: '718096' } }, alignment: { horizontal: 'center' } };
-  const kpiValueGreen = { font: { bold: true, sz: 14, color: { rgb: '16A34A' } }, alignment: { horizontal: 'center' } };
-  const kpiValueAmber = { font: { bold: true, sz: 14, color: { rgb: 'D97706' } }, alignment: { horizontal: 'center' } };
-  const kpiValueBlue = { font: { bold: true, sz: 14, color: { rgb: '2563EB' } }, alignment: { horizontal: 'center' } };
-  const kpiValueDefault = { font: { bold: true, sz: 14, color: { rgb: '1B2A4A' } }, alignment: { horizontal: 'center' } };
-  const moneyStyle = { font: { sz: 10 }, numFmt: '#,##0.00', alignment: { horizontal: 'right' } };
-  const cellStyle = { font: { sz: 10, color: { rgb: '2D3748' } }, alignment: { vertical: 'center' } };
-  const cellCenterStyle = { font: { sz: 10, color: { rgb: '2D3748' } }, alignment: { horizontal: 'center', vertical: 'center' } };
-  const confirmadoStyle = { font: { bold: true, sz: 9, color: { rgb: '16A34A' } }, alignment: { horizontal: 'center' } };
-  const pendenteStyle = { font: { bold: true, sz: 9, color: { rgb: 'D97706' } }, alignment: { horizontal: 'center' } };
-  const sectionStyle = { font: { bold: true, sz: 12, color: { rgb: '1B2A4A' } }, border: { bottom: { style: 'medium', color: { rgb: '2563EB' } } } };
-  const footerStyle = { font: { italic: true, sz: 8, color: { rgb: 'A0AEC0' } } };
-
-  // === HELPER: get field from op ===
-  const g = (o, field) => {
-    if (o[field] !== undefined && o[field] !== null) return o[field];
-    return (o.dados && o.dados[field]) || null;
+  var S = {
+    title: { font: { bold: true, sz: 13, color: { rgb: '1B2A4A' } } },
+    sub: { font: { sz: 9, color: { rgb: '6B7280' }, italic: true } },
+    sec: { font: { bold: true, sz: 9, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1B2A4A' } }, alignment: { vertical: 'center' } },
+    hd: { font: { bold: true, sz: 8, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4B5563' } }, alignment: { horizontal: 'center', vertical: 'center' } },
+    lbl: { font: { bold: true, sz: 8, color: { rgb: '6B7280' } }, alignment: { horizontal: 'right' } },
+    vGr: { font: { bold: true, sz: 11, color: { rgb: '16A34A' } }, numFmt: '#,##0.00' },
+    vAm: { font: { bold: true, sz: 11, color: { rgb: 'D97706' } }, numFmt: '#,##0.00' },
+    vBl: { font: { bold: true, sz: 11, color: { rgb: '2563EB' } }, numFmt: '#,##0.00' },
+    vBd: { font: { bold: true, sz: 10, color: { rgb: '1F2937' } } },
+    c: { font: { sz: 9, color: { rgb: '374151' } } },
+    cc: { font: { sz: 9, color: { rgb: '374151' } }, alignment: { horizontal: 'center' } },
+    m: { font: { sz: 9, color: { rgb: '374151' } }, numFmt: '#,##0.00', alignment: { horizontal: 'right' } },
+    mb: { font: { bold: true, sz: 9, color: { rgb: '1F2937' } }, numFmt: '#,##0.00', alignment: { horizontal: 'right' } },
+    ok: { font: { bold: true, sz: 8, color: { rgb: '16A34A' } }, alignment: { horizontal: 'center' } },
+    pn: { font: { bold: true, sz: 8, color: { rgb: 'D97706' } }, alignment: { horizontal: 'center' } },
+    ft: { font: { sz: 7, color: { rgb: '9CA3AF' }, italic: true } }
   };
 
-  // === DATA PREPARATION ===
-  const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
-  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const totalGerado = comissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
-  const totalComissoes = comCalcularTotalComissoes(comissionaveis);
-  const liquidoAVP = totalGerado - totalComissoes;
-  const totalOps = _comOperacoes.length;
-  const totalAdesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
-  const totalTrocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade').length;
-  const totalConfirmadas = _comOperacoes.filter(o => (g(o, 'status') || 'pendente') === 'confirmado').length;
-  const totalPendentes = totalOps - totalConfirmadas;
+  var g = function(o, f) { return (o[f] != null) ? o[f] : (o.dados && o.dados[f]) || null; };
+  var tipoL = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
+
+  // === DATA ===
+  var coms = _comOperacoes.filter(function(o) { return o.tipo === 'adesao' || o.tipo === 'troca_titularidade'; });
+  var totG = coms.reduce(function(s, o) { return s + (parseFloat(g(o, 'valor')) || 0); }, 0);
+  var totC = comCalcularTotalComissoes(coms);
+  var liq = totG - totC;
+  var nOps = _comOperacoes.length;
+  var nAd = _comOperacoes.filter(function(o) { return o.tipo === 'adesao'; }).length;
+  var nConf = _comOperacoes.filter(function(o) { return (g(o, 'status') || 'pendente') === 'confirmado'; }).length;
 
   // Group by sede
-  const bySede = {};
-  _comOperacoes.forEach(o => {
-    const sedeId = g(o, 'sede_id') || '_sem_sede';
-    if (!bySede[sedeId]) bySede[sedeId] = [];
-    bySede[sedeId].push(o);
+  var bySede = {};
+  _comOperacoes.forEach(function(o) {
+    var sid = g(o, 'sede_id') || '_sem';
+    if (!bySede[sid]) bySede[sid] = [];
+    bySede[sid].push(o);
   });
 
-  // Group by user for ranking
-  const byUser = {};
-  comissionaveis.forEach(o => {
-    const uid = o.usuario_id || 'unknown';
-    if (!byUser[uid]) byUser[uid] = { nome: '', total: 0, comissao: 0, ops: 0 };
-    const user = _comUsersCache.find(u => u.id === uid);
-    byUser[uid].nome = user ? user.nome : (g(o, 'usuario_nome') || 'Desconhecido');
-    byUser[uid].total += parseFloat(g(o, 'valor')) || 0;
-    byUser[uid].comissao += comCalcularComissao(o);
-    byUser[uid].ops++;
+  // Ranking
+  var byU = {};
+  coms.forEach(function(o) {
+    var uid = o.usuario_id || 'x';
+    if (!byU[uid]) byU[uid] = { nome: '', total: 0, com: 0, ops: 0 };
+    var u = _comUsersCache.find(function(x) { return x.id === uid; });
+    byU[uid].nome = u ? u.nome : (g(o, 'usuario_nome') || '—');
+    byU[uid].total += parseFloat(g(o, 'valor')) || 0;
+    byU[uid].com += comCalcularComissao(o);
+    byU[uid].ops++;
   });
-  const ranking = Object.values(byUser).sort((a, b) => b.total - a.total);
+  var rank = Object.values(byU).sort(function(a, b) { return b.total - a.total; });
 
   try {
-    const wb = XLSX.utils.book_new();
+    var wb = XLSX.utils.book_new();
 
-    // ============================
-    // ABA 1: DASHBOARD (Resumo)
-    // ============================
-    const dashData = [];
-    // Title
-    dashData.push([{ v: 'AVP - Relatorio de Comissoes', s: titleStyle }]);
-    dashData.push([{ v: mesLabel + ' | Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' as ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), s: subtitleStyle }]);
-    dashData.push([]);
-    // KPIs section
-    dashData.push([{ v: 'RESUMO FINANCEIRO', s: sectionStyle }, '', '', '', '']);
-    dashData.push([]);
-    dashData.push([{ v: 'Total Gerado', s: kpiLabelStyle }, '', { v: 'Total Comissoes', s: kpiLabelStyle }, '', { v: 'Liquido AVP', s: kpiLabelStyle }]);
-    dashData.push([{ v: totalGerado, s: kpiValueGreen }, '', { v: totalComissoes, s: kpiValueAmber }, '', { v: liquidoAVP, s: kpiValueBlue }]);
-    dashData.push([]);
-    dashData.push([{ v: 'INDICADORES', s: sectionStyle }, '', '', '', '']);
-    dashData.push([]);
-    dashData.push([{ v: 'Total Operacoes', s: kpiLabelStyle }, { v: 'Adesoes', s: kpiLabelStyle }, { v: 'Troca Titular', s: kpiLabelStyle }, { v: 'Confirmadas', s: kpiLabelStyle }, { v: 'Pendentes', s: kpiLabelStyle }]);
-    dashData.push([{ v: totalOps, s: kpiValueDefault }, { v: totalAdesoes, s: kpiValueGreen }, { v: totalTrocaTit, s: kpiValueAmber }, { v: totalConfirmadas, s: kpiValueGreen }, { v: totalPendentes, s: kpiValueAmber }]);
-    dashData.push([]);
-    // Ranking
-    dashData.push([{ v: 'RANKING POR FATURAMENTO', s: sectionStyle }, '', '', '', '']);
-    dashData.push([]);
-    dashData.push([{ v: '#', s: headerStyle }, { v: 'Colaborador', s: headerStyle }, { v: 'Operacoes', s: headerStyle }, { v: 'Faturamento (R$)', s: headerStyle }, { v: 'Comissao (R$)', s: headerStyle }]);
-    ranking.forEach((r, i) => {
-      dashData.push([{ v: i + 1, s: cellCenterStyle }, { v: r.nome, s: cellStyle }, { v: r.ops, s: cellCenterStyle }, { v: r.total, s: moneyStyle }, { v: r.comissao, s: moneyStyle }]);
+    // ========== DASHBOARD ==========
+    var D = [];
+    D.push([{v:'AVP - Relatorio de Comissoes',s:S.title},'','','','']);
+    D.push([{v:mesLabel+' | '+new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),s:S.sub}]);
+    D.push([{v:'RESUMO FINANCEIRO',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec}]);
+    D.push([{v:'Total Gerado:',s:S.lbl},{v:totG,s:S.vGr},{v:'Comissoes:',s:S.lbl},{v:totC,s:S.vAm},{v:''}]);
+    D.push([{v:'Liquido AVP:',s:S.lbl},{v:liq,s:S.vBl},{v:'Margem:',s:S.lbl},{v:totG>0?Math.round(liq/totG*100)+'%':'—',s:S.vBd},{v:''}]);
+    D.push([{v:'Operacoes: '+nOps,s:S.c},{v:'Adesoes: '+nAd,s:S.c},{v:'Confirmadas: '+nConf,s:S.c},{v:'Pendentes: '+(nOps-nConf),s:S.c},{v:''}]);
+    D.push([{v:'RANKING',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec}]);
+    D.push([{v:'#',s:S.hd},{v:'Colaborador',s:S.hd},{v:'Ops',s:S.hd},{v:'Faturamento',s:S.hd},{v:'Comissao',s:S.hd}]);
+    rank.forEach(function(r, i) {
+      D.push([{v:i+1,s:S.cc},{v:r.nome,s:S.c},{v:r.ops,s:S.cc},{v:r.total,s:S.m},{v:r.com,s:S.m}]);
     });
-    dashData.push([]);
-    // Per-sede summary
-    dashData.push([{ v: 'RESUMO POR SEDE', s: sectionStyle }, '', '', '', '']);
-    dashData.push([]);
-    dashData.push([{ v: 'Sede', s: headerStyle }, { v: 'Operacoes', s: headerStyle }, { v: 'Faturamento (R$)', s: headerStyle }, { v: 'Comissoes (R$)', s: headerStyle }, { v: 'Liquido (R$)', s: headerStyle }]);
-    Object.entries(bySede).forEach(([sedeId, ops]) => {
-      const sede = _comSedes.find(s => s.id === sedeId);
-      const sedeName = sede ? sede.nome : 'Sem sede';
-      const sedeComissionaveis = ops.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-      const sedeTotalGerado = sedeComissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
-      const sedeTotalCom = comCalcularTotalComissoes(sedeComissionaveis);
-      dashData.push([{ v: sedeName, s: cellStyle }, { v: ops.length, s: cellCenterStyle }, { v: sedeTotalGerado, s: moneyStyle }, { v: sedeTotalCom, s: moneyStyle }, { v: sedeTotalGerado - sedeTotalCom, s: moneyStyle }]);
+    if(!rank.length) D.push([{v:'',s:S.cc},{v:'Sem dados no periodo',s:S.c},{v:'',s:S.cc},{v:'',s:S.m},{v:'',s:S.m}]);
+    D.push([{v:'POR SEDE',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec},{v:'',s:S.sec}]);
+    D.push([{v:'Sede',s:S.hd},{v:'Ops',s:S.hd},{v:'Faturamento',s:S.hd},{v:'Comissoes',s:S.hd},{v:'Liquido',s:S.hd}]);
+    Object.entries(bySede).forEach(function(entry) {
+      var sid=entry[0], ops=entry[1];
+      var sede=_comSedes.find(function(x){return x.id===sid;});
+      var nm=sede?sede.nome:'Sem sede';
+      var sc=ops.filter(function(o){return o.tipo==='adesao'||o.tipo==='troca_titularidade';});
+      var sg=sc.reduce(function(s,o){return s+(parseFloat(g(o,'valor'))||0);},0);
+      var scom=comCalcularTotalComissoes(sc);
+      D.push([{v:nm,s:S.c},{v:ops.length,s:S.cc},{v:sg,s:S.m},{v:scom,s:S.m},{v:sg-scom,s:S.mb}]);
     });
-    dashData.push([]);
-    dashData.push([{ v: 'AutoVale Prevencoes - Documento gerado automaticamente', s: footerStyle }]);
+    D.push([{v:'AutoVale Prevencoes - Documento confidencial',s:S.ft}]);
 
-    const wsDash = XLSX.utils.aoa_to_sheet(dashData);
-    wsDash['!cols'] = [{ wch: 18 }, { wch: 24 }, { wch: 18 }, { wch: 20 }, { wch: 20 }];
-    XLSX.utils.book_append_sheet(wb, wsDash, 'Dashboard');
+    var wD=XLSX.utils.aoa_to_sheet(D);
+    wD['!cols']=[{wch:18},{wch:20},{wch:14},{wch:14},{wch:13}];
+    XLSX.utils.book_append_sheet(wb,wD,'Dashboard');
 
-    // ============================
-    // ABAS POR SEDE
-    // ============================
-    Object.entries(bySede).forEach(([sedeId, ops]) => {
-      const sede = _comSedes.find(s => s.id === sedeId);
-      const sedeName = sede ? sede.nome : 'Sem sede';
-      const sheetName = sedeName.substring(0, 28); // Excel limit 31 chars
+    // ========== ABAS POR SEDE ==========
+    Object.entries(bySede).forEach(function(entry) {
+      var sid=entry[0], ops=entry[1];
+      var sede=_comSedes.find(function(x){return x.id===sid;});
+      var nm=sede?sede.nome:'Sem sede';
+      var sn=nm.substring(0,28);
+      var sc=ops.filter(function(o){return o.tipo==='adesao'||o.tipo==='troca_titularidade';});
+      var sg=sc.reduce(function(s,o){return s+(parseFloat(g(o,'valor'))||0);},0);
+      var scom=comCalcularTotalComissoes(sc);
 
-      const sedeData = [];
-      sedeData.push([{ v: sedeName, s: titleStyle }]);
-      sedeData.push([{ v: mesLabel, s: subtitleStyle }]);
-      sedeData.push([]);
-
-      // Sede summary
-      const sedeComissionaveis = ops.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-      const sedeTotalGerado = sedeComissionaveis.reduce((s, o) => s + (parseFloat(g(o, 'valor')) || 0), 0);
-      const sedeTotalCom = comCalcularTotalComissoes(sedeComissionaveis);
-      sedeData.push([{ v: 'Faturamento', s: kpiLabelStyle }, { v: 'Comissoes', s: kpiLabelStyle }, { v: 'Liquido', s: kpiLabelStyle }, { v: 'Operacoes', s: kpiLabelStyle }]);
-      sedeData.push([{ v: sedeTotalGerado, s: kpiValueGreen }, { v: sedeTotalCom, s: kpiValueAmber }, { v: sedeTotalGerado - sedeTotalCom, s: kpiValueBlue }, { v: ops.length, s: kpiValueDefault }]);
-      sedeData.push([]);
-
-      // Table header
-      sedeData.push([
-        { v: 'Tipo', s: headerStyle },
-        { v: 'Associado', s: headerStyle },
-        { v: 'Placa', s: headerStyle },
-        { v: 'Valor (R$)', s: headerStyle },
-        { v: 'Comissao (R$)', s: headerStyle },
-        { v: 'Colaborador', s: headerStyle },
-        { v: 'Data', s: headerStyle },
-        { v: 'Status', s: headerStyle }
-      ]);
-
-      // Table rows
-      ops.forEach(o => {
-        const user = _comUsersCache.find(u => u.id === o.usuario_id);
-        const opStatus = g(o, 'status') || 'pendente';
-        const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(g(o, 'valor')) || 0) : 0;
-        const comissao = comCalcularComissao(o);
-        sedeData.push([
-          { v: tipoLabels[o.tipo] || o.tipo, s: cellCenterStyle },
-          { v: g(o, 'associado') || '', s: cellStyle },
-          { v: g(o, 'placa') || '', s: cellCenterStyle },
-          { v: valor, s: moneyStyle },
-          { v: comissao, s: moneyStyle },
-          { v: user ? user.nome : (g(o, 'usuario_nome') || ''), s: cellStyle },
-          { v: o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '', s: cellCenterStyle },
-          { v: opStatus === 'confirmado' ? 'Confirmado' : 'Pendente', s: opStatus === 'confirmado' ? confirmadoStyle : pendenteStyle }
+      var R=[];
+      R.push([{v:nm+' — '+mesLabel,s:S.title},'','','','','','','']);
+      R.push([{v:'Faturamento:',s:S.lbl},{v:sg,s:S.vGr},{v:'Comissoes:',s:S.lbl},{v:scom,s:S.vAm},{v:'Liquido:',s:S.lbl},{v:sg-scom,s:S.vBl},{v:'Ops:',s:S.lbl},{v:ops.length,s:S.vBd}]);
+      R.push([{v:'Tipo',s:S.hd},{v:'Associado',s:S.hd},{v:'Placa',s:S.hd},{v:'Valor',s:S.hd},{v:'Comissao',s:S.hd},{v:'Colaborador',s:S.hd},{v:'Data',s:S.hd},{v:'Status',s:S.hd}]);
+      ops.forEach(function(o) {
+        var u=_comUsersCache.find(function(x){return x.id===o.usuario_id;});
+        var st=g(o,'status')||'pendente';
+        var val=(o.tipo==='adesao'||o.tipo==='troca_titularidade')?(parseFloat(g(o,'valor'))||0):0;
+        R.push([
+          {v:tipoL[o.tipo]||o.tipo,s:S.cc},
+          {v:g(o,'associado')||'—',s:S.c},
+          {v:g(o,'placa')||'—',s:S.cc},
+          {v:val,s:S.m},
+          {v:comCalcularComissao(o),s:S.m},
+          {v:u?u.nome:(g(o,'usuario_nome')||'—'),s:S.c},
+          {v:o.created_at?new Date(o.created_at).toLocaleDateString('pt-BR'):'—',s:S.cc},
+          {v:st==='confirmado'?'Confirmado':'Pendente',s:st==='confirmado'?S.ok:S.pn}
         ]);
       });
+      R.push([{v:'',s:S.c},{v:'',s:S.c},{v:'TOTAL',s:S.hd},{v:sg,s:S.mb},{v:scom,s:S.mb},{v:'',s:S.c},{v:'',s:S.c},{v:'',s:S.c}]);
 
-      const wsSede = XLSX.utils.aoa_to_sheet(sedeData);
-      wsSede['!cols'] = [{ wch: 18 }, { wch: 24 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 22 }, { wch: 12 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, wsSede, sheetName);
+      var ws=XLSX.utils.aoa_to_sheet(R);
+      ws['!cols']=[{wch:16},{wch:20},{wch:9},{wch:12},{wch:12},{wch:18},{wch:10},{wch:11}];
+      XLSX.utils.book_append_sheet(wb,ws,sn);
     });
 
-    XLSX.writeFile(wb, 'AVP_Comissoes_' + mesLabel.replace(/\s/g, '_') + '.xlsx');
-    showToast('Exportacao concluida!', 'success');
-  } catch (e) { showToast('Erro na exportacao: ' + e.message, 'error'); }
+    XLSX.writeFile(wb,'AVP_Comissoes_'+mesLabel.replace(/\s/g,'_')+'.xlsx');
+    showToast('Exportacao concluida!','success');
+  } catch(e) { showToast('Erro na exportacao: '+e.message,'error'); }
 }
 
 
