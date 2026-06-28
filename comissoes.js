@@ -161,9 +161,8 @@ function comRenderResumoFinanceiro() {
   const el = document.getElementById('comResumoFinanceiro');
   if (!el) return;
 
-  // Only adesao and troca_titularidade generate commission
   const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const totalGerado = comissionaveis.reduce((s, o) => s + (parseFloat(o.valor) || 0), 0);
+  const totalGerado = comissionaveis.reduce((s, o) => { const d = o.dados || {}; return s + (parseFloat(d.valor) || parseFloat(o.valor) || 0); }, 0);
   const totalComissoes = comCalcularTotalComissoes(comissionaveis);
   const liquidoAVP = totalGerado - totalComissoes;
 
@@ -191,7 +190,8 @@ function comGetPercentual(usuarioId) {
 function comCalcularComissao(operacao) {
   if (operacao.tipo !== 'adesao' && operacao.tipo !== 'troca_titularidade') return 0;
   const percentual = comGetPercentual(operacao.usuario_id);
-  const valor = parseFloat(operacao.valor) || 0;
+  const d = operacao.dados || {};
+  const valor = parseFloat(d.valor) || parseFloat(operacao.valor) || 0;
   return valor * (percentual / 100);
 }
 
@@ -215,8 +215,9 @@ function comRenderRankings() {
   const byUser = {};
   comissionaveis.forEach(o => {
     if (!byUser[o.usuario_id]) byUser[o.usuario_id] = { ops: 0, total: 0, comissao: 0 };
+    const d = o.dados || {};
     byUser[o.usuario_id].ops++;
-    byUser[o.usuario_id].total += parseFloat(o.valor) || 0;
+    byUser[o.usuario_id].total += parseFloat(d.valor) || parseFloat(o.valor) || 0;
     byUser[o.usuario_id].comissao += comCalcularComissao(o);
   });
 
@@ -272,15 +273,21 @@ function comRenderTable() {
 
   let filtered = _comOperacoes;
   if (tipoFilter) filtered = filtered.filter(o => o.tipo === tipoFilter);
-  if (statusFilter) filtered = filtered.filter(o => (statusFilter === 'confirmado' ? o.status === 'confirmado' : o.status !== 'confirmado'));
+  if (statusFilter) {
+    filtered = filtered.filter(o => {
+      const st = (o.dados && o.dados.status) || o.status || 'pendente';
+      return statusFilter === 'confirmado' ? st === 'confirmado' : st !== 'confirmado';
+    });
+  }
   if (search) {
     const s = search.toLowerCase();
-    filtered = filtered.filter(o =>
-      (o.associado || '').toLowerCase().includes(s) ||
-      (o.placa || '').toLowerCase().includes(s) ||
-      ((o.dados && o.dados.placa_nova) || '').toLowerCase().includes(s) ||
-      ((o.dados && o.dados.novo_titular) || '').toLowerCase().includes(s)
-    );
+    filtered = filtered.filter(o => {
+      const d = o.dados || {};
+      return (d.associado || o.associado || '').toLowerCase().includes(s) ||
+        (d.placa || o.placa || '').toLowerCase().includes(s) ||
+        (d.placa_nova || '').toLowerCase().includes(s) ||
+        (d.novo_titular || '').toLowerCase().includes(s);
+    });
   }
 
   // Pagination
@@ -290,6 +297,9 @@ function comRenderTable() {
   const start = (_comPage - 1) * _comPageSize;
   const pageItems = filtered.slice(start, start + _comPageSize);
 
+
+  // Helper to get field from dados JSONB or direct column
+  const g = (o, field) => (o.dados && o.dados[field] !== undefined) ? o.dados[field] : o[field];
 
   if (pageItems.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma operacao encontrada</td></tr>';
@@ -301,11 +311,12 @@ function comRenderTable() {
       const tipoColors = { adesao: 'var(--green)', troca_titularidade: 'var(--amber)', troca_placa: 'var(--blue)', troca_plano: 'var(--purple,#8b5cf6)' };
       const tipoLabel = tipoLabels[o.tipo] || o.tipo;
       const tipoColor = tipoColors[o.tipo] || 'var(--text2)';
-      const assocName = escapeHtml(o.associado || (o.dados && o.dados.novo_titular) || '—');
-      const placa = escapeHtml(o.placa || (o.dados && o.dados.placa_nova) || '—');
-      const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? 'R$ ' + comFormatMoney(parseFloat(o.valor) || 0) : '—';
+      const assocName = escapeHtml(g(o, 'associado') || g(o, 'novo_titular') || '—');
+      const placa = escapeHtml(g(o, 'placa') || g(o, 'placa_nova') || '—');
+      const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? 'R$ ' + comFormatMoney(parseFloat(g(o, 'valor')) || 0) : '—';
       const dataStr = o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '—';
-      const statusHtml = o.status === 'confirmado'
+      const opStatus = g(o, 'status') || 'pendente';
+      const statusHtml = opStatus === 'confirmado'
         ? '<span style="font-size:.7rem;font-weight:600;color:var(--green);background:var(--green)15;padding:2px 8px;border-radius:10px">Confirmado</span>'
         : '<span style="font-size:.7rem;font-weight:600;color:var(--amber);background:var(--amber)15;padding:2px 8px;border-radius:10px">Pendente</span>';
 
@@ -344,15 +355,16 @@ function comOpenDetalhe(id) {
   if (!op) return;
   const user = _comUsersCache.find(u => u.id === op.usuario_id);
   const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca de Placa', troca_plano: 'Troca de Plano' };
+  const d = op.dados || {};
 
   let detailHtml = '<div class="drawer-title">' + (tipoLabels[op.tipo] || op.tipo) + '</div>';
   detailHtml += '<div style="display:grid;gap:10px;margin-top:16px">';
 
   const field = (label, val) => '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)"><span style="font-size:.72rem;color:var(--text3);font-weight:500">' + label + '</span><span style="font-size:.82rem;font-weight:500">' + escapeHtml(val || '—') + '</span></div>';
 
-  detailHtml += field('Colaborador', user ? user.nome : '—');
+  detailHtml += field('Colaborador', user ? user.nome : (d.usuario_nome || '—'));
   detailHtml += field('Data', op.created_at ? new Date(op.created_at).toLocaleString('pt-BR') : '—');
-  detailHtml += field('Status', op.status === 'confirmado' ? 'Confirmado' : 'Pendente');
+  detailHtml += field('Status', (d.status || 'pendente') === 'confirmado' ? 'Confirmado' : 'Pendente');
 
 
   if (op.tipo === 'adesao') {
@@ -413,7 +425,10 @@ function comOpenDetalhe(id) {
 
 async function comConfirmarOperacao(id) {
   try {
-    await supabase.update('operacoes', { status: 'confirmado', confirmado_at: new Date().toISOString() }, 'id=eq.' + id);
+    // Update dados.status inside JSONB
+    const op = _comOperacoes.find(o => o.id === id);
+    const dados = (op && op.dados) ? { ...op.dados, status: 'confirmado' } : { status: 'confirmado' };
+    await supabase.update('operacoes', { dados: dados }, 'id=eq.' + id);
     showToast('Operacao confirmada', 'success');
     closeDrawer();
     comRender();
@@ -516,76 +531,72 @@ async function comSalvarNovaOperacao() {
   const sedeId = (document.getElementById('novaOp_sede') || {}).value || null;
   const gv = (id) => (document.getElementById(id) || {}).value || '';
 
-  let data = {
-    tipo: tipo,
-    usuario_id: currentProfile ? currentProfile.id : null,
+  // Montar todos os campos no JSONB 'dados' para evitar erros de coluna inexistente
+  let dados = {
     usuario_nome: currentProfile ? currentProfile.nome : null,
     sede_id: sedeId,
-    status: 'pendente',
-    dados: {}
+    status: 'pendente'
   };
 
   if (tipo === 'adesao') {
     if (!gv('novaOp_associado') || !gv('novaOp_placa') || !gv('novaOp_data_ativacao') || !gv('novaOp_valor_adesao')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
-    data.associado = gv('novaOp_associado');
-    data.placa = gv('novaOp_placa').toUpperCase();
-    data.valor = parseFloat(gv('novaOp_valor_adesao')) || 0;
-    data.dados = {
-      data_ativacao: gv('novaOp_data_ativacao'),
-      origem_lead: gv('novaOp_origem_lead'),
-      valor_adesao: parseFloat(gv('novaOp_valor_adesao')) || 0,
-      valor_mensalidade: parseFloat(gv('novaOp_valor_mensalidade')) || 0
-    };
+    dados.associado = gv('novaOp_associado');
+    dados.placa = gv('novaOp_placa').toUpperCase();
+    dados.valor = parseFloat(gv('novaOp_valor_adesao')) || 0;
+    dados.data_ativacao = gv('novaOp_data_ativacao');
+    dados.origem_lead = gv('novaOp_origem_lead');
+    dados.valor_adesao = parseFloat(gv('novaOp_valor_adesao')) || 0;
+    dados.valor_mensalidade = parseFloat(gv('novaOp_valor_mensalidade')) || 0;
   } else if (tipo === 'troca_titularidade') {
     if (!gv('novaOp_placa') || !gv('novaOp_antigo_titular') || !gv('novaOp_novo_titular') || !gv('novaOp_valor')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
-    data.placa = gv('novaOp_placa').toUpperCase();
-    data.associado = gv('novaOp_novo_titular');
-    data.valor = parseFloat(gv('novaOp_valor')) || 0;
-    data.dados = {
-      antigo_titular: gv('novaOp_antigo_titular'),
-      novo_titular: gv('novaOp_novo_titular'),
-      data_efetuado: gv('novaOp_data_efetuado'),
-      data_pagamento: gv('novaOp_data_pagamento'),
-      situacao: gv('novaOp_situacao')
-    };
-
+    dados.placa = gv('novaOp_placa').toUpperCase();
+    dados.associado = gv('novaOp_novo_titular');
+    dados.valor = parseFloat(gv('novaOp_valor')) || 0;
+    dados.antigo_titular = gv('novaOp_antigo_titular');
+    dados.novo_titular = gv('novaOp_novo_titular');
+    dados.data_efetuado = gv('novaOp_data_efetuado');
+    dados.data_pagamento = gv('novaOp_data_pagamento');
+    dados.situacao = gv('novaOp_situacao');
   } else if (tipo === 'troca_placa') {
     if (!gv('novaOp_associado') || !gv('novaOp_placa_antiga') || !gv('novaOp_placa_nova')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
-    data.associado = gv('novaOp_associado');
-    data.placa = gv('novaOp_placa_nova').toUpperCase();
-    data.valor = 0;
-    data.dados = {
-      placa_antiga: gv('novaOp_placa_antiga').toUpperCase(),
-      placa_nova: gv('novaOp_placa_nova').toUpperCase(),
-      data_vencimento: gv('novaOp_data_vencimento'),
-      valor_antigo_veiculo: parseFloat(gv('novaOp_valor_antigo_veiculo')) || 0,
-      valor_novo_veiculo: parseFloat(gv('novaOp_valor_novo_veiculo')) || 0,
-      solicitado_por: gv('novaOp_solicitado_por')
-    };
+    dados.associado = gv('novaOp_associado');
+    dados.placa = gv('novaOp_placa_nova').toUpperCase();
+    dados.valor = 0;
+    dados.placa_antiga = gv('novaOp_placa_antiga').toUpperCase();
+    dados.placa_nova = gv('novaOp_placa_nova').toUpperCase();
+    dados.data_vencimento = gv('novaOp_data_vencimento');
+    dados.valor_antigo_veiculo = parseFloat(gv('novaOp_valor_antigo_veiculo')) || 0;
+    dados.valor_novo_veiculo = parseFloat(gv('novaOp_valor_novo_veiculo')) || 0;
+    dados.solicitado_por = gv('novaOp_solicitado_por');
   } else if (tipo === 'troca_plano') {
     if (!gv('novaOp_associado') || !gv('novaOp_plano_antigo') || !gv('novaOp_plano_novo')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
-    data.associado = gv('novaOp_associado');
-    data.placa = '';
-    data.valor = 0;
-    data.dados = {
-      plano_antigo: gv('novaOp_plano_antigo'),
-      plano_novo: gv('novaOp_plano_novo'),
-      valor_antigo_mensalidade: parseFloat(gv('novaOp_valor_antigo_mensalidade')) || 0,
-      valor_novo_mensalidade: parseFloat(gv('novaOp_valor_novo_mensalidade')) || 0,
-      solicitado_por: gv('novaOp_solicitado_por')
-    };
+    dados.associado = gv('novaOp_associado');
+    dados.placa = '';
+    dados.valor = 0;
+    dados.plano_antigo = gv('novaOp_plano_antigo');
+    dados.plano_novo = gv('novaOp_plano_novo');
+    dados.valor_antigo_mensalidade = parseFloat(gv('novaOp_valor_antigo_mensalidade')) || 0;
+    dados.valor_novo_mensalidade = parseFloat(gv('novaOp_valor_novo_mensalidade')) || 0;
+    dados.solicitado_por = gv('novaOp_solicitado_por');
   }
 
+  // Insert com apenas colunas que certamente existem: tipo, usuario_id, dados
+  const insertData = {
+    tipo: tipo,
+    usuario_id: currentProfile ? currentProfile.id : null,
+    dados: dados
+  };
+
   try {
-    await supabase.insert('operacoes', data);
+    await supabase.insert('operacoes', insertData);
     showToast('Operacao registrada com sucesso!', 'success');
     closeDrawer();
     comRender();
@@ -800,28 +811,28 @@ function comExportXLSX() {
   // Prepare data
   const rows = _comOperacoes.map(o => {
     const user = _comUsersCache.find(u => u.id === o.usuario_id);
-    const sede = _comSedes.find(s => s.id === o.sede_id);
+    const d = o.dados || {};
+    const sede = _comSedes.find(s => s.id === (d.sede_id || o.sede_id));
     const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
     return {
       'Tipo': tipoLabels[o.tipo] || o.tipo,
-      'Associado': o.associado || (o.dados && o.dados.novo_titular) || '',
-      'Placa': o.placa || (o.dados && o.dados.placa_nova) || '',
-      'Valor (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(o.valor) || 0) : '',
+      'Associado': d.associado || o.associado || d.novo_titular || '',
+      'Placa': d.placa || o.placa || d.placa_nova || '',
+      'Valor (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(d.valor) || parseFloat(o.valor) || 0) : '',
       'Comissao (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? comCalcularComissao(o) : '',
-      'Colaborador': user ? user.nome : '',
+      'Colaborador': user ? user.nome : (d.usuario_nome || ''),
       'Sede': sede ? sede.nome : '',
       'Data': o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '',
-      'Status': o.status === 'confirmado' ? 'Confirmado' : 'Pendente'
+      'Status': (d.status || 'pendente') === 'confirmado' ? 'Confirmado' : 'Pendente'
     };
   });
 
 
-  // Summary row
-  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const totalGerado = comissionaveis.reduce((s, o) => s + (parseFloat(o.valor) || 0), 0);
-  const totalComissoes = comCalcularTotalComissoes(comissionaveis);
+  const comissionaveis2 = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+  const totalGerado2 = comissionaveis2.reduce((s, o) => { const d2 = o.dados || {}; return s + (parseFloat(d2.valor) || parseFloat(o.valor) || 0); }, 0);
+  const totalComissoes2 = comCalcularTotalComissoes(comissionaveis2);
   rows.push({});
-  rows.push({ 'Tipo': 'RESUMO', 'Associado': '', 'Placa': '', 'Valor (R$)': totalGerado, 'Comissao (R$)': totalComissoes, 'Colaborador': '', 'Sede': '', 'Data': '', 'Status': 'Liquido AVP: R$ ' + comFormatMoney(totalGerado - totalComissoes) });
+  rows.push({ 'Tipo': 'RESUMO', 'Associado': '', 'Placa': '', 'Valor (R$)': totalGerado2, 'Comissao (R$)': totalComissoes2, 'Colaborador': '', 'Sede': '', 'Data': '', 'Status': 'Liquido AVP: R$ ' + comFormatMoney(totalGerado2 - totalComissoes2) });
 
   try {
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -882,8 +893,10 @@ async function comCheckConfirmacaoToken() {
       showToast('Link expirado', 'error');
       return;
     }
-    // Confirm the operation
-    await supabase.update('operacoes', { status: 'confirmado', confirmado_at: new Date().toISOString() }, 'id=eq.' + tokenData.operacao_id);
+    // Confirm the operation - update dados.status
+    const opRows = await supabase.select('operacoes', { filter: 'id=eq.' + tokenData.operacao_id });
+    const opData = (opRows && opRows[0] && opRows[0].dados) ? { ...opRows[0].dados, status: 'confirmado' } : { status: 'confirmado' };
+    await supabase.update('operacoes', { dados: opData }, 'id=eq.' + tokenData.operacao_id);
     await supabase.update('confirmacao_tokens', { usado: true }, 'id=eq.' + tokenData.id);
     showToast('Pagamento confirmado com sucesso!', 'success');
     // Clean URL
