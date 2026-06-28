@@ -278,8 +278,8 @@ function comRenderTable() {
     filtered = filtered.filter(o =>
       (o.associado || '').toLowerCase().includes(s) ||
       (o.placa || '').toLowerCase().includes(s) ||
-      (o.placa_nova || '').toLowerCase().includes(s) ||
-      (o.novo_titular || '').toLowerCase().includes(s)
+      ((o.dados && o.dados.placa_nova) || '').toLowerCase().includes(s) ||
+      ((o.dados && o.dados.novo_titular) || '').toLowerCase().includes(s)
     );
   }
 
@@ -301,8 +301,8 @@ function comRenderTable() {
       const tipoColors = { adesao: 'var(--green)', troca_titularidade: 'var(--amber)', troca_placa: 'var(--blue)', troca_plano: 'var(--purple,#8b5cf6)' };
       const tipoLabel = tipoLabels[o.tipo] || o.tipo;
       const tipoColor = tipoColors[o.tipo] || 'var(--text2)';
-      const assocName = escapeHtml(o.associado || o.novo_titular || '—');
-      const placa = escapeHtml(o.placa || o.placa_nova || '—');
+      const assocName = escapeHtml(o.associado || (o.dados && o.dados.novo_titular) || '—');
+      const placa = escapeHtml(o.placa || (o.dados && o.dados.placa_nova) || '—');
       const valor = (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? 'R$ ' + comFormatMoney(parseFloat(o.valor) || 0) : '—';
       const dataStr = o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '—';
       const statusHtml = o.status === 'confirmado'
@@ -356,37 +356,41 @@ function comOpenDetalhe(id) {
 
 
   if (op.tipo === 'adesao') {
+    const d = op.dados || {};
     detailHtml += field('Associado', op.associado);
     detailHtml += field('Placa', op.placa);
-    detailHtml += field('Data Ativacao', op.data_ativacao);
-    detailHtml += field('Origem Lead', op.origem_lead);
-    detailHtml += field('Valor Adesao', 'R$ ' + comFormatMoney(parseFloat(op.valor_adesao) || 0));
-    detailHtml += field('Valor Mensalidade', 'R$ ' + comFormatMoney(parseFloat(op.valor_mensalidade) || 0));
+    detailHtml += field('Data Ativacao', d.data_ativacao);
+    detailHtml += field('Origem Lead', d.origem_lead);
+    detailHtml += field('Valor Adesao', 'R$ ' + comFormatMoney(parseFloat(d.valor_adesao) || 0));
+    detailHtml += field('Valor Mensalidade', 'R$ ' + comFormatMoney(parseFloat(d.valor_mensalidade) || 0));
     detailHtml += field('Comissao (' + comGetPercentual(op.usuario_id) + '%)', 'R$ ' + comFormatMoney(comCalcularComissao(op)));
   } else if (op.tipo === 'troca_titularidade') {
+    const d = op.dados || {};
     detailHtml += field('Placa', op.placa);
-    detailHtml += field('Antigo Titular', op.antigo_titular);
-    detailHtml += field('Novo Titular', op.novo_titular);
-    detailHtml += field('Data Efetuado', op.data_efetuado);
-    detailHtml += field('Data Pagamento', op.data_pagamento);
+    detailHtml += field('Antigo Titular', d.antigo_titular);
+    detailHtml += field('Novo Titular', d.novo_titular);
+    detailHtml += field('Data Efetuado', d.data_efetuado);
+    detailHtml += field('Data Pagamento', d.data_pagamento);
     detailHtml += field('Valor', 'R$ ' + comFormatMoney(parseFloat(op.valor) || 0));
-    detailHtml += field('Situacao', op.situacao);
+    detailHtml += field('Situacao', d.situacao);
     detailHtml += field('Comissao (' + comGetPercentual(op.usuario_id) + '%)', 'R$ ' + comFormatMoney(comCalcularComissao(op)));
   } else if (op.tipo === 'troca_placa') {
+    const d = op.dados || {};
     detailHtml += field('Associado', op.associado);
-    detailHtml += field('Placa Antiga', op.placa_antiga);
-    detailHtml += field('Placa Nova', op.placa_nova);
-    detailHtml += field('Data Vencimento', op.data_vencimento);
-    detailHtml += field('Valor Antigo Veiculo', 'R$ ' + comFormatMoney(parseFloat(op.valor_antigo_veiculo) || 0));
-    detailHtml += field('Valor Novo Veiculo', 'R$ ' + comFormatMoney(parseFloat(op.valor_novo_veiculo) || 0));
-    detailHtml += field('Solicitado por', op.solicitado_por);
+    detailHtml += field('Placa Antiga', d.placa_antiga);
+    detailHtml += field('Placa Nova', d.placa_nova);
+    detailHtml += field('Data Vencimento', d.data_vencimento);
+    detailHtml += field('Valor Antigo Veiculo', 'R$ ' + comFormatMoney(parseFloat(d.valor_antigo_veiculo) || 0));
+    detailHtml += field('Valor Novo Veiculo', 'R$ ' + comFormatMoney(parseFloat(d.valor_novo_veiculo) || 0));
+    detailHtml += field('Solicitado por', d.solicitado_por);
   } else if (op.tipo === 'troca_plano') {
+    const d = op.dados || {};
     detailHtml += field('Associado', op.associado);
-    detailHtml += field('Plano Antigo', op.plano_antigo);
-    detailHtml += field('Plano Novo', op.plano_novo);
-    detailHtml += field('Valor Antigo', 'R$ ' + comFormatMoney(parseFloat(op.valor_antigo_mensalidade) || 0));
-    detailHtml += field('Valor Novo', 'R$ ' + comFormatMoney(parseFloat(op.valor_novo_mensalidade) || 0));
-    detailHtml += field('Solicitado por', op.solicitado_por);
+    detailHtml += field('Plano Antigo', d.plano_antigo);
+    detailHtml += field('Plano Novo', d.plano_novo);
+    detailHtml += field('Valor Antigo', 'R$ ' + comFormatMoney(parseFloat(d.valor_antigo_mensalidade) || 0));
+    detailHtml += field('Valor Novo', 'R$ ' + comFormatMoney(parseFloat(d.valor_novo_mensalidade) || 0));
+    detailHtml += field('Solicitado por', d.solicitado_por);
   }
 
 
@@ -517,7 +521,8 @@ async function comSalvarNovaOperacao() {
     usuario_id: currentProfile ? currentProfile.id : null,
     usuario_nome: currentProfile ? currentProfile.nome : null,
     sede_id: sedeId,
-    status: 'pendente'
+    status: 'pendente',
+    dados: {}
   };
 
   if (tipo === 'adesao') {
@@ -526,47 +531,57 @@ async function comSalvarNovaOperacao() {
     }
     data.associado = gv('novaOp_associado');
     data.placa = gv('novaOp_placa').toUpperCase();
-    data.data_ativacao = gv('novaOp_data_ativacao');
-    data.origem_lead = gv('novaOp_origem_lead');
-    data.valor_adesao = parseFloat(gv('novaOp_valor_adesao')) || 0;
-    data.valor_mensalidade = parseFloat(gv('novaOp_valor_mensalidade')) || 0;
-    data.valor = data.valor_adesao; // valor principal para calculo de comissao
+    data.valor = parseFloat(gv('novaOp_valor_adesao')) || 0;
+    data.dados = {
+      data_ativacao: gv('novaOp_data_ativacao'),
+      origem_lead: gv('novaOp_origem_lead'),
+      valor_adesao: parseFloat(gv('novaOp_valor_adesao')) || 0,
+      valor_mensalidade: parseFloat(gv('novaOp_valor_mensalidade')) || 0
+    };
   } else if (tipo === 'troca_titularidade') {
     if (!gv('novaOp_placa') || !gv('novaOp_antigo_titular') || !gv('novaOp_novo_titular') || !gv('novaOp_valor')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
     data.placa = gv('novaOp_placa').toUpperCase();
-    data.antigo_titular = gv('novaOp_antigo_titular');
-    data.novo_titular = gv('novaOp_novo_titular');
-    data.data_efetuado = gv('novaOp_data_efetuado');
-    data.data_pagamento = gv('novaOp_data_pagamento');
+    data.associado = gv('novaOp_novo_titular');
     data.valor = parseFloat(gv('novaOp_valor')) || 0;
-    data.situacao = gv('novaOp_situacao');
+    data.dados = {
+      antigo_titular: gv('novaOp_antigo_titular'),
+      novo_titular: gv('novaOp_novo_titular'),
+      data_efetuado: gv('novaOp_data_efetuado'),
+      data_pagamento: gv('novaOp_data_pagamento'),
+      situacao: gv('novaOp_situacao')
+    };
 
   } else if (tipo === 'troca_placa') {
     if (!gv('novaOp_associado') || !gv('novaOp_placa_antiga') || !gv('novaOp_placa_nova')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
     data.associado = gv('novaOp_associado');
-    data.placa_antiga = gv('novaOp_placa_antiga').toUpperCase();
-    data.placa_nova = gv('novaOp_placa_nova').toUpperCase();
-    data.placa = data.placa_nova;
-    data.data_vencimento = gv('novaOp_data_vencimento');
-    data.valor_antigo_veiculo = parseFloat(gv('novaOp_valor_antigo_veiculo')) || 0;
-    data.valor_novo_veiculo = parseFloat(gv('novaOp_valor_novo_veiculo')) || 0;
-    data.solicitado_por = gv('novaOp_solicitado_por');
-    data.valor = 0; // nao gera comissao
+    data.placa = gv('novaOp_placa_nova').toUpperCase();
+    data.valor = 0;
+    data.dados = {
+      placa_antiga: gv('novaOp_placa_antiga').toUpperCase(),
+      placa_nova: gv('novaOp_placa_nova').toUpperCase(),
+      data_vencimento: gv('novaOp_data_vencimento'),
+      valor_antigo_veiculo: parseFloat(gv('novaOp_valor_antigo_veiculo')) || 0,
+      valor_novo_veiculo: parseFloat(gv('novaOp_valor_novo_veiculo')) || 0,
+      solicitado_por: gv('novaOp_solicitado_por')
+    };
   } else if (tipo === 'troca_plano') {
     if (!gv('novaOp_associado') || !gv('novaOp_plano_antigo') || !gv('novaOp_plano_novo')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
     }
     data.associado = gv('novaOp_associado');
-    data.plano_antigo = gv('novaOp_plano_antigo');
-    data.plano_novo = gv('novaOp_plano_novo');
-    data.valor_antigo_mensalidade = parseFloat(gv('novaOp_valor_antigo_mensalidade')) || 0;
-    data.valor_novo_mensalidade = parseFloat(gv('novaOp_valor_novo_mensalidade')) || 0;
-    data.solicitado_por = gv('novaOp_solicitado_por');
-    data.valor = 0; // nao gera comissao
+    data.placa = '';
+    data.valor = 0;
+    data.dados = {
+      plano_antigo: gv('novaOp_plano_antigo'),
+      plano_novo: gv('novaOp_plano_novo'),
+      valor_antigo_mensalidade: parseFloat(gv('novaOp_valor_antigo_mensalidade')) || 0,
+      valor_novo_mensalidade: parseFloat(gv('novaOp_valor_novo_mensalidade')) || 0,
+      solicitado_por: gv('novaOp_solicitado_por')
+    };
   }
 
   try {
@@ -789,8 +804,8 @@ function comExportXLSX() {
     const tipoLabels = { adesao: 'Adesao', troca_titularidade: 'Troca Titularidade', troca_placa: 'Troca Placa', troca_plano: 'Troca Plano' };
     return {
       'Tipo': tipoLabels[o.tipo] || o.tipo,
-      'Associado': o.associado || o.novo_titular || '',
-      'Placa': o.placa || o.placa_nova || '',
+      'Associado': o.associado || (o.dados && o.dados.novo_titular) || '',
+      'Placa': o.placa || (o.dados && o.dados.placa_nova) || '',
       'Valor (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? (parseFloat(o.valor) || 0) : '',
       'Comissao (R$)': (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') ? comCalcularComissao(o) : '',
       'Colaborador': user ? user.nome : '',
