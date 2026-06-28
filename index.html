@@ -6687,7 +6687,7 @@ function renderTempReleases(){
     else{detalhes='Ano: '+(t.ano_original||'?')+' &rarr; <strong>'+(t.ano_temporario||'?')+'</strong>';}
     var autorNome=escapeHtml(t.autorizador_nome||'—');
     var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
-    var anexoHtml=t.anexo_url?'<a href="'+t.anexo_url+'" target="_blank" style="font-size:.68rem;color:var(--blue)">Ver anexo</a> <button class="btn btn-sm" onclick="trocarAnexoLiberacao('+realIdx+')" title="Substituir imagem anexada" style="font-size:.6rem;padding:1px 5px;margin-left:4px">Trocar</button> <span onclick="removerAnexoLiberacao('+realIdx+')" style="cursor:pointer;font-size:9px;font-weight:700;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:3px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Remover anexo">&#10005;</span>':'<button class="btn btn-sm" onclick="anexarFotoLiberacao('+realIdx+')" title="Anexar imagem de autorizacao" style="font-size:.65rem;padding:2px 6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Anexar</button>';
+    var anexoHtml=t.anexo_url?'<div style="margin-top:4px;padding:6px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--text3)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style="font-size:.68rem;color:var(--text2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(t.anexo_url.split('/').pop())+'</span><span style="display:flex;gap:6px;font-size:.65rem"><a href="'+t.anexo_url+'" target="_blank" style="color:var(--blue);text-decoration:none">Ver</a><span style="color:var(--border-strong)">·</span><span onclick="trocarAnexoLiberacao('+realIdx+')" style="cursor:pointer;color:var(--text2)">Trocar</span><span style="color:var(--border-strong)">·</span><span onclick="confirmarRemoverAnexo('+realIdx+')" style="cursor:pointer;color:var(--red)">Remover</span></span></div>':'<div style="margin-top:4px"><button class="btn btn-sm" onclick="anexarFotoLiberacao('+realIdx+')" style="font-size:.65rem;padding:4px 8px;display:inline-flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Anexar imagem</button></div>';
     return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+'<br>'+anexoHtml+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
   var pagEl=document.getElementById('tempReleasesPagination');
@@ -7188,6 +7188,15 @@ async function removerAnexoLiberacao(idx){
     showToast('Anexo removido','success');
     renderTempReleases();
   }catch(e){showToast('Erro ao remover: '+e.message,'error');}
+}
+
+function confirmarRemoverAnexo(idx){
+  var t=TEMP_RELEASES[idx];
+  if(!t) return;
+  showModal('Remover anexo?','<div style="line-height:1.8"><span style="font-size:.82rem">Deseja remover a imagem anexada a esta liberacao?</span><br><br><span style="font-size:.75rem;color:var(--text2)">A imagem sera excluida permanentemente do servidor. Esta acao nao pode ser desfeita.</span></div>',function(){
+    closeModal();
+    removerAnexoLiberacao(idx);
+  },'red','Remover');
 }
 
 function loadTempReleasesFromStorage(){
