@@ -5604,7 +5604,6 @@ function getStagingData(){
         if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
       }
     } else if(op.type==='Edição'){
-      // Remove old model name, add new model name in same category
       if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
         const idx = copy[op.catFrom].brands[op.marca].indexOf(op.oldModelo);
         if(idx>=0) copy[op.catFrom].brands[op.marca].splice(idx,1);
@@ -5615,6 +5614,8 @@ function getStagingData(){
       if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
     } else if(op.type==='Remoção de Marca'){
       if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const count=copy[op.catFrom].brands[op.marca].length;
+        copy[op.catFrom].total-=count;
         delete copy[op.catFrom].brands[op.marca];
       }
     } else if(op.type==='Edição de Marca'){
@@ -5622,9 +5623,38 @@ function getStagingData(){
         copy[op.catFrom].brands[op.newMarca]=copy[op.catFrom].brands[op.oldMarca];
         delete copy[op.catFrom].brands[op.oldMarca];
       }
+    } else if(op.type==='Mover'||op.type==='Movimentação'){
+      if(copy[op.catFrom]&&copy[op.catFrom].brands[op.marca]){
+        const idx=copy[op.catFrom].brands[op.marca].indexOf(op.modelo);
+        if(idx>=0){copy[op.catFrom].brands[op.marca].splice(idx,1);copy[op.catFrom].total--;}
+        if(copy[op.catFrom].brands[op.marca].length===0) delete copy[op.catFrom].brands[op.marca];
+      }
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+      if(!copy[op.catTo].brands[op.marca]) copy[op.catTo].brands[op.marca]=[];
+      copy[op.catTo].brands[op.marca].push(op.modelo);
+      copy[op.catTo].total++;
+    } else if(op.type==='Criação de Categoria'){
+      if(!copy[op.catTo]) copy[op.catTo]={total:0,brands:{}};
+    } else if(op.type==='Remoção de Categoria'){
+      if(copy[op.catFrom]) delete copy[op.catFrom];
+    } else if(op.type==='Edição de Categoria'||op.type==='Renomeação de Categoria'){
+      if(copy[op.catFrom]){
+        copy[op.catTo]=copy[op.catFrom];
+        delete copy[op.catFrom];
+      }
     }
   }
   return copy;
+}
+
+// Retorna categorias que foram removidas/renomeadas no staging
+function getStagingDeletedCategories(){
+  const deleted=[];
+  for(const op of STAGING.ops){
+    if(op.type==='Remoção de Categoria') deleted.push(op.catFrom);
+    if(op.type==='Edição de Categoria'||op.type==='Renomeação de Categoria') deleted.push(op.catFrom);
+  }
+  return deleted;
 }
 
 function hasStagingChanges(){return STAGING.ops.length>0;}
@@ -5708,6 +5738,18 @@ async function commitDirectAction(op){
       RAW[op.catFrom].total-=count;
       delete RAW[op.catFrom].brands[op.marca];
     }
+  } else if(op.type==='Mover'||op.type==='Movimentação'){
+    // Move model from one category to another
+    const cat=op.catFrom;
+    if(RAW[cat]&&RAW[cat].brands[op.marca]){
+      const idx=RAW[cat].brands[op.marca].indexOf(op.modelo);
+      if(idx>=0){RAW[cat].brands[op.marca].splice(idx,1);RAW[cat].total--;}
+      if(RAW[cat].brands[op.marca].length===0) delete RAW[cat].brands[op.marca];
+    }
+    if(!RAW[op.catTo]) RAW[op.catTo]={total:0,brands:{}};
+    if(!RAW[op.catTo].brands[op.marca]) RAW[op.catTo].brands[op.marca]=[];
+    RAW[op.catTo].brands[op.marca].push(op.modelo);
+    RAW[op.catTo].total++;
   } else if(op.type==='Alterar Ano'||op.type==='Alterar Tipo FIPE'||op.type==='Ignorar Divergência'){
     // Metadata changes - no RAW structure change needed, just history
     // Alterar Ano: update ano_aceitacao in ANOS_ACEITACAO + Supabase
@@ -5729,6 +5771,26 @@ async function commitDirectAction(op){
           await supabase.update('modelos',{ano_aceitacao:anoVal},'categoria_id=eq.'+catId+'&marca=eq.'+encodeURIComponent(op.marca)+'&modelo=eq.'+encodeURIComponent(op.modelo));
         }
       }catch(e){console.warn('Erro ao atualizar ano no Supabase:',e);}
+    }
+    // Ignorar Divergência: persist to divergencias_ignoradas table
+    if(op.type==='Ignorar Divergência'){
+      try{
+        await supabase.ignorarDivergencia(op.marca, op.modelo, op.catFrom, op.catTo, currentUser||'admin');
+        if(typeof DIVERGENCIAS_IGNORADAS!=='undefined'){
+          DIVERGENCIAS_IGNORADAS.push({marca:op.marca, modelo:op.modelo, categoria_origem:op.catFrom, categoria_destino:op.catTo});
+        }
+      }catch(e){console.warn('Erro ao ignorar divergencia no Supabase:',e);}
+    }
+    // Alterar Tipo FIPE: update tipo_fipe on categoria in Supabase
+    if(op.type==='Alterar Tipo FIPE'){
+      try{
+        const catIdMap=window._catIdMap||{};
+        const catId=catIdMap[op.catFrom];
+        if(catId && op.details){
+          const newTipo=(op.details||'').split('\u2192').pop().trim();
+          if(newTipo) await supabase.update('categorias',{tipo_fipe:newTipo},'id=eq.'+catId);
+        }
+      }catch(e){console.warn('Erro ao atualizar tipo FIPE no Supabase:',e);}
     }
   }
 
@@ -5830,7 +5892,12 @@ function commitStaging(){
   showModal('Salvar Alterações','Deseja aplicar '+STAGING.ops.length+' alteração(ões) à base de dados?',async ()=>{
     // 1. Apply changes to RAW immediately
     const d = getStagingData();
+    const deletedCats = getStagingDeletedCategories();
+    // Replace RAW entirely with staged version (includes additions, removals, edits)
+    for(const key of Object.keys(RAW)) delete RAW[key];
     for(const[k,v] of Object.entries(d)) RAW[k]=v;
+    // Remove deleted categories explicitly
+    for(const cat of deletedCats) delete RAW[cat];
     for(const op of STAGING.ops){
       HISTORY.push({...op, timestamp: new Date().toLocaleString("pt-BR")});
       mgmtStats[op.type==='Adição'?'added':op.type==='Remoção'?'removed':op.type==='Edição'?'moved':'moved']++;
@@ -5850,11 +5917,6 @@ function commitStaging(){
     try{
       const saved=await safeSave();
       if(saved){
-        // Also save temp releases to database
-        if(TEMP_RELEASES.length>0){
-          // Supabase: temp releases saved via supabase client
-          try{await supabase.insert('liberacoes_temporarias',TEMP_RELEASES.map(t=>({marca:t.marca,modelo:t.modelo,categoria:t.categoria,motivo:t.motivo,observacao:t.obs||'',status:t.status,usuario_criacao:t.usuario||currentUser||''})));}catch(e){}
-        }
         // 4. Success: clear saving state
         _savingOps=[];
         rebuildPendingIndex();
@@ -5894,7 +5956,6 @@ async function commitStagingSingle(idx){
     renderStagingBars();
     renderStagingTable();
     renderKPIs();
-    showToast('Alteracao aplicada com sucesso!','success');
   }catch(e){showToast('Erro: '+e.message,'error');}
 }
 
@@ -7697,15 +7758,36 @@ async function saveToDatabase(){
   isSyncing=true;
   try{
     showSyncStatus('loading','Salvando no Supabase...');
-    // Save all models to Supabase
+
+    // 1. Sync categories first (create new, rename, delete)
     const catIdMap = window._catIdMap || {};
-    if(Object.keys(catIdMap).length === 0){
-      // Reload categories to get IDs
-      const cats = await supabase.select('categorias');
-      for(const c of cats) catIdMap[c.nome] = c.id;
-      window._catIdMap = catIdMap;
+    const existingCats = await supabase.select('categorias', { select: 'id,nome' });
+    const existingMap = {};
+    for(const c of existingCats) { existingMap[c.nome] = c.id; catIdMap[c.nome] = c.id; }
+
+    // Create categories that exist in RAW but not in Supabase
+    for(const catName of Object.keys(RAW)){
+      if(!existingMap[catName]){
+        try{
+          const result = await supabase.insert('categorias', { nome: catName, ativo: true }, { returnData: true });
+          if(result && result[0]) { catIdMap[catName] = result[0].id; }
+        }catch(e){ console.warn('Erro ao criar categoria '+catName+':', e); }
+      }
     }
+
+    // Deactivate categories that are in Supabase but no longer in RAW
+    for(const [nome, id] of Object.entries(existingMap)){
+      if(!RAW[nome]){
+        try{ await supabase.update('categorias', { ativo: false }, 'id=eq.' + id); }catch(e){}
+        delete catIdMap[nome];
+      }
+    }
+
+    window._catIdMap = catIdMap;
+
+    // 2. Save all models
     await supabase.saveFullBase(RAW, catIdMap);
+
     // Update cache
     try{localStorage.setItem('avp-raw-cache',JSON.stringify(RAW));}catch(e){}
     try{localStorage.setItem('avp-anos-cache',JSON.stringify(ANOS_ACEITACAO));}catch(e){}
