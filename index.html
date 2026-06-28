@@ -2598,8 +2598,6 @@ function renderRecentActivity(){
     }
   }
 
-  activities = activities.reverse();
-
   if(activities.length === 0){
     el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteração recente</h4><p style="font-size:.75rem">As alterações confirmadas aparecerão aqui.</p></div>';
     return;
