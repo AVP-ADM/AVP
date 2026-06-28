@@ -484,7 +484,8 @@ function comRenderFormFields() {
   };
 
   let html = '';
-  html += mkField('novaOp_sede', 'Sede', 'select_sede', '', false);
+  const sedeRequired = currentProfile && currentProfile.nivel !== 'admin';
+  html += mkField('novaOp_sede', 'Sede' + (sedeRequired ? ' *' : ''), 'select_sede', '', sedeRequired);
 
 
   if (tipo === 'adesao') {
@@ -527,6 +528,11 @@ async function comSalvarNovaOperacao() {
   const tipo = (document.getElementById('novaOp_tipo') || {}).value;
   const sedeId = (document.getElementById('novaOp_sede') || {}).value || null;
   const gv = (id) => (document.getElementById(id) || {}).value || '';
+
+  // Operador DEVE selecionar uma sede; admin pode deixar sem
+  if (!sedeId && currentProfile && currentProfile.nivel !== 'admin') {
+    showToast('Selecione uma sede', 'error'); return;
+  }
 
   // Montar todos os campos no JSONB 'dados' para evitar erros de coluna inexistente
   let dados = {
