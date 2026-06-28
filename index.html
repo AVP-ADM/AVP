@@ -6409,6 +6409,16 @@ function renderHistory(){
     if(!catOrigem && !catDestino && h.detalhes && h.detalhes.startsWith('{')){
       try{const d=JSON.parse(h.detalhes);catOrigem=d.catFrom||'';catDestino=d.catTo||'';}catch(e){}
     }
+    // Para Alterar Ano, mostrar detalhes do ano na coluna destino
+    let extraInfo = '';
+    if(htype==='Alterar Ano'){
+      const det = h.detalhes || h.details || '';
+      if(det.startsWith('{')){
+        try{const d=JSON.parse(det);if(d.details) extraInfo=d.details;}catch(e){}
+      } else if(det) {
+        extraInfo = det;
+      }
+    }
     if(!catOrigem && catDestino) catOrigem = '';
     if(!catDestino && catOrigem && htype.includes('Remoção')) catDestino = '';
     const isCatOp = htype.includes('Categoria');
@@ -6420,7 +6430,7 @@ function renderHistory(){
     <td>${isCatOp?'—':escapeHtml(hmarca)}</td>
     <td>${isCatOp?'—':escapeHtml(hmodelo)}</td>
     <td>${escapeHtml(catOrigem)||'—'}</td>
-    <td>${escapeHtml(catDestino)||'—'}</td>
+    <td>${extraInfo ? '<span style="font-size:.72rem;color:var(--amber);font-weight:500">'+escapeHtml(extraInfo)+'</span>' : (escapeHtml(catDestino)||'—')}</td>
   </tr>`;
   }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
