@@ -164,23 +164,21 @@ function comRenderChips() {
   const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado').length;
   const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado').length;
 
-  const chip = (val, label, color) => {
+  const chip = (val, label) => {
     const op = val > 0 ? '1' : '0.4';
-    const bg = val > 0 ? color + '18' : 'transparent';
-    const border = val > 0 ? color + '30' : 'var(--border)';
-    return '<span style="font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';opacity:' + op + '">' + val + ' ' + label + '</span>';
+    return '<span style="font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text2);opacity:' + op + '">' + val + ' ' + label + '</span>';
   };
 
-  const dotChip = (val, label, color) => {
+  const dotChip = (val, label, dotColor) => {
     const op = val > 0 ? '1' : '0.4';
-    return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:' + color + '18;border:1px solid ' + color + '30;color:' + color + ';opacity:' + op + '"><span style="width:6px;height:6px;border-radius:50%;background:' + color + '"></span>' + val + ' ' + label + '</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text2);opacity:' + op + '"><span style="width:6px;height:6px;border-radius:50%;background:' + dotColor + '"></span>' + val + ' ' + label + '</span>';
   };
 
   el.innerHTML =
-    chip(adesoes, 'Adesoes', 'var(--green)') +
-    chip(trocaTit, 'Troca Tit.', 'var(--amber)') +
-    chip(trocaPlaca, 'Troca Placa', 'var(--text2)') +
-    chip(trocaPlano, 'Troca Plano', 'var(--text2)') +
+    chip(adesoes, 'Adesoes') +
+    chip(trocaTit, 'Troca Tit.') +
+    chip(trocaPlaca, 'Troca Placa') +
+    chip(trocaPlano, 'Troca Plano') +
     '<span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>' +
     dotChip(confirmadas, 'Confirmada' + (confirmadas !== 1 ? 's' : ''), 'var(--green)') +
     dotChip(pendentes, 'Pendente' + (pendentes !== 1 ? 's' : ''), 'var(--amber)');
