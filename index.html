@@ -9724,9 +9724,6 @@ async function initDataConnection(){
     enableExportButtons();
     showSyncStatus('success','Conectado ao Supabase');
 
-    // Inicializar notificações (após profile carregado)
-    notifInit().then(()=>{ notifShowLoginModal(); });
-
   } catch(err){
     console.error('Erro ao carregar do Supabase:',err);
     // Check if we have cached data - if so, it's not a total failure
@@ -9772,6 +9769,8 @@ function checkSession(){
       supabase.getProfile(session.user.id).then(profile=>{
         currentProfile=profile;
         applyAccessLevels();
+        // Inicializar notificações assim que profile estiver disponível
+        notifInit().then(()=>{ notifShowLoginModal(); });
       }).catch(()=>{});
       showApp();
       return true;
@@ -9895,6 +9894,8 @@ async function doLogin(){
       // Start session verification
       startSessionCheck();
       logSystem('login','Login realizado');
+      // Inicializar notificações imediatamente após login (não espera base carregar)
+      notifInit().then(()=>{ notifShowLoginModal(); });
     } else {
       recordLoginAttempt();
       const msg=result.error_description||result.msg||result.error?.message||'Usuario ou senha incorretos';

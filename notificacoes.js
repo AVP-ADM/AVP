@@ -407,6 +407,9 @@ function notifAdminOpenForm(notif) {
   html += '<input type="datetime-local" id="notif_data_agendada" style="display:none;margin-top:6px"></div>';
 
   html += '<button class="btn btn-green" style="width:100%;margin-top:16px" onclick="notifAdminSalvar(\'' + (isEdit ? notif.id : '') + '\')">' + (isEdit ? 'Salvar Alteracoes' : 'Publicar Notificacao') + '</button>';
+  if (isEdit) {
+    html += '<div style="font-size:.68rem;color:var(--amber);text-align:center;margin-top:8px">Ao editar, todos os usuarios que ja confirmaram leitura precisarao confirmar novamente.</div>';
+  }
   html += '</div>';
 
   // Store options data for dynamic fields
@@ -487,7 +490,9 @@ async function notifAdminSalvar(editId) {
   try {
     if (editId) {
       await supabase.update('notificacoes', data, 'id=eq.' + editId);
-      showToast('Notificacao atualizada', 'success');
+      // Resetar todas as confirmações de leitura (usuários precisarão confirmar novamente)
+      await supabase.delete('leituras_notificacoes', 'notificacao_id=eq.' + editId);
+      showToast('Notificacao atualizada. Leituras resetadas.', 'success');
     } else {
       await supabase.insert('notificacoes', data);
       showToast('Notificacao publicada', 'success');
