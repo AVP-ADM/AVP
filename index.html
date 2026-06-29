@@ -9107,29 +9107,30 @@ function openCreateUserModal(){
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="newUserName" placeholder="Nome completo" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="newUserEmail" placeholder="email@exemplo.com" style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label>${passwordFieldHtml('newUserPass','Senha do novo usuário...')}</div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="operador">Operador</option><option value="admin">Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="newUserSetor" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
+      <div style="padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)">
+        <div style="font-size:.72rem;color:var(--text3);margin-bottom:2px">Senha padrao do primeiro acesso:</div>
+        <div style="font-size:.82rem;font-weight:600;color:var(--text1);font-family:monospace">Autovale123#</div>
+        <div style="font-size:.65rem;color:var(--text3);margin-top:4px">O usuario sera obrigado a trocar no primeiro login.</div>
+      </div>
     </div>
   `,async function(){
     const nome=document.getElementById('newUserName').value.trim();
     const email=document.getElementById('newUserEmail').value.trim();
-    const pass=document.getElementById('newUserPass').value;
     const nivel=document.getElementById('newUserNivel').value;
     const setor=document.getElementById('newUserSetor').value.trim();
-    if(!nome||!email||!pass){showToast('Preencha nome, email e senha','error');return;}
-    const passErr=validatePassword(pass);
-    if(passErr){showToast(passErr,'error');return;}
+    if(!nome||!email){showToast('Preencha nome e email','error');return;}
     try{
-      // Create user in Supabase Auth
-      const result=await supabase.signUp(email,pass,{nome:nome});
+      // Create user in Supabase Auth com senha padrão
+      const result=await supabase.signUp(email,'Autovale123#',{nome:nome});
       if(result.error||(!result.user&&!result.id)){
         showToast('Erro ao criar usuário: '+(result.error?.message||result.msg||'Falha desconhecida'),'error');
         return;
       }
       const userId=result.user?.id||result.id;
-      // Create profile
-      await supabase.insert('perfis',[{id:userId,nome:nome,email:email,nivel:nivel,setor:setor||null,ativo:true}]);
+      // Create profile com primeiro_acesso = true
+      await supabase.insert('perfis',[{id:userId,nome:nome,email:email,nivel:nivel,setor:setor||null,ativo:true,primeiro_acesso:true}]);
       closeModal();
       showToast('Usuário "'+nome+'" criado com sucesso!','success');
       renderSettingsUsers();
@@ -9889,6 +9890,11 @@ async function doLogin(){
       try{
         currentProfile=await supabase.getProfile(result.user.id);
       }catch(e){ currentProfile=null; }
+      // Verificar primeiro acesso (troca de senha obrigatória)
+      if(currentProfile && currentProfile.primeiro_acesso){
+        showFirstAccessScreen();
+        return;
+      }
       showApp();
       initApp();
       // Start session verification
@@ -9915,6 +9921,63 @@ async function doLogin(){
     console.error('Login error:',e);
     // Reset button
     if(btn){btn.disabled=false;btn.textContent=btn.dataset.origText||'Entrar';}
+  }
+}
+
+// ========= FIRST ACCESS (troca de senha obrigatória) =========
+function showFirstAccessScreen(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appHeader').style.display='none';
+  document.getElementById('appContainer').style.display='none';
+  // Criar tela de troca
+  let screen=document.getElementById('firstAccessScreen');
+  if(!screen){
+    screen=document.createElement('div');
+    screen.id='firstAccessScreen';
+    screen.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999';
+    document.body.appendChild(screen);
+  }
+  screen.style.display='flex';
+  screen.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;max-width:400px;width:90%">'+
+    '<div style="font-size:1.1rem;font-weight:700;color:var(--text1);margin-bottom:8px">Bem-vindo ao AVP!</div>'+
+    '<div style="font-size:.78rem;color:var(--text3);margin-bottom:24px">Para sua seguranca, defina uma nova senha antes de continuar.</div>'+
+    '<div style="margin-bottom:14px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nova Senha</label>'+passwordFieldHtml('firstAccessPass1','Min. 8 caracteres')+'</div>'+
+    '<div style="margin-bottom:16px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Confirmar Senha</label>'+passwordFieldHtml('firstAccessPass2','Confirme a nova senha')+'</div>'+
+    '<div style="font-size:.68rem;color:var(--text3);margin-bottom:20px;line-height:1.6">'+
+      'Requisitos:<br>'+
+      '- Min. 8 caracteres<br>'+
+      '- 1 letra maiuscula<br>'+
+      '- 1 numero<br>'+
+      '- 1 caractere especial'+
+    '</div>'+
+    '<button class="btn btn-green" style="width:100%" onclick="submitFirstAccess()">Definir Nova Senha</button>'+
+  '</div>';
+}
+
+async function submitFirstAccess(){
+  const pass1=(document.getElementById('firstAccessPass1')||{}).value||'';
+  const pass2=(document.getElementById('firstAccessPass2')||{}).value||'';
+  if(!pass1||!pass2){showToast('Preencha ambos os campos','error');return;}
+  if(pass1!==pass2){showToast('As senhas nao coincidem','error');return;}
+  if(pass1==='Autovale123#'){showToast('Escolha uma senha diferente da padrao','error');return;}
+  const passErr=validatePassword(pass1);
+  if(passErr){showToast(passErr,'error');return;}
+  try{
+    await supabase.updatePassword(pass1);
+    // Marcar primeiro_acesso = false
+    await supabase.update('perfis',{primeiro_acesso:false},'id=eq.'+currentProfile.id);
+    currentProfile.primeiro_acesso=false;
+    // Esconder tela e prosseguir normalmente
+    const screen=document.getElementById('firstAccessScreen');
+    if(screen) screen.style.display='none';
+    showApp();
+    initApp();
+    startSessionCheck();
+    logSystem('login','Primeiro acesso - senha alterada');
+    notifInit().then(()=>{notifShowLoginModal();notifStartPolling();});
+    showToast('Senha definida com sucesso! Bem-vindo ao sistema.','success');
+  }catch(e){
+    showToast('Erro ao atualizar senha: '+e.message,'error');
   }
 }
 
