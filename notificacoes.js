@@ -522,4 +522,75 @@ async function notifAdminExcluir(notifId) {
     } catch (e) { showToast('Erro: ' + e.message, 'error'); }
   }, 'red', 'Excluir');
 }
+// ========= POLLING INTELIGENTE (auto-refresh com visibilidade) =========
+let _notifPollingInterval = null;
+let _basePollingInterval = null;
+const NOTIF_POLL_MS = 2 * 60 * 1000; // 2 minutos
+const BASE_POLL_MS = 5 * 60 * 1000;  // 5 minutos
+
+function notifStartPolling() {
+  // Limpar intervals anteriores
+  if (_notifPollingInterval) { clearInterval(_notifPollingInterval); _notifPollingInterval = null; }
+  if (_basePollingInterval) { clearInterval(_basePollingInterval); _basePollingInterval = null; }
+
+  // Polling de notificações (2 min)
+  _notifPollingInterval = setInterval(function() {
+    if (document.hidden) return; // Tab inativa, não checar
+    notifPollCheck();
+  }, NOTIF_POLL_MS);
+
+  // Polling de base (5 min)
+  _basePollingInterval = setInterval(function() {
+    if (document.hidden) return;
+    basePollCheck();
+  }, BASE_POLL_MS);
+
+  // Checar imediatamente ao voltar à aba
+  document.addEventListener('visibilitychange', notifOnVisibilityChange);
+}
+
+function notifStopPolling() {
+  if (_notifPollingInterval) { clearInterval(_notifPollingInterval); _notifPollingInterval = null; }
+  if (_basePollingInterval) { clearInterval(_basePollingInterval); _basePollingInterval = null; }
+  document.removeEventListener('visibilitychange', notifOnVisibilityChange);
+}
+
+function notifOnVisibilityChange() {
+  if (!document.hidden && currentProfile && currentProfile.id) {
+    // Usuário voltou à aba — checar tudo imediatamente
+    notifPollCheck();
+    basePollCheck();
+  }
+}
+
+async function notifPollCheck() {
+  if (!currentProfile || !currentProfile.id) return;
+  try {
+    const oldCount = _notifPendentes.length;
+    await notifLoadPendentes();
+    const newCount = _notifPendentes.length;
+    notifUpdateBadge();
+    notifUpdateBanner();
+    // Se apareceu notificação nova, avisar
+    if (newCount > oldCount) {
+      showToast('Novo comunicado recebido', 'warning');
+    }
+  } catch (e) { /* silencioso */ }
+}
+
+async function basePollCheck() {
+  if (!currentProfile || !currentProfile.id) return;
+  if (typeof _dataLoadTimestamp === 'undefined' || !_dataLoadTimestamp) return;
+  try {
+    const rows = await supabase.select('meta_sync', { filter: 'chave=eq.last_save', limit: 1 });
+    if (rows && rows.length > 0) {
+      const serverTs = new Date(rows[0].valor).getTime();
+      if (serverTs > _dataLoadTimestamp) {
+        showToast('Base atualizada por ' + (rows[0].usuario || 'outro usuario') + '. Recarregue para ver as mudancas.', 'warning');
+        _dataLoadTimestamp = serverTs; // Evitar repetir o aviso
+      }
+    }
+  } catch (e) { /* silencioso */ }
+}
+
 // ========= FIM NOTIFICAÇÕES MODULE =========

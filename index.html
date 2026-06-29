@@ -9770,7 +9770,7 @@ function checkSession(){
         currentProfile=profile;
         applyAccessLevels();
         // Inicializar notificações assim que profile estiver disponível
-        notifInit().then(()=>{ notifShowLoginModal(); });
+        notifInit().then(()=>{ notifShowLoginModal(); notifStartPolling(); });
       }).catch(()=>{});
       showApp();
       return true;
@@ -9895,7 +9895,7 @@ async function doLogin(){
       startSessionCheck();
       logSystem('login','Login realizado');
       // Inicializar notificações imediatamente após login (não espera base carregar)
-      notifInit().then(()=>{ notifShowLoginModal(); });
+      notifInit().then(()=>{ notifShowLoginModal(); notifStartPolling(); });
     } else {
       recordLoginAttempt();
       const msg=result.error_description||result.msg||result.error?.message||'Usuario ou senha incorretos';
@@ -9921,6 +9921,8 @@ async function doLogin(){
 async function doLogout(){
   closeSettings();
   logSystem('logout','Logout realizado');
+  // Stop polling
+  notifStopPolling();
   // Stop session check
   if(_sessionCheckInterval){clearInterval(_sessionCheckInterval);_sessionCheckInterval=null;}
   if(_inactivityTimer){clearInterval(_inactivityTimer);_inactivityTimer=null;}
