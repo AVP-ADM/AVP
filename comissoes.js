@@ -75,8 +75,7 @@ async function comRender() {
   _comPage = 1; // Bug 11 fix: sempre resetar paginação ao recarregar/trocar filtro
   await comLoadSedes();
   await comLoadOperacoes();
-  comRenderKpis();
-  comRenderResumoFinanceiro();
+  comRenderHero();
   comRenderRankings();
   comRenderTable();
 }
@@ -128,55 +127,57 @@ async function comLoadOperacoes() {
 }
 
 
-// ========= KPIs =========
-function comRenderKpis() {
-  const el = document.getElementById('comKpis');
+// ========= HERO (Resumo Financeiro + KPIs unificados) =========
+function comRenderHero() {
+  const el = document.getElementById('comHero');
   if (!el) return;
 
   const totalOps = _comOperacoes.length;
-  const adesoes = _comOperacoes.filter(o => o.tipo === 'adesao');
-  const trocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade');
-  const trocaPlaca = _comOperacoes.filter(o => o.tipo === 'troca_placa');
-  const trocaPlano = _comOperacoes.filter(o => o.tipo === 'troca_plano');
-  const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado');
-  const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado');
-
-  el.innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px">' +
-      comKpiCard('Total Operacoes', totalOps, 'var(--blue)') +
-      comKpiCard('Adesoes', adesoes.length, 'var(--green)') +
-      comKpiCard('Troca Titular', trocaTit.length, 'var(--amber)') +
-      comKpiCard('Troca Placa', trocaPlaca.length, 'var(--text2)') +
-      comKpiCard('Troca Plano', trocaPlano.length, 'var(--text2)') +
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-      comKpiCard('Confirmadas', confirmadas.length, 'var(--green)') +
-      comKpiCard('Pendentes', pendentes.length, 'var(--amber)') +
-    '</div>';
-}
-
-function comKpiCard(label, value, color) {
-  return '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-align:center">' +
-    '<div style="font-size:1.4rem;font-weight:700;color:' + color + '">' + value + '</div>' +
-    '<div style="font-size:.7rem;color:var(--text3);margin-top:2px">' + label + '</div></div>';
-}
-
-
-// ========= RESUMO FINANCEIRO =========
-function comRenderResumoFinanceiro() {
-  const el = document.getElementById('comResumoFinanceiro');
-  if (!el) return;
+  const adesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
+  const trocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade').length;
+  const trocaPlaca = _comOperacoes.filter(o => o.tipo === 'troca_placa').length;
+  const trocaPlano = _comOperacoes.filter(o => o.tipo === 'troca_plano').length;
+  const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado').length;
+  const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado').length;
 
   const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
   const totalGerado = comissionaveis.reduce((s, o) => { const d = o.dados || {}; return s + (parseFloat(d.valor) || parseFloat(o.valor) || 0); }, 0);
   const totalComissoes = comCalcularTotalComissoes(comissionaveis);
   const liquidoAVP = totalGerado - totalComissoes;
 
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)">' +
-    '<div style="text-align:center"><div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px">Total Gerado</div><div style="font-size:1.2rem;font-weight:700;color:var(--green)">R$ ' + comFormatMoney(totalGerado) + '</div></div>' +
-    '<div style="text-align:center"><div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px">Total Comissoes</div><div style="font-size:1.2rem;font-weight:700;color:var(--amber)">R$ ' + comFormatMoney(totalComissoes) + '</div></div>' +
-    '<div style="text-align:center"><div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px">Liquido AVP</div><div style="font-size:1.2rem;font-weight:700;color:var(--blue)">R$ ' + comFormatMoney(liquidoAVP) + '</div></div>' +
-    '</div>';
+  // Mini KPI helper
+  const miniKpi = (val, label, color) => '<div style="text-align:center;padding:10px 0">' +
+    '<div style="font-size:1.3rem;font-weight:700;color:' + color + '">' + val + '</div>' +
+    '<div style="font-size:.65rem;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px">' + label + '</div></div>';
+
+  // Financial value helper
+  const finVal = (val, label, color) => '<div style="text-align:center">' +
+    '<div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">' + label + '</div>' +
+    '<div style="font-size:1.4rem;font-weight:700;color:' + color + '">R$ ' + comFormatMoney(val) + '</div></div>';
+
+  el.innerHTML = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px">' +
+    // Linha 1: Valores financeiros
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">' +
+      finVal(totalGerado, 'Total Gerado', 'var(--green)') +
+      finVal(totalComissoes, 'Total Comissoes', 'var(--amber)') +
+      finVal(liquidoAVP, 'Liquido AVP', 'var(--blue)') +
+    '</div>' +
+    // Separador
+    '<div style="border-top:1px solid var(--border);margin-bottom:16px"></div>' +
+    // Linha 2: Mini KPIs por tipo
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">' +
+      miniKpi(totalOps, 'Total', 'var(--blue)') +
+      miniKpi(adesoes, 'Adesoes', 'var(--green)') +
+      miniKpi(trocaTit, 'Troca Tit.', 'var(--amber)') +
+      miniKpi(trocaPlaca, 'Troca Placa', 'var(--text2)') +
+      miniKpi(trocaPlano, 'Troca Plano', 'var(--text2)') +
+    '</div>' +
+    // Linha 3: Status inline
+    '<div style="display:flex;justify-content:center;gap:16px;font-size:.75rem;color:var(--text3)">' +
+      '<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green)"></span> ' + confirmadas + ' confirmada' + (confirmadas !== 1 ? 's' : '') + '</span>' +
+      '<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span> ' + pendentes + ' pendente' + (pendentes !== 1 ? 's' : '') + '</span>' +
+    '</div>' +
+  '</div>';
 }
 
 function comFormatMoney(val) {
@@ -232,36 +233,28 @@ function comRenderRankings() {
     return { nome: user ? user.nome : 'Desconhecido', ...data };
   }).sort((a, b) => b.total - a.total);
 
+  if (ranked.length === 0) {
+    el.innerHTML = '<div style="grid-column:1/-1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;font-size:.78rem;color:var(--text3)">Sem dados de ranking no periodo</div>';
+    return;
+  }
+
+  // Ranking item helper
+  const rankItem = (r, i, valueField, color) => '<div style="display:flex;align-items:center;gap:10px;padding:8px 0' + (i < 4 ? ';border-bottom:1px solid var(--border)' : '') + '">' +
+    '<span style="font-size:.72rem;font-weight:700;color:var(--text3);width:20px;text-align:center">' + (i + 1) + '</span>' +
+    '<span style="flex:1;font-size:.78rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(r.nome) + '</span>' +
+    '<span style="font-size:.78rem;font-weight:600;color:' + color + '">R$ ' + comFormatMoney(r[valueField]) + '</span></div>';
 
   // Ranking by volume
   let rankHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">' +
-    '<div style="font-size:.78rem;font-weight:600;color:var(--text1);margin-bottom:10px">Ranking por Faturamento</div>';
-  if (ranked.length === 0) {
-    rankHtml += '<div style="font-size:.75rem;color:var(--text3);text-align:center;padding:12px">Sem dados</div>';
-  } else {
-    ranked.slice(0, 5).forEach((r, i) => {
-      rankHtml += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
-        '<span style="font-size:.7rem;font-weight:700;color:var(--text3);width:18px">' + (i + 1) + '.</span>' +
-        '<span style="flex:1;font-size:.78rem;font-weight:500">' + escapeHtml(r.nome) + '</span>' +
-        '<span style="font-size:.75rem;color:var(--green);font-weight:600">R$ ' + comFormatMoney(r.total) + '</span></div>';
-    });
-  }
+    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Ranking Faturamento</div>';
+  ranked.slice(0, 5).forEach((r, i) => { rankHtml += rankItem(r, i, 'total', 'var(--green)'); });
   rankHtml += '</div>';
 
   // Ranking by commission
   const rankedCom = [...ranked].sort((a, b) => b.comissao - a.comissao);
   let comHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">' +
-    '<div style="font-size:.78rem;font-weight:600;color:var(--text1);margin-bottom:10px">Ranking por Comissao</div>';
-  if (rankedCom.length === 0) {
-    comHtml += '<div style="font-size:.75rem;color:var(--text3);text-align:center;padding:12px">Sem dados</div>';
-  } else {
-    rankedCom.slice(0, 5).forEach((r, i) => {
-      comHtml += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
-        '<span style="font-size:.7rem;font-weight:700;color:var(--text3);width:18px">' + (i + 1) + '.</span>' +
-        '<span style="flex:1;font-size:.78rem;font-weight:500">' + escapeHtml(r.nome) + '</span>' +
-        '<span style="font-size:.75rem;color:var(--amber);font-weight:600">R$ ' + comFormatMoney(r.comissao) + '</span></div>';
-    });
-  }
+    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Ranking Comissao</div>';
+  rankedCom.slice(0, 5).forEach((r, i) => { comHtml += rankItem(r, i, 'comissao', 'var(--amber)'); });
   comHtml += '</div>';
 
   el.innerHTML = rankHtml + comHtml;
