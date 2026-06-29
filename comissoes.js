@@ -392,7 +392,7 @@ function comRenderTable() {
   const g = (o, field) => o[field] !== undefined && o[field] !== null ? o[field] : (o.dados && o.dados[field]);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma operacao encontrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma operacao encontrada</td></tr>';
   } else {
     tbody.innerHTML = pageItems.map(o => {
       const user = _comUsersCache.find(u => u.id === o.usuario_id);
@@ -410,6 +410,12 @@ function comRenderTable() {
         ? '<span style="font-size:.7rem;font-weight:600;color:var(--green);background:var(--green)15;padding:2px 8px;border-radius:10px">Confirmado</span>'
         : '<span style="font-size:.7rem;font-weight:600;color:var(--amber);background:var(--amber)15;padding:2px 8px;border-radius:10px">Pendente</span>';
 
+      // Anexo (comprovante) - só para adesão
+      const comprovanteUrl = (o.dados && o.dados.comprovante_url) || null;
+      const anexoHtml = comprovanteUrl
+        ? '<a href="' + comprovanteUrl + '" target="_blank" onclick="event.stopPropagation()" title="Ver comprovante" style="color:var(--blue);display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></a>'
+        : (o.tipo === 'adesao' ? '<span style="color:var(--red);font-size:.65rem">Sem anexo</span>' : '');
+
       return '<tr onclick="comOpenDetalhe(\'' + o.id + '\')" style="cursor:pointer">' +
         '<td><span style="font-size:.7rem;font-weight:600;color:' + tipoColor + ';background:' + tipoColor + '15;padding:2px 8px;border-radius:10px">' + tipoLabel + '</span></td>' +
         '<td style="font-weight:500;font-size:.82rem">' + assocName + '</td>' +
@@ -417,7 +423,8 @@ function comRenderTable() {
         '<td style="font-size:.82rem;font-weight:500">' + valor + '</td>' +
         '<td style="font-size:.78rem">' + userName + '</td>' +
         '<td style="font-size:.75rem;color:var(--text3)">' + dataStr + '</td>' +
-        '<td>' + statusHtml + '</td></tr>';
+        '<td>' + statusHtml + '</td>' +
+        '<td style="text-align:center">' + anexoHtml + '</td></tr>';
     }).join('');
   }
 
@@ -466,6 +473,24 @@ function comOpenDetalhe(id) {
     detailHtml += field('Valor Adesao', 'R$ ' + comFormatMoney(parseFloat(d.valor_adesao) || 0));
     detailHtml += field('Valor Mensalidade', 'R$ ' + comFormatMoney(parseFloat(d.valor_mensalidade) || 0));
     detailHtml += field('Comissao (' + comGetPercentual(op.usuario_id) + '%)', 'R$ ' + comFormatMoney(comCalcularComissao(op)));
+    // Comprovante
+    if (d.comprovante_url) {
+      detailHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border)">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+          '<span style="font-size:.75rem;color:var(--text2)">Comprovante anexado</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<a href="' + escapeHtml(d.comprovante_url) + '" target="_blank" class="btn btn-sm" style="padding:4px 8px;font-size:.7rem" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver</a>' +
+          '<button class="btn btn-sm" style="padding:4px 8px;font-size:.7rem" onclick="event.stopPropagation();comEditarComprovante(\'' + op.id + '\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>' +
+        '</div>' +
+      '</div>';
+    } else {
+      detailHtml += '<div style="padding:8px 12px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">' +
+        '<span style="font-size:.75rem;color:var(--red)">Comprovante nao anexado</span>' +
+        '<button class="btn btn-sm" style="padding:4px 8px;font-size:.7rem" onclick="event.stopPropagation();comEditarComprovante(\'' + op.id + '\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Anexar</button>' +
+      '</div>';
+    }
   } else if (op.tipo === 'troca_titularidade') {
     const d = op.dados || {};
     detailHtml += field('Placa', op.placa);
@@ -534,6 +559,39 @@ async function comExcluirOperacao(id) {
   }, 'red', 'Excluir');
 }
 
+// ========= EDITAR COMPROVANTE =========
+function comEditarComprovante(opId) {
+  const op = _comOperacoes.find(o => o.id === opId);
+  if (!op) return;
+  showModal('Atualizar Comprovante',
+    '<div style="display:flex;flex-direction:column;gap:12px">' +
+      '<p style="font-size:.78rem;color:var(--text2)">Selecione o novo comprovante (PDF ou imagem). O anterior sera substituido.</p>' +
+      '<input type="file" id="comEditComprovante_file" accept="image/*,application/pdf" style="font-size:.78rem">' +
+      '<span style="font-size:.68rem;color:var(--text3)">Maximo 10MB. PDF ou imagem.</span>' +
+    '</div>',
+    async function () {
+      const fileInput = document.getElementById('comEditComprovante_file');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        showToast('Selecione um arquivo', 'error');
+        return;
+      }
+      closeModal();
+      showToast('Enviando comprovante...', 'warning');
+      const url = await comUploadComprovante(fileInput.files[0]);
+      if (!url) return;
+      try {
+        // Atualizar dados JSONB com novo comprovante_url
+        const newDados = { ...(op.dados || {}), comprovante_url: url };
+        await supabase.update('operacoes', { dados: newDados }, 'id=eq.' + opId);
+        showToast('Comprovante atualizado!', 'success');
+        closeDrawer();
+        comRender();
+      } catch (e) {
+        showToast('Erro ao salvar: ' + e.message, 'error');
+      }
+    }, 'blue', 'Enviar');
+}
+
 
 // ========= NOVA OPERACAO (DRAWER) =========
 function openNovaOperacao() {
@@ -597,6 +655,10 @@ function comRenderFormFields() {
       mkField('novaOp_valor_adesao', 'Valor da Adesao (R$)', 'number', '0.00', true),
       mkField('novaOp_valor_mensalidade', 'Valor Mensalidade (R$)', 'number', '0.00', false)
     );
+    // Comprovante obrigatório (PDF ou imagem)
+    html += '<div style="margin-bottom:12px"><label style="' + lblStyle + '">Comprovante (obrigatorio)</label>' +
+      '<input type="file" id="novaOp_comprovante" accept="image/*,application/pdf" required style="font-size:.78rem">' +
+      '<span style="font-size:.68rem;color:var(--text3);display:block;margin-top:4px">PDF ou imagem. Maximo 10MB.</span></div>';
   } else if (tipo === 'troca_titularidade') {
     html += row2(
       mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7),
@@ -638,6 +700,55 @@ function comRenderFormFields() {
 }
 
 
+// ========= UPLOAD COMPROVANTE (PDF ou imagem) =========
+async function comUploadComprovante(file) {
+  try {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'application/pdf'];
+    if (file.size > MAX_FILE_SIZE) {
+      showToast('Arquivo muito grande. Maximo: 10MB', 'error');
+      return null;
+    }
+    if (!ALLOWED_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
+      showToast('Tipo nao permitido. Envie PDF ou imagem.', 'error');
+      return null;
+    }
+
+    let uploadBody = file;
+    let contentType = file.type;
+    let ext = file.name.split('.').pop().toLowerCase() || 'bin';
+
+    // Comprimir se for imagem (não PDF)
+    if (file.type.startsWith('image/') && typeof compressImage === 'function') {
+      try {
+        uploadBody = await compressImage(file);
+        contentType = 'image/jpeg';
+        ext = 'jpg';
+      } catch (e) {
+        // Se falhar compressão, enviar original
+        uploadBody = file;
+      }
+    }
+
+    const fileName = 'comp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) + '.' + ext;
+    const token = supabase.getToken() || SUPABASE_ANON_KEY;
+    const resp = await fetch(SUPABASE_URL + '/storage/v1/object/comprovantes/' + fileName, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token, 'Content-Type': contentType },
+      body: uploadBody
+    });
+    if (!resp.ok) {
+      const errText = await resp.text().catch(function () { return ''; });
+      throw new Error('Status ' + resp.status + (errText ? ' - ' + errText : ''));
+    }
+    return SUPABASE_URL + '/storage/v1/object/public/comprovantes/' + fileName;
+  } catch (e) {
+    console.warn('comUploadComprovante error:', e);
+    showToast('Falha no upload: ' + e.message, 'error');
+    return null;
+  }
+}
+
 let _comSaving = false; // Bug 6 fix: guard contra double-click
 
 async function comSalvarNovaOperacao() {
@@ -668,6 +779,11 @@ async function comSalvarNovaOperacao() {
   if (tipo === 'adesao') {
     if (!gv('novaOp_associado') || !gv('novaOp_placa') || !gv('novaOp_data_ativacao') || !gv('novaOp_valor_adesao')) {
       showToast('Preencha os campos obrigatorios', 'error'); return;
+    }
+    // Validar comprovante obrigatório
+    const fileInput = document.getElementById('novaOp_comprovante');
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+      showToast('Anexe o comprovante (obrigatorio para adesao)', 'error'); return;
     }
     dados.associado = gv('novaOp_associado');
     dados.placa = gv('novaOp_placa').toUpperCase();
@@ -713,6 +829,18 @@ async function comSalvarNovaOperacao() {
     dados.valor_antigo_mensalidade = parseFloat(gv('novaOp_valor_antigo_mensalidade')) || 0;
     dados.valor_novo_mensalidade = parseFloat(gv('novaOp_valor_novo_mensalidade')) || 0;
     dados.solicitado_por = gv('novaOp_solicitado_por');
+  }
+
+  // Upload comprovante para adesão (obrigatório)
+  if (tipo === 'adesao') {
+    const fileInput = document.getElementById('novaOp_comprovante');
+    const file = fileInput.files[0];
+    const comprovanteUrl = await comUploadComprovante(file);
+    if (!comprovanteUrl) {
+      showToast('Falha no upload do comprovante. Tente novamente.', 'error');
+      return;
+    }
+    dados.comprovante_url = comprovanteUrl;
   }
 
   // Insert usando colunas diretas da tabela operacoes
