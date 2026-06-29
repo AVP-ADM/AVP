@@ -562,54 +562,76 @@ function comRenderFormFields() {
   const el = document.getElementById('novaOp_fields');
   if (!el) return;
 
+  const lblStyle = 'font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px';
+
   const mkField = (id, label, type, placeholder, required, maxlength) => {
     const req = required ? ' required' : '';
     const maxl = maxlength ? ' maxlength="' + maxlength + '"' : '';
     if (type === 'select_sede') {
       let opts = '<option value="">Selecione...</option>';
       _comSedes.filter(s => s.ativo !== false).forEach(s => { opts += '<option value="' + s.id + '">' + escapeHtml(s.nome) + '</option>'; });
-      return '<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">' + label + '</label><select id="' + id + '"' + req + '>' + opts + '</select></div>';
+      return '<div><label style="' + lblStyle + '">' + label + '</label><select id="' + id + '"' + req + '>' + opts + '</select></div>';
     }
-    return '<div style="margin-bottom:12px"><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">' + label + '</label><input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '"' + req + maxl + '></div>';
+    return '<div><label style="' + lblStyle + '">' + label + '</label><input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '"' + req + maxl + '></div>';
   };
 
+  // Row helper: 2 campos lado a lado
+  const row2 = (f1, f2) => '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' + f1 + f2 + '</div>';
+  // Row helper: 1 campo full width
+  const row1 = (f) => '<div style="margin-bottom:12px">' + f + '</div>';
+
   let html = '';
-  // Só admin vê o campo sede (operador puxa do cadastro automaticamente)
+  // Só admin vê o campo sede
   if (currentProfile && currentProfile.nivel === 'admin') {
-    html += mkField('novaOp_sede', 'Sede', 'select_sede', '', false);
+    html += row1(mkField('novaOp_sede', 'Sede', 'select_sede', '', false));
   }
 
-
   if (tipo === 'adesao') {
-    html += mkField('novaOp_associado', 'Nome do Associado', 'text', 'Nome completo', true);
-    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7);
-    html += mkField('novaOp_data_ativacao', 'Data de Ativacao', 'date', '', true);
-    html += mkField('novaOp_origem_lead', 'Origem do Lead', 'text', 'Ex: Indicacao, Instagram...', false);
-    html += mkField('novaOp_valor_adesao', 'Valor da Adesao (R$)', 'number', '0.00', true);
-    html += mkField('novaOp_valor_mensalidade', 'Valor Mensalidade (R$)', 'number', '0.00', false);
+    html += row1(mkField('novaOp_associado', 'Nome do Associado', 'text', 'Nome completo', true));
+    html += row2(
+      mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7),
+      mkField('novaOp_data_ativacao', 'Data de Ativacao', 'date', '', true)
+    );
+    html += row1(mkField('novaOp_origem_lead', 'Origem do Lead', 'text', 'Ex: Indicacao, Instagram...', false));
+    html += row2(
+      mkField('novaOp_valor_adesao', 'Valor da Adesao (R$)', 'number', '0.00', true),
+      mkField('novaOp_valor_mensalidade', 'Valor Mensalidade (R$)', 'number', '0.00', false)
+    );
   } else if (tipo === 'troca_titularidade') {
-    html += mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7);
-    html += mkField('novaOp_antigo_titular', 'Antigo Titular', 'text', 'Nome completo', true);
-    html += mkField('novaOp_novo_titular', 'Novo Titular', 'text', 'Nome completo', true);
-    html += mkField('novaOp_data_efetuado', 'Data Efetuado', 'date', '', true);
-    html += mkField('novaOp_data_pagamento', 'Data Pagamento', 'date', '', false);
-    html += mkField('novaOp_valor', 'Valor (R$)', 'number', '0.00', true);
-    html += mkField('novaOp_situacao', 'Situacao', 'text', 'Ex: Concluido, Pendente', false);
+    html += row2(
+      mkField('novaOp_placa', 'Placa', 'text', 'ABC1D23', true, 7),
+      mkField('novaOp_valor', 'Valor (R$)', 'number', '0.00', true)
+    );
+    html += row1(mkField('novaOp_antigo_titular', 'Antigo Titular', 'text', 'Nome completo', true));
+    html += row1(mkField('novaOp_novo_titular', 'Novo Titular', 'text', 'Nome completo', true));
+    html += row2(
+      mkField('novaOp_data_efetuado', 'Data Efetuado', 'date', '', true),
+      mkField('novaOp_data_pagamento', 'Data Pagamento', 'date', '', false)
+    );
+    html += row1(mkField('novaOp_situacao', 'Situacao', 'text', 'Ex: Concluido, Pendente', false));
   } else if (tipo === 'troca_placa') {
-    html += mkField('novaOp_associado', 'Associado', 'text', 'Nome completo', true);
-    html += mkField('novaOp_placa_antiga', 'Placa Antiga', 'text', 'ABC1D23', true, 7);
-    html += mkField('novaOp_placa_nova', 'Placa Nova', 'text', 'ABC1D23', true, 7);
-    html += mkField('novaOp_data_vencimento', 'Data de Vencimento', 'date', '', false);
-    html += mkField('novaOp_valor_antigo_veiculo', 'Valor Antigo Veiculo (R$)', 'number', '0.00', false);
-    html += mkField('novaOp_valor_novo_veiculo', 'Valor Novo Veiculo (R$)', 'number', '0.00', false);
-    html += mkField('novaOp_solicitado_por', 'Solicitado por', 'text', '', false);
+    html += row1(mkField('novaOp_associado', 'Associado', 'text', 'Nome completo', true));
+    html += row2(
+      mkField('novaOp_placa_antiga', 'Placa Antiga', 'text', 'ABC1D23', true, 7),
+      mkField('novaOp_placa_nova', 'Placa Nova', 'text', 'ABC1D23', true, 7)
+    );
+    html += row1(mkField('novaOp_data_vencimento', 'Data de Vencimento', 'date', '', false));
+    html += row2(
+      mkField('novaOp_valor_antigo_veiculo', 'Valor Antigo Veiculo (R$)', 'number', '0.00', false),
+      mkField('novaOp_valor_novo_veiculo', 'Valor Novo Veiculo (R$)', 'number', '0.00', false)
+    );
+    html += row1(mkField('novaOp_solicitado_por', 'Solicitado por', 'text', '', false));
   } else if (tipo === 'troca_plano') {
-    html += mkField('novaOp_associado', 'Associado', 'text', 'Nome completo', true);
-    html += mkField('novaOp_plano_antigo', 'Plano Antigo', 'text', 'Ex: Basico', true);
-    html += mkField('novaOp_plano_novo', 'Plano Novo', 'text', 'Ex: Premium', true);
-    html += mkField('novaOp_valor_antigo_mensalidade', 'Valor Antigo Mensalidade (R$)', 'number', '0.00', false);
-    html += mkField('novaOp_valor_novo_mensalidade', 'Valor Novo Mensalidade (R$)', 'number', '0.00', false);
-    html += mkField('novaOp_solicitado_por', 'Solicitado por', 'text', '', false);
+    html += row1(mkField('novaOp_associado', 'Associado', 'text', 'Nome completo', true));
+    html += row2(
+      mkField('novaOp_plano_antigo', 'Plano Antigo', 'text', 'Ex: Basico', true),
+      mkField('novaOp_plano_novo', 'Plano Novo', 'text', 'Ex: Premium', true)
+    );
+    html += row2(
+      mkField('novaOp_valor_antigo_mensalidade', 'Valor Antigo (R$)', 'number', '0.00', false),
+      mkField('novaOp_valor_novo_mensalidade', 'Valor Novo (R$)', 'number', '0.00', false)
+    );
+    html += row1(mkField('novaOp_solicitado_por', 'Solicitado por', 'text', '', false));
   }
 
   el.innerHTML = html;
