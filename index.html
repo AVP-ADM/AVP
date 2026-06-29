@@ -10313,6 +10313,11 @@ function tmClearPct(){
 
 function tmFmtBRL(v){return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});}
 
+// Arredonda valor para sempre terminar em .90 centavos
+function tmRound90(v){
+  return Math.floor(v) + 0.90;
+}
+
 function tmUpdateTable(){
   var sh=_tmSheets[_tmCurrentKey];
   if(!sh) return;
@@ -10366,7 +10371,7 @@ function tmUpdateTable(){
         else{
           var isFixed=sh.colsFixas&&sh.colsFixas.indexOf(ci)!==-1;
           var isAdj=sh.colsDesconto&&sh.colsDesconto.indexOf(ci)!==-1;
-          var displayVal=isAdj&&hasPct?cell*(1+pct/100):cell;
+          var displayVal=isAdj&&hasPct?tmRound90(cell*(1+pct/100)):cell;
           var tdClass=isFixed?'tm-fixed':(isAdj&&hasPct?(isDisc?'tm-adj-disc':'tm-adj-incr'):'');
           var orig=isAdj&&hasPct?'<span class="tm-orig">orig: '+tmFmtBRL(cell)+'</span>':'';
           html+='<td class="'+tdClass+'" style="text-align:right'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+tmFmtBRL(displayVal)+orig+'</td>';
