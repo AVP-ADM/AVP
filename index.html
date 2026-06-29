@@ -9107,7 +9107,7 @@ function openCreateUserModal(){
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="newUserName" placeholder="Nome completo" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="newUserEmail" placeholder="email@exemplo.com" style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label>'+passwordFieldHtml('newUserPass','Senha do novo usuário...')+'</div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Senha</label>${passwordFieldHtml('newUserPass','Senha do novo usuário...')}</div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="operador">Operador</option><option value="admin">Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="newUserSetor" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
     </div>
@@ -9148,7 +9148,7 @@ function openEditUserModal(userId){
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="editUserEmail" value="${(user.email||'').replace(/"/g,'&quot;')}" disabled style="width:100%;opacity:.6"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="editUserNivel" style="width:100%"><option value="operador" ${user.nivel==='operador'?'selected':''}>Operador</option><option value="admin" ${user.nivel==='admin'?'selected':''}>Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><input id="editUserSetor" value="${(user.setor||'').replace(/"/g,'&quot;')}" placeholder="Ex: Operações, Atendimento..." style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label>'+passwordFieldHtml('editUserPass','Nova senha...')+'</div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label>${passwordFieldHtml('editUserPass','Nova senha...')}</div>
     </div>
   `,async function(){
     const nome=document.getElementById('editUserName').value.trim();
