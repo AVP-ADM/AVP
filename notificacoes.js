@@ -100,18 +100,19 @@ function notifUpdateBanner() {
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'notifBanner';
-      banner.style.cssText = 'padding:8px 20px;background:var(--amber)12;border-bottom:1px solid var(--amber)30;display:flex;align-items:center;justify-content:space-between;cursor:pointer';
-      banner.onclick = function() { notifOpenPanel(); };
-      const appMain = document.getElementById('appMain');
-      if (appMain) appMain.parentNode.insertBefore(banner, appMain);
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:8px 20px;background:var(--surface-2);border-bottom:1px solid var(--amber);display:flex;align-items:center;justify-content:center;gap:12px;height:36px;box-sizing:border-box';
+      document.body.appendChild(banner);
     }
     banner.innerHTML = '<span style="font-size:.78rem;color:var(--text1);display:flex;align-items:center;gap:8px">' +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' +
       'Voce possui ' + count + ' comunicado' + (count !== 1 ? 's' : '') + ' aguardando leitura.</span>' +
-      '<span style="font-size:.72rem;font-weight:600;color:var(--amber)">Ver agora</span>';
+      '<button onclick="notifOpenPanel()" style="font-size:.72rem;font-weight:600;color:var(--amber);background:none;border:1px solid var(--amber);border-radius:var(--radius);padding:3px 10px;cursor:pointer">Ver agora</button>';
     banner.style.display = '';
+    // Empurrar o conteúdo pra baixo sem alterar layout (padding no body)
+    document.body.style.paddingTop = '36px';
   } else {
-    if (banner) banner.style.display = 'none';
+    if (banner) { banner.style.display = 'none'; }
+    document.body.style.paddingTop = '';
   }
 }
 
