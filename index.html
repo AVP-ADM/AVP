@@ -227,16 +227,19 @@ input[type="checkbox"]:focus{box-shadow:none;border-color:var(--border-strong)}
 /* ========= DRAWER ========= */
 .drawer-overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
 .drawer-overlay.open{opacity:1;pointer-events:auto}
+body:has(.drawer-overlay.open){overflow:hidden}
 .drawer{position:fixed;top:0;right:-500px;width:480px;max-width:90vw;height:100vh;background:var(--surface);z-index:201;box-shadow:-4px 0 20px rgba(0,0,0,.12);transition:right .3s;overflow-y:auto;padding:28px}
 .drawer.open{right:0}
 .drawer input,.drawer select{width:100%;box-sizing:border-box}
+body.drawer-open{overflow:hidden}
 .drawer-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text2);padding:4px 8px;border-radius:var(--radius)}
 .drawer-close:hover{background:var(--bg)}
 .drawer-title{font-size:1.2rem;font-weight:700;margin-bottom:20px;padding-right:40px}
 .drawer-subtitle{font-size:.78rem;color:var(--text2);margin-top:-14px;margin-bottom:16px}
-.drawer-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-.drawer-toolbar input{flex:1;min-width:150px}
-.drawer-toolbar .btn{white-space:nowrap}
+.drawer-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.drawer-toolbar input{flex:1;min-width:100px;height:34px;font-size:.78rem}
+.drawer-toolbar select{height:34px;font-size:.78rem;padding:4px 8px}
+.drawer-toolbar .btn{white-space:nowrap;height:34px;padding:0 10px;display:flex;align-items:center;gap:4px}
 .drawer-count{font-size:.75rem;color:var(--text3);margin-bottom:10px}
 .drawer-table{width:100%;border-collapse:collapse;font-size:.78rem}
 .drawer-table th{padding:8px 10px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
@@ -2988,6 +2991,7 @@ function openDrawer(cat){
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.classList.remove('drawer-open');
 }
 
 // ========= KPI DETAIL DRAWER =========
@@ -3041,10 +3045,10 @@ function showKpiDetail(type){
     const tableId='drawerTableData_divergencias';
     const PAGE_SIZE=100;
     window['_drawerData_divergencias']={headers:['Tipo','Marca','Modelo','Situação'],allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
-    html='<div class="drawer-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-    html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDivergenceDrawer()" style="flex:1;min-width:150px">';
-    html+='<select id="divDrawerTypeFilter" onchange="filterDivergenceDrawer()" style="font-size:.78rem;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1)"><option value="">Todos os tipos</option><option value="critica">Criticas</option><option value="revisao">Para Revisao</option></select>';
-    html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\'divergencias\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+    html='<div class="drawer-toolbar">';
+    html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDivergenceDrawer()">';
+    html+='<select id="divDrawerTypeFilter" onchange="filterDivergenceDrawer()"><option value="">Todos</option><option value="critica">Criticas</option><option value="revisao">Revisao</option></select>';
+    html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\'divergencias\')" title="Exportar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>';
     html+='</div>';
     html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
     html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
@@ -3108,10 +3112,10 @@ function showCatDetail(cat, type){
     const tableId='drawerTableData_cat-diverg';
     const PAGE_SIZE=100;
     window['_drawerData_cat-diverg']={headers:['Tipo','Marca','Modelo','Situação'],allData:data,filtered:data,page:1,pageSize:PAGE_SIZE};
-    html='<div class="drawer-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
-    html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterCatDivergDrawer()" style="flex:1;min-width:150px">';
-    html+='<select id="catDivDrawerTypeFilter" onchange="filterCatDivergDrawer()" style="font-size:.78rem;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1)"><option value="">Todos os tipos</option><option value="critica">Criticas</option><option value="revisao">Para Revisao</option></select>';
-    html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\'cat-diverg\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+    html='<div class="drawer-toolbar">';
+    html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterCatDivergDrawer()">';
+    html+='<select id="catDivDrawerTypeFilter" onchange="filterCatDivergDrawer()"><option value="">Todos</option><option value="critica">Criticas</option><option value="revisao">Revisao</option></select>';
+    html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\'cat-diverg\')" title="Exportar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>';
     html+='</div>';
     html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
     html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
@@ -3222,12 +3226,12 @@ function buildDrawerTableWithTypeFilter(headers, data, id){
   const tableId='drawerTableData_'+id;
   const PAGE_SIZE=100;
   window['_drawerData_'+id]={headers:headers,allData:data,filtered:data,page:1,pageSize:PAGE_SIZE,baseData:data};
-  let html='<div class="drawer-toolbar" style="flex-wrap:wrap">';
+  let html='<div class="drawer-toolbar">';
   html+='<input type="text" id="'+searchId+'" placeholder="Pesquisar..." oninput="filterDrawerCategorias()">';
-  html+='<select id="drawerTypeFilter" onchange="filterDrawerCategorias()" style="min-width:100px;height:40px;padding:8px 10px;font-size:.78rem;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--surface);color:var(--text1)">';
-  html+='<option value="">Todos</option><option value="cars">Carros</option><option value="motorcycles">Motos</option><option value="trucks">Caminhões</option>';
+  html+='<select id="drawerTypeFilter" onchange="filterDrawerCategorias()">';
+  html+='<option value="">Todos</option><option value="cars">Carros</option><option value="motorcycles">Motos</option><option value="trucks">Caminhoes</option>';
   html+='</select>';
-  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>';
+  html+='<button class="btn btn-sm btn-blue" onclick="exportDrawerTableLazy(\''+id+'\')" title="Exportar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>';
   html+='</div>';
   html+='<div class="drawer-count" id="count_'+tableId+'">'+data.length+' registros</div>';
   html+='<div style="max-height:calc(100vh - 200px);overflow-y:auto" id="wrap_'+tableId+'">';
