@@ -72,12 +72,213 @@ async function comLoadSedes() {
 
 // ========= MAIN RENDER =========
 async function comRender() {
-  _comPage = 1; // Bug 11 fix: sempre resetar paginação ao recarregar/trocar filtro
+  _comPage = 1;
   await comLoadSedes();
   await comLoadOperacoes();
-  comRenderHero();
-  comRenderRankings();
+  comRenderKpiCards();
+  comRenderChips();
+  comRenderMiddleSection();
   comRenderTable();
+  comApplyVisibility();
+}
+
+// ========= VISIBILITY (admin vs operador) =========
+function comApplyVisibility() {
+  const isAdmin = currentProfile && currentProfile.nivel === 'admin';
+  // Subtitle
+  const sub = document.getElementById('comSubtitle');
+  if (sub) sub.textContent = isAdmin ? 'Visao geral do periodo' : 'Suas operacoes no periodo';
+  // Sede filter (operador usa a dele)
+  const sedeFilter = document.getElementById('comSedeFilter');
+  if (sedeFilter) sedeFilter.style.display = isAdmin ? '' : 'none';
+  // Export button
+  const exportBtn = document.querySelector('#panel-comissoes .btn[onclick*="comExportXLSX"]');
+  if (exportBtn) exportBtn.style.display = isAdmin ? '' : 'none';
+  // Middle section (rankings + sedes)
+  const middle = document.getElementById('comMiddleSection');
+  if (middle) middle.style.display = isAdmin ? '' : 'none';
+  // Table title
+  const tTitle = document.getElementById('comTableTitle');
+  if (tTitle) tTitle.textContent = isAdmin ? 'Operacoes Recentes' : 'Suas Operacoes Recentes';
+}
+
+// ========= KPI CARDS PRINCIPAIS =========
+function comRenderKpiCards() {
+  const el = document.getElementById('comKpiCards');
+  if (!el) return;
+
+  const isAdmin = currentProfile && currentProfile.nivel === 'admin';
+  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+  const totalGerado = comissionaveis.reduce((s, o) => { const d = o.dados || {}; return s + (parseFloat(d.valor) || parseFloat(o.valor) || 0); }, 0);
+  const totalComissoes = comCalcularTotalComissoes(comissionaveis);
+  const liquidoAVP = totalGerado - totalComissoes;
+  const totalOps = _comOperacoes.length;
+  const adesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
+  const trocas = totalOps - adesoes;
+
+  // Insights contextuais
+  const pctComissao = totalGerado > 0 ? Math.round(totalComissoes / totalGerado * 100) : 0;
+  const pctMargem = totalGerado > 0 ? Math.round(liquidoAVP / totalGerado * 100) : 0;
+  const opsDetail = adesoes + ' ades.' + (trocas > 0 ? ' ' + trocas + ' troc.' : '');
+
+  // Labels baseados no nível
+  const lblGerado = isAdmin ? 'Total Gerado' : 'Voce Gerou';
+  const lblComissao = isAdmin ? 'Comissoes' : 'Sua Comissao';
+  const lblOps = isAdmin ? 'Operacoes' : 'Suas Operacoes';
+
+  // Icon SVGs (feather style)
+  const iconTrending = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+  const iconPercent = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>';
+  const iconBank = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
+  const iconFile = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+
+  const card = (icon, value, label, insight, borderColor) => {
+    return '<div style="background:var(--surface-2);border:1px solid var(--border);border-left:4px solid ' + borderColor + ';border-radius:var(--radius);padding:20px;transition:transform .2s,box-shadow .2s;cursor:default" onmouseenter="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.15)\'" onmouseleave="this.style.transform=\'\';this.style.boxShadow=\'\'">' +
+      '<div style="color:' + borderColor + ';opacity:.7;margin-bottom:12px">' + icon + '</div>' +
+      '<div style="font-size:1.4rem;font-weight:700;color:var(--text1);margin-bottom:4px">' + value + '</div>' +
+      '<div style="font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">' + label + '</div>' +
+      '<div style="font-size:.7rem;color:var(--text3)">' + insight + '</div>' +
+    '</div>';
+  };
+
+  // Insight para "Total Gerado" — comparação com mês anterior (se tiver dados)
+  let insightGerado = 'Primeiro periodo com dados';
+  // TODO: Quando implementar query do mês anterior, calcular variação aqui
+
+  el.innerHTML =
+    card(iconTrending, 'R$ ' + comFormatMoney(totalGerado), lblGerado, insightGerado, 'var(--green)') +
+    card(iconPercent, 'R$ ' + comFormatMoney(totalComissoes), lblComissao, pctComissao + '% do faturamento', 'var(--amber)') +
+    card(iconBank, 'R$ ' + comFormatMoney(liquidoAVP), 'Liquido AVP', pctMargem + '% margem', 'var(--blue)') +
+    card(iconFile, String(totalOps), lblOps, opsDetail, 'var(--text3)');
+}
+
+// ========= CHIPS SECUNDÁRIOS =========
+function comRenderChips() {
+  const el = document.getElementById('comChips');
+  if (!el) return;
+
+  const adesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
+  const trocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade').length;
+  const trocaPlaca = _comOperacoes.filter(o => o.tipo === 'troca_placa').length;
+  const trocaPlano = _comOperacoes.filter(o => o.tipo === 'troca_plano').length;
+  const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado').length;
+  const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado').length;
+
+  const chip = (val, label, color) => {
+    const op = val > 0 ? '1' : '0.4';
+    const bg = val > 0 ? color + '18' : 'transparent';
+    const border = val > 0 ? color + '30' : 'var(--border)';
+    return '<span style="font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';opacity:' + op + '">' + val + ' ' + label + '</span>';
+  };
+
+  const dotChip = (val, label, color) => {
+    const op = val > 0 ? '1' : '0.4';
+    return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:20px;background:' + color + '18;border:1px solid ' + color + '30;color:' + color + ';opacity:' + op + '"><span style="width:6px;height:6px;border-radius:50%;background:' + color + '"></span>' + val + ' ' + label + '</span>';
+  };
+
+  el.innerHTML =
+    chip(adesoes, 'Adesoes', 'var(--green)') +
+    chip(trocaTit, 'Troca Tit.', 'var(--amber)') +
+    chip(trocaPlaca, 'Troca Placa', 'var(--text2)') +
+    chip(trocaPlano, 'Troca Plano', 'var(--text2)') +
+    '<span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>' +
+    dotChip(confirmadas, 'Confirmada' + (confirmadas !== 1 ? 's' : ''), 'var(--green)') +
+    dotChip(pendentes, 'Pendente' + (pendentes !== 1 ? 's' : ''), 'var(--amber)');
+}
+
+// ========= MIDDLE SECTION (Top Colaboradores + Por Sede) =========
+function comRenderMiddleSection() {
+  const el = document.getElementById('comMiddleSection');
+  if (!el) return;
+  if (!currentProfile || currentProfile.nivel !== 'admin') {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
+
+  // === TOP COLABORADORES ===
+  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+  const byUser = {};
+  comissionaveis.forEach(o => {
+    if (!byUser[o.usuario_id]) byUser[o.usuario_id] = { ops: 0, total: 0 };
+    const d = o.dados || {};
+    byUser[o.usuario_id].ops++;
+    byUser[o.usuario_id].total += parseFloat(d.valor) || parseFloat(o.valor) || 0;
+  });
+
+  const ranked = Object.entries(byUser).map(([uid, data]) => {
+    const user = _comUsersCache.find(u => u.id === uid);
+    return { nome: user ? user.nome : 'Desconhecido', ops: data.ops, total: data.total, ticket: data.ops > 0 ? data.total / data.ops : 0 };
+  }).sort((a, b) => b.total - a.total).slice(0, 5);
+
+  let colabHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:20px">' +
+    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px">Top Colaboradores</div>';
+
+  if (ranked.length === 0) {
+    colabHtml += '<div style="text-align:center;padding:20px;font-size:.78rem;color:var(--text3)">Sem movimentacao no periodo</div>';
+  } else {
+    // Table header
+    colabHtml += '<div style="display:grid;grid-template-columns:24px 1fr 40px 90px 80px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px">' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600">#</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600">Nome</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:center">Ops</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:right">Faturado</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:right">Ticket Med.</span>' +
+    '</div>';
+    ranked.forEach((r, i) => {
+      colabHtml += '<div style="display:grid;grid-template-columns:24px 1fr 40px 90px 80px;gap:8px;padding:8px 0;align-items:center' + (i < ranked.length - 1 ? ';border-bottom:1px solid var(--border)' : '') + '">' +
+        '<span style="font-size:.75rem;font-weight:700;color:var(--text3)">' + (i + 1) + '</span>' +
+        '<span style="font-size:.78rem;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(r.nome) + '</span>' +
+        '<span style="font-size:.78rem;color:var(--text2);text-align:center">' + r.ops + '</span>' +
+        '<span style="font-size:.78rem;font-weight:600;color:var(--green);text-align:right">R$ ' + comFormatMoney(r.total) + '</span>' +
+        '<span style="font-size:.75rem;color:var(--text2);text-align:right">R$ ' + comFormatMoney(r.ticket) + '</span>' +
+      '</div>';
+    });
+  }
+  colabHtml += '</div>';
+
+  // === POR SEDE ===
+  const bySede = {};
+  _comOperacoes.forEach(o => {
+    const sid = o.sede_id || (o.dados && o.dados.sede_id) || '_sem';
+    if (!bySede[sid]) bySede[sid] = { ops: 0, total: 0, comissao: 0 };
+    bySede[sid].ops++;
+    if (o.tipo === 'adesao' || o.tipo === 'troca_titularidade') {
+      const d = o.dados || {};
+      bySede[sid].total += parseFloat(d.valor) || parseFloat(o.valor) || 0;
+      bySede[sid].comissao += comCalcularComissao(o);
+    }
+  });
+
+  const sedeRows = Object.entries(bySede).map(([sid, data]) => {
+    const sede = _comSedes.find(s => s.id === sid);
+    return { nome: sede ? sede.nome : 'Sem sede', ...data, liquido: data.total - data.comissao };
+  }).sort((a, b) => b.total - a.total);
+
+  let sedeHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:20px">' +
+    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px">Por Sede</div>';
+
+  if (sedeRows.length === 0) {
+    sedeHtml += '<div style="text-align:center;padding:20px;font-size:.78rem;color:var(--text3)">Sem dados</div>';
+  } else {
+    sedeHtml += '<div style="display:grid;grid-template-columns:1fr 40px 90px 90px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px">' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600">Sede</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:center">Ops</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:right">Faturado</span>' +
+      '<span style="font-size:.65rem;color:var(--text3);font-weight:600;text-align:right">Liquido</span>' +
+    '</div>';
+    sedeRows.forEach((r, i) => {
+      sedeHtml += '<div style="display:grid;grid-template-columns:1fr 40px 90px 90px;gap:8px;padding:8px 0;align-items:center' + (i < sedeRows.length - 1 ? ';border-bottom:1px solid var(--border)' : '') + '">' +
+        '<span style="font-size:.78rem;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(r.nome) + '</span>' +
+        '<span style="font-size:.78rem;color:var(--text2);text-align:center">' + r.ops + '</span>' +
+        '<span style="font-size:.78rem;font-weight:600;color:var(--green);text-align:right">R$ ' + comFormatMoney(r.total) + '</span>' +
+        '<span style="font-size:.78rem;font-weight:500;color:var(--blue);text-align:right">R$ ' + comFormatMoney(r.liquido) + '</span>' +
+      '</div>';
+    });
+  }
+  sedeHtml += '</div>';
+
+  el.innerHTML = colabHtml + sedeHtml;
 }
 
 async function comLoadOperacoes() {
@@ -127,65 +328,11 @@ async function comLoadOperacoes() {
 }
 
 
-// ========= HERO (Resumo Financeiro + KPIs unificados) =========
-function comRenderHero() {
-  const el = document.getElementById('comHero');
-  if (!el) return;
-
-  const totalOps = _comOperacoes.length;
-  const adesoes = _comOperacoes.filter(o => o.tipo === 'adesao').length;
-  const trocaTit = _comOperacoes.filter(o => o.tipo === 'troca_titularidade').length;
-  const trocaPlaca = _comOperacoes.filter(o => o.tipo === 'troca_placa').length;
-  const trocaPlano = _comOperacoes.filter(o => o.tipo === 'troca_plano').length;
-  const confirmadas = _comOperacoes.filter(o => o.status === 'confirmado').length;
-  const pendentes = _comOperacoes.filter(o => o.status !== 'confirmado').length;
-
-  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const totalGerado = comissionaveis.reduce((s, o) => { const d = o.dados || {}; return s + (parseFloat(d.valor) || parseFloat(o.valor) || 0); }, 0);
-  const totalComissoes = comCalcularTotalComissoes(comissionaveis);
-  const liquidoAVP = totalGerado - totalComissoes;
-
-  // Mini KPI helper
-  const miniKpi = (val, label, color) => '<div style="text-align:center;padding:10px 0">' +
-    '<div style="font-size:1.3rem;font-weight:700;color:' + color + '">' + val + '</div>' +
-    '<div style="font-size:.65rem;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px">' + label + '</div></div>';
-
-  // Financial value helper
-  const finVal = (val, label, color) => '<div style="text-align:center">' +
-    '<div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">' + label + '</div>' +
-    '<div style="font-size:1.4rem;font-weight:700;color:' + color + '">R$ ' + comFormatMoney(val) + '</div></div>';
-
-  el.innerHTML = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px">' +
-    // Linha 1: Valores financeiros
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">' +
-      finVal(totalGerado, 'Total Gerado', 'var(--green)') +
-      finVal(totalComissoes, 'Total Comissoes', 'var(--amber)') +
-      finVal(liquidoAVP, 'Liquido AVP', 'var(--blue)') +
-    '</div>' +
-    // Separador
-    '<div style="border-top:1px solid var(--border);margin-bottom:16px"></div>' +
-    // Linha 2: Mini KPIs por tipo
-    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">' +
-      miniKpi(totalOps, 'Total', 'var(--blue)') +
-      miniKpi(adesoes, 'Adesoes', 'var(--green)') +
-      miniKpi(trocaTit, 'Troca Tit.', 'var(--amber)') +
-      miniKpi(trocaPlaca, 'Troca Placa', 'var(--text2)') +
-      miniKpi(trocaPlano, 'Troca Plano', 'var(--text2)') +
-    '</div>' +
-    // Linha 3: Status inline
-    '<div style="display:flex;justify-content:center;gap:16px;font-size:.75rem;color:var(--text3)">' +
-      '<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green)"></span> ' + confirmadas + ' confirmada' + (confirmadas !== 1 ? 's' : '') + '</span>' +
-      '<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber)"></span> ' + pendentes + ' pendente' + (pendentes !== 1 ? 's' : '') + '</span>' +
-    '</div>' +
-  '</div>';
-}
-
+// ========= CALCULOS DE COMISSAO =========
 function comFormatMoney(val) {
   return (val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-
-// ========= CALCULOS DE COMISSAO =========
 function comGetPercentual(usuarioId) {
   // Check specific rules first
   const especifica = _comConfigEspecificas.find(r => r.usuario_id === usuarioId);
@@ -204,60 +351,6 @@ function comCalcularComissao(operacao) {
 
 function comCalcularTotalComissoes(operacoes) {
   return operacoes.reduce((sum, o) => sum + comCalcularComissao(o), 0);
-}
-
-
-// ========= RANKINGS (admin only) =========
-function comRenderRankings() {
-  const el = document.getElementById('comRankings');
-  if (!el) return;
-  if (!currentProfile || currentProfile.nivel !== 'admin') {
-    el.style.display = 'none';
-    return;
-  }
-  el.style.display = '';
-
-  // Group by user
-  const comissionaveis = _comOperacoes.filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
-  const byUser = {};
-  comissionaveis.forEach(o => {
-    if (!byUser[o.usuario_id]) byUser[o.usuario_id] = { ops: 0, total: 0, comissao: 0 };
-    const d = o.dados || {};
-    byUser[o.usuario_id].ops++;
-    byUser[o.usuario_id].total += parseFloat(d.valor) || parseFloat(o.valor) || 0;
-    byUser[o.usuario_id].comissao += comCalcularComissao(o);
-  });
-
-  const ranked = Object.entries(byUser).map(([uid, data]) => {
-    const user = _comUsersCache.find(u => u.id === uid);
-    return { nome: user ? user.nome : 'Desconhecido', ...data };
-  }).sort((a, b) => b.total - a.total);
-
-  if (ranked.length === 0) {
-    el.innerHTML = '<div style="grid-column:1/-1;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;font-size:.78rem;color:var(--text3)">Sem dados de ranking no periodo</div>';
-    return;
-  }
-
-  // Ranking item helper
-  const rankItem = (r, i, valueField, color) => '<div style="display:flex;align-items:center;gap:10px;padding:8px 0' + (i < 4 ? ';border-bottom:1px solid var(--border)' : '') + '">' +
-    '<span style="font-size:.72rem;font-weight:700;color:var(--text3);width:20px;text-align:center">' + (i + 1) + '</span>' +
-    '<span style="flex:1;font-size:.78rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(r.nome) + '</span>' +
-    '<span style="font-size:.78rem;font-weight:600;color:' + color + '">R$ ' + comFormatMoney(r[valueField]) + '</span></div>';
-
-  // Ranking by volume
-  let rankHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">' +
-    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Ranking Faturamento</div>';
-  ranked.slice(0, 5).forEach((r, i) => { rankHtml += rankItem(r, i, 'total', 'var(--green)'); });
-  rankHtml += '</div>';
-
-  // Ranking by commission
-  const rankedCom = [...ranked].sort((a, b) => b.comissao - a.comissao);
-  let comHtml = '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">' +
-    '<div style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Ranking Comissao</div>';
-  rankedCom.slice(0, 5).forEach((r, i) => { comHtml += rankItem(r, i, 'comissao', 'var(--amber)'); });
-  comHtml += '</div>';
-
-  el.innerHTML = rankHtml + comHtml;
 }
 
 
