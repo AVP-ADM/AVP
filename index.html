@@ -10098,7 +10098,16 @@ function applyAccessLevels(){
   if(nivel==='admin'){
     document.querySelectorAll('.sidebar-nav > .sidebar-item[data-tab]').forEach(item=>{item.style.display='';});
     document.querySelectorAll('.sidebar-group[data-group]').forEach(group=>{group.style.display='';});
-    document.body.classList.remove('hide-cat-actions','hide-drawer-add','hide-drawer-edit','hide-drawer-remove');
+    document.body.classList.remove('hide-cat-actions','hide-drawer-add','hide-drawer-edit','hide-drawer-remove','hide-col-divergencias');
+    // Restaurar seções que aplicarPermissoes pode ter escondido
+    const elTopConflicts = document.getElementById('topDuplicates');
+    const elTopDivergences = document.getElementById('topDivergences');
+    const elActivity = document.getElementById('activityContent');
+    if(elTopConflicts) elTopConflicts.parentElement.style.display='';
+    if(elTopDivergences) elTopDivergences.parentElement.style.display='';
+    if(elActivity) elActivity.parentElement.style.display='';
+    const btnNovaCat = document.querySelector('[onclick*="openAddCategory"]');
+    if(btnNovaCat) btnNovaCat.style.display='';
     // Settings only for admin
     const settingsUsersItem=document.getElementById('settingsUsersItem');
     if(settingsUsersItem) settingsUsersItem.style.display='';
