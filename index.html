@@ -832,6 +832,28 @@ tr:hover .row-actions{opacity:1}
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span class="si-text">Visão Geral</span>
         </button>
+        <div class="sidebar-group" data-group="consultas">
+          <button class="sidebar-item has-children" data-tab="consultas" data-tooltip="Consultas" onclick="toggleSidebarGroup('consultas')">
+            <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
+            <span class="si-text">Consultas</span>
+            <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+          </button>
+          <div class="sidebar-sub">
+            <button class="sidebar-sub-item" data-subtab="planos" onclick="goTab('planos')">
+              <span class="si-text">Tabela de Planos</span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="coberturas" onclick="goTab('coberturas')">
+              <span class="si-text">Coberturas</span>
+            </button>
+            <button class="sidebar-sub-item" data-subtab="placafipe" onclick="goTab('placafipe')">
+              <span class="si-text">Consulta de Placa</span>
+            </button>
+          </div>
+        </div>
+        <button class="sidebar-item" data-tab="comissoes" data-tooltip="Comissões" onclick="goTab('comissoes')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          <span class="si-text">Comissões</span>
+        </button>
         <div class="sidebar-group" data-group="analise">
           <button class="sidebar-item has-children" data-tab="analise" data-tooltip="Análise" onclick="toggleSidebarGroup('analise')">
             <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
@@ -867,31 +889,9 @@ tr:hover .row-actions{opacity:1}
             </button>
           </div>
         </div>
-        <div class="sidebar-group" data-group="consultas">
-          <button class="sidebar-item has-children" data-tab="consultas" data-tooltip="Consultas" onclick="toggleSidebarGroup('consultas')">
-            <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg></span>
-            <span class="si-text">Consultas</span>
-            <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
-          </button>
-          <div class="sidebar-sub">
-            <button class="sidebar-sub-item" data-subtab="planos" onclick="goTab('planos')">
-              <span class="si-text">Tabela de Planos</span>
-            </button>
-            <button class="sidebar-sub-item" data-subtab="coberturas" onclick="goTab('coberturas')">
-              <span class="si-text">Coberturas</span>
-            </button>
-            <button class="sidebar-sub-item" data-subtab="placafipe" onclick="goTab('placafipe')">
-              <span class="si-text">Consulta de Placa</span>
-            </button>
-          </div>
-        </div>
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
-        </button>
-        <button class="sidebar-item" data-tab="comissoes" data-tooltip="Comissões" onclick="goTab('comissoes')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-          <span class="si-text">Comissões</span>
         </button>
         <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border);margin-left:-8px;margin-right:-8px;padding-left:8px;padding-right:8px"></div>
         <button class="sidebar-item" data-tooltip="Fixar menu" onclick="toggleSidebar()">
