@@ -1296,9 +1296,15 @@ tr:hover .row-actions{opacity:1}
   <!-- ========= TAB: EXPORTAÇÕES ========= -->
   <div class="tab-panel" id="panel-exports">
     <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="loading-overlay"><div class="spinner"></div><span>Carregando dados...</span></div></div>
-    <div style="margin-bottom:28px">
-      <div style="font-size:1.1rem;font-weight:700;color:var(--text1);margin-bottom:4px">Exportacoes</div>
-      <div style="font-size:.75rem;color:var(--text3)">Gere relatorios em XLSX da base de dados</div>
+    <div style="margin-bottom:28px;display:flex;align-items:flex-end;justify-content:space-between">
+      <div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text1);margin-bottom:4px">Exportacoes</div>
+        <div style="font-size:.75rem;color:var(--text3)">Gere relatorios em XLSX da base de dados</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="toggleAllExportAccordions(true)" style="font-size:.72rem;padding:5px 10px">Expandir Todos</button>
+        <button class="btn btn-sm" onclick="toggleAllExportAccordions(false)" style="font-size:.72rem;padding:5px 10px">Fechar Todos</button>
+      </div>
     </div>
 
     <!-- Accordion: Base de Dados -->
@@ -1313,7 +1319,7 @@ tr:hover .row-actions{opacity:1}
           <svg class="export-accordion-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
-      <div class="export-accordion-body">
+      <div class="export-accordion-body" style="display:none">
         <div class="export-row" onclick="exportFullBaseXLSX()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Base Completa</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Todos os modelos por categoria com historico</div></div>
@@ -10568,6 +10574,20 @@ function toggleExportAccordion(header){
     body.style.display='';
     accordion.classList.add('open');
   }
+}
+
+function toggleAllExportAccordions(expand){
+  document.querySelectorAll('#panel-exports .export-accordion').forEach(acc=>{
+    const body=acc.querySelector('.export-accordion-body');
+    if(!body) return;
+    if(expand){
+      body.style.display='';
+      acc.classList.add('open');
+    } else {
+      body.style.display='none';
+      acc.classList.remove('open');
+    }
+  });
 }
 
 function enableExportButtons(){
