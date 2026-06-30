@@ -243,6 +243,9 @@ body.hide-kpi-analysis .export-card-admin,body.hide-kpi-analysis .export-section
 .export-row{display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
 .export-row:last-child{border-bottom:none}
 .export-row:hover{background:var(--surface)}
+.settings-sidebar-item{display:block;width:100%;text-align:left;padding:8px 16px;font-size:.78rem;color:var(--text2);background:none;border:none;cursor:pointer;border-radius:0;transition:all .15s;font-family:var(--font)}
+.settings-sidebar-item:hover{background:var(--surface-2);color:var(--text1)}
+.settings-sidebar-item.active{color:var(--accent);font-weight:600;background:var(--accent)08;border-right:2px solid var(--accent)}
 body.hide-drawer-add [onclick*="openAddModelToCat"],body.hide-drawer-add [onclick*="openAddBrandToCat"]{display:none!important}
 body.hide-drawer-edit [onclick*="openModelEdit"],body.hide-drawer-edit [onclick*="openSimpleModelEdit"]{display:none!important}
 body.hide-drawer-remove [onclick*="confirmRemoveFromCat"],body.hide-drawer-remove [onclick*="confirmRemoveBrandFromCat"],body.hide-drawer-remove [onclick*="openModelRemove"]{display:none!important}
@@ -1393,20 +1396,34 @@ tr:hover .row-actions{opacity:1}
 
   <!-- ========= TAB: CONFIGURAÇÕES ========= -->
   <div class="tab-panel" id="panel-settings">
-    <div class="card" style="margin-bottom:0">
-      <div class="card-title" style="margin-bottom:20px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configurações</div>
-      <!-- Settings Sub-tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px">
-        <button class="comp-tab active" id="settingsTab_users" onclick="switchSettingsTab('users')">Usuarios</button>
-        <button class="comp-tab" id="settingsTab_autorizadores" onclick="switchSettingsTab('autorizadores')">Autorizadores</button>
-        <button class="comp-tab" id="settingsTab_regras" onclick="switchSettingsTab('regras')">Regras de Aceitacao</button>
-        <button class="comp-tab" id="settingsTab_system" onclick="switchSettingsTab('system')">Sistema</button>
-        <button class="comp-tab" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">Base FIPE</button>
-        <button class="comp-tab" id="settingsTab_sedes" onclick="switchSettingsTab('sedes')">Sedes</button>
-        <button class="comp-tab" id="settingsTab_setores" onclick="switchSettingsTab('setores')">Setores</button>
-        <button class="comp-tab" id="settingsTab_comissao" onclick="switchSettingsTab('comissao')">Comissoes</button>
-        <button class="comp-tab" id="settingsTab_notificacoes" onclick="switchSettingsTab('notificacoes')">Notificacoes</button>
+    <div style="display:flex;gap:0;min-height:calc(100vh - 120px)">
+      <!-- Settings Sidebar -->
+      <div style="width:200px;min-width:200px;border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;gap:4px">
+        <div style="padding:0 16px 12px;font-size:1rem;font-weight:700;color:var(--text1)">Configuracoes</div>
+
+        <div style="padding:12px 16px 4px;font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Equipe</div>
+        <button class="settings-sidebar-item active" id="settingsTab_users" onclick="switchSettingsTab('users')">Usuarios</button>
+        <button class="settings-sidebar-item" id="settingsTab_setores" onclick="switchSettingsTab('setores')">Setores</button>
+        <button class="settings-sidebar-item" id="settingsTab_sedes" onclick="switchSettingsTab('sedes')">Sedes</button>
+
+        <div style="padding:16px 16px 4px;font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Operacao</div>
+        <button class="settings-sidebar-item" id="settingsTab_comissao" onclick="switchSettingsTab('comissao')">Comissoes</button>
+        <button class="settings-sidebar-item" id="settingsTab_autorizadores" onclick="switchSettingsTab('autorizadores')">Autorizadores</button>
+        <button class="settings-sidebar-item" id="settingsTab_notificacoes" onclick="switchSettingsTab('notificacoes')">Notificacoes</button>
+
+        <div style="padding:16px 16px 4px;font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Sistema</div>
+        <button class="settings-sidebar-item" id="settingsTab_regras" onclick="switchSettingsTab('regras')">Regras de Aceitacao</button>
+        <button class="settings-sidebar-item" id="settingsTab_fipe" onclick="switchSettingsTab('fipe')">Base FIPE</button>
+        <button class="settings-sidebar-item" id="settingsTab_system" onclick="switchSettingsTab('system')">Geral</button>
       </div>
+
+      <!-- Settings Content -->
+      <div style="flex:1;padding:20px 28px;overflow-y:auto">
+        <!-- Breadcrumb + Título -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:.7rem;color:var(--text3);margin-bottom:4px">Configuracoes > <span id="settingsBreadcrumb">Usuarios</span></div>
+          <div style="font-size:1.05rem;font-weight:700;color:var(--text1)" id="settingsTitle">Gestao de Usuarios</div>
+        </div>
 
       <!-- Sub-tab: Usuários -->
       <div id="settingsPanel_users">
@@ -1632,6 +1649,8 @@ tr:hover .row-actions{opacity:1}
 
     </div>
   </div>
+  </div><!-- end settings flex layout -->
+  </div><!-- end panel-settings -->
 
       </div><!-- end app-main-inner -->
     </main>
@@ -8706,11 +8725,21 @@ function togglePassField(id){
 let _settingsCurrentTab='users';
 function switchSettingsTab(tab){
   _settingsCurrentTab=tab;
+  const titles = {users:'Gestao de Usuarios',setores:'Setores',sedes:'Sedes',comissao:'Configuracao de Comissoes',autorizadores:'Autorizadores',notificacoes:'Gerenciar Notificacoes',regras:'Regras de Aceitacao',fipe:'Base FIPE',system:'Geral'};
+  const breadcrumbs = {users:'Usuarios',setores:'Setores',sedes:'Sedes',comissao:'Comissoes',autorizadores:'Autorizadores',notificacoes:'Notificacoes',regras:'Regras de Aceitacao',fipe:'Base FIPE',system:'Geral'};
+  // Update breadcrumb and title
+  const bcEl=document.getElementById('settingsBreadcrumb');
+  const titleEl=document.getElementById('settingsTitle');
+  if(bcEl) bcEl.textContent=breadcrumbs[tab]||tab;
+  if(titleEl) titleEl.textContent=titles[tab]||tab;
+  // Update sidebar active state
+  document.querySelectorAll('.settings-sidebar-item').forEach(btn=>{btn.classList.remove('active');});
+  const activeBtn=document.getElementById('settingsTab_'+tab);
+  if(activeBtn) activeBtn.classList.add('active');
+  // Show/hide panels
   ['users','autorizadores','regras','system','fipe','sedes','setores','comissao','notificacoes'].forEach(t=>{
     const panel=document.getElementById('settingsPanel_'+t);
-    const btn=document.getElementById('settingsTab_'+t);
     if(panel) panel.style.display=(t===tab)?'':'none';
-    if(btn) btn.classList.toggle('active',t===tab);
   });
   if(tab==='users') renderSettingsUsers();
   if(tab==='autorizadores') renderAutorizadores();
