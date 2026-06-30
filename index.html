@@ -9913,6 +9913,31 @@ async function initDataConnection(){
       }
     }
 
+    // Load compatibility rules BEFORE recomputeAll (necessário para classificar duplicados corretamente)
+    try{
+      const rules = await supabase.loadRules();
+      if(rules.compat && rules.compat.length > 0){
+        for(const rule of rules.compat){
+          if(!CAT_COMPAT_MAP[rule.categoria_a]) CAT_COMPAT_MAP[rule.categoria_a]=[];
+          if(!CAT_COMPAT_MAP[rule.categoria_a].includes(rule.categoria_b)){
+            CAT_COMPAT_MAP[rule.categoria_a].push(rule.categoria_b);
+          }
+          if(!CAT_COMPAT_MAP[rule.categoria_b]) CAT_COMPAT_MAP[rule.categoria_b]=[];
+          if(!CAT_COMPAT_MAP[rule.categoria_b].includes(rule.categoria_a)){
+            CAT_COMPAT_MAP[rule.categoria_b].push(rule.categoria_a);
+          }
+        }
+      }
+    }catch(e){ console.warn('Rules load (non-critical):',e); }
+
+    // Load divergencias ignoradas BEFORE recomputeAll (necessário para divergências)
+    try{
+      const ignoradas = await supabase.loadDivergenciasIgnoradas();
+      if(ignoradas && ignoradas.length > 0){
+        DIVERGENCIAS_IGNORADAS = ignoradas;
+      }
+    }catch(e){ console.warn('Divergencias ignoradas load (non-critical):',e); }
+
     recomputeAll();
     initAnos();
 
@@ -9934,37 +9959,6 @@ async function initDataConnection(){
         saveTempReleasesToStorage();
       }
     }catch(e){ console.warn('Temp releases load (non-critical):',e); }
-
-    // Load divergencias ignoradas (non-critical)
-    try{
-      const ignoradas = await supabase.loadDivergenciasIgnoradas();
-      if(ignoradas && ignoradas.length > 0){
-        DIVERGENCIAS_IGNORADAS = ignoradas;
-      }
-    }catch(e){ console.warn('Divergencias ignoradas load (non-critical):',e); }
-
-    // Load compatibility rules from database (B06 fix - dynamic rules)
-    // NOTE: Regras do banco COMPLEMENTAM as hardcoded, mas NAO substituem.
-    // Apenas regras de compatibilidade (compat) sao carregadas para evitar
-    // inflar divergencias com regras de inclusao incorretas no banco.
-    try{
-      const rules = await supabase.loadRules();
-      if(rules.compat && rules.compat.length > 0){
-        // Update CAT_COMPAT_MAP from database rules (only adds new pairs)
-        for(const rule of rules.compat){
-          if(!CAT_COMPAT_MAP[rule.categoria_a]) CAT_COMPAT_MAP[rule.categoria_a]=[];
-          if(!CAT_COMPAT_MAP[rule.categoria_a].includes(rule.categoria_b)){
-            CAT_COMPAT_MAP[rule.categoria_a].push(rule.categoria_b);
-          }
-          if(!CAT_COMPAT_MAP[rule.categoria_b]) CAT_COMPAT_MAP[rule.categoria_b]=[];
-          if(!CAT_COMPAT_MAP[rule.categoria_b].includes(rule.categoria_a)){
-            CAT_COMPAT_MAP[rule.categoria_b].push(rule.categoria_a);
-          }
-        }
-      }
-      // NOTE: CAT_MANDATORY_INCLUSION e CAT_REVIEW_RULES ficam como hardcoded.
-      // O banco regras_inclusao sera usado apenas quando migrar para arquitetura modular.
-    }catch(e){ console.warn('Rules load (non-critical):',e); }
 
     // Load FIPE base from Supabase if not available locally (cross-device support)
     if(!isFipeBaseLoaded()){
