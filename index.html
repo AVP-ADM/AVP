@@ -10809,8 +10809,8 @@ function tmLoadFromStorage(){
     var sheets=localStorage.getItem('avp-tm-sheets');
     var groups=localStorage.getItem('avp-tm-groups');
     var ver=localStorage.getItem('avp-tm-version');
-    if(sheets&&groups&&ver==='4'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
-    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','4');}
+    if(sheets&&groups&&ver==='5'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
+    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','5');}
   }catch(e){tmLoadDefaultData();}
 }
 
@@ -11153,7 +11153,7 @@ const COB_DEFAULT_DATA = {
     { id: 'passeio', nome: 'Automoveis', icon: 'car', descricao: 'Passeio  \u2022  SUV / Caminhonete / Utilitario  \u2022  Eletrico / Hibrido' },
     { id: 'moto', nome: 'Motocicletas', icon: 'moto', descricao: 'Avelloz / Shineray / Bajaj  \u2022  PCX 150 / NMAX 160 / ADV 150  \u2022  PCX 160 / XMAX 250 / ADV 160  \u2022  ELITE 125 / FLUO 125 / NEO  \u2022  Motocicletas Especiais' },
     { id: 'premium', nome: 'Premium', icon: 'car', descricao: 'Automovel Premium' },
-    { id: 'start', nome: 'Start', icon: 'car', descricao: 'Automovel Start' },
+    { id: 'start', nome: 'Automovel Start', icon: 'car', descricao: 'Automovel Start' },
     { id: 'truck', nome: 'Truck', icon: 'truck', descricao: 'Truck Leve (ate 14t)  \u2022  Truck Pesado (a partir de 14t)' },
     { id: 'agregado', nome: 'Agregado', icon: 'truck', descricao: 'Agregado Carreta' }
   ],
@@ -11165,7 +11165,7 @@ const COB_DEFAULT_DATA = {
     { id: 'vip_moto', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'moto' },
     { id: 'top_moto', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'moto' },
     { id: 'premium', nome: 'Premium', cor: 'purple', ordem: 1, cssClass: 'plan-vip', grupo: 'premium' },
-    { id: 'start', nome: 'Start', cor: 'green', ordem: 1, cssClass: 'plan-default', grupo: 'start' },
+    { id: 'start', nome: 'Automovel Start', cor: 'green', ordem: 1, cssClass: 'plan-default', grupo: 'start' },
     { id: 'basico_truck', nome: 'Basico Truck', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'truck' },
     { id: 'vip_truck', nome: 'VIP Truck', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'truck' },
     { id: 'top_truck', nome: 'TOP Truck', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'truck' },
