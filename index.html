@@ -10089,10 +10089,13 @@ function showApp(){
 
 // ========= ACCESS LEVELS =========
 function applyAccessLevels(){
-  const nivel=(currentProfile&&currentProfile.nivel)||'operador';
+  // Não aplicar nada se profile ainda não carregou (evitar race condition)
+  if(!currentProfile) return;
+
+  const nivel=currentProfile.nivel||'operador';
   // Update setor display in header
   const setorEl=document.getElementById('userSetor');
-  if(setorEl) setorEl.textContent=(currentProfile&&currentProfile.setor)||'';
+  if(setorEl) setorEl.textContent=currentProfile.setor||'';
 
   // Admin: acesso total (ignora permissões de setor)
   if(nivel==='admin'){
