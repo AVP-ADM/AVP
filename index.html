@@ -3781,7 +3781,7 @@ function openEditCategoryType(cat){
       <input type="checkbox" id="catType_trucks" ${hasTrucks?'checked':''}> Caminhões
     </label>
     <span style="font-size:.72rem;color:var(--text3)">Isso define quais marcas/modelos FIPE serão exibidos ao adicionar modelos nesta categoria.</span>
-    <span style="font-size:.72rem;color:var(--amber)">A alteração será adicionada às Alterações Pendentes.</span>
+    <span style="font-size:.72rem;color:var(--amber)">A alteracao sera aplicada imediatamente.</span>
   </div>`,function(){
     const types=[];
     if(document.getElementById('catType_cars').checked) types.push('cars');
@@ -4549,7 +4549,7 @@ function openModelEdit(marca, modelo, categoria){
     </div>
     <label style="font-size:.78rem;color:var(--text2);font-weight:600">Ano de Aceitação:</label>
     <input id="edit_ano_value" value="${ano.replace('A partir de ','')}" placeholder="Ex: 2010 ou deixe vazio para usar padrão" style="padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem">
-    <span style="font-size:.72rem;color:var(--text3)">Deixe vazio para usar o ano padrão da categoria (A partir de ${anoMinimo}). A alteração será adicionada às Pendentes.</span>
+    <span style="font-size:.72rem;color:var(--text3)">Deixe vazio para usar o ano padrão da categoria (A partir de ${anoMinimo}). A alteracao sera aplicada imediatamente.</span>
   </div>`,function(){
     const newAno=document.getElementById('edit_ano_value').value.trim();
     const currentAno=ano.replace('A partir de ','');
@@ -4703,7 +4703,7 @@ function openModelRemove(marca, modelo){
     <strong>${marca} — ${modelo}</strong><br><br>
     <span style="font-size:.78rem;color:var(--text2)">Selecione de qual categoria remover:</span><br>`;
   body+=cats.map(c=>`<label style="display:block;padding:4px 0;font-size:.82rem;cursor:pointer"><input type="checkbox" name="rem_cat" value="${c}"> ${c}</label>`).join('');
-  body+=`<br><span style="font-size:.72rem;color:var(--text3)">A remoção será adicionada às Alterações Pendentes.</span></div>`;
+  body+=`<br><span style="font-size:.72rem;color:var(--text3)">A remocao sera aplicada imediatamente.</span></div>`;
   showModal('Remover Modelo',body,function(){
     const checked=document.querySelectorAll('input[name="rem_cat"]:checked');
     if(!checked.length) return alert('Selecione pelo menos uma categoria');
