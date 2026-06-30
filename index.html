@@ -5297,7 +5297,7 @@ function openEditCategory(cat){
       <input id="edit_cat_ano" type="number" value="${anoAtual}" min="1990" max="2030">
       <span style="font-size:.68rem;color:var(--text3);margin-top:2px;display:block">Veiculos a partir deste ano serao aceitos nesta categoria.</span>
     </div>
-    <span style="font-size:.72rem;color:var(--text3)">Alteracoes no nome serao adicionadas as Pendencias. Alteracoes no ano sao aplicadas imediatamente.</span>
+    <span style="font-size:.72rem;color:var(--text3)">Alteracoes serao aplicadas imediatamente.</span>
   </div>`,function(){
     const newName=document.getElementById('edit_cat_name').value.trim();
     const newAno=parseInt(document.getElementById('edit_cat_ano').value)||anoAtual;
