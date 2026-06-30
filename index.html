@@ -1589,8 +1589,8 @@ tr:hover .row-actions{opacity:1}
       <button class="search-tab active" onclick="setSearchType('modelo')">Modelo</button>
       <button class="search-tab" onclick="setSearchType('categoria')">Categoria</button>
       <button class="search-tab" onclick="setSearchType('marca')">Marca</button>
-      <button class="search-tab" onclick="setSearchType('duplicidade')">Duplicidade</button>
-      <button class="search-tab" onclick="setSearchType('divergencia')">Divergência</button>
+      <button class="search-tab" onclick="setSearchType('duplicidade')" id="searchTabDuplicidade">Duplicidade</button>
+      <button class="search-tab" onclick="setSearchType('divergencia')" id="searchTabDivergencia">Divergência</button>
     </div>
     <div class="search-input-wrap">
       <span class="icon" style="display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -9346,6 +9346,11 @@ function aplicarPermissoes() {
   } else {
     document.body.classList.remove('hide-kpi-analysis');
   }
+  // Ocultar abas de pesquisa (Duplicidade/Divergência)
+  const searchTabDup = document.getElementById('searchTabDuplicidade');
+  const searchTabDiv = document.getElementById('searchTabDivergencia');
+  if (searchTabDup) searchTabDup.style.display = p.acoes.ver_conflitos ? '' : 'none';
+  if (searchTabDiv) searchTabDiv.style.display = p.acoes.ver_divergencias ? '' : 'none';
   // Drawers: botões add/edit/remove
   if (!p.acoes.adicionar_modelos && !p.acoes.adicionar_marcas) {
     document.body.classList.add('hide-drawer-add');
@@ -10150,6 +10155,11 @@ function applyAccessLevels(){
     if(elActivity) elActivity.parentElement.style.display='';
     const btnNovaCat = document.querySelector('[onclick*="openAddCategory"]');
     if(btnNovaCat) btnNovaCat.style.display='';
+    // Restaurar abas de pesquisa
+    const searchTabDup = document.getElementById('searchTabDuplicidade');
+    const searchTabDiv = document.getElementById('searchTabDivergencia');
+    if(searchTabDup) searchTabDup.style.display='';
+    if(searchTabDiv) searchTabDiv.style.display='';
     // Settings only for admin
     const settingsUsersItem=document.getElementById('settingsUsersItem');
     if(settingsUsersItem) settingsUsersItem.style.display='';
