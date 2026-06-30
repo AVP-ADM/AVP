@@ -30,7 +30,8 @@ function comPopulateMonthFilter() {
   if (!sel) return;
   const now = new Date();
   let opts = '';
-  for (let i = 0; i < 12; i++) {
+  // Mostrar apenas mês atual + 2 anteriores (sistema começou recentemente)
+  for (let i = 0; i < 3; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     const label = d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
