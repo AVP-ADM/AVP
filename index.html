@@ -5787,6 +5787,17 @@ async function commitDirectAction(op){
     if(RAW[op.catFrom]){
       RAW[op.catTo]=RAW[op.catFrom];
       delete RAW[op.catFrom];
+      // Rename directly in Supabase (evita desativar + criar)
+      try{
+        const catIdMap=window._catIdMap||{};
+        const catId=catIdMap[op.catFrom];
+        if(catId){
+          await supabase.update('categorias',{nome:op.catTo},'id=eq.'+catId);
+          catIdMap[op.catTo]=catId;
+          delete catIdMap[op.catFrom];
+          window._catIdMap=catIdMap;
+        }
+      }catch(e){console.warn('Erro ao renomear categoria no Supabase:',e);}
     }
   } else if(op.type==='Remoção de Categoria'){
     if(RAW[op.catFrom]) delete RAW[op.catFrom];
@@ -7866,17 +7877,25 @@ async function saveToDatabase(){
 
     // 1. Sync categories first (create new, rename, delete)
     const catIdMap = window._catIdMap || {};
-    const existingCats = await supabase.select('categorias', { select: 'id,nome' });
+    const existingCats = await supabase.select('categorias', { select: 'id,nome', filter: 'ativo=eq.true' });
     const existingMap = {};
     for(const c of existingCats) { existingMap[c.nome] = c.id; catIdMap[c.nome] = c.id; }
 
-    // Create categories that exist in RAW but not in Supabase
+    // Create categories that exist in RAW but not in Supabase (or reactivate if exists inactive)
     for(const catName of Object.keys(RAW)){
       if(!existingMap[catName]){
         try{
-          const result = await supabase.insert('categorias', { nome: catName, ativo: true }, { returnData: true });
-          if(result && result[0]) { catIdMap[catName] = result[0].id; }
-        }catch(e){ console.warn('Erro ao criar categoria '+catName+':', e); }
+          // Check if exists but inactive
+          const inactive = await supabase.select('categorias', { select: 'id', filter: 'nome=eq.' + encodeURIComponent(catName) + '&ativo=eq.false', limit: 1 });
+          if(inactive && inactive.length > 0){
+            // Reactivate
+            await supabase.update('categorias', { ativo: true }, 'id=eq.' + inactive[0].id);
+            catIdMap[catName] = inactive[0].id;
+          } else {
+            const result = await supabase.insert('categorias', { nome: catName, ativo: true }, { returnData: true });
+            if(result && result[0]) { catIdMap[catName] = result[0].id; }
+          }
+        }catch(e){ console.warn('Erro ao criar/reativar categoria '+catName+':', e); }
       }
     }
 
