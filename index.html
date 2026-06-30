@@ -1078,6 +1078,9 @@ tr:hover .row-actions{opacity:1}
       <div class="filter-row">
         <input type="text" id="dupBrandFilter" placeholder="Filtrar marca..." oninput="debouncedRenderDupTable()">
         <input type="text" id="dupModelFilter" placeholder="Filtrar modelo..." oninput="debouncedRenderDupTable()">
+        <select id="dupCatFilter" onchange="renderDupTable()">
+          <option value="">Todas categorias</option>
+        </select>
         <select id="dupCountFilter" onchange="renderDupTable()">
           <option value="0">Todas as qtd.</option>
           <option value="2">≥ 2 categorias</option>
@@ -4794,11 +4797,21 @@ function renderDupTable(){
   const bf = norm(document.getElementById('dupBrandFilter').value);
   const mf = norm(document.getElementById('dupModelFilter').value);
   const cf = parseInt(document.getElementById('dupCountFilter').value)||0;
+  const catF = (document.getElementById('dupCatFilter')||{}).value||'';
+
+  // Populate category filter if empty
+  const catSel = document.getElementById('dupCatFilter');
+  if(catSel && catSel.options.length <= 1){
+    const allCats = new Set();
+    DUPLICATES_REAL.forEach(d=>{ d.cats.forEach(c=>allCats.add(c)); });
+    [...allCats].sort().forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; catSel.appendChild(opt); });
+  }
 
   let filtered = DUPLICATES_REAL.filter(d=>{
     if(bf && !norm(d.marca).includes(bf)) return false;
     if(mf && !norm(d.modelo).includes(mf)) return false;
     if(d.count < cf) return false;
+    if(catF && !d.cats.includes(catF)) return false;
     return true;
   });
 
