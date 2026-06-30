@@ -11152,6 +11152,7 @@ const COB_DEFAULT_DATA = {
   grupos: [
     { id: 'passeio', nome: 'Passeio', icon: 'car' },
     { id: 'moto', nome: 'Motocicletas', icon: 'moto', descricao: 'Avelloz / Shineray / Bajaj  \u2022  PCX 150 / NMAX 160 / ADV 150  \u2022  PCX 160 / XMAX 250 / ADV 160  \u2022  ELITE 125 / FLUO 125 / NEO  \u2022  Motocicletas Especiais' },
+    { id: 'premium', nome: 'Premium', icon: 'car', descricao: 'Automovel Premium' },
     { id: 'start', nome: 'Start', icon: 'car' },
     { id: 'truck', nome: 'Truck', icon: 'truck' }
   ],
@@ -11162,6 +11163,7 @@ const COB_DEFAULT_DATA = {
     { id: 'basico_moto', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'moto' },
     { id: 'vip_moto', nome: 'VIP', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'moto' },
     { id: 'top_moto', nome: 'TOP', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'moto' },
+    { id: 'premium', nome: 'Premium', cor: 'purple', ordem: 1, cssClass: 'plan-vip', grupo: 'premium' },
     { id: 'start', nome: 'Start', cor: 'green', ordem: 1, cssClass: 'plan-default', grupo: 'start' },
     { id: 'basico_truck', nome: 'Basico Truck', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'truck' },
     { id: 'vip_truck', nome: 'VIP Truck', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'truck' },
@@ -11234,6 +11236,26 @@ const COB_DEFAULT_DATA = {
     { id: 'mt_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'moto', valores: { basico_moto: 'App exclusivo para solicitacoes, boletos e beneficios', vip_moto: 'App exclusivo para solicitacoes, boletos e beneficios', top_moto: 'App exclusivo para solicitacoes, boletos e beneficios' }},
     { id: 'mt_cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'moto', valores: { basico_moto: null, vip_moto: 'Ate R$10.000,00 em danos materiais', top_moto: 'Ate R$10.000,00 em danos materiais' }},
     { id: 'mt_veiculo_reserva', nome: 'Veiculo Reserva', categoria: 'beneficio', destaque: true, grupo: 'moto', valores: { basico_moto: null, vip_moto: null, top_moto: 'Ate 30 dias' }},
+    // ====== PREMIUM ======
+    { id: 'pm_cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Sim' }},
+    { id: 'pm_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Apenas decorrente de colisao' }},
+    { id: 'pm_roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Ate 100% da FIPE' }},
+    { id: 'pm_fenomenos_naturais', nome: 'Fenomenos Naturais', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Queda de arvore e granizo' }},
+    { id: 'pm_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Ate 100% da FIPE' }},
+    { id: 'pm_perda_total', nome: 'Perda Total', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Ate 100% da FIPE' }},
+    { id: 'pm_assistencia_funeral', nome: 'Assistencia Funeral', categoria: 'cobertura', destaque: false, grupo: 'premium', valores: { premium: 'Ate R$2.000 (falecimento acidental)' }},
+    { id: 'pm_cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'premium', valores: { premium: 'Ate R$50.000,00 em danos materiais' }},
+    { id: 'pm_assistencia_24h', nome: 'Assistencia 24hrs', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Sim' }},
+    { id: 'pm_auxilio_taxi', nome: 'Auxilio Taxi ou Motorista de APP', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Ate R$70,00' }},
+    { id: 'pm_auxilio_chaveiro', nome: 'Auxilio Chaveiro', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Abertura do veiculo' }},
+    { id: 'pm_guincho_pane', nome: 'Guincho para Pane Eletrica/Mecanica', categoria: 'assistencia', destaque: true, grupo: 'premium', valores: { premium: '500km (250km ida + 250km volta)' }},
+    { id: 'pm_guarda_veiculo', nome: 'Guarda de Veiculo', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Em caso de colisao' }},
+    { id: 'pm_retorno_domicilio', nome: 'Retorno ao Domicilio', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Ate R$100,00 por pessoa' }},
+    { id: 'pm_hospedagem', nome: 'Hospedagem Emergencial', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Maximo 1 dia' }},
+    { id: 'pm_sos_pneu', nome: 'SOS Pneu', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Limitado 50km. Somente deslocamento ate a oficina' }},
+    { id: 'pm_guincho_colisao', nome: 'Guincho para Colisao', categoria: 'assistencia', destaque: false, grupo: 'premium', valores: { premium: 'Ilimitado ate a credenciada mais proxima' }},
+    { id: 'pm_clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'premium', valores: { premium: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'pm_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'premium', valores: { premium: 'App exclusivo para solicitacoes, boletos e beneficios' }},
     // ====== TRUCK ======
     { id: 'tk_cobertura_nacional', nome: 'Cobertura Nacional', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Sim', vip_truck: 'Sim', top_truck: 'Sim' }},
     { id: 'tk_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: 'Ate 100% da FIPE', vip_truck: 'Ate 100% da FIPE', top_truck: 'Ate 100% da FIPE' }},
@@ -11260,6 +11282,7 @@ const COB_DEFAULT_DATA = {
   destaques: {
     passeio: ['guincho_pane', 'cobertura_terceiros', 'veiculo_reserva'],
     moto: ['mt_guincho_pane', 'mt_cobertura_terceiros', 'mt_veiculo_reserva'],
+    premium: ['pm_guincho_pane', 'pm_cobertura_terceiros'],
     start: ['st_guincho_pane', 'st_cobertura_terceiros', 'st_veiculo_reserva'],
     truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor']
   }
