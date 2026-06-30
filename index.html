@@ -233,6 +233,7 @@ body.hide-cat-actions th:nth-child(6),body.hide-cat-actions td:nth-child(6){disp
 body.hide-col-divergencias #panel-overview th:nth-child(4),body.hide-col-divergencias #panel-overview td:nth-child(4){display:none!important}
 body.hide-col-divergencias #panel-overview th:nth-child(5),body.hide-col-divergencias #panel-overview td:nth-child(5){display:none!important}
 body.hide-kpi-analysis .integrity-card,body.hide-kpi-analysis .kpi-card.red,body.hide-kpi-analysis .kpi-card.amber{display:none!important}
+body.hide-kpi-analysis .export-card-admin{display:none!important}
 body.hide-drawer-add [onclick*="openAddModelToCat"],body.hide-drawer-add [onclick*="openAddBrandToCat"]{display:none!important}
 body.hide-drawer-edit [onclick*="openModelEdit"],body.hide-drawer-edit [onclick*="openSimpleModelEdit"]{display:none!important}
 body.hide-drawer-remove [onclick*="confirmRemoveFromCat"],body.hide-drawer-remove [onclick*="confirmRemoveBrandFromCat"],body.hide-drawer-remove [onclick*="openModelRemove"]{display:none!important}
@@ -1286,48 +1287,52 @@ tr:hover .row-actions{opacity:1}
   <!-- ========= TAB: EXPORTAÇÕES ========= -->
   <div class="tab-panel" id="panel-exports">
     <div id="exportsLoading" style="text-align:center;padding:30px;color:var(--text2);display:none"><div class="loading-overlay"><div class="spinner"></div><span>Carregando dados...</span></div></div>
-    <div class="export-grid" id="exportsGrid">
+    <div style="margin-bottom:24px">
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text1);margin-bottom:4px">Exportacoes</div>
+      <div style="font-size:.75rem;color:var(--text3)">Gere relatorios em XLSX da base de dados</div>
+    </div>
+    <div class="export-grid" id="exportsGrid" style="grid-template-columns:repeat(3,1fr)">
       <div class="export-card">
-        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
         <h4>Base Completa</h4>
-        <p>Exportar todos os modelos separados por categoria com histórico ao lado</p>
-        <button class="btn btn-blue export-btn" onclick="exportFullBaseXLSX()">Exportar XLSX</button>
+        <p>Todos os modelos por categoria com historico</p>
+        <button class="btn btn-blue export-btn" onclick="exportFullBaseXLSX()">Exportar</button>
       </div>
       <div class="export-card">
         <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <h4>Alterações Pendentes</h4>
-        <p>Exportar as operações que estão no staging (para revisão antes de salvar)</p>
-        <button class="btn btn-amber export-btn" onclick="exportStagingXLSX()">Exportar XLSX</button>
+        <h4>Alteracoes Pendentes</h4>
+        <p>Operacoes no staging aguardando revisao</p>
+        <button class="btn btn-blue export-btn" onclick="exportStagingXLSX()">Exportar</button>
       </div>
       <div class="export-card">
-        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-        <h4>Apenas Alterações</h4>
-        <p>Exportar somente as modificações realizadas na sessão atual</p>
-        <button class="btn btn-green export-btn" onclick="exportChangesXLSX()">Exportar XLSX</button>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h4>Apenas Alteracoes</h4>
+        <p>Modificacoes realizadas na sessao atual</p>
+        <button class="btn btn-blue export-btn" onclick="exportChangesXLSX()">Exportar</button>
       </div>
       <div class="export-card">
-        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg></div>
-        <h4>Relatório de Divergências</h4>
-        <p>Exportar comparação detalhada entre categorias similares</p>
-        <button class="btn btn-amber export-btn" onclick="exportDivergencesXLSX()">Exportar XLSX</button>
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <h4>Historico Completo</h4>
+        <p>Todas as alteracoes registradas no sistema</p>
+        <button class="btn btn-blue export-btn" onclick="exportHistoryXLSX()">Exportar</button>
       </div>
-      <div class="export-card">
-        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <h4>Histórico Completo</h4>
-        <p>Exportar todo o histórico de alterações registradas</p>
-        <button class="btn btn-blue export-btn" onclick="exportHistoryXLSX()">Exportar XLSX</button>
+      <div class="export-card export-card-admin">
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+        <h4>Divergencias</h4>
+        <p>Comparacao entre categorias similares</p>
+        <button class="btn btn-blue export-btn" onclick="exportDivergencesXLSX()">Exportar</button>
       </div>
-      <div class="export-card">
-        <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+      <div class="export-card export-card-admin">
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
         <h4>Conflitos</h4>
-        <p>Exportar todos os modelos que aparecem em múltiplas categorias</p>
-        <button class="btn btn-red export-btn" onclick="exportConflitos()">Exportar XLSX</button>
+        <p>Modelos em categorias incompativeis</p>
+        <button class="btn btn-blue export-btn" onclick="exportConflitos()">Exportar</button>
       </div>
-      <div class="export-card">
-        <div class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-        <h4>Relatório de Saúde</h4>
-        <p>Resumo da integridade da base: duplicidades, divergências e cobertura</p>
-        <button class="btn btn-purple export-btn" onclick="exportHealthReport()">Exportar XLSX</button>
+      <div class="export-card export-card-admin">
+        <div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h4>Relatorio de Saude</h4>
+        <p>Integridade, duplicidades e cobertura</p>
+        <button class="btn btn-blue export-btn" onclick="exportHealthReport()">Exportar</button>
       </div>
     </div>
   </div>
