@@ -76,7 +76,7 @@ async function comRender() {
   _comPage = 1;
   await comLoadSedes();
   await comLoadOperacoes();
-  comRenderKpiCards();
+  await comRenderKpiCards();
   comRenderChips();
   comRenderMiddleSection();
   comRenderTable();
@@ -104,7 +104,7 @@ function comApplyVisibility() {
 }
 
 // ========= KPI CARDS PRINCIPAIS =========
-function comRenderKpiCards() {
+async function comRenderKpiCards() {
   const el = document.getElementById('comKpiCards');
   if (!el) return;
 
@@ -142,9 +142,50 @@ function comRenderKpiCards() {
     '</div>';
   };
 
-  // Insight para "Total Gerado" — comparação com mês anterior (se tiver dados)
+  // Insight para "Total Gerado" — comparação com mês anterior
   let insightGerado = 'Primeiro periodo com dados';
-  // TODO: Quando implementar query do mês anterior, calcular variação aqui
+  try {
+    const mes = document.getElementById('comMesFilter');
+    const mesVal = mes ? mes.value : '';
+    if (mesVal) {
+      const [year, month] = mesVal.split('-').map(Number);
+      // Calculate previous month
+      const prevDate = new Date(year, month - 2, 1); // month-1 is current (0-indexed), month-2 is previous
+      const prevYear = prevDate.getFullYear();
+      const prevMonth = String(prevDate.getMonth() + 1).padStart(2, '0');
+      const prevStart = prevYear + '-' + prevMonth + '-01';
+      const prevEndDate = new Date(prevYear, prevDate.getMonth() + 1, 0);
+      const prevEnd = prevYear + '-' + prevMonth + '-' + String(prevEndDate.getDate()).padStart(2, '0');
+
+      let prevFilter = 'created_at=gte.' + prevStart + 'T00:00:00&created_at=lte.' + prevEnd + 'T23:59:59';
+      if (currentProfile && currentProfile.nivel !== 'admin') {
+        prevFilter += '&usuario_id=eq.' + currentProfile.id;
+      }
+      const sedeVal = document.getElementById('comSedeFilter') ? document.getElementById('comSedeFilter').value : '';
+      if (sedeVal) {
+        prevFilter += '&sede_id=eq.' + sedeVal;
+      }
+
+      const prevRows = await supabase.select('operacoes', { filter: prevFilter, order: 'created_at.desc' });
+      const prevOps = (prevRows || []).filter(o => o.tipo === 'adesao' || o.tipo === 'troca_titularidade');
+      const prevGerado = prevOps.reduce((s, o) => { const d = o.dados || {}; return s + (parseFloat(d.valor) || parseFloat(o.valor) || 0); }, 0);
+
+      if (prevGerado > 0) {
+        const variacao = totalGerado - prevGerado;
+        const pctVar = Math.round((variacao / prevGerado) * 100);
+        const sinal = pctVar >= 0 ? '+' : '';
+        const corVar = pctVar >= 0 ? 'var(--green)' : 'var(--red)';
+        const iconVar = pctVar >= 0
+          ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="18 15 12 9 6 15"/></svg>'
+          : '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="6 9 12 15 18 9"/></svg>';
+        insightGerado = '<span style="color:' + corVar + '">' + iconVar + ' ' + sinal + pctVar + '% vs. mes anterior</span>';
+      } else if (totalGerado > 0) {
+        insightGerado = 'Sem dados no mes anterior';
+      }
+    }
+  } catch (e) {
+    console.warn('comRenderKpiCards prev month error:', e);
+  }
 
   el.innerHTML =
     card(iconTrending, 'R$ ' + comFormatMoney(totalGerado), lblGerado, insightGerado, 'var(--green)') +

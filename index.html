@@ -7019,6 +7019,114 @@ function exportDivergencesXLSX(){
   showToast('Relatório de divergências exportado com sucesso!','success');
 }
 
+function exportCoberturaFipe(){
+  if(typeof XLSX==='undefined'){showToast('Biblioteca XLSX nao carregada','error');return;}
+  if(!isFipeBaseLoaded()){showToast('Base FIPE nao carregada. Atualize a base oficial primeiro.','warning');return;}
+
+  // Collect all models from operational base (RAW)
+  const operationalModels = [];
+  for(const cat of Object.keys(RAW)){
+    const brands = RAW[cat].brands || {};
+    for(const [brand, models] of Object.entries(brands)){
+      for(const model of models){
+        operationalModels.push({marca: brand, modelo: model, categoria: cat});
+      }
+    }
+  }
+
+  // Collect all FIPE models
+  const fipeModels = new Set();
+  const fipeBrandMap = {}; // brandName -> [models]
+  for(const brand of FIPE_BASE.brands){
+    const key = brand._type==='moto' ? 'moto_'+brand.code : brand._type==='truck' ? 'truck_'+brand.code : brand.code;
+    const models = FIPE_BASE.models[key] || [];
+    const bName = brand.name;
+    if(!fipeBrandMap[bName]) fipeBrandMap[bName] = [];
+    for(const m of models){
+      fipeModels.add(bName.toLowerCase() + '||' + m.name.toLowerCase());
+      fipeBrandMap[bName].push(m.name);
+    }
+  }
+
+  // Find operational models NOT in FIPE (modelos cadastrados sem correspondencia FIPE)
+  const notInFipe = [];
+  for(const item of operationalModels){
+    const key = item.marca.toLowerCase() + '||' + item.modelo.toLowerCase();
+    if(!fipeModels.has(key)){
+      notInFipe.push(item);
+    }
+  }
+
+  // Find FIPE models NOT in operational base (modelos FIPE nao cadastrados)
+  const operationalSet = new Set();
+  for(const item of operationalModels){
+    operationalSet.add(item.marca.toLowerCase() + '||' + item.modelo.toLowerCase());
+  }
+  const notInBase = [];
+  for(const [brandName, models] of Object.entries(fipeBrandMap)){
+    for(const model of models){
+      const key = brandName.toLowerCase() + '||' + model.toLowerCase();
+      if(!operationalSet.has(key)){
+        notInBase.push({marca: brandName, modelo: model});
+      }
+    }
+  }
+
+  // Build XLSX with 2 sheets
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Modelos na base sem correspondencia FIPE
+  const headers1 = ['Marca', 'Modelo', 'Categoria', 'Situacao'];
+  const data1 = notInFipe.map(item => [item.marca, item.modelo, item.categoria, 'Sem correspondencia FIPE']);
+  const rows1 = [headers1, ...data1];
+  const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+  ws1['!cols'] = [{wch:22},{wch:50},{wch:30},{wch:28}];
+  const colLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for(let i=0;i<headers1.length;i++){
+    const cell = colLetters[i]+'1';
+    if(ws1[cell]) ws1[cell].s = {font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb, ws1, 'Sem Correspondencia FIPE');
+
+  // Sheet 2: Modelos FIPE nao cadastrados na base
+  const headers2 = ['Marca', 'Modelo', 'Situacao'];
+  const data2 = notInBase.map(item => [item.marca, item.modelo, 'Nao cadastrado na base']);
+  const rows2 = [headers2, ...data2];
+  const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+  ws2['!cols'] = [{wch:22},{wch:50},{wch:28}];
+  for(let i=0;i<headers2.length;i++){
+    const cell = colLetters[i]+'1';
+    if(ws2[cell]) ws2[cell].s = {font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb, ws2, 'FIPE Nao Cadastrados');
+
+  // Summary sheet
+  const totalOp = operationalModels.length;
+  const totalFipe = fipeModels.size;
+  const cobertura = totalFipe > 0 ? Math.round((totalOp - notInFipe.length) / totalFipe * 100) : 0;
+  const summaryHeaders = ['Metrica', 'Valor'];
+  const summaryData = [
+    ['Total modelos na base operacional', totalOp],
+    ['Total modelos na base FIPE', totalFipe],
+    ['Modelos da base sem correspondencia FIPE', notInFipe.length],
+    ['Modelos FIPE nao cadastrados', notInBase.length],
+    ['Cobertura da base vs FIPE', cobertura + '%'],
+    ['Data da exportacao', new Date().toLocaleString('pt-BR')],
+    ['Ultima atualizacao FIPE', FIPE_BASE.lastUpdate ? new Date(FIPE_BASE.lastUpdate).toLocaleString('pt-BR') : 'N/A']
+  ];
+  const summaryRows = [summaryHeaders, ...summaryData];
+  const ws3 = XLSX.utils.aoa_to_sheet(summaryRows);
+  ws3['!cols'] = [{wch:40},{wch:25}];
+  for(let i=0;i<summaryHeaders.length;i++){
+    const cell = colLetters[i]+'1';
+    if(ws3[cell]) ws3[cell].s = {font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
+  }
+  XLSX.utils.book_append_sheet(wb, ws3, 'Resumo');
+
+  XLSX.writeFile(wb, 'cobertura_fipe_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Relatorio de cobertura FIPE exportado! ' + notInFipe.length + ' sem correspondencia, ' + notInBase.length + ' nao cadastrados.','success');
+}
+
 function exportHistoryXLSX(){
   if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
   const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
