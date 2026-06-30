@@ -11470,24 +11470,27 @@ function cobRenderAccordions() {
       html+='</div></div>';
     });
     html+='</div>';
-    // Table section
+    // Table section - UNIFIED TABLE (all coverage items across all groups except agregado)
     html+='<div class="cob-table-section"><button class="btn btn-sm cob-toggle-table'+(tblVis?' expanded':'')+'" onclick="cobToggleTable(\''+grupo.id+'\')">';
     html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="'+(tblVis?'18 15 12 9 6 15':'6 9 12 15 18 9')+'"/></svg> '+(tblVis?'Ocultar tabela':'Ver todas as coberturas')+'</button>';
     if(tblVis){
+      // Build unified coverage items list (excluding agregado)
+      var unifiedItems = cobGetUnifiedItems();
       html+='<div class="cob-full-table" style="margin-top:14px"><div class="table-wrap"><table><thead><tr><th>Cobertura</th>';
       sel.forEach(function(pid){var p=cobGetPlano(pid);if(p)html+='<th>'+p.nome+'</th>';});
       html+='</tr></thead><tbody>';
       [{key:'cobertura',label:'Coberturas'},{key:'assistencia',label:'Assistencias'},{key:'beneficio',label:'Beneficios'}].forEach(function(cat){
-        var items=gCobs.filter(function(c){return c.categoria===cat.key;});if(!items.length)return;
+        var items=unifiedItems.filter(function(u){return u.categoria===cat.key;});if(!items.length)return;
         html+='<tr><td colspan="'+(sel.length+1)+'" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">'+cat.label+'</td></tr>';
-        items.forEach(function(cob){
-          var vals=sel.map(function(pid){return cob.valores[pid];}),same=vals.every(function(v){return v===vals[0];}),diff=!same;
-          html+='<tr><td style="font-weight:500;white-space:nowrap">'+cob.nome+'</td>';
+        items.forEach(function(uItem){
+          // Find matching item in this group's coberturas
+          var groupItem=gCobs.find(function(c){return c.nome===uItem.nome;});
+          html+='<tr><td style="font-weight:500;white-space:nowrap">'+uItem.nome+'</td>';
           sel.forEach(function(pid){
-            var val=cob.valores[pid],cls=diff?'cob-diff':'';if(!val)cls+=' cob-disabled';
-            if(!val)html+='<td class="'+cls.trim()+'"><span class="cob-cross"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>';
-            else if(val==='Sim')html+='<td class="'+cls.trim()+'"><span class="cob-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
-            else html+='<td class="'+cls.trim()+'">'+val+'</td>';
+            var val=groupItem?groupItem.valores[pid]:null;
+            if(!val&&val!==0)html+='<td class="cob-disabled"><span class="cob-cross"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>';
+            else if(val==='Sim')html+='<td><span class="cob-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+            else html+='<td>'+val+'</td>';
           });html+='</tr>';
         });
       });
@@ -11501,6 +11504,19 @@ function cobToggleAccordion(gid){_cobExpandedGrupos[gid]=!_cobExpandedGrupos[gid
 function cobExpandAll(){_cobData.grupos.forEach(function(g){_cobExpandedGrupos[g.id]=true;});document.querySelectorAll('.cob-accordion').forEach(function(el){el.classList.add('expanded');});}
 function cobCollapseAll(){_cobData.grupos.forEach(function(g){_cobExpandedGrupos[g.id]=false;});document.querySelectorAll('.cob-accordion').forEach(function(el){el.classList.remove('expanded');});}
 function cobGetPlano(id){return _cobData.planos.find(function(p){return p.id===id;});}
+function cobGetUnifiedItems(){
+  // Build a unified list of all unique coverage items across all groups (excluding agregado)
+  var seen={};
+  var items=[];
+  var allCobs=_cobData.coberturas.filter(function(c){return c.grupo!=='agregado';});
+  allCobs.forEach(function(c){
+    if(!seen[c.nome]){
+      seen[c.nome]=true;
+      items.push({nome:c.nome,categoria:c.categoria});
+    }
+  });
+  return items;
+}
 function cobToggleTable(gid){_cobTableVisibleByGrupo[gid]=!_cobTableVisibleByGrupo[gid];cobRenderAccordions();}
 // ========= FIM COBERTURAS =========
 
