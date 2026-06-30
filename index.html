@@ -229,6 +229,9 @@ input[type="checkbox"]:focus{box-shadow:none;border-color:var(--border-strong)}
 .drawer-overlay.open{opacity:1;pointer-events:auto}
 body:has(.drawer-overlay.open){overflow:hidden}
 body.hide-cat-actions .row-actions-btn,body.hide-cat-actions .row-menu{display:none!important}
+body.hide-cat-actions th:nth-child(6),body.hide-cat-actions td:nth-child(6){display:none!important}
+body.hide-col-divergencias #panel-overview th:nth-child(4),body.hide-col-divergencias #panel-overview td:nth-child(4){display:none!important}
+body.hide-col-divergencias #panel-overview th:nth-child(5),body.hide-col-divergencias #panel-overview td:nth-child(5){display:none!important}
 body.hide-drawer-add [onclick*="openAddModelToCat"],body.hide-drawer-add [onclick*="openAddBrandToCat"]{display:none!important}
 body.hide-drawer-edit [onclick*="openModelEdit"],body.hide-drawer-edit [onclick*="openSimpleModelEdit"]{display:none!important}
 body.hide-drawer-remove [onclick*="confirmRemoveFromCat"],body.hide-drawer-remove [onclick*="confirmRemoveBrandFromCat"]{display:none!important}
@@ -9297,6 +9300,12 @@ function aplicarPermissoes() {
     document.body.classList.remove('hide-cat-actions');
   } else {
     document.body.classList.add('hide-cat-actions');
+  }
+  // Ocultar coluna Status + Divergências se não tem permissão
+  if (!p.acoes.ver_divergencias) {
+    document.body.classList.add('hide-col-divergencias');
+  } else {
+    document.body.classList.remove('hide-col-divergencias');
   }
   // Drawers: botões add/edit/remove
   if (!p.acoes.adicionar_modelos && !p.acoes.adicionar_marcas) {
