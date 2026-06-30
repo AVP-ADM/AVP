@@ -1433,7 +1433,7 @@ tr:hover .row-actions{opacity:1}
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Setor</th><th>Status</th><th style="width:100px">Ações</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Usuario</th><th>Nível</th><th>Setor</th><th>Status</th><th style="width:100px">Ações</th></tr></thead>
             <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Carregando...</td></tr></tbody>
           </table>
         </div>
@@ -8981,7 +8981,7 @@ async function renderSettingsUsers(){
       const eId=u.id;
       return `<tr style="${u.ativo===false?'opacity:.5':''}">
         <td style="font-weight:500">${escapeHtml(u.nome)||'—'}</td>
-        <td style="font-size:.75rem;color:var(--text2)">${escapeHtml(u.email)||'—'}</td>
+        <td style="font-size:.75rem;color:var(--text2)">${escapeHtml((u.email||'').replace(/@avpbase\.local$/,''))||'—'}</td>
         <td><span style="font-size:.7rem;font-weight:600;color:${nivelColors[u.nivel]||'var(--text2)'};background:${nivelColors[u.nivel]||'var(--text3)'}15;padding:2px 8px;border-radius:10px">${nivelLabels[u.nivel]||escapeHtml(u.nivel)}</span></td>
         <td style="font-size:.75rem;color:var(--text2)">${u.setor||'—'}</td>
         <td>${statusHtml}</td>
@@ -9531,7 +9531,7 @@ async function openCreateUserModal(){
   showModal('Novo Usuário',`
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="newUserName" placeholder="Nome completo" style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="newUserEmail" placeholder="email@exemplo.com" style="width:100%"></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Usuario de Acesso</label><input id="newUserEmail" placeholder="Ex: iris, joao, pedro" style="width:100%"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="newUserNivel" style="width:100%"><option value="operador">Operador</option><option value="admin">Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><div style="display:flex;gap:6px"><select id="newUserSetor" style="flex:1">${_setorOpts}</select><button type="button" class="btn btn-sm" onclick="quickCreateSetor('newUserSetor')" title="Criar novo setor" style="padding:6px 8px;white-space:nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
       <div style="padding:10px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)">
@@ -9542,10 +9542,12 @@ async function openCreateUserModal(){
     </div>
   `,async function(){
     const nome=document.getElementById('newUserName').value.trim();
-    const email=document.getElementById('newUserEmail').value.trim();
+    const username=document.getElementById('newUserEmail').value.trim().toLowerCase().replace(/\s/g,'');
     const nivel=document.getElementById('newUserNivel').value;
     const setor=document.getElementById('newUserSetor').value.trim();
-    if(!nome||!email){showToast('Preencha nome e email','error');return;}
+    if(!nome||!username){showToast('Preencha nome e usuario','error');return;}
+    if(username.includes('@')){showToast('Digite apenas o nome de usuario, sem @','error');return;}
+    const email=username+'@avpbase.local';
     try{
       // Create user in Supabase Auth com senha padrão
       const result=await supabase.signUp(email,'Autovale123#',{nome:nome});
@@ -9572,7 +9574,7 @@ async function openEditUserModal(userId){
   showModal('Editar Usuário',`
     <div style="display:grid;gap:12px">
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nome</label><input id="editUserName" value="${(user.nome||'').replace(/"/g,'&quot;')}" style="width:100%"></div>
-      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Email</label><input id="editUserEmail" value="${(user.email||'').replace(/"/g,'&quot;')}" disabled style="width:100%;opacity:.6"></div>
+      <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Usuario</label><input id="editUserEmail" value="${(user.email||'').replace(/@avpbase\.local$/,'').replace(/"/g,'&quot;')}" disabled style="width:100%;opacity:.6"></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nível de Acesso</label><select id="editUserNivel" style="width:100%"><option value="operador" ${user.nivel==='operador'?'selected':''}>Operador</option><option value="admin" ${user.nivel==='admin'?'selected':''}>Admin</option></select></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Setor</label><div style="display:flex;gap:6px"><select id="editUserSetor" style="flex:1">${_setorOpts}</select><button type="button" class="btn btn-sm" onclick="quickCreateSetor('editUserSetor')" title="Criar novo setor" style="padding:6px 8px;white-space:nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
       <div><label style="font-size:.75rem;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Nova Senha (deixe vazio para não alterar)</label>${passwordFieldHtml('editUserPass','Nova senha...')}</div>
