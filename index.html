@@ -11280,8 +11280,9 @@ const COB_DEFAULT_DATA = {
     { id: 'tk_parabrisa_retrovisor', nome: 'Para-brisa / Retrovisor', categoria: 'cobertura', destaque: true, grupo: 'truck', valores: { basico_truck: null, vip_truck: null, top_truck: '50% - Carencia 60 dias da afiliacao' }},
     { id: 'tk_parabrisa', nome: 'Para-brisa', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: null, vip_truck: '50% - Carencia 60 dias da afiliacao', top_truck: null }},
     // ====== AGREGADO ======
-    { id: 'ag_agregado_carreta', nome: 'Agregado Carreta', categoria: 'cobertura', destaque: true, grupo: 'agregado', valores: { agregado: 'Cobertura para Roubo / Furto / Colisao' }},
-    { id: 'ag_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'agregado', valores: { agregado: 'Incendio / Decorrente de colisao' }},
+    { id: 'ag_roubo_furto', nome: 'Roubo / Furto', categoria: 'cobertura', destaque: true, grupo: 'agregado', valores: { agregado: 'Ate 100% da FIPE' }},
+    { id: 'ag_colisao', nome: 'Colisao', categoria: 'cobertura', destaque: false, grupo: 'agregado', valores: { agregado: 'Ate 100% da FIPE' }},
+    { id: 'ag_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'agregado', valores: { agregado: 'Decorrente de colisao' }},
     { id: 'ag_clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'agregado', valores: { agregado: 'Descontos exclusivos, cashback e parceiros locais' }},
     { id: 'ag_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'agregado', valores: { agregado: 'App exclusivo para solicitacoes, boletos e beneficios' }}
   ],
@@ -11292,7 +11293,7 @@ const COB_DEFAULT_DATA = {
     premium: ['pm_guincho_pane', 'pm_cobertura_terceiros'],
     start: ['st_guincho_pane', 'st_cobertura_terceiros', 'st_veiculo_reserva'],
     truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor'],
-    agregado: ['ag_agregado_carreta']
+    agregado: ['ag_roubo_furto']
   }
 };
 
