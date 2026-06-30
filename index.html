@@ -11284,8 +11284,54 @@ function cobLoadData() {
   } catch(e) {
     _cobData = JSON.parse(JSON.stringify(COB_DEFAULT_DATA));
   }
+  // Merge missing groups/plans/coberturas from defaults (handles new groups added to COB_DEFAULT_DATA)
+  cobMergeDefaults();
   // Then async load from Supabase (will re-render if data differs)
   cobLoadFromSupabase();
+}
+
+function cobMergeDefaults() {
+  if (!_cobData) return;
+  const def = COB_DEFAULT_DATA;
+  let changed = false;
+  // Merge missing grupos
+  def.grupos.forEach(dg => {
+    if (!_cobData.grupos.find(g => g.id === dg.id)) {
+      _cobData.grupos.push(JSON.parse(JSON.stringify(dg)));
+      changed = true;
+    }
+  });
+  // Merge missing planos
+  def.planos.forEach(dp => {
+    if (!_cobData.planos.find(p => p.id === dp.id)) {
+      _cobData.planos.push(JSON.parse(JSON.stringify(dp)));
+      changed = true;
+    }
+  });
+  // Merge missing coberturas
+  def.coberturas.forEach(dc => {
+    if (!_cobData.coberturas.find(c => c.id === dc.id)) {
+      _cobData.coberturas.push(JSON.parse(JSON.stringify(dc)));
+      changed = true;
+    }
+  });
+  // Merge missing destaques
+  if (typeof def.destaques === 'object' && !Array.isArray(def.destaques)) {
+    if (typeof _cobData.destaques !== 'object' || Array.isArray(_cobData.destaques)) {
+      _cobData.destaques = JSON.parse(JSON.stringify(def.destaques));
+      changed = true;
+    } else {
+      Object.keys(def.destaques).forEach(key => {
+        if (!_cobData.destaques[key]) {
+          _cobData.destaques[key] = JSON.parse(JSON.stringify(def.destaques[key]));
+          changed = true;
+        }
+      });
+    }
+  }
+  if (changed) {
+    try { localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData)); } catch(e) {}
+  }
 }
 
 async function cobLoadFromSupabase() {
@@ -11295,6 +11341,7 @@ async function cobLoadFromSupabase() {
       const remote = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
       if (remote.planos && remote.coberturas && remote.destaques && remote.grupos) {
         _cobData = remote;
+        cobMergeDefaults();
         localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
         cobRenderAccordions();
       }
