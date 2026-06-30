@@ -11294,11 +11294,17 @@ function cobMergeDefaults() {
   if (!_cobData) return;
   const def = COB_DEFAULT_DATA;
   let changed = false;
-  // Merge missing grupos
+  // Merge missing grupos + update nome/descricao of existing ones
   def.grupos.forEach(dg => {
-    if (!_cobData.grupos.find(g => g.id === dg.id)) {
+    const existing = _cobData.grupos.find(g => g.id === dg.id);
+    if (!existing) {
       _cobData.grupos.push(JSON.parse(JSON.stringify(dg)));
       changed = true;
+    } else {
+      // Update nome and descricao if changed in defaults
+      if (existing.nome !== dg.nome) { existing.nome = dg.nome; changed = true; }
+      if (dg.descricao && existing.descricao !== dg.descricao) { existing.descricao = dg.descricao; changed = true; }
+      if (dg.icon && existing.icon !== dg.icon) { existing.icon = dg.icon; changed = true; }
     }
   });
   // Merge missing planos
@@ -11330,6 +11336,13 @@ function cobMergeDefaults() {
     }
   }
   if (changed) {
+    // Reorder grupos to match default order
+    const defOrder = def.grupos.map(g => g.id);
+    _cobData.grupos.sort((a, b) => {
+      const ai = defOrder.indexOf(a.id);
+      const bi = defOrder.indexOf(b.id);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
     try { localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData)); } catch(e) {}
   }
 }
