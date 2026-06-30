@@ -11151,7 +11151,7 @@ const COB_STORAGE_KEY = 'avp-coberturas-data';
 const COB_DEFAULT_DATA = {
   grupos: [
     { id: 'passeio', nome: 'Passeio', icon: 'car' },
-    { id: 'moto', nome: 'Moto', icon: 'moto' },
+    { id: 'moto', nome: 'Motocicletas', icon: 'moto', descricao: 'Moto | Shineray | Avelloz | Bajaj | PCX 150 | PCX 160 | Elite | NMAX | ADV | Especiais' },
     { id: 'start', nome: 'Start', icon: 'car' },
     { id: 'truck', nome: 'Truck', icon: 'truck' }
   ],
@@ -11401,7 +11401,7 @@ function cobRenderAccordions() {
     html+='<div class="cob-accordion'+(isExp?' expanded':'')+'" data-grupo="'+grupo.id+'">';
     html+='<div class="cob-accordion-header" onclick="cobToggleAccordion(\''+grupo.id+'\')">';
     html+='<div class="cob-accordion-icon">'+(iconMap[grupo.icon]||'')+'</div>';
-    html+='<span class="cob-accordion-title">'+grupo.nome+'</span>';
+    html+='<div style="flex:1;min-width:0"><span class="cob-accordion-title">'+grupo.nome+'</span>'+(grupo.descricao?'<div style="font-size:.65rem;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+grupo.descricao+'</div>':'')+'</div>';
     html+='<span class="cob-accordion-count">'+gPlanos.length+' planos</span>';
     html+='<span class="cob-accordion-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>';
     html+='<div class="cob-accordion-body">';
