@@ -11154,7 +11154,8 @@ const COB_DEFAULT_DATA = {
     { id: 'moto', nome: 'Motocicletas', icon: 'moto', descricao: 'Avelloz / Shineray / Bajaj  \u2022  PCX 150 / NMAX 160 / ADV 150  \u2022  PCX 160 / XMAX 250 / ADV 160  \u2022  ELITE 125 / FLUO 125 / NEO  \u2022  Motocicletas Especiais' },
     { id: 'premium', nome: 'Premium', icon: 'car', descricao: 'Automovel Premium' },
     { id: 'start', nome: 'Start', icon: 'car', descricao: 'Automovel Start' },
-    { id: 'truck', nome: 'Truck', icon: 'truck', descricao: 'Truck Leve (ate 14t)  \u2022  Truck Pesado (a partir de 14t)' }
+    { id: 'truck', nome: 'Truck', icon: 'truck', descricao: 'Truck Leve (ate 14t)  \u2022  Truck Pesado (a partir de 14t)' },
+    { id: 'agregado', nome: 'Agregado', icon: 'truck', descricao: 'Agregado Carreta' }
   ],
   planos: [
     { id: 'basico', nome: 'Basico', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'passeio' },
@@ -11167,7 +11168,8 @@ const COB_DEFAULT_DATA = {
     { id: 'start', nome: 'Start', cor: 'green', ordem: 1, cssClass: 'plan-default', grupo: 'start' },
     { id: 'basico_truck', nome: 'Basico Truck', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'truck' },
     { id: 'vip_truck', nome: 'VIP Truck', cor: 'purple', ordem: 2, cssClass: 'plan-vip', grupo: 'truck' },
-    { id: 'top_truck', nome: 'TOP Truck', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'truck' }
+    { id: 'top_truck', nome: 'TOP Truck', cor: 'amber', ordem: 3, cssClass: 'plan-top', badge: 'Mais completo', grupo: 'truck' },
+    { id: 'agregado', nome: 'Agregado', cor: 'blue', ordem: 1, cssClass: 'plan-basico', grupo: 'agregado' }
   ],
   coberturas: [
     // ====== PASSEIO ======
@@ -11276,7 +11278,12 @@ const COB_DEFAULT_DATA = {
     { id: 'tk_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'truck', valores: { basico_truck: 'App exclusivo para solicitacoes, boletos e beneficios', vip_truck: 'App exclusivo para solicitacoes, boletos e beneficios', top_truck: 'App exclusivo para solicitacoes, boletos e beneficios' }},
     { id: 'tk_cobertura_terceiros', nome: 'Cobertura para Terceiros', categoria: 'cobertura', destaque: true, grupo: 'truck', valores: { basico_truck: null, vip_truck: 'Ate R$50.000,00 em danos materiais', top_truck: 'Ate R$100.000,00 em danos materiais' }},
     { id: 'tk_parabrisa_retrovisor', nome: 'Para-brisa / Retrovisor', categoria: 'cobertura', destaque: true, grupo: 'truck', valores: { basico_truck: null, vip_truck: null, top_truck: '50% - Carencia 60 dias da afiliacao' }},
-    { id: 'tk_parabrisa', nome: 'Para-brisa', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: null, vip_truck: '50% - Carencia 60 dias da afiliacao', top_truck: null }}
+    { id: 'tk_parabrisa', nome: 'Para-brisa', categoria: 'cobertura', destaque: false, grupo: 'truck', valores: { basico_truck: null, vip_truck: '50% - Carencia 60 dias da afiliacao', top_truck: null }},
+    // ====== AGREGADO ======
+    { id: 'ag_agregado_carreta', nome: 'Agregado Carreta', categoria: 'cobertura', destaque: true, grupo: 'agregado', valores: { agregado: 'Cobertura para Roubo / Furto / Colisao' }},
+    { id: 'ag_incendio', nome: 'Incendio', categoria: 'cobertura', destaque: false, grupo: 'agregado', valores: { agregado: 'Incendio / Decorrente de colisao' }},
+    { id: 'ag_clube_vantagens', nome: 'Clube de Vantagens', categoria: 'beneficio', destaque: false, grupo: 'agregado', valores: { agregado: 'Descontos exclusivos, cashback e parceiros locais' }},
+    { id: 'ag_app_associado', nome: 'Aplicativo do Associado', categoria: 'beneficio', destaque: false, grupo: 'agregado', valores: { agregado: 'App exclusivo para solicitacoes, boletos e beneficios' }}
   ],
   // Items that are key differentiators per group
   destaques: {
@@ -11284,7 +11291,8 @@ const COB_DEFAULT_DATA = {
     moto: ['mt_guincho_pane', 'mt_cobertura_terceiros', 'mt_veiculo_reserva'],
     premium: ['pm_guincho_pane', 'pm_cobertura_terceiros'],
     start: ['st_guincho_pane', 'st_cobertura_terceiros', 'st_veiculo_reserva'],
-    truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor']
+    truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor'],
+    agregado: ['ag_agregado_carreta']
   }
 };
 
