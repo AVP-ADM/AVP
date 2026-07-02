@@ -344,7 +344,7 @@ function migRenderAutorizacoes() {
   const pageItems = filtered.slice(start, start + _migAutPageSize);
 
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma autorizacao registrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3)">Nenhuma autorizacao registrada</td></tr>';
   } else {
     tbody.innerHTML = pageItems.map(a => {
       const pct = parseFloat(a.percentual_desconto) || 0;
@@ -358,6 +358,7 @@ function migRenderAutorizacoes() {
         '<td>R$ ' + migFormatMoney(parseFloat(a.valor_desconto) || 0) + '</td>' +
         '<td style="font-weight:600;color:' + pctColor + '">' + pct.toFixed(1) + '%</td>' +
         '<td>' + escapeHtml(a.autorizado_por || '') + '</td>' +
+        '<td style="font-size:.75rem;color:var(--text2)">' + escapeHtml(a.registrado_por_nome || '—') + '</td>' +
         '<td style="font-size:.75rem;color:var(--text3)">' + dataStr + '</td>' +
         '<td style="text-align:center"><button onclick="migCopyFromRow(\'' + escapeHtml(a.placa || '') + '\',' + (parseFloat(a.valor_autovale)||0) + ',' + (parseFloat(a.valor_concorrente)||0) + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px" title="Copiar texto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></td>' +
       '</tr>';
