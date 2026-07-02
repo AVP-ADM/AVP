@@ -476,23 +476,62 @@ async function migSalvarAutorizacao() {
 
 
 // ========= CONSULTORES MONITORADOS =========
+function migFilterConsultores() {
+  migRenderConsultores();
+}
+
 function migRenderConsultores() {
   const cardsEl = document.getElementById('migConsultoresCards');
   const emptyEl = document.getElementById('migConsultoresEmpty');
+  const infoEl = document.getElementById('migConsSearchInfo');
   if (!cardsEl) return;
 
-  if (_migConsultores.length === 0) {
+  // Filtro de pesquisa
+  const searchEl = document.getElementById('migConsSearch');
+  const search = searchEl ? searchEl.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+
+  let consultoresFiltrados = _migConsultores;
+
+  if (search) {
+    consultoresFiltrados = _migConsultores.filter(c => {
+      // Busca por nome do consultor
+      const nomeMatch = (c.nome || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(search);
+      // Busca por placa nos registros desse consultor
+      const regs = _migRegistros.filter(r => r.consultor_id === c.id);
+      const placaMatch = regs.some(r => (r.placa || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(search));
+      return nomeMatch || placaMatch;
+    });
+
+    if (infoEl) {
+      infoEl.style.display = '';
+      if (consultoresFiltrados.length === 0) {
+        infoEl.innerHTML = '<span style="color:var(--amber)">Nenhum consultor encontrado para "' + escapeHtml(searchEl.value.trim()) + '"</span>';
+      } else {
+        infoEl.textContent = consultoresFiltrados.length + ' de ' + _migConsultores.length + ' consultor(es) encontrado(s)';
+      }
+    }
+  } else {
+    if (infoEl) infoEl.style.display = 'none';
+  }
+
+  if (consultoresFiltrados.length === 0 && _migConsultores.length === 0) {
     cardsEl.innerHTML = '';
     if (emptyEl) emptyEl.style.display = '';
     return;
   }
+
   if (emptyEl) emptyEl.style.display = 'none';
+
+  if (consultoresFiltrados.length === 0 && search) {
+    cardsEl.innerHTML = '<div style="text-align:center;padding:30px 20px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5;margin-bottom:8px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><div style="font-size:.78rem;color:var(--text3)">Nenhum resultado para "<strong>' + escapeHtml(searchEl.value.trim()) + '</strong>"</div><div style="font-size:.68rem;color:var(--text3);margin-top:4px">Pesquise por nome do consultor ou placa</div></div>';
+    return;
+  }
 
   const limite = parseFloat(_migConfig.limite_percentual) || 30;
   const minMig = parseInt(_migConfig.migracoes_para_alerta) || 10;
 
   let html = '';
-  _migConsultores.forEach(c => {
+  consultoresFiltrados.forEach(c => {
     const regs = _migRegistros.filter(r => r.consultor_id === c.id);
     const totalRegs = regs.length;
     const media = totalRegs > 0 ? regs.reduce((s, r) => s + (parseFloat(r.percentual_desconto) || 0), 0) / totalRegs : 0;
