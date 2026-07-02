@@ -1205,7 +1205,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Tipo</th><th>Detalhes</th><th>Categoria</th><th>Autorizado por</th><th>Data</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Tipo</th><th>Detalhes</th><th>Categoria</th><th>Autorizado por</th><th>Operador</th><th>Data</th><th>Status</th><th></th></tr></thead>
           <tbody id="tempReleasesBody"></tbody>
         </table>
       </div>
@@ -1235,7 +1235,7 @@ tr:hover .row-actions{opacity:1}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Data/Hora</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th></tr></thead>
+          <thead><tr><th>#</th><th>Data/Hora</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th><th>Operador</th></tr></thead>
           <tbody id="histTableBody"></tbody>
         </table>
       </div>
@@ -6929,8 +6929,9 @@ function renderHistory(){
     <td>${isCatOp?'—':escapeHtml(hmodelo)}</td>
     <td>${escapeHtml(catOrigem)||'—'}</td>
     <td>${extraInfo ? '<span style="font-size:.72rem;color:var(--amber);font-weight:500">'+escapeHtml(extraInfo)+'</span>' : (escapeHtml(catDestino)||'—')}</td>
+    <td style="font-size:.75rem;color:var(--text2)">${escapeHtml(h.usuario_nome||h.user||'—')}</td>
   </tr>`;
-  }).join('')||'<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
+  }).join('')||'<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
 
   renderPagination('histPagination', pages, histPage, p=>{histPage=p;renderHistory();});
 }
@@ -7286,8 +7287,8 @@ function exportCoberturaFipe(){
 
 function exportHistoryXLSX(){
   if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
-  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino'];
-  const data=HISTORY.map(h=>[h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',h.type||h.tipo||'',h.marca||'',h.modelo||'',h.catFrom||h.categoria||'',h.catTo||'']);
+  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino','Operador'];
+  const data=HISTORY.map(h=>[h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',h.type||h.tipo||'',h.marca||'',h.modelo||'',h.catFrom||h.categoria||'',h.catTo||'',h.usuario_nome||h.user||'']);
   styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
@@ -7504,8 +7505,8 @@ function renderTempReleases(){
     var autorNome=escapeHtml(t.autorizador_nome||'—');
     var dataStr=t.created_at?new Date(t.created_at).toLocaleDateString('pt-BR'):(t.dataCriacao||'—');
     var anexoHtml=t.anexo_url?'<div style="margin-top:4px;padding:6px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--text3)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style="font-size:.68rem;color:var(--text2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(t.anexo_url.split('/').pop())+'</span><span style="display:flex;gap:6px;font-size:.65rem"><a href="'+t.anexo_url+'" target="_blank" style="color:var(--blue);text-decoration:none">Ver</a><span style="color:var(--border-strong)">·</span><span onclick="trocarAnexoLiberacao('+realIdx+')" style="cursor:pointer;color:var(--text2)">Trocar</span><span style="color:var(--border-strong)">·</span><span onclick="confirmarRemoverAnexo('+realIdx+')" style="cursor:pointer;color:var(--red)">Remover</span></span></div>':'<div style="margin-top:4px"><button class="btn btn-sm" onclick="anexarFotoLiberacao('+realIdx+')" style="font-size:.65rem;padding:4px 8px;display:inline-flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Anexar imagem</button></div>';
-    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+'<br>'+anexoHtml+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
-  }).join('')||'<tr><td colspan="7" class="empty">Nenhuma liberacao encontrada</td></tr>';
+    return '<tr><td>'+tipo+'</td><td style="font-size:.78rem">'+detalhes+(t.observacao?'<br><span style="font-size:.68rem;color:var(--text3)">'+t.observacao+'</span>':'')+'<br>'+anexoHtml+'</td><td><span class="tag tag-blue">'+(t.categoria||'—')+'</span></td><td style="font-size:.75rem">'+autorNome+'</td><td style="font-size:.75rem;color:var(--text2)">'+escapeHtml(t.usuario_criacao||'—')+'</td><td style="font-size:.75rem">'+dataStr+'</td><td>'+statusTag+'</td><td>'+(isActive?'<div style="display:flex;gap:4px"><button class="btn btn-red btn-sm" onclick="resolverLiberacao('+realIdx+')" title="A liberacao cumpriu seu proposito e sera registrada como finalizada no historico">Resolver</button><button class="btn btn-sm" onclick="cancelarLiberacao('+realIdx+')" title="Cancela a liberacao como se nunca tivesse existido (nao fica no historico)">Cancelar</button></div>':'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" class="empty">Nenhuma liberacao encontrada</td></tr>';
   var pagEl=document.getElementById('tempReleasesPagination');
   if(pagEl){
     if(totalPages<=1){pagEl.innerHTML='';return;}
@@ -8824,9 +8825,9 @@ function exportFullBaseXLSX(){
   for(const[cat, catData] of Object.entries(RAW)){
     const rows = [];
     // Row 1: blank for data cols + "HISTÓRICO DA CATEGORIA" merged in E1:G1
-    rows.push(['','','','','HISTÓRICO DA CATEGORIA','','']);
-    // Row 2: headers for data (cols A-C) + blank col D + history sub-headers (cols E-G)
-    rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe']);
+    rows.push(['','','','','HISTÓRICO DA CATEGORIA','','','']);
+    // Row 2: headers for data (cols A-C) + blank col D + history sub-headers (cols E-H)
+    rows.push(['Marca','Modelo','Ano de Aceitação','','Data/Hora','Tipo','Detalhe','Operador']);
     // Get history entries for this category
     const catHistory = HISTORY.filter(h=>(h.catFrom||h.categoria)===cat||(h.catTo)===cat);
     // Build data rows
@@ -8842,20 +8843,21 @@ function exportFullBaseXLSX(){
       const htime = h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'';
       const htype = h.type||h.tipo||'';
       const hdetail = (h.marca||'')+' '+(h.modelo||'')+' | '+(htype);
-      return [htime, htype, hdetail];
+      const huser = h.usuario_nome||h.user||'';
+      return [htime, htype, hdetail, huser];
     });
     // Merge data + history side by side starting from row 3
     const maxRows = Math.max(dataRows.length, histRows.length);
     for(let i=0;i<maxRows;i++){
       const d = dataRows[i]||['','',''];
-      const h = histRows[i]||['','',''];
-      rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2]]);
+      const h = histRows[i]||['','','',''];
+      rows.push([d[0], d[1], d[2], '', h[0], h[1], h[2], h[3]]);
     }
     const ws = XLSX.utils.aoa_to_sheet(rows);
     // Set column widths
-    ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50}];
-    // Merge E1:G1 for "HISTÓRICO DA CATEGORIA"
-    ws['!merges']=[{s:{r:0,c:4},e:{r:0,c:6}}];
+    ws['!cols']=[{wch:20},{wch:45},{wch:18},{wch:3},{wch:20},{wch:12},{wch:50},{wch:15}];
+    // Merge E1:H1 for "HISTÓRICO DA CATEGORIA"
+    ws['!merges']=[{s:{r:0,c:4},e:{r:0,c:7}}];
     // Style row 1 E1 (HISTÓRICO DA CATEGORIA) - dark blue background
     if(ws['E1']) ws['E1'].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'0D2137'}},alignment:{horizontal:'center'}};
     // Style row 2 A2:C2 (data headers) - black background
@@ -8864,8 +8866,8 @@ function exportFullBaseXLSX(){
       if(!ws[c]) ws[c]={v:'',t:'s'};
       ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
     }
-    // Style row 2 E2:G2 (history sub-headers) - black background
-    const histSubHeaders = ['E2','F2','G2'];
+    // Style row 2 E2:H2 (history sub-headers) - black background
+    const histSubHeaders = ['E2','F2','G2','H2'];
     for(const c of histSubHeaders){
       if(!ws[c]) ws[c]={v:'',t:'s'};
       ws[c].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:11},fill:{fgColor:{rgb:'1A1A2E'}},alignment:{horizontal:'center'}};
