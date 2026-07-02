@@ -192,22 +192,57 @@ function migRenderKpis() {
   // Total desconto concedido (monitorados)
   const totalDesconto = _migRegistros.reduce((s, r) => s + (parseFloat(r.valor_desconto) || 0), 0);
 
-  // Media geral dos monitorados
-  const mediaGeral = totalMigracoes > 0
-    ? _migRegistros.reduce((s, r) => s + (parseFloat(r.percentual_desconto) || 0), 0) / totalMigracoes
+  const limite = parseFloat(_migConfig.limite_percentual) || 30;
+
+  // Media POR CONSULTOR (cada consultor pesa igual, elimina vies de volume)
+  const mediasIndividuais = [];
+  let piorConsultor = null;
+  let piorMedia = 0;
+
+  _migConsultores.forEach(c => {
+    const regs = _migRegistros.filter(r => r.consultor_id === c.id);
+    if (regs.length > 0) {
+      const media = regs.reduce((s, r) => s + (parseFloat(r.percentual_desconto) || 0), 0) / regs.length;
+      mediasIndividuais.push(media);
+      if (media > piorMedia) { piorMedia = media; piorConsultor = c; }
+    }
+  });
+
+  const mediaConsultores = mediasIndividuais.length > 0
+    ? mediasIndividuais.reduce((s, m) => s + m, 0) / mediasIndividuais.length
     : 0;
 
-  const limite = parseFloat(_migConfig.limite_percentual) || 30;
-  const mediaColor = mediaGeral <= 20 ? 'var(--green)' : mediaGeral <= limite ? 'var(--amber)' : 'var(--red)';
-  const mediaStatus = mediaGeral <= limite ? '&#10003;' : '&#9888;';
+  const mediaColor = mediaConsultores <= 20 ? 'var(--green)' : mediaConsultores <= limite ? 'var(--amber)' : 'var(--red)';
 
-  // Alertas ativos
-  const alertas = migGetAlertas();
+  // Consultores acima do limite (indicador de risco)
+  const consultoresAcima = mediasIndividuais.filter(m => m > limite).length;
+  const totalConsultoresComRegistros = mediasIndividuais.length;
+  const riskColor = consultoresAcima === 0 ? 'var(--green)' : consultoresAcima <= 1 ? 'var(--amber)' : 'var(--red)';
+
+  // Insight do pior caso
+  let mediaInsight = '';
+  if (mediasIndividuais.length === 0) {
+    mediaInsight = 'Sem registros ainda';
+  } else if (piorConsultor && piorMedia > limite) {
+    mediaInsight = '<span style="color:var(--red)">&#9888; Pior: ' + piorMedia.toFixed(1) + '% (' + escapeHtml(piorConsultor.nome.split(' ')[0]) + ')</span>';
+  } else if (piorConsultor) {
+    mediaInsight = 'Pior: ' + piorMedia.toFixed(1) + '% (' + escapeHtml(piorConsultor.nome.split(' ')[0]) + ')';
+  }
+
+  // Insight do risco
+  let riskInsight = '';
+  if (totalConsultoresComRegistros === 0) {
+    riskInsight = 'Sem consultores com registros';
+  } else if (consultoresAcima === 0) {
+    riskInsight = 'Todos dentro do limite de ' + limite + '%';
+  } else {
+    riskInsight = '<span style="color:var(--red)">' + consultoresAcima + ' de ' + totalConsultoresComRegistros + ' acima de ' + limite + '%</span>';
+  }
 
   const iconMig = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-5 5"/><path d="M21 8H9"/><path d="M8 21l-5-5 5-5"/><path d="M3 16h12"/></svg>';
   const iconMoney = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
   const iconPct = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>';
-  const iconAlert = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  const iconRisk = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
 
   const card = (icon, value, label, insight, borderColor) => {
     return '<div style="background:var(--surface-2);border:1px solid var(--border);border-left:4px solid ' + borderColor + ';border-radius:var(--radius);padding:20px;transition:transform .2s,box-shadow .2s;cursor:default" onmouseenter="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.15)\'" onmouseleave="this.style.transform=\'\';this.style.boxShadow=\'\'">' +
@@ -221,8 +256,8 @@ function migRenderKpis() {
   el.innerHTML =
     card(iconMig, String(totalGeral), 'Total Migracoes', totalMigracoes + ' monitoradas, ' + totalAutorizacoes + ' pontuais', 'var(--blue)') +
     card(iconMoney, 'R$ ' + migFormatMoney(totalDesconto), 'Desc. Concedido', 'Consultores monitorados', 'var(--green)') +
-    card(iconPct, mediaGeral.toFixed(1) + '%', 'Media Desconto', '<span style="color:' + mediaColor + '">' + mediaStatus + ' Limite: ' + limite + '%</span>', mediaColor) +
-    card(iconAlert, String(alertas.length), 'Alertas Ativos', alertas.length > 0 ? 'Consultores acima do limite' : 'Nenhum alerta', alertas.length > 0 ? 'var(--red)' : 'var(--text3)');
+    card(iconPct, mediaConsultores.toFixed(1) + '%', 'Media por Consultor', mediaInsight, mediaColor) +
+    card(iconRisk, consultoresAcima + ' / ' + (_migConsultores.length || 0), 'Risco Ativo', riskInsight, riskColor);
 }
 
 
