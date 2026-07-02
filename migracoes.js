@@ -617,7 +617,7 @@ function migRenderConsultores() {
     html += '<div id="migRegs_' + c.id + '" style="display:none;margin-top:12px">';
 
     if (totalRegs > 0) {
-      html += '<div class="table-wrap"><table><thead><tr><th>Placa</th><th>Mens. AVP</th><th>Mens. Conc.</th><th>Desconto</th><th>%</th><th>Data</th><th></th></tr></thead><tbody>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Placa</th><th>Mens. AVP</th><th>Mens. Conc.</th><th>Desconto</th><th>%</th><th>Operador</th><th>Data</th><th></th></tr></thead><tbody>';
       regs.slice(0, 20).forEach(r => {
         const pctColor = (parseFloat(r.percentual_desconto)||0) > limite ? 'var(--red)' : (parseFloat(r.percentual_desconto)||0) > 20 ? 'var(--amber)' : 'var(--green)';
         const d = r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : '—';
@@ -626,6 +626,7 @@ function migRenderConsultores() {
         html += '<td>R$ ' + migFormatMoney(parseFloat(r.valor_concorrente)||0) + '</td>';
         html += '<td>R$ ' + migFormatMoney(parseFloat(r.valor_desconto)||0) + '</td>';
         html += '<td style="font-weight:600;color:' + pctColor + '">' + (parseFloat(r.percentual_desconto)||0).toFixed(1) + '%</td>';
+        html += '<td style="font-size:.75rem;color:var(--text2)">' + escapeHtml(r.registrado_por_nome || '—') + '</td>';
         html += '<td style="font-size:.75rem;color:var(--text3)">' + d + '</td>';
         html += '<td><button onclick="migCopyFromRow(\'' + escapeHtml(r.placa||'') + '\',' + (parseFloat(r.valor_autovale)||0) + ',' + (parseFloat(r.valor_concorrente)||0) + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px" title="Copiar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></td></tr>';
       });
@@ -820,6 +821,8 @@ async function migSalvarRegistro() {
     valor_concorrente: conc,
     valor_desconto: desconto,
     percentual_desconto: Math.round(percentual * 100) / 100,
+    registrado_por: currentProfile ? currentProfile.id : null,
+    registrado_por_nome: currentProfile ? currentProfile.nome : null,
     created_at: new Date().toISOString()
   };
 
