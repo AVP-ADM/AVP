@@ -11001,9 +11001,17 @@ function tmLoadFromStorage(){
     var sheets=localStorage.getItem('avp-tm-sheets');
     var groups=localStorage.getItem('avp-tm-groups');
     var ver=localStorage.getItem('avp-tm-version');
-    if(sheets&&groups&&ver==='5'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
-    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','5');}
+    if(sheets&&groups&&ver==='6'){_tmSheets=JSON.parse(sheets);_tmGroups=JSON.parse(groups);}
+    else{tmLoadDefaultData();tmSaveToStorage();localStorage.setItem('avp-tm-version','6');}
   }catch(e){tmLoadDefaultData();}
+  tmEnsureObservacoes();
+}
+
+// Garante que as observações default existam nos sheets de Truck (mesmo se dados vieram do Supabase sem elas)
+function tmEnsureObservacoes(){
+  var defaultObs=[{tipo:'alerta',condicao:'Veículos com FIPE acima de R$ 101.000',texto:'Uso de rastreador OBRIGATÓRIO',detalhe:'O associado deve instalar rastreador homologado antes da vistoria de adesão.'}];
+  if(_tmSheets['TRUCK_LEVE']&&!_tmSheets['TRUCK_LEVE'].observacoes){_tmSheets['TRUCK_LEVE'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});}
+  if(_tmSheets['TRUCK_PESADO']&&!_tmSheets['TRUCK_PESADO'].observacoes){_tmSheets['TRUCK_PESADO'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});}
 }
 
 // --- Persistência Supabase ---
@@ -11027,6 +11035,7 @@ async function tmLoadFromSupabase(){
       var groups=JSON.parse(record.groups);
       if(sheets&&Object.keys(sheets).length>0){
         _tmSheets=sheets;_tmGroups=groups;
+        tmEnsureObservacoes();
         tmSaveToStorage();
         tmBuildSidebar();
         if(_tmCurrentKey&&_tmSheets[_tmCurrentKey]) tmSelectSheet(_tmCurrentKey);
