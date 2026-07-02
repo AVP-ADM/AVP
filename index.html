@@ -11008,6 +11008,7 @@ function tmLoadFromStorage(){
 }
 
 // Garante que as observações default existam nos sheets de Truck (mesmo se dados vieram do Supabase sem elas)
+// Outros planos podem ter observações adicionadas manualmente via modo edição
 function tmEnsureObservacoes(){
   var defaultObs=[{tipo:'alerta',condicao:'Veículos com FIPE acima de R$ 101.000',texto:'Uso de rastreador OBRIGATÓRIO',detalhe:'O associado deve instalar rastreador homologado antes da vistoria de adesão.'}];
   if(_tmSheets['TRUCK_LEVE']&&!_tmSheets['TRUCK_LEVE'].observacoes){_tmSheets['TRUCK_LEVE'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});}
@@ -11269,11 +11270,16 @@ function tmBuildObservacoes(){
   var body=document.getElementById('tm_obsBody');
   var editBtn=document.getElementById('tm_obsEditBtn');
   if(!card||!body) return;
-  // Só mostra se tiver observações
-  if(!sh||!sh.observacoes||sh.observacoes.length===0){card.style.display='none';return;}
+  var hasObs=sh&&sh.observacoes&&sh.observacoes.length>0;
+  // Em modo edição: sempre mostra (para poder adicionar). Fora do modo edição: só mostra se tiver observações.
+  if(!hasObs&&!_tmEditMode){card.style.display='none';return;}
   card.style.display='block';
-  // Botão editar só para admin
-  if(editBtn) editBtn.style.display=(currentProfile&&currentProfile.nivel==='admin')?'inline-flex':'none';
+  // Botão editar só aparece no modo edição
+  if(editBtn) editBtn.style.display=_tmEditMode?'inline-flex':'none';
+  if(!hasObs){
+    body.innerHTML='<div style="padding:14px 20px;font-size:.76rem;color:var(--text3);font-style:italic">Nenhuma observação cadastrada. Clique em "Editar" para adicionar.</div>';
+    return;
+  }
   var html='';
   for(var i=0;i<sh.observacoes.length;i++){
     var obs=sh.observacoes[i];
