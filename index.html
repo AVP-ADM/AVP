@@ -2960,12 +2960,18 @@ function renderRecentActivity(){
     for(const h of sorted.slice(0,6)){
       let icon='+', iconClass='edit';
       const tipo = h.tipo || h.type || '';
-      if(tipo.includes('Adição') || tipo.includes('Criação') || tipo.includes('Novo')){ icon='+'; iconClass='add'; }
-      else if(tipo.includes('Remoção') || tipo.includes('Excluir') || tipo.includes('Remover')){ icon='−'; iconClass='remove'; }
-      else if(tipo.includes('Mov')){ icon='↔'; iconClass='move'; }
-      else if(tipo.includes('Opcional') || tipo.includes('N/D') || tipo.includes('Disponivel')){ icon='⚡'; iconClass='optional'; }
-      else if(tipo.includes('Tabela Planos')){ icon='📊'; iconClass='planos'; }
-      else { icon='✏️'; iconClass='edit'; }
+      const _svgAdd='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      const _svgRemove='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+      const _svgEdit='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+      const _svgMove='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-5 5"/><path d="M21 8H9"/><path d="M8 21l-5-5 5-5"/><path d="M3 16h12"/></svg>';
+      const _svgOptional='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
+      const _svgPlanos='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>';
+      if(tipo.includes('Adição') || tipo.includes('Criação') || tipo.includes('Novo')){ icon=_svgAdd; iconClass='add'; }
+      else if(tipo.includes('Remoção') || tipo.includes('Excluir') || tipo.includes('Remover')){ icon=_svgRemove; iconClass='remove'; }
+      else if(tipo.includes('Mov')){ icon=_svgMove; iconClass='move'; }
+      else if(tipo.includes('Opcional') || tipo.includes('N/D') || tipo.includes('Disponivel')){ icon=_svgOptional; iconClass='optional'; }
+      else if(tipo.includes('Tabela Planos')){ icon=_svgPlanos; iconClass='planos'; }
+      else { icon=_svgEdit; iconClass='edit'; }
       let text = '';
       const detalhes = h.detalhes || '';
       const marca = h.marca || '';
@@ -7015,13 +7021,19 @@ function renderHistory(){
       lastDay=dayStr;
     }
     var tipo = h.type || h.tipo || 'Acao';
-    var iconClass='edit',icon='✏️';
-    if(tipo.includes('Adição')||tipo.includes('Criação')||tipo.includes('Novo')){iconClass='add';icon='+';}
-    else if(tipo.includes('Remoção')||tipo.includes('Excluir')||tipo.includes('Remover')){iconClass='remove';icon='🗑️';}
-    else if(tipo.includes('Mov')){iconClass='move';icon='↔';}
-    else if(tipo.includes('Opcional')||tipo.includes('N/D')||tipo.includes('Disponivel')){iconClass='optional';icon='🏷️';}
-    else if(tipo.includes('Tabela Planos')){iconClass='planos';icon='📊';}
-    else if(tipo.includes('Renome')||tipo.includes('Edição')){iconClass='edit';icon='✏️';}
+    var svgAdd='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    var svgRemove='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    var svgEdit='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    var svgMove='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-5 5"/><path d="M21 8H9"/><path d="M8 21l-5-5 5-5"/><path d="M3 16h12"/></svg>';
+    var svgOptional='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>';
+    var svgPlanos='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>';
+    var iconClass='edit',icon=svgEdit;
+    if(tipo.includes('Adição')||tipo.includes('Criação')||tipo.includes('Novo')){iconClass='add';icon=svgAdd;}
+    else if(tipo.includes('Remoção')||tipo.includes('Excluir')||tipo.includes('Remover')){iconClass='remove';icon=svgRemove;}
+    else if(tipo.includes('Mov')){iconClass='move';icon=svgMove;}
+    else if(tipo.includes('Opcional')||tipo.includes('N/D')||tipo.includes('Disponivel')){iconClass='optional';icon=svgOptional;}
+    else if(tipo.includes('Tabela Planos')){iconClass='planos';icon=svgPlanos;}
+    else if(tipo.includes('Renome')||tipo.includes('Edição')){iconClass='edit';icon=svgEdit;}
 
     // Build description
     var desc='', detail='', area='';
