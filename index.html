@@ -490,7 +490,7 @@ tr:hover .row-actions{opacity:1}
 .health-bar-fill.blue{background:var(--blue)}
 .health-value{font-size:.75rem;font-weight:600;min-width:50px;text-align:right}
 
-/* Activity Timeline */
+/* Activity Timeline (mini - visão geral) */
 .activity-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-light)}
 .activity-item:last-child{border-bottom:none}
 .activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem}
@@ -498,9 +498,45 @@ tr:hover .row-actions{opacity:1}
 .activity-icon.remove{background:var(--red-bg);color:var(--red)}
 .activity-icon.move{background:var(--blue-bg);color:var(--blue)}
 .activity-icon.edit{background:var(--amber-bg);color:var(--amber)}
+.activity-icon.optional{background:var(--purple-light);color:var(--purple)}
+.activity-icon.planos{background:var(--blue-bg);color:var(--blue)}
 .activity-info{flex:1;min-width:0}
-.activity-text{font-size:.78rem;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-text{font-size:.78rem;color:var(--text1);line-height:1.4}
 .activity-meta{font-size:.68rem;color:var(--text3);margin-top:2px}
+/* History Timeline (aba completa) */
+.hist-timeline{display:flex;flex-direction:column;gap:0}
+.hist-day-separator{display:flex;align-items:center;gap:12px;padding:16px 0 10px;font-size:.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.hist-day-separator::after{content:'';flex:1;height:1px;background:var(--border)}
+.hist-card{display:flex;gap:12px;padding:14px 16px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);transition:all .15s}
+.hist-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+.hist-card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.8rem;font-weight:700}
+.hist-card-icon.add{background:var(--green-bg);color:var(--green)}
+.hist-card-icon.remove{background:var(--red-bg);color:var(--red)}
+.hist-card-icon.edit{background:var(--amber-bg);color:var(--amber)}
+.hist-card-icon.move{background:var(--blue-bg);color:var(--blue)}
+.hist-card-icon.optional{background:var(--purple-light);color:var(--purple)}
+.hist-card-icon.planos{background:var(--blue-bg);color:var(--blue)}
+.hist-card-body{flex:1;min-width:0}
+.hist-card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.hist-card-type{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em}
+.hist-card-type.add{background:var(--green-bg);color:var(--green)}
+.hist-card-type.remove{background:var(--red-bg);color:var(--red)}
+.hist-card-type.edit{background:var(--amber-bg);color:var(--amber)}
+.hist-card-type.move{background:var(--blue-bg);color:var(--blue)}
+.hist-card-type.optional{background:var(--purple-light);color:var(--purple)}
+.hist-card-type.planos{background:var(--blue-bg);color:var(--blue)}
+.hist-card-area{font-size:.62rem;color:var(--text3);font-weight:500;padding:2px 6px;border-radius:3px;background:var(--surface-2)}
+.hist-card-desc{font-size:.8rem;color:var(--text1);line-height:1.5;margin-bottom:4px}
+.hist-card-detail{font-size:.72rem;color:var(--text2);line-height:1.4}
+.hist-card-detail strong{color:var(--text1)}
+.hist-card-footer{display:flex;align-items:center;gap:12px;margin-top:6px;font-size:.66rem;color:var(--text3)}
+.hist-card-footer svg{width:10px;height:10px;vertical-align:-1px}
+.hist-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.hist-filters input,.hist-filters select{padding:8px 12px;font-size:.78rem;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text1);outline:none;transition:border-color .15s}
+.hist-filters input:focus,.hist-filters select:focus{border-color:var(--blue)}
+.hist-filters input{min-width:180px}
+.hist-load-more{width:100%;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-size:.78rem;font-family:var(--font);font-weight:500;cursor:pointer;transition:all .15s;margin-top:12px}
+.hist-load-more:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
 
 /* Ranking items */
 .rank-item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--border-light);border-radius:4px;cursor:pointer;transition:background .15s}
@@ -1296,7 +1332,7 @@ tr:hover .row-actions{opacity:1}
     <div class="sub-tab-panel" id="subpanel-history">
     <div class="card">
       <div class="card-title"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Histórico de Alterações</div>
-      <div class="filter-row">
+      <div class="hist-filters">
         <input type="text" id="histFilter" placeholder="Buscar..." oninput="debouncedRenderHistory()">
         <select id="histType" onchange="renderHistory()">
           <option value="">Todos os tipos</option>
@@ -1308,15 +1344,14 @@ tr:hover .row-actions{opacity:1}
           <option value="Remoção de Categoria">Remocao de Categoria</option>
           <option value="Renomeação de Categoria">Renomeacao de Categoria</option>
           <option value="Edição Ano Categoria">Edicao Ano Categoria</option>
-          <option value="Alterar Tipo FIPE">Alteracao Tipo FIPE</option>
+          <option value="Edição Tabela Planos">Edicao Tabela Planos</option>
+          <option value="Edição Cobertura">Edicao Cobertura</option>
+          <option value="Edição Opcional">Edicao Opcional</option>
+          <option value="Novo Plano">Novo Plano</option>
+          <option value="Excluir Plano">Excluir Plano</option>
         </select>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Data/Hora</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Cat. Origem</th><th>Cat. Destino</th><th>Operador</th></tr></thead>
-          <tbody id="histTableBody"></tbody>
-        </table>
-      </div>
+      <div id="histTimeline" class="hist-timeline"></div>
       <div id="histPagination" class="pagination"></div>
     </div>
     </div>
@@ -2915,69 +2950,58 @@ function toggleIntegrityDetails(btn){
 function renderRecentActivity(){
   const el = document.getElementById('activityContent');
   if(!el) return;
-
   let activities = [];
-
-  // Only from confirmed HISTORY (not from pending STAGING)
   if(HISTORY && HISTORY.length){
-    // Sort by date DESC and take recent
     let sorted = HISTORY.slice().sort((a,b)=>{
       const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
       const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
       return dateB - dateA;
     });
-    for(const h of sorted.slice(0,5)){
-      let icon='•', iconClass='edit';
+    for(const h of sorted.slice(0,6)){
+      let icon='+', iconClass='edit';
       const tipo = h.tipo || h.type || '';
-      if(tipo.includes('Adição') || tipo.includes('add')){ icon='+'; iconClass='add'; }
-      else if(tipo.includes('Remoção') || tipo.includes('remove')){ icon='−'; iconClass='remove'; }
-      else if(tipo.includes('Mov') || tipo.includes('move')){ icon='↔'; iconClass='move'; }
-      // Build readable text
+      if(tipo.includes('Adição') || tipo.includes('Criação') || tipo.includes('Novo')){ icon='+'; iconClass='add'; }
+      else if(tipo.includes('Remoção') || tipo.includes('Excluir') || tipo.includes('Remover')){ icon='−'; iconClass='remove'; }
+      else if(tipo.includes('Mov')){ icon='↔'; iconClass='move'; }
+      else if(tipo.includes('Opcional') || tipo.includes('N/D') || tipo.includes('Disponivel')){ icon='⚡'; iconClass='optional'; }
+      else if(tipo.includes('Tabela Planos')){ icon='📊'; iconClass='planos'; }
+      else { icon='✏️'; iconClass='edit'; }
       let text = '';
+      const detalhes = h.detalhes || '';
       const marca = h.marca || '';
       const modelo = h.modelo || '';
-      let categoria = h.categoria || '';
-      const detalhes = h.detalhes || '';
-      // Extract category from detalhes JSON if empty
-      if(!categoria && detalhes && detalhes.startsWith('{')){
-        try{const d=JSON.parse(detalhes);categoria=d.catTo||d.catFrom||'';}catch(e){}
-      }
-      if(marca && modelo){
-        text = tipo + ': ' + escapeHtml(marca) + ' ' + escapeHtml(modelo);
-        if(categoria) text += ' → ' + escapeHtml(categoria);
-        // Para Alterar Ano, adicionar o detalhe (ex: "Ano: 2006 → 2008")
-        if(tipo==='Alterar Ano' && detalhes && !detalhes.startsWith('{')){
-          text += ' (' + escapeHtml(detalhes) + ')';
-        }
-      } else if(detalhes && !detalhes.startsWith('{')){
-        text = escapeHtml(detalhes);
-      } else if(detalhes && detalhes.startsWith('{')){
+      const categoria = h.categoria || '';
+      if(detalhes && !detalhes.startsWith('{')){
+        text = detalhes;
+      }else if(detalhes && detalhes.startsWith('{')){
         try{
           const d=JSON.parse(detalhes);
-          text = (d.type||tipo)+': '+escapeHtml(d.marca||'')+' '+escapeHtml(d.modelo||'');
-          if(d.catTo) text += ' → '+escapeHtml(d.catTo);
-          else if(d.catFrom) text += ' de '+escapeHtml(d.catFrom);
-        }catch(e){ text = tipo || 'Ação'; }
-      } else {
-        text = tipo || 'Ação';
+          text = (d.type||tipo)+': '+(d.marca||'')+' '+(d.modelo||'');
+          if(d.catTo) text += ' → '+d.catTo;
+          else if(d.catFrom) text += ' de '+d.catFrom;
+        }catch(e){ text = tipo; }
+      }else if(marca && marca!=='—' && modelo && modelo!=='—'){
+        text = tipo + ': ' + marca + ' ' + modelo;
+        if(categoria && categoria!=='—') text += ' → ' + categoria;
+      }else{
+        text = tipo;
+        if(categoria && categoria!=='—' && categoria!=='Coberturas') text += ' ('+categoria+')';
       }
-      const time = h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : '';
+      const time = h.created_at ? new Date(h.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
       const user = h.usuario_nome || '';
-      activities.push({icon, iconClass, text, meta: user, time});
+      activities.push({icon, iconClass, text, meta: user+(time?' · '+time:'')});
     }
   }
-
   if(activities.length === 0){
-    el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteração recente</h4><p style="font-size:.75rem">As alterações confirmadas aparecerão aqui.</p></div>';
+    el.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon" style="width:40px;height:40px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4 style="font-size:.82rem">Nenhuma alteracao recente</h4><p style="font-size:.75rem">As alteracoes confirmadas aparecerao aqui.</p></div>';
     return;
   }
-
   el.innerHTML = activities.map(a=>`
     <div class="activity-item">
       <div class="activity-icon ${a.iconClass}">${a.icon}</div>
       <div class="activity-info">
         <div class="activity-text">${a.text}</div>
-        <div class="activity-meta">${a.meta}${a.time?' · '+a.time:''}</div>
+        <div class="activity-meta">${a.meta}</div>
       </div>
     </div>
   `).join('') + `<div style="text-align:center;padding:14px 0 4px;margin-top:12px"><a href="#" onclick="goTab('history');return false" style="display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--text3);text-decoration:none;font-weight:500;padding:6px 14px;border-radius:var(--radius);border:1px solid var(--border);transition:all .15s" onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historico completo</a></div>`;
@@ -6949,69 +6973,103 @@ function parseLocalDate(str){
   }catch(e){return 0;}
 }
 function renderHistory(){
-  const filt = norm(document.getElementById('histFilter').value);
-  const typeF = document.getElementById('histType').value;
-  let items = HISTORY.filter(h=>{
-    const htype = h.type || h.tipo || '';
+  var filt = norm(document.getElementById('histFilter')?document.getElementById('histFilter').value:'');
+  var typeF = document.getElementById('histType')?document.getElementById('histType').value:'';
+  var items = HISTORY.filter(function(h){
+    var htype = h.type || h.tipo || '';
     if(typeF && htype!==typeF) return false;
     if(filt){
-      const s = norm(h.marca||'')+norm(h.modelo||'')+norm(h.catFrom||h.categoria||'')+norm(h.catTo||'');
+      var s = norm(h.marca||'')+norm(h.modelo||'')+norm(h.catFrom||h.categoria||'')+norm(h.catTo||'')+norm(h.detalhes||'')+norm(h.usuario_nome||'');
       if(!s.includes(filt)) return false;
     }
     return true;
   });
-  // Sort by date descending (most recent first)
-  items = items.slice().sort((a,b)=>{
-    const dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
-    const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
+  items = items.slice().sort(function(a,b){
+    var dateA = a.created_at ? new Date(a.created_at).getTime() : (a.timestamp ? parseLocalDate(a.timestamp) : 0);
+    var dateB = b.created_at ? new Date(b.created_at).getTime() : (b.timestamp ? parseLocalDate(b.timestamp) : 0);
     return dateB - dateA;
   });
-  const total = items.length;
-  const pages = Math.ceil(total/HIST_PER_PAGE);
+  var total = items.length;
+  var pages = Math.ceil(total/HIST_PER_PAGE);
   if(histPage>pages) histPage=1;
-  const start = (histPage-1)*HIST_PER_PAGE;
-  const page = items.slice(start, start+HIST_PER_PAGE);
+  var start = (histPage-1)*HIST_PER_PAGE;
+  var page = items.slice(start, start+HIST_PER_PAGE);
 
-  document.getElementById('histTableBody').innerHTML = page.map((h,i)=>{
-    const htype = h.type || h.tipo || '';
-    const htimestamp = h.timestamp || (h.created_at ? new Date(h.created_at).toLocaleString('pt-BR') : '—');
-    const hmarca = h.marca || '';
-    const hmodelo = h.modelo || '';
-    const hcatFrom = h.catFrom || h.categoria || '';
-    const hcatTo = h.catTo || '';
-    // Fallback: extract from detalhes JSON if empty
-    let catOrigem = hcatFrom;
-    let catDestino = hcatTo;
-    if(!catOrigem && !catDestino && h.detalhes && h.detalhes.startsWith('{')){
-      try{const d=JSON.parse(h.detalhes);catOrigem=d.catFrom||'';catDestino=d.catTo||'';}catch(e){}
-    }
-    // Para Alterar Ano, mostrar detalhes do ano na coluna destino
-    let extraInfo = '';
-    if(htype==='Alterar Ano'){
-      const det = h.detalhes || h.details || '';
-      if(det.startsWith('{')){
-        try{const d=JSON.parse(det);if(d.details) extraInfo=d.details;}catch(e){}
-      } else if(det) {
-        extraInfo = det;
-      }
-    }
-    if(!catOrigem && catDestino) catOrigem = '';
-    if(!catDestino && catOrigem && htype.includes('Remoção')) catDestino = '';
-    const isCatOp = htype.includes('Categoria');
-    const tagClass = htype.includes('Adição')||htype.includes('Criação')?'tag-green':htype.includes('Remoção')?'tag-red':'tag-blue';
-    return `<tr>
-    <td style="color:var(--text2)">${start+i+1}</td>
-    <td style="font-size:.78rem">${htimestamp}</td>
-    <td><span class="tag ${tagClass}">${escapeHtml(htype)||'—'}</span></td>
-    <td>${isCatOp?'—':escapeHtml(hmarca)}</td>
-    <td>${isCatOp?'—':escapeHtml(hmodelo)}</td>
-    <td>${escapeHtml(catOrigem)||'—'}</td>
-    <td>${extraInfo ? '<span style="font-size:.72rem;color:var(--amber);font-weight:500">'+escapeHtml(extraInfo)+'</span>' : (escapeHtml(catDestino)||'—')}</td>
-    <td style="font-size:.75rem;color:var(--text2)">${escapeHtml(h.usuario_nome||h.user||'—')}</td>
-  </tr>`;
-  }).join('')||'<tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no histórico</h4><p>As alterações realizadas aparecerão aqui após serem salvas.</p></div></td></tr>';
+  var container = document.getElementById('histTimeline');
+  if(!container) return;
 
-  renderPagination('histPagination', pages, histPage, p=>{histPage=p;renderHistory();});
+  if(page.length===0){
+    container.innerHTML='<div class="empty-state" style="padding:40px 20px"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>Nenhum registro no historico</h4><p style="font-size:.75rem">As alteracoes realizadas aparecerao aqui apos serem salvas.</p></div>';
+    renderPagination('histPagination', pages, histPage, function(p){histPage=p;renderHistory();});
+    return;
+  }
+
+  var html='';
+  var lastDay='';
+  page.forEach(function(h){
+    var dt = h.created_at ? new Date(h.created_at) : (h.timestamp ? new Date(parseLocalDate(h.timestamp)) : null);
+    var dayStr = dt ? dt.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}) : 'Data desconhecida';
+    var timeStr = dt ? dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(dayStr!==lastDay){
+      html+='<div class="hist-day-separator">'+dayStr+'</div>';
+      lastDay=dayStr;
+    }
+    var tipo = h.type || h.tipo || 'Acao';
+    var iconClass='edit',icon='✏️';
+    if(tipo.includes('Adição')||tipo.includes('Criação')||tipo.includes('Novo')){iconClass='add';icon='+';}
+    else if(tipo.includes('Remoção')||tipo.includes('Excluir')||tipo.includes('Remover')){iconClass='remove';icon='🗑️';}
+    else if(tipo.includes('Mov')){iconClass='move';icon='↔';}
+    else if(tipo.includes('Opcional')||tipo.includes('N/D')||tipo.includes('Disponivel')){iconClass='optional';icon='🏷️';}
+    else if(tipo.includes('Tabela Planos')){iconClass='planos';icon='📊';}
+    else if(tipo.includes('Renome')||tipo.includes('Edição')){iconClass='edit';icon='✏️';}
+
+    // Build description
+    var desc='', detail='', area='';
+    var marca=h.marca||'';var modelo=h.modelo||'';var categoria=h.categoria||h.catFrom||'';var catTo=h.catTo||'';
+    var detalhes=h.detalhes||'';
+
+    // Determine area
+    if(tipo.includes('Tabela Planos'))area=categoria||'Tabela de Planos';
+    else if(tipo.includes('Cobertura')||tipo.includes('Opcional')||tipo.includes('Plano')&&!tipo.includes('Tabela'))area='Coberturas';
+    else if(categoria)area=categoria;
+
+    // Build description from detalhes or structured fields
+    if(detalhes && !detalhes.startsWith('{')){
+      desc=detalhes;
+    }else if(detalhes && detalhes.startsWith('{')){
+      try{
+        var d=JSON.parse(detalhes);
+        desc=(d.type||tipo);
+        if(d.marca&&d.modelo)desc+=': '+d.marca+' '+d.modelo;
+        if(d.catTo)detail='→ '+d.catTo;
+        else if(d.catFrom)detail='de '+d.catFrom;
+        if(d.details)detail=d.details;
+      }catch(e){desc=tipo;}
+    }else if(marca&&marca!=='—'&&modelo&&modelo!=='—'){
+      desc=marca+' › '+modelo;
+      if(catTo)detail='Movido para: '+catTo;
+      else if(categoria)detail='Categoria: '+categoria;
+    }else{
+      desc=tipo;
+      if(categoria&&categoria!=='—')detail='Contexto: '+categoria;
+    }
+
+    var user=h.usuario_nome||h.user||'—';
+
+    html+='<div class="hist-card">';
+    html+='<div class="hist-card-icon '+iconClass+'">'+icon+'</div>';
+    html+='<div class="hist-card-body">';
+    html+='<div class="hist-card-header"><span class="hist-card-type '+iconClass+'">'+escapeHtml(tipo)+'</span>';
+    if(area)html+='<span class="hist-card-area">'+escapeHtml(area)+'</span>';
+    html+='</div>';
+    html+='<div class="hist-card-desc">'+escapeHtml(desc)+'</div>';
+    if(detail)html+='<div class="hist-card-detail">'+escapeHtml(detail)+'</div>';
+    html+='<div class="hist-card-footer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> '+timeStr+' &nbsp;·&nbsp; <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+escapeHtml(user)+'</div>';
+    html+='</div></div>';
+  });
+
+  container.innerHTML=html;
+  renderPagination('histPagination', pages, histPage, function(p){histPage=p;renderHistory();});
 }
 
 // ========= PAGINATION =========
