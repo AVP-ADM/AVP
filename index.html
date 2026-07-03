@@ -11863,7 +11863,15 @@ function cobRenderAccordions() {
       }else{
         html+='<span class="cob-hero-card-name">'+pl.nome+'</span>';
       }
-      if(pl.badge)html+='<span class="cob-hero-card-badge">'+pl.badge+'</span>';
+      if(_cobEditMode){
+        if(pl.badge){
+          html+='<span class="cob-hero-card-badge" style="cursor:pointer" onclick="cobPlanEditBadge(this,\''+pl.id+'\')" title="Clique para editar badge">'+pl.badge+'</span>';
+        }else{
+          html+='<span class="cob-hero-card-badge" style="cursor:pointer;opacity:.4;border:1px dashed var(--border)" onclick="cobPlanEditBadge(this,\''+pl.id+'\')" title="Adicionar badge">+ badge</span>';
+        }
+      }else{
+        if(pl.badge)html+='<span class="cob-hero-card-badge">'+pl.badge+'</span>';
+      }
       html+='</div><div class="cob-hero-card-body">';
       destItems.forEach(function(cob){
         var v=cob.valores[pid],has=v!==null&&v!==undefined&&v!=='';
@@ -12162,6 +12170,21 @@ function cobPlanAdd(grupoId){
   });
   cobSaveData();cobRenderAccordions();
   showToast('Plano "'+nome.trim()+'" criado','success');
+}
+
+function cobPlanEditBadge(el,planoId){
+  if(el.querySelector('input'))return;
+  var pl=cobGetPlano(planoId);if(!pl)return;
+  var input=document.createElement('input');
+  input.type='text';input.value=pl.badge||'';
+  input.placeholder='Ex: Mais completo (vazio = sem badge)';
+  input.className='cob-edit-inline-input';
+  input.style.fontSize='.6rem';input.style.fontWeight='700';input.style.textTransform='uppercase';input.style.maxWidth='140px';
+  el.innerHTML='';el.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){pl.badge=input.value.trim();cobSaveData();cobRenderAccordions();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
 }
 
 // --- Destaque toggle ---
