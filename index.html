@@ -11011,8 +11011,10 @@ function tmLoadFromStorage(){
 // Outros planos podem ter observações adicionadas manualmente via modo edição
 function tmEnsureObservacoes(){
   var defaultObs=[{tipo:'alerta',condicao:'Veículos com FIPE acima de R$ 101.000',texto:'Uso de rastreador OBRIGATÓRIO',detalhe:'O associado deve instalar rastreador homologado antes da vistoria de adesão.'}];
-  if(_tmSheets['TRUCK_LEVE']&&!_tmSheets['TRUCK_LEVE'].observacoes){_tmSheets['TRUCK_LEVE'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});}
-  if(_tmSheets['TRUCK_PESADO']&&!_tmSheets['TRUCK_PESADO'].observacoes){_tmSheets['TRUCK_PESADO'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});}
+  var changed=false;
+  if(_tmSheets['TRUCK_LEVE']&&!_tmSheets['TRUCK_LEVE'].observacoes){_tmSheets['TRUCK_LEVE'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});changed=true;}
+  if(_tmSheets['TRUCK_PESADO']&&!_tmSheets['TRUCK_PESADO'].observacoes){_tmSheets['TRUCK_PESADO'].observacoes=defaultObs.map(function(o){return Object.assign({},o);});changed=true;}
+  if(changed){tmSaveToStorage();tmSaveToSupabase();}
 }
 
 // --- Persistência Supabase ---
