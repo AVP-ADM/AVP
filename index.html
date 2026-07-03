@@ -1130,6 +1130,10 @@ tr:hover .row-actions{opacity:1}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Modo Edicao
             </button>
+            <button class="btn btn-sm btn-green" id="cob_saveBtn" onclick="cobSaveAll()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Salvar
+            </button>
           </div>
         </div>
       </div>
@@ -11795,12 +11799,35 @@ async function cobLoadFromSupabase() {
   } catch(e) { console.warn('cobLoadFromSupabase error:', e); }
 }
 
+let _cobDirty = false;
+
 function cobSaveData() {
+  // Only save to localStorage as draft — Supabase save requires explicit "Salvar"
   try {
     localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
   } catch(e) { console.warn('Coberturas localStorage save failed:', e); }
-  // Also save to Supabase async
+  cobMarkDirty();
+}
+
+function cobMarkDirty() {
+  _cobDirty = true;
+  var btn = document.getElementById('cob_saveBtn');
+  if (btn) btn.style.display = 'inline-flex';
+  // Add beforeunload warning
+  window.addEventListener('beforeunload', cobBeforeUnload);
+}
+
+function cobBeforeUnload(e) {
+  if (_cobDirty) { e.preventDefault(); e.returnValue = ''; }
+}
+
+function cobSaveAll() {
   cobSaveToSupabase();
+  _cobDirty = false;
+  var btn = document.getElementById('cob_saveBtn');
+  if (btn) btn.style.display = 'none';
+  window.removeEventListener('beforeunload', cobBeforeUnload);
+  showToast('Coberturas salvas com sucesso!', 'success');
 }
 
 async function cobSaveToSupabase() {
@@ -12001,6 +12028,14 @@ function cobToggleOpcionais(gid){_cobOpcionaisVisibleByGrupo[gid]=!_cobOpcionais
 
 // ========= COBERTURAS EDIT MODE =========
 function cobToggleEditMode(){
+  if(_cobEditMode&&_cobDirty){
+    if(!confirm('Voce tem alteracoes nao salvas. Deseja sair sem salvar?'))return;
+    // Discard changes - reload from localStorage (last saved state)
+    _cobDirty=false;
+    window.removeEventListener('beforeunload',cobBeforeUnload);
+    var btn=document.getElementById('cob_saveBtn');
+    if(btn)btn.style.display='none';
+  }
   _cobEditMode=!_cobEditMode;
   var btn=document.getElementById('cob_editModeBtn');
   if(btn){
@@ -12012,15 +12047,7 @@ function cobToggleEditMode(){
   cobRenderAccordions();
 }
 
-function cobSaveData(){
-  try{localStorage.setItem(COB_STORAGE_KEY,JSON.stringify(_cobData));}catch(e){}
-  cobSaveToSupabase();
-}
-async function cobSaveToSupabase(){
-  try{
-    await supabase.insert('coberturas_config',[{id:'coberturas_v1',data:JSON.stringify(_cobData),updated_at:new Date().toISOString()}],{upsert:true});
-  }catch(e){console.warn('cobSaveToSupabase:',e);}
-}
+// (cobSaveData and cobSaveToSupabase defined above in unified version)
 
 // --- Opcionais inline edit ---
 function cobOptEditCell(td,grupoId,optIdx,field){
