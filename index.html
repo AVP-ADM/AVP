@@ -7423,8 +7423,30 @@ function exportCoberturaFipe(){
 
 function exportHistoryXLSX(){
   if(!HISTORY.length) return showToast('Nenhum registro no histórico','warning');
-  const headers=['Data/Hora','Tipo','Marca','Modelo','Cat. Origem','Cat. Destino','Operador'];
-  const data=HISTORY.map(h=>[h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'',h.type||h.tipo||'',h.marca||'',h.modelo||'',h.catFrom||h.categoria||'',h.catTo||'',h.usuario_nome||h.user||'']);
+  const headers=['Data/Hora','Tipo','Área/Contexto','Descrição','Operador'];
+  const data=HISTORY.slice().sort((a,b)=>{
+    const dateA=a.created_at?new Date(a.created_at).getTime():(a.timestamp?parseLocalDate(a.timestamp):0);
+    const dateB=b.created_at?new Date(b.created_at).getTime():(b.timestamp?parseLocalDate(b.timestamp):0);
+    return dateB-dateA;
+  }).map(h=>{
+    const tipo=h.type||h.tipo||'';
+    const timestamp=h.timestamp||(h.created_at?new Date(h.created_at).toLocaleString('pt-BR'):'')||'';
+    const user=h.usuario_nome||h.user||'';
+    // Build area
+    let area=h.categoria||h.catFrom||'';
+    if(tipo.includes('Tabela Planos'))area=area||'Tabela de Planos';
+    else if(tipo.includes('Cobertura')||tipo.includes('Opcional')||tipo.includes('Plano'))area=area||'Coberturas';
+    // Build description
+    let desc='';
+    const detalhes=h.detalhes||'';
+    const marca=h.marca||'';
+    const modelo=h.modelo||'';
+    if(detalhes&&!detalhes.startsWith('{'))desc=detalhes;
+    else if(detalhes&&detalhes.startsWith('{')){try{const d=JSON.parse(detalhes);desc=(d.type||tipo)+': '+(d.marca||'')+' '+(d.modelo||'');if(d.catTo)desc+=' → '+d.catTo;else if(d.catFrom)desc+=' de '+d.catFrom;if(d.details)desc+=' ('+d.details+')';}catch(e){desc=tipo;}}
+    else if(marca&&marca!=='—'&&modelo&&modelo!=='—'){desc=marca+' › '+modelo;if(h.catTo)desc+=' → '+h.catTo;else if(h.catFrom)desc+=' ('+h.catFrom+')';}
+    else desc=tipo;
+    return [timestamp,tipo,area,desc,user];
+  });
   styledXLSX(headers, data, 'Histórico', 'historico_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
