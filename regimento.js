@@ -2,9 +2,14 @@
 // Integração com Google Gemini para consulta ao Regimento Interno
 // Auto Vale Clube de Benefícios
 
-const GEMINI_API_KEY = 'AIzaSyAb8RN6JXi9E_RETFKjEv1feDMa5r_AQmNrzAPwXkitkuzauSag';
+// A API key é carregada do localStorage ou configurada pelo admin em Configurações
+// Para configurar: localStorage.setItem('avp-gemini-key', 'SUA_KEY_AQUI')
+let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || '';
 const GEMINI_MODEL = 'gemini-2.0-flash';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+function getGeminiUrl() {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+}
 
 let _regimentoMessages = [];
 let _regimentoLoading = false;
@@ -205,7 +210,28 @@ ANEXO I - BENEFÍCIOS ADICIONAIS:
 function regimentoInit() {
   const container = document.getElementById('regimento_container');
   if (!container) return;
+  // Carregar key do localStorage
+  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || '';
   regimentoRender();
+}
+
+function regimentoConfigKey() {
+  const currentKey = GEMINI_API_KEY ? '****' + GEMINI_API_KEY.slice(-6) : 'Nao configurada';
+  showModal('Configurar API Key do Gemini',
+    '<div style="display:flex;flex-direction:column;gap:12px">' +
+    '<label style="font-size:.78rem;color:var(--text2);font-weight:600">API Key atual: <span style="font-weight:400;color:var(--text3)">' + currentKey + '</span></label>' +
+    '<input id="gemini_key_input" type="password" placeholder="Cole sua API Key do Google Gemini aqui..." value="' + (GEMINI_API_KEY || '') + '" style="width:100%">' +
+    '<span style="font-size:.72rem;color:var(--text3)">Acesse <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com/apikey</a> para obter sua key gratuita.</span>' +
+    '</div>',
+    function() {
+      var key = document.getElementById('gemini_key_input').value.trim();
+      if (!key) { showToast('Informe a API key', 'error'); return; }
+      localStorage.setItem('avp-gemini-key', key);
+      GEMINI_API_KEY = key;
+      closeModal();
+      showToast('API Key salva com sucesso!', 'success');
+      regimentoRender();
+    }, 'green', 'Salvar');
 }
 
 function regimentoRender() {
@@ -218,11 +244,23 @@ function regimentoRender() {
     <div style="width:44px;height:44px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
     </div>
-    <div>
+    <div style="flex:1">
       <div style="font-size:1.05rem;font-weight:700;color:var(--text1)">Consulta ao Regimento Interno</div>
       <div style="font-size:.75rem;color:var(--text3)">Pergunte sobre planos, coberturas, regras e beneficios do PAM</div>
     </div>
+    <button class="btn btn-sm" onclick="regimentoConfigKey()" title="Configurar API Key" style="display:flex;align-items:center;gap:5px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      API Key
+    </button>
   </div>`;
+
+  // Aviso se key não configurada
+  if (!GEMINI_API_KEY) {
+    html += `<div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:var(--amber)">API Key nao configurada</div><div style="font-size:.72rem;color:var(--text2)">Clique em "API Key" acima para configurar sua chave do Google Gemini.</div></div>
+    </div>`;
+  }
 
   // FAQ Chips
   html += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px" id="regimento_chips">`;
@@ -337,6 +375,12 @@ async function regimentoSend() {
   const question = input.value.trim();
   if (!question || _regimentoLoading) return;
 
+  // Verificar se a API key está configurada
+  if (!GEMINI_API_KEY) {
+    showToast('API Key do Gemini nao configurada. Configure em Regimento > Configurar API Key.', 'error');
+    return;
+  }
+
   // Add user message
   _regimentoMessages.push({ role: 'user', content: question });
   input.value = '';
@@ -399,7 +443,7 @@ async function regimentoCallGemini(question) {
     }
   };
 
-  const resp = await fetch(GEMINI_URL, {
+  const resp = await fetch(getGeminiUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
