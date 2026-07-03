@@ -11067,9 +11067,18 @@ function tmEnsureObservacoes(){
 
 // --- Persistência Supabase ---
 var _tmSaveTimeout=null;
-function tmScheduleSave(){
+var _tmLastAction='';
+function tmScheduleSave(action){
+  if(action)_tmLastAction=action;else if(!_tmLastAction)_tmLastAction='Alteração na Tabela de Planos';
   if(_tmSaveTimeout) clearTimeout(_tmSaveTimeout);
-  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmSaveToSupabase();},1500);
+  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmSaveToSupabase();if(_tmLastAction){tmLogHistory(_tmLastAction);_tmLastAction='';}},1500);
+}
+function tmLogHistory(detalhes){
+  try{
+    var userId=(typeof currentProfile!=='undefined'&&currentProfile)?currentProfile.id:null;
+    var userName=(typeof currentUser!=='undefined'&&currentUser)?currentUser:'admin';
+    supabase.saveHistory({usuario_id:userId,usuario_nome:userName,tipo:'Edição Tabela Planos',marca:'—',modelo:'—',categoria:_tmSheets[_tmCurrentKey]?_tmSheets[_tmCurrentKey].label:'Tabela Planos',detalhes:detalhes});
+  }catch(e){}
 }
 async function tmSaveToSupabase(){
   try{
@@ -11830,6 +11839,23 @@ function cobSaveAll() {
   showToast('Coberturas salvas com sucesso!', 'success');
 }
 
+// Log de histórico para edições em Coberturas/Opcionais
+function cobLogHistory(tipo, detalhes) {
+  try {
+    var userId = (typeof currentProfile !== 'undefined' && currentProfile) ? currentProfile.id : null;
+    var userName = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : 'admin';
+    supabase.saveHistory({
+      usuario_id: userId,
+      usuario_nome: userName,
+      tipo: tipo,
+      marca: '—',
+      modelo: '—',
+      categoria: 'Coberturas',
+      detalhes: detalhes
+    });
+  } catch(e) { console.warn('cobLogHistory error:', e); }
+}
+
 async function cobSaveToSupabase() {
   try {
     await supabase.insert('coberturas_config', [{ id: 'default', data: _cobData, updated_by: currentUser || 'admin', updated_at: new Date().toISOString() }], { upsert: true });
@@ -12062,8 +12088,8 @@ function cobOptEditCell(td,grupoId,optIdx,field){
   td.innerHTML='';td.appendChild(input);
   input.focus();input.select();
   var commit=function(){
-    if(field==='nome'){opt.nome=input.value||raw;}
-    else{opt.valor=parseFloat(input.value)||raw;}
+    if(field==='nome'){var oldVal=opt.nome;opt.nome=input.value||raw;if(opt.nome!==oldVal)cobLogHistory('Edição Opcional','Renomeou opcional: "'+oldVal+'" → "'+opt.nome+'"');}
+    else{var oldVal=opt.valor;opt.valor=parseFloat(input.value)||raw;if(opt.valor!==oldVal)cobLogHistory('Edição Opcional','Alterou valor de "'+opt.nome+'": R$'+oldVal.toFixed(2)+' → R$'+opt.valor.toFixed(2));}
     cobSaveData();cobRenderAccordions();
   };
   input.addEventListener('blur',commit);
@@ -12074,8 +12100,9 @@ function cobOptToggleExcl(grupoId,optIdx,planoId){
   var opt=_cobData.opcionais[grupoId][optIdx];
   if(!opt.excluirPlanos)opt.excluirPlanos=[];
   var idx=opt.excluirPlanos.indexOf(planoId);
-  if(idx===-1)opt.excluirPlanos.push(planoId);
-  else opt.excluirPlanos.splice(idx,1);
+  var plano=cobGetPlano(planoId);var planoNome=plano?plano.nome:planoId;
+  if(idx===-1){opt.excluirPlanos.push(planoId);cobLogHistory('Opcional N/D','Marcou "'+opt.nome+'" como nao disponivel no plano '+planoNome);}
+  else{opt.excluirPlanos.splice(idx,1);cobLogHistory('Opcional Disponivel','Desmarcou "'+opt.nome+'" como disponivel no plano '+planoNome);}
   cobSaveData();cobRenderAccordions();
 }
 
@@ -12084,13 +12111,16 @@ function cobOptAdd(grupoId){
   if(!_cobData.opcionais[grupoId])_cobData.opcionais[grupoId]=[];
   _cobData.opcionais[grupoId].push({id:'opt_'+Date.now(),nome:'Novo opcional',valor:0,excluirPlanos:[]});
   cobSaveData();cobRenderAccordions();
+  cobLogHistory('Novo Opcional','Adicionou novo opcional no grupo '+grupoId);
   showToast('Opcional adicionado','success');
 }
 
 function cobOptRemove(grupoId,optIdx){
   if(!confirm('Remover este opcional?'))return;
+  var nome=_cobData.opcionais[grupoId][optIdx].nome;
   _cobData.opcionais[grupoId].splice(optIdx,1);
   cobSaveData();cobRenderAccordions();
+  cobLogHistory('Remover Opcional','Removeu opcional "'+nome+'" do grupo '+grupoId);
   showToast('Opcional removido','success');
 }
 
@@ -12109,7 +12139,10 @@ function cobCovEditCell(td,cobId,planoId){
   input.focus();input.select();
   var commit=function(){
     var val=input.value.trim();
+    var oldVal=cob.valores[planoId]||'Nao incluso';
     cob.valores[planoId]=val===''?null:val;
+    var newVal=val===''?'Nao incluso':val;
+    if(oldVal!==newVal){var plano=cobGetPlano(planoId);cobLogHistory('Edição Cobertura','Alterou "'+cob.nome+'" no plano '+(plano?plano.nome:planoId)+': "'+oldVal+'" → "'+newVal+'"');}
     cobSaveData();cobRenderAccordions();
   };
   input.addEventListener('blur',commit);
@@ -12125,15 +12158,18 @@ function cobCovEditName(td,cobId){
   input.className='cob-edit-inline-input align-left';
   td.innerHTML='';td.appendChild(input);
   input.focus();input.select();
-  var commit=function(){cob.nome=input.value||cob.nome;cobSaveData();cobRenderAccordions();};
+  var commit=function(){var oldNome=cob.nome;cob.nome=input.value||cob.nome;if(cob.nome!==oldNome)cobLogHistory('Renomear Cobertura','Renomeou cobertura: "'+oldNome+'" → "'+cob.nome+'"');cobSaveData();cobRenderAccordions();};
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
 }
 
 function cobCovRemove(cobId){
   if(!confirm('Remover esta cobertura?'))return;
+  var cob=_cobData.coberturas.find(function(c){return c.id===cobId;});
+  var nome=cob?cob.nome:'desconhecida';
   _cobData.coberturas=_cobData.coberturas.filter(function(c){return c.id!==cobId;});
   cobSaveData();cobRenderAccordions();
+  cobLogHistory('Remover Cobertura','Removeu cobertura "'+nome+'"');
   showToast('Cobertura removida','success');
 }
 
@@ -12145,6 +12181,7 @@ function cobCovAdd(grupoId,categoria){
   gPlanos.forEach(function(p){valores[p.id]=null;});
   _cobData.coberturas.push({id:'cob_'+Date.now(),nome:nomeMap[cat]||'Novo item',categoria:cat,destaque:false,grupo:grupoId,valores:valores});
   cobSaveData();cobRenderAccordions();
+  cobLogHistory('Nova '+cat.charAt(0).toUpperCase()+cat.slice(1),'Adicionou "'+nomeMap[cat]+'" no grupo '+grupoId);
   showToast((nomeMap[cat]||'Item')+' adicionado(a)','success');
 }
 
@@ -12158,7 +12195,7 @@ function cobPlanEditName(el,planoId){
   input.style.fontSize='.95rem';input.style.fontWeight='700';
   el.innerHTML='';el.appendChild(input);
   input.focus();input.select();
-  var commit=function(){pl.nome=input.value||pl.nome;cobSaveData();cobRenderAccordions();};
+  var commit=function(){var oldNome=pl.nome;pl.nome=input.value||pl.nome;if(pl.nome!==oldNome)cobLogHistory('Renomear Plano','Renomeou plano: "'+oldNome+'" → "'+pl.nome+'"');cobSaveData();cobRenderAccordions();};
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
 }
@@ -12166,20 +12203,19 @@ function cobPlanEditName(el,planoId){
 function cobPlanDelete(planoId,grupoId){
   var pl=cobGetPlano(planoId);if(!pl)return;
   if(!confirm('Excluir o plano "'+pl.nome+'"? As coberturas deste grupo serao mantidas, mas os valores deste plano serao perdidos.'))return;
-  // Remove plan
+  var nome=pl.nome;
   _cobData.planos=_cobData.planos.filter(function(p){return p.id!==planoId;});
-  // Remove plan values from coberturas
   _cobData.coberturas.forEach(function(cob){
     if(cob.grupo===grupoId&&cob.valores){delete cob.valores[planoId];}
   });
-  // Remove from opcionais excluirPlanos
   if(_cobData.opcionais&&_cobData.opcionais[grupoId]){
     _cobData.opcionais[grupoId].forEach(function(opt){
       if(opt.excluirPlanos)opt.excluirPlanos=opt.excluirPlanos.filter(function(id){return id!==planoId;});
     });
   }
   cobSaveData();cobRenderAccordions();
-  showToast('Plano "'+pl.nome+'" excluido','success');
+  cobLogHistory('Excluir Plano','Excluiu plano "'+nome+'" do grupo '+grupoId);
+  showToast('Plano "'+nome+'" excluido','success');
 }
 
 function cobPlanAdd(grupoId){
@@ -12191,11 +12227,11 @@ function cobPlanAdd(grupoId){
   var cor=cores[gPlanos.length%cores.length];
   var cssMap={blue:'plan-basico',purple:'plan-vip',amber:'plan-top',green:'plan-default',red:'plan-default'};
   _cobData.planos.push({id:newId,nome:nome.trim(),cor:cor,ordem:gPlanos.length+1,cssClass:cssMap[cor]||'plan-default',badge:'',grupo:grupoId});
-  // Add empty values for this plan in all group coberturas
   _cobData.coberturas.forEach(function(cob){
     if(cob.grupo===grupoId)cob.valores[newId]=null;
   });
   cobSaveData();cobRenderAccordions();
+  cobLogHistory('Novo Plano','Criou plano "'+nome.trim()+'" no grupo '+grupoId);
   showToast('Plano "'+nome.trim()+'" criado','success');
 }
 
