@@ -11301,6 +11301,49 @@ function tmClearPct(){
 
 function tmFmtBRL(v){return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});}
 
+// Máscara de valor monetário (centavos automáticos)
+// Transforma input em campo que formata R$ automaticamente ao digitar
+function applyMoneyMask(input,initialValue){
+  var cents=Math.round((initialValue||0)*100);
+  input.type='text';
+  input.inputMode='numeric';
+  input.value=formatCents(cents);
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Backspace'){
+      e.preventDefault();
+      cents=Math.floor(cents/10);
+      input.value=formatCents(cents);
+      return;
+    }
+    if(e.key==='Delete'){
+      e.preventDefault();
+      cents=0;
+      input.value=formatCents(cents);
+      return;
+    }
+    if(e.key>='0'&&e.key<='9'){
+      e.preventDefault();
+      cents=cents*10+parseInt(e.key);
+      if(cents>99999999)cents=99999999;
+      input.value=formatCents(cents);
+      return;
+    }
+    // Allow Enter, Escape, Tab
+    if(['Enter','Escape','Tab'].indexOf(e.key)===-1){
+      e.preventDefault();
+    }
+  });
+  input._getCents=function(){return cents;};
+  input._getValue=function(){return cents/100;};
+}
+function formatCents(cents){
+  var str=String(cents).padStart(3,'0');
+  var reais=str.slice(0,-2);
+  var centsPart=str.slice(-2);
+  // Add thousand separator
+  reais=reais.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return reais+','+centsPart;
+}
 // Arredonda valor para sempre terminar em .90 centavos
 function tmRound90(v){
   return Math.floor(v) + 0.90;
@@ -11453,20 +11496,22 @@ function tmBuildCota(){
 function tmCotaEditVal(el,seg,field){
   var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg])return;
   var raw=sh.cotaInfo[seg][field]||0;
-  var input=document.createElement('input');input.type='number';input.step='0.01';input.value=raw;
-  input.style.cssText='width:80px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--amber);font-size:.76rem;font-weight:700;font-family:inherit;outline:none';
-  el.innerHTML='';el.appendChild(input);input.focus();input.select();
-  var commit=function(){sh.cotaInfo[seg][field]=parseFloat(input.value)||0;tmBuildCota();tmScheduleSave();};
+  var input=document.createElement('input');
+  applyMoneyMask(input,raw);
+  input.style.cssText='width:90px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--amber);font-size:.76rem;font-weight:700;font-family:inherit;outline:none';
+  el.innerHTML='';el.appendChild(input);input.focus();
+  var commit=function(){sh.cotaInfo[seg][field]=input._getValue();tmBuildCota();tmScheduleSave();};
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')tmBuildCota();});
 }
 function tmCotaEditFipe(el,seg,fi){
   var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg]||!sh.cotaInfo[seg].fipeCota[fi])return;
   var raw=sh.cotaInfo[seg].fipeCota[fi].fipe||0;
-  var input=document.createElement('input');input.type='number';input.step='0.01';input.value=raw;
-  input.style.cssText='width:90px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.76rem;font-family:inherit;outline:none';
-  el.innerHTML='';el.appendChild(input);input.focus();input.select();
-  var commit=function(){sh.cotaInfo[seg].fipeCota[fi].fipe=parseFloat(input.value)||0;tmBuildCota();tmScheduleSave();};
+  var input=document.createElement('input');
+  applyMoneyMask(input,raw);
+  input.style.cssText='width:100px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.76rem;font-family:inherit;outline:none';
+  el.innerHTML='';el.appendChild(input);input.focus();
+  var commit=function(){sh.cotaInfo[seg].fipeCota[fi].fipe=input._getValue();tmBuildCota();tmScheduleSave();};
   input.addEventListener('blur',commit);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')tmBuildCota();});
 }
@@ -11651,14 +11696,18 @@ function tmStartEditCell(td,ri,ci,isNumeric){
   var sh=_tmSheets[_tmCurrentKey];
   var raw=sh.dados[ri][ci];
   var input=document.createElement('input');
-  input.type=isNumeric?'number':'text';
-  input.step='0.01';
-  input.value=raw;
-  input.style.cssText='width:80px;max-width:100%;padding:3px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.8rem;font-family:inherit;text-align:'+(ci===0?'left;width:auto;max-width:180px':'right')+';outline:none;height:auto';
+  if(isNumeric){
+    applyMoneyMask(input,raw);
+    input.style.cssText='width:90px;max-width:100%;padding:3px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.8rem;font-family:inherit;text-align:right;outline:none;height:auto';
+  }else{
+    input.type='text';
+    input.value=raw;
+    input.style.cssText='width:auto;max-width:180px;padding:3px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.8rem;font-family:inherit;text-align:left;outline:none;height:auto';
+  }
   td.innerHTML='';td.appendChild(input);
-  input.focus();input.select();
+  input.focus();if(!isNumeric)input.select();
   var commit=function(){
-    var v=isNumeric?(parseFloat(input.value.replace(',','.'))||0):input.value;
+    var v=isNumeric?input._getValue():(input.value||raw);
     sh.dados[ri][ci]=v;tmUpdateTable();tmScheduleSave();
   };
   input.addEventListener('blur',commit);
@@ -12300,15 +12349,18 @@ function cobOptEditCell(td,grupoId,optIdx,field){
   var opt=_cobData.opcionais[grupoId][optIdx];
   var raw=field==='nome'?opt.nome:opt.valor;
   var input=document.createElement('input');
-  input.type=field==='valor'?'number':'text';
-  if(field==='valor')input.step='0.01';
-  input.value=raw;
+  if(field==='valor'){
+    applyMoneyMask(input,raw);
+  }else{
+    input.type='text';
+    input.value=raw;
+  }
   input.className='cob-edit-inline-input'+(field==='nome'?' align-left':'');
   td.innerHTML='';td.appendChild(input);
-  input.focus();input.select();
+  input.focus();if(field==='nome')input.select();
   var commit=function(){
     if(field==='nome'){var oldVal=opt.nome;opt.nome=input.value||raw;if(opt.nome!==oldVal)cobLogHistory('Edição Opcional','Renomeou opcional: "'+oldVal+'" → "'+opt.nome+'"');}
-    else{var oldVal=opt.valor;opt.valor=parseFloat(input.value)||raw;if(opt.valor!==oldVal)cobLogHistory('Edição Opcional','Alterou valor de "'+opt.nome+'": R$'+oldVal.toFixed(2)+' → R$'+opt.valor.toFixed(2));}
+    else{var oldVal=opt.valor;opt.valor=input._getValue();if(opt.valor!==oldVal)cobLogHistory('Edição Opcional','Alterou valor de "'+opt.nome+'": R$'+oldVal.toFixed(2)+' → R$'+opt.valor.toFixed(2));}
     cobSaveData();cobRenderAccordions();
   };
   input.addEventListener('blur',commit);
