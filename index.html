@@ -11914,7 +11914,7 @@ function cobRenderAccordions() {
             if(excluido){
               html+='<td style="text-align:center"><button class="cob-opt-excl-toggle active" onclick="cobOptToggleExcl(\''+grupo.id+'\','+optIdx+',\''+p.id+'\')">N/D</button></td>';
             }else{
-              html+='<td data-editable="valor" onclick="cobOptEditCell(this,\''+grupo.id+'\','+optIdx+',\'valor\')" style="cursor:pointer"><span class="cob-opt-valor">R$ '+opt.valor.toFixed(2).replace('.',',')+'</span></td>';
+              html+='<td data-editable="valor" style="cursor:pointer;text-align:center"><span class="cob-opt-valor" onclick="cobOptEditCell(this.parentNode,\''+grupo.id+'\','+optIdx+',\'valor\')">R$ '+opt.valor.toFixed(2).replace('.',',')+'</span> <button class="cob-opt-excl-toggle" onclick="event.stopPropagation();cobOptToggleExcl(\''+grupo.id+'\','+optIdx+',\''+p.id+'\')" title="Marcar como nao disponivel">N/D</button></td>';
             }
           }else{
             if(excluido){
