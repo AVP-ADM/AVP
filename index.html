@@ -693,10 +693,9 @@ tr:hover .row-actions{opacity:1}
 .cob-opcionais-table tbody td:first-child{color:var(--text1);font-weight:500;padding-left:20px}
 .cob-opcionais-table tbody td:not(:first-child){text-align:center}
 .cob-opcionais-table .cob-opt-valor{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
-.cob-opcionais-table .cob-opt-incluso{font-size:.68rem;font-weight:600;color:var(--green);font-style:italic;display:inline-flex;align-items:center;gap:4px}
-.cob-opcionais-table .cob-opt-incluso svg{width:12px;height:12px}
+.cob-opcionais-table .cob-opt-indisponivel{font-size:.68rem;font-weight:500;color:var(--text3);font-style:italic}
 .cob-opcionais-footer{padding:10px 20px;background:var(--surface-2);border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;align-items:center;gap:6px}
-.cob-opcionais-footer svg{color:var(--green);flex-shrink:0}
+.cob-opcionais-footer svg{color:var(--text3);flex-shrink:0}
 @media(max-width:768px){.cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.68rem;padding:8px 6px;min-width:60px}}
 /* ========= FIM OPCIONAIS ========= */
 .cob-toggle-table{width:100%;justify-content:center;padding:10px;border:1px dashed var(--border);background:var(--bg);color:var(--text2);font-weight:500}
@@ -11867,7 +11866,7 @@ function cobRenderAccordions() {
         gPlanos.forEach(function(p){
           var excluido=opt.excluirPlanos&&opt.excluirPlanos.indexOf(p.id)!==-1;
           if(excluido){
-            html+='<td><span class="cob-opt-incluso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> incluso</span></td>';
+            html+='<td><span class="cob-opt-indisponivel">——</span></td>';
           }else{
             html+='<td><span class="cob-opt-valor">+ R$ '+opt.valor.toFixed(2).replace('.',',')+' /mes</span></td>';
           }
@@ -11875,7 +11874,7 @@ function cobRenderAccordions() {
         html+='</tr>';
       });
       html+='</tbody></table>';
-      html+='<div class="cob-opcionais-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span><strong>incluso</strong> = ja coberto pelo plano, nao precisa contratar</span></div>';
+      html+='<div class="cob-opcionais-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> <span><strong>——</strong> = opcional nao disponivel para este plano</span></div>';
       html+='</div></div>';
     }
     // Table section - UNIFIED TABLE (all coverage items across all groups except agregado)
