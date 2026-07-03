@@ -698,6 +698,22 @@ tr:hover .row-actions{opacity:1}
 .cob-opcionais-footer svg{color:var(--text3);flex-shrink:0}
 @media(max-width:768px){.cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.68rem;padding:8px 6px;min-width:60px}}
 /* ========= FIM OPCIONAIS ========= */
+/* ========= COBERTURAS EDIT MODE ========= */
+.cob-edit-active .cob-opcionais-table tbody td[data-editable]{cursor:pointer;transition:background .1s}
+.cob-edit-active .cob-opcionais-table tbody td[data-editable]:hover{background:var(--blue-bg)}
+.cob-edit-active .cob-full-table table tbody td[data-editable]{cursor:pointer;transition:background .1s}
+.cob-edit-active .cob-full-table table tbody td[data-editable]:hover{background:var(--blue-bg)}
+.cob-edit-inline-input{width:100%;min-width:60px;max-width:200px;padding:4px 8px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.78rem;font-family:var(--font);outline:none;text-align:center}
+.cob-edit-inline-input.align-left{text-align:left;max-width:250px}
+.cob-edit-row-actions{display:flex;align-items:center;gap:2px}
+.cob-edit-row-actions button{width:24px;height:24px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cob-edit-row-actions button:hover{background:var(--red-bg)}
+.cob-edit-add-row{width:100%;padding:8px;background:none;border:1px dashed var(--border);border-radius:var(--radius);color:var(--text3);font-size:.72rem;font-family:var(--font);cursor:pointer;transition:all .15s;margin-top:8px}
+.cob-edit-add-row:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.cob-opt-excl-toggle{padding:3px 8px;font-size:.62rem;font-weight:600;border-radius:4px;border:1px solid var(--border);background:var(--surface-2);color:var(--text3);cursor:pointer;font-family:var(--font);transition:all .15s}
+.cob-opt-excl-toggle:hover{border-color:var(--red);color:var(--red)}
+.cob-opt-excl-toggle.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+/* ========= FIM COBERTURAS EDIT MODE ========= */
 .cob-toggle-table{width:100%;justify-content:center;padding:10px;border:1px dashed var(--border);background:var(--bg);color:var(--text2);font-weight:500}
 .cob-toggle-table:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 .cob-toggle-table.expanded svg{transform:rotate(180deg)}
@@ -1113,6 +1129,10 @@ tr:hover .row-actions{opacity:1}
             <button class="btn btn-sm btn-green" id="cob_manageBtn" onclick="cobOpenManager()" style="display:none">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               Gerenciar Planos
+            </button>
+            <button class="btn btn-sm" id="cob_editModeBtn" onclick="cobToggleEditMode()" style="display:none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Modo Edicao
             </button>
           </div>
         </div>
@@ -11661,6 +11681,7 @@ let _cobData = null;
 let _cobExpandedGrupos = {}; // { grupo_id: boolean }
 let _cobTableVisibleByGrupo = {}; // { grupo_id: boolean }
 let _cobOpcionaisVisibleByGrupo = {}; // { grupo_id: boolean }
+let _cobEditMode = false;
 
 function cobLoadData() {
   // First load from localStorage as immediate cache
@@ -11794,12 +11815,14 @@ async function cobSaveToSupabase() {
 
 function cobRender() {
   if (!_cobData) cobLoadData();
-  // Show manage button for admin users
+  // Show manage button and edit mode button for admin users
   const manageBtn = document.getElementById('cob_manageBtn');
+  const editModeBtn = document.getElementById('cob_editModeBtn');
   if (manageBtn) {
     const perfil = typeof currentProfile !== 'undefined' ? currentProfile : null;
     const isAdmin = perfil && (perfil.nivel === 'admin' || perfil.setor === 'TI');
     manageBtn.style.display = isAdmin ? '' : 'none';
+    if (editModeBtn) editModeBtn.style.display = isAdmin ? '' : 'none';
   }
   // Initialize state per grupo
   _cobData.grupos.forEach(g => {
@@ -11850,7 +11873,7 @@ function cobRenderAccordions() {
     html+='</div>';
     // Opcionais section (collapsible)
     var grupoOpcionais=_cobData.opcionais&&_cobData.opcionais[grupo.id]?_cobData.opcionais[grupo.id]:[];
-    if(grupoOpcionais.length>0){
+    if(grupoOpcionais.length>0||_cobEditMode){
       var optVis=_cobOpcionaisVisibleByGrupo[grupo.id]||false;
       html+='<div class="cob-opcionais-section">';
       html+='<button class="cob-opcionais-toggle'+(optVis?' expanded':'')+'" onclick="cobToggleOpcionais(\''+grupo.id+'\')">';
@@ -11858,23 +11881,40 @@ function cobRenderAccordions() {
       html+='<div class="cob-opcionais-toggle-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>';
       html+='</button>';
       html+='<div class="cob-opcionais-body'+(optVis?' visible':'')+'">';
-      html+='<table class="cob-opcionais-table"><thead><tr><th>Opcional</th>';
+      html+='<table class="cob-opcionais-table"><thead><tr>';
+      if(_cobEditMode)html+='<th style="width:30px"></th>';
+      html+='<th>Opcional</th>';
       gPlanos.forEach(function(p){html+='<th>'+p.nome+'</th>';});
       html+='</tr></thead><tbody>';
-      grupoOpcionais.forEach(function(opt){
-        html+='<tr><td>'+opt.nome+'</td>';
+      grupoOpcionais.forEach(function(opt,optIdx){
+        html+='<tr>';
+        if(_cobEditMode)html+='<td style="padding:4px"><div class="cob-edit-row-actions"><button onclick="cobOptRemove(\''+grupo.id+'\','+optIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></td>';
+        if(_cobEditMode){
+          html+='<td data-editable="nome" onclick="cobOptEditCell(this,\''+grupo.id+'\','+optIdx+',\'nome\')" style="cursor:pointer">'+opt.nome+'</td>';
+        }else{
+          html+='<td>'+opt.nome+'</td>';
+        }
         gPlanos.forEach(function(p){
           var excluido=opt.excluirPlanos&&opt.excluirPlanos.indexOf(p.id)!==-1;
-          if(excluido){
-            html+='<td><span class="cob-opt-indisponivel">——</span></td>';
+          if(_cobEditMode){
+            if(excluido){
+              html+='<td style="text-align:center"><button class="cob-opt-excl-toggle active" onclick="cobOptToggleExcl(\''+grupo.id+'\','+optIdx+',\''+p.id+'\')">N/D</button></td>';
+            }else{
+              html+='<td data-editable="valor" onclick="cobOptEditCell(this,\''+grupo.id+'\','+optIdx+',\'valor\')" style="cursor:pointer"><span class="cob-opt-valor">R$ '+opt.valor.toFixed(2).replace('.',',')+'</span></td>';
+            }
           }else{
-            html+='<td><span class="cob-opt-valor">+ R$ '+opt.valor.toFixed(2).replace('.',',')+' /mes</span></td>';
+            if(excluido){
+              html+='<td><span class="cob-opt-indisponivel">——</span></td>';
+            }else{
+              html+='<td><span class="cob-opt-valor">+ R$ '+opt.valor.toFixed(2).replace('.',',')+' /mes</span></td>';
+            }
           }
         });
         html+='</tr>';
       });
       html+='</tbody></table>';
-      html+='<div class="cob-opcionais-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> <span><strong>——</strong> = opcional nao disponivel para este plano</span></div>';
+      if(_cobEditMode)html+='<button class="cob-edit-add-row" onclick="cobOptAdd(\''+grupo.id+'\')">+ Novo Opcional</button>';
+      html+='<div class="cob-opcionais-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> <span><strong>——</strong> = opcional nao disponivel para este plano'+(_cobEditMode?' &nbsp;|&nbsp; Clique em <strong>N/D</strong> para alternar disponibilidade':'')+'</span></div>';
       html+='</div></div>';
     }
     // Table section - UNIFIED TABLE (all coverage items across all groups except agregado)
@@ -11883,24 +11923,36 @@ function cobRenderAccordions() {
     if(tblVis){
       // Build unified coverage items list (excluding agregado)
       var unifiedItems = cobGetUnifiedItems();
-      html+='<div class="cob-full-table" style="margin-top:14px"><div class="table-wrap"><table><thead><tr><th>Cobertura</th>';
+      html+='<div class="cob-full-table" style="margin-top:14px"><div class="table-wrap"><table><thead><tr>';
+      if(_cobEditMode)html+='<th style="width:30px"></th>';
+      html+='<th>Cobertura</th>';
       sel.forEach(function(pid){var p=cobGetPlano(pid);if(p)html+='<th>'+p.nome+'</th>';});
       html+='</tr></thead><tbody>';
       [{key:'cobertura',label:'Coberturas'},{key:'assistencia',label:'Assistencias'},{key:'beneficio',label:'Beneficios'}].forEach(function(cat){
-        var items=unifiedItems.filter(function(u){return u.categoria===cat.key;});if(!items.length)return;
-        html+='<tr><td colspan="'+(sel.length+1)+'" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">'+cat.label+'</td></tr>';
-        items.forEach(function(uItem){
-          // Find matching item in this group's coberturas
-          var groupItem=gCobs.find(function(c){return c.nome===uItem.nome;});
-          html+='<tr><td style="font-weight:500;white-space:nowrap">'+uItem.nome+'</td>';
+        var items=gCobs.filter(function(c){return c.categoria===cat.key;});if(!items.length)return;
+        html+='<tr><td colspan="'+(sel.length+1+(_cobEditMode?1:0))+'" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">'+cat.label+'</td></tr>';
+        items.forEach(function(cob){
+          html+='<tr>';
+          if(_cobEditMode)html+='<td style="padding:4px"><div class="cob-edit-row-actions"><button onclick="cobCovRemove(\''+cob.id+'\')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></td>';
+          if(_cobEditMode){
+            html+='<td data-editable="nome" onclick="cobCovEditName(this,\''+cob.id+'\')" style="font-weight:500;white-space:nowrap;cursor:pointer">'+cob.nome+'</td>';
+          }else{
+            html+='<td style="font-weight:500;white-space:nowrap">'+cob.nome+'</td>';
+          }
           sel.forEach(function(pid){
-            var val=groupItem?groupItem.valores[pid]:null;
-            if(!val&&val!==0)html+='<td class="cob-disabled"><span class="cob-cross"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>';
-            else if(val==='Sim')html+='<td><span class="cob-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
-            else html+='<td>'+val+'</td>';
+            var val=cob.valores[pid];
+            if(_cobEditMode){
+              var displayVal=(!val&&val!==0)?'Nao incluso':val;
+              html+='<td data-editable="val" onclick="cobCovEditCell(this,\''+cob.id+'\',\''+pid+'\')" style="cursor:pointer">'+((!val&&val!==0)?'<span style="color:var(--text3);font-style:italic">Nao incluso</span>':val)+'</td>';
+            }else{
+              if(!val&&val!==0)html+='<td class="cob-disabled"><span class="cob-cross"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></td>';
+              else if(val==='Sim')html+='<td><span class="cob-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></td>';
+              else html+='<td>'+val+'</td>';
+            }
           });html+='</tr>';
         });
       });
+      if(_cobEditMode)html+='<tr><td colspan="'+(sel.length+1+1)+'"><button class="cob-edit-add-row" onclick="cobCovAdd(\''+grupo.id+'\')">+ Nova Cobertura</button></td></tr>';
       html+='</tbody></table></div></div>';
     }
     html+='</div></div></div>';
@@ -11926,6 +11978,128 @@ function cobGetUnifiedItems(){
 }
 function cobToggleTable(gid){_cobTableVisibleByGrupo[gid]=!_cobTableVisibleByGrupo[gid];cobRenderAccordions();}
 function cobToggleOpcionais(gid){_cobOpcionaisVisibleByGrupo[gid]=!_cobOpcionaisVisibleByGrupo[gid];cobRenderAccordions();}
+
+// ========= COBERTURAS EDIT MODE =========
+function cobToggleEditMode(){
+  _cobEditMode=!_cobEditMode;
+  var btn=document.getElementById('cob_editModeBtn');
+  if(btn){
+    if(_cobEditMode){btn.className='btn btn-sm btn-amber';btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Sair da Edicao';}
+    else{btn.className='btn btn-sm';btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao';}
+  }
+  var container=document.getElementById('cob_accordionContainer');
+  if(container){if(_cobEditMode)container.classList.add('cob-edit-active');else container.classList.remove('cob-edit-active');}
+  cobRenderAccordions();
+}
+
+function cobSaveData(){
+  try{localStorage.setItem(COB_STORAGE_KEY,JSON.stringify(_cobData));}catch(e){}
+  cobSaveToSupabase();
+}
+async function cobSaveToSupabase(){
+  try{
+    await supabase.insert('coberturas_config',[{id:'coberturas_v1',data:JSON.stringify(_cobData),updated_at:new Date().toISOString()}],{upsert:true});
+  }catch(e){console.warn('cobSaveToSupabase:',e);}
+}
+
+// --- Opcionais inline edit ---
+function cobOptEditCell(td,grupoId,optIdx,field){
+  if(td.querySelector('input'))return;
+  var opt=_cobData.opcionais[grupoId][optIdx];
+  var raw=field==='nome'?opt.nome:opt.valor;
+  var input=document.createElement('input');
+  input.type=field==='valor'?'number':'text';
+  if(field==='valor')input.step='0.01';
+  input.value=raw;
+  input.className='cob-edit-inline-input'+(field==='nome'?' align-left':'');
+  td.innerHTML='';td.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){
+    if(field==='nome'){opt.nome=input.value||raw;}
+    else{opt.valor=parseFloat(input.value)||raw;}
+    cobSaveData();cobRenderAccordions();
+  };
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
+}
+
+function cobOptToggleExcl(grupoId,optIdx,planoId){
+  var opt=_cobData.opcionais[grupoId][optIdx];
+  if(!opt.excluirPlanos)opt.excluirPlanos=[];
+  var idx=opt.excluirPlanos.indexOf(planoId);
+  if(idx===-1)opt.excluirPlanos.push(planoId);
+  else opt.excluirPlanos.splice(idx,1);
+  cobSaveData();cobRenderAccordions();
+}
+
+function cobOptAdd(grupoId){
+  if(!_cobData.opcionais)_cobData.opcionais={};
+  if(!_cobData.opcionais[grupoId])_cobData.opcionais[grupoId]=[];
+  _cobData.opcionais[grupoId].push({id:'opt_'+Date.now(),nome:'Novo opcional',valor:0,excluirPlanos:[]});
+  cobSaveData();cobRenderAccordions();
+  showToast('Opcional adicionado','success');
+}
+
+function cobOptRemove(grupoId,optIdx){
+  if(!confirm('Remover este opcional?'))return;
+  _cobData.opcionais[grupoId].splice(optIdx,1);
+  cobSaveData();cobRenderAccordions();
+  showToast('Opcional removido','success');
+}
+
+// --- Coberturas inline edit ---
+function cobCovEditCell(td,cobId,planoId){
+  if(td.querySelector('input'))return;
+  var cob=_cobData.coberturas.find(function(c){return c.id===cobId;});
+  if(!cob)return;
+  var raw=cob.valores[planoId]||'';
+  var input=document.createElement('input');
+  input.type='text';
+  input.value=raw===null?'':raw;
+  input.placeholder='Nao incluso';
+  input.className='cob-edit-inline-input align-left';
+  td.innerHTML='';td.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){
+    var val=input.value.trim();
+    cob.valores[planoId]=val===''?null:val;
+    cobSaveData();cobRenderAccordions();
+  };
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
+}
+
+function cobCovEditName(td,cobId){
+  if(td.querySelector('input'))return;
+  var cob=_cobData.coberturas.find(function(c){return c.id===cobId;});
+  if(!cob)return;
+  var input=document.createElement('input');
+  input.type='text';input.value=cob.nome;
+  input.className='cob-edit-inline-input align-left';
+  td.innerHTML='';td.appendChild(input);
+  input.focus();input.select();
+  var commit=function(){cob.nome=input.value||cob.nome;cobSaveData();cobRenderAccordions();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')cobRenderAccordions();});
+}
+
+function cobCovRemove(cobId){
+  if(!confirm('Remover esta cobertura?'))return;
+  _cobData.coberturas=_cobData.coberturas.filter(function(c){return c.id!==cobId;});
+  cobSaveData();cobRenderAccordions();
+  showToast('Cobertura removida','success');
+}
+
+function cobCovAdd(grupoId){
+  var gPlanos=_cobData.planos.filter(function(p){return p.grupo===grupoId;});
+  var valores={};
+  gPlanos.forEach(function(p){valores[p.id]=null;});
+  _cobData.coberturas.push({id:'cob_'+Date.now(),nome:'Nova cobertura',categoria:'cobertura',destaque:false,grupo:grupoId,valores:valores});
+  cobSaveData();cobRenderAccordions();
+  showToast('Cobertura adicionada','success');
+}
+// ========= FIM COBERTURAS EDIT MODE =========
+
 // ========= FIM COBERTURAS =========
 
 // ========= COBERTURAS MANAGER (CRUD ADMIN) =========
