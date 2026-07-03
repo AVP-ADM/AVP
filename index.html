@@ -670,6 +670,35 @@ tr:hover .row-actions{opacity:1}
 .cob-hero-item.highlight .cob-hero-item-icon svg{color:var(--green)}
 .cob-hero-item.highlight .cob-hero-item-value{color:var(--green)}
 .cob-table-section{margin-top:4px}
+/* ========= OPCIONAIS (COBERTURAS) ========= */
+.cob-opcionais-section{margin-top:16px;margin-bottom:8px}
+.cob-opcionais-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;transition:all .2s;user-select:none}
+.cob-opcionais-toggle:hover{background:var(--surface-2);border-color:var(--border-strong);box-shadow:var(--shadow)}
+.cob-opcionais-toggle-left{display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:600;color:var(--text1)}
+.cob-opcionais-toggle-left svg{color:var(--amber)}
+.cob-opcionais-toggle-badge{font-size:.6rem;font-weight:700;padding:3px 8px;border-radius:10px;background:var(--amber-bg);color:var(--amber);text-transform:uppercase;letter-spacing:.03em}
+.cob-opcionais-toggle-chevron{color:var(--text3);transition:transform .2s}
+.cob-opcionais-toggle.expanded .cob-opcionais-toggle-chevron{transform:rotate(180deg)}
+.cob-opcionais-toggle.expanded{border-radius:var(--radius-lg) var(--radius-lg) 0 0;border-bottom-color:transparent}
+.cob-opcionais-body{display:none;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg);background:var(--surface);overflow:hidden;animation:fadeIn .2s ease-out}
+.cob-opcionais-body.visible{display:block}
+.cob-opcionais-table{width:100%;border-collapse:collapse}
+.cob-opcionais-table thead th{padding:10px 16px;font-size:.65rem;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
+.cob-opcionais-table thead th:first-child{text-align:left;padding-left:20px}
+.cob-opcionais-table thead th:not(:first-child){text-align:center;min-width:90px}
+.cob-opcionais-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+.cob-opcionais-table tbody tr:last-child{border-bottom:none}
+.cob-opcionais-table tbody tr:hover{background:var(--bg)}
+.cob-opcionais-table tbody td{padding:11px 16px;font-size:.78rem;color:var(--text2)}
+.cob-opcionais-table tbody td:first-child{color:var(--text1);font-weight:500;padding-left:20px}
+.cob-opcionais-table tbody td:not(:first-child){text-align:center}
+.cob-opcionais-table .cob-opt-valor{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
+.cob-opcionais-table .cob-opt-incluso{font-size:.68rem;font-weight:600;color:var(--green);font-style:italic;display:inline-flex;align-items:center;gap:4px}
+.cob-opcionais-table .cob-opt-incluso svg{width:12px;height:12px}
+.cob-opcionais-footer{padding:10px 20px;background:var(--surface-2);border-top:1px solid var(--border);font-size:.68rem;color:var(--text3);display:flex;align-items:center;gap:6px}
+.cob-opcionais-footer svg{color:var(--green);flex-shrink:0}
+@media(max-width:768px){.cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.68rem;padding:8px 6px;min-width:60px}}
+/* ========= FIM OPCIONAIS ========= */
 .cob-toggle-table{width:100%;justify-content:center;padding:10px;border:1px dashed var(--border);background:var(--bg);color:var(--text2);font-weight:500}
 .cob-toggle-table:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 .cob-toggle-table.expanded svg{transform:rotate(180deg)}
@@ -11597,12 +11626,42 @@ const COB_DEFAULT_DATA = {
     start: ['st_guincho_pane', 'st_cobertura_terceiros', 'st_veiculo_reserva'],
     truck: ['tk_guincho_pane', 'tk_cobertura_terceiros', 'tk_parabrisa_retrovisor'],
     agregado: ['ag_roubo_furto', 'ag_guincho_pane', 'ag_cobertura_terceiros', 'ag_veiculo_reserva']
+  },
+  // Opcionais por grupo (valores adicionais à mensalidade)
+  opcionais: {
+    passeio: [
+      { id: 'opt_rastreamento', nome: 'Rastreamento e Monitoramento', valor: 14.90, excluirPlanos: [] },
+      { id: 'opt_gnv', nome: 'Cobertura GNV', valor: 39.90, excluirPlanos: [] },
+      { id: 'opt_pequenos_reparos', nome: 'Pequenos Reparos', valor: 19.90, excluirPlanos: [] },
+      { id: 'opt_tag', nome: 'Acesso a TAG', valor: 4.90, excluirPlanos: [] },
+      { id: 'opt_vidros_20', nome: 'Cobertura Vidros e Farois (20%)', valor: 14.90, excluirPlanos: [] },
+      { id: 'opt_vidros_50', nome: 'Cobertura Vidros e Farois (50%)', valor: 19.90, excluirPlanos: ['vip','top'] },
+      { id: 'opt_terceiros_30k', nome: 'Danos a terceiro R$30.000,00', valor: 24.90, excluirPlanos: ['top'] },
+      { id: 'opt_reboque_200', nome: '+200 KM de reboque', valor: 14.90, excluirPlanos: ['top'] },
+      { id: 'opt_reboque_400', nome: '+400 KM de reboque', valor: 19.90, excluirPlanos: ['top'] },
+      { id: 'opt_reserva_7', nome: 'Carro Reserva 7 dias', valor: 9.90, excluirPlanos: ['top'] },
+      { id: 'opt_reserva_14', nome: 'Carro Reserva 14 dias', valor: 19.90, excluirPlanos: ['top'] }
+    ],
+    moto: [
+      { id: 'opt_mt_rastreamento', nome: 'Rastreamento e Monitoramento', valor: 14.90, excluirPlanos: [] },
+      { id: 'opt_mt_pequenos_reparos', nome: 'Pequenos Reparos', valor: 19.90, excluirPlanos: [] },
+      { id: 'opt_mt_tag', nome: 'Acesso a TAG', valor: 4.90, excluirPlanos: [] },
+      { id: 'opt_mt_reboque_200', nome: '+200 KM de reboque', valor: 14.90, excluirPlanos: ['top_moto'] },
+      { id: 'opt_mt_reboque_400', nome: '+400 KM de reboque', valor: 19.90, excluirPlanos: ['top_moto'] }
+    ],
+    truck: [
+      { id: 'opt_tk_rastreamento', nome: 'Rastreamento e Monitoramento', valor: 14.90, excluirPlanos: [] },
+      { id: 'opt_tk_gnv', nome: 'Cobertura GNV', valor: 39.90, excluirPlanos: [] },
+      { id: 'opt_tk_pequenos_reparos', nome: 'Pequenos Reparos', valor: 19.90, excluirPlanos: [] },
+      { id: 'opt_tk_tag', nome: 'Acesso a TAG', valor: 4.90, excluirPlanos: [] }
+    ]
   }
 };
 
 let _cobData = null;
 let _cobExpandedGrupos = {}; // { grupo_id: boolean }
 let _cobTableVisibleByGrupo = {}; // { grupo_id: boolean }
+let _cobOpcionaisVisibleByGrupo = {}; // { grupo_id: boolean }
 
 function cobLoadData() {
   // First load from localStorage as immediate cache
@@ -11666,6 +11725,26 @@ function cobMergeDefaults() {
         if (!_cobData.destaques[key]) {
           _cobData.destaques[key] = JSON.parse(JSON.stringify(def.destaques[key]));
           changed = true;
+        }
+      });
+    }
+  }
+  // Merge opcionais from defaults (ensure new opcionais are available)
+  if (def.opcionais) {
+    if (!_cobData.opcionais) { _cobData.opcionais = JSON.parse(JSON.stringify(def.opcionais)); changed = true; }
+    else {
+      Object.keys(def.opcionais).forEach(grupoId => {
+        if (!_cobData.opcionais[grupoId]) {
+          _cobData.opcionais[grupoId] = JSON.parse(JSON.stringify(def.opcionais[grupoId]));
+          changed = true;
+        } else {
+          // Merge individual new opcionais
+          def.opcionais[grupoId].forEach(dOpt => {
+            if (!_cobData.opcionais[grupoId].find(o => o.id === dOpt.id)) {
+              _cobData.opcionais[grupoId].push(JSON.parse(JSON.stringify(dOpt)));
+              changed = true;
+            }
+          });
         }
       });
     }
@@ -11770,6 +11849,35 @@ function cobRenderAccordions() {
       html+='</div></div>';
     });
     html+='</div>';
+    // Opcionais section (collapsible)
+    var grupoOpcionais=_cobData.opcionais&&_cobData.opcionais[grupo.id]?_cobData.opcionais[grupo.id]:[];
+    if(grupoOpcionais.length>0){
+      var optVis=_cobOpcionaisVisibleByGrupo[grupo.id]||false;
+      html+='<div class="cob-opcionais-section">';
+      html+='<button class="cob-opcionais-toggle'+(optVis?' expanded':'')+'" onclick="cobToggleOpcionais(\''+grupo.id+'\')">';
+      html+='<div class="cob-opcionais-toggle-left"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Opcionais <span class="cob-opcionais-toggle-badge">'+grupoOpcionais.length+' disponiveis</span></div>';
+      html+='<div class="cob-opcionais-toggle-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>';
+      html+='</button>';
+      html+='<div class="cob-opcionais-body'+(optVis?' visible':'')+'">';
+      html+='<table class="cob-opcionais-table"><thead><tr><th>Opcional</th>';
+      gPlanos.forEach(function(p){html+='<th>'+p.nome+'</th>';});
+      html+='</tr></thead><tbody>';
+      grupoOpcionais.forEach(function(opt){
+        html+='<tr><td>'+opt.nome+'</td>';
+        gPlanos.forEach(function(p){
+          var excluido=opt.excluirPlanos&&opt.excluirPlanos.indexOf(p.id)!==-1;
+          if(excluido){
+            html+='<td><span class="cob-opt-incluso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> incluso</span></td>';
+          }else{
+            html+='<td><span class="cob-opt-valor">+ R$ '+opt.valor.toFixed(2).replace('.',',')+' /mes</span></td>';
+          }
+        });
+        html+='</tr>';
+      });
+      html+='</tbody></table>';
+      html+='<div class="cob-opcionais-footer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span><strong>incluso</strong> = ja coberto pelo plano, nao precisa contratar</span></div>';
+      html+='</div></div>';
+    }
     // Table section - UNIFIED TABLE (all coverage items across all groups except agregado)
     html+='<div class="cob-table-section"><button class="btn btn-sm cob-toggle-table'+(tblVis?' expanded':'')+'" onclick="cobToggleTable(\''+grupo.id+'\')">';
     html+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="'+(tblVis?'18 15 12 9 6 15':'6 9 12 15 18 9')+'"/></svg> '+(tblVis?'Ocultar tabela':'Ver todas as coberturas')+'</button>';
@@ -11818,6 +11926,7 @@ function cobGetUnifiedItems(){
   return items;
 }
 function cobToggleTable(gid){_cobTableVisibleByGrupo[gid]=!_cobTableVisibleByGrupo[gid];cobRenderAccordions();}
+function cobToggleOpcionais(gid){_cobOpcionaisVisibleByGrupo[gid]=!_cobOpcionaisVisibleByGrupo[gid];cobRenderAccordions();}
 // ========= FIM COBERTURAS =========
 
 // ========= COBERTURAS MANAGER (CRUD ADMIN) =========
