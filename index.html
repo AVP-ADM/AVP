@@ -11929,7 +11929,7 @@ function cobRenderAccordions() {
       sel.forEach(function(pid){var p=cobGetPlano(pid);if(p)html+='<th>'+p.nome+'</th>';});
       html+='</tr></thead><tbody>';
       [{key:'cobertura',label:'Coberturas'},{key:'assistencia',label:'Assistencias'},{key:'beneficio',label:'Beneficios'}].forEach(function(cat){
-        var items=gCobs.filter(function(c){return c.categoria===cat.key;});if(!items.length)return;
+        var items=gCobs.filter(function(c){return c.categoria===cat.key;});if(!items.length&&!_cobEditMode)return;
         html+='<tr><td colspan="'+(sel.length+1+(_cobEditMode?1:0))+'" style="background:var(--surface-2);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:8px 14px">'+cat.label+'</td></tr>';
         items.forEach(function(cob){
           html+='<tr>';
@@ -11951,8 +11951,11 @@ function cobRenderAccordions() {
             }
           });html+='</tr>';
         });
+        if(_cobEditMode){
+          var btnLabel=cat.key==='cobertura'?'+ Nova Cobertura':cat.key==='assistencia'?'+ Nova Assistencia':'+ Novo Beneficio';
+          html+='<tr><td colspan="'+(sel.length+1+1)+'"><button class="cob-edit-add-row" onclick="cobCovAdd(\''+grupo.id+'\',\''+cat.key+'\')">'+btnLabel+'</button></td></tr>';
+        }
       });
-      if(_cobEditMode)html+='<tr><td colspan="'+(sel.length+1+1)+'"><button class="cob-edit-add-row" onclick="cobCovAdd(\''+grupo.id+'\')">+ Nova Cobertura</button></td></tr>';
       html+='</tbody></table></div></div>';
     }
     html+='</div></div></div>';
@@ -12090,13 +12093,15 @@ function cobCovRemove(cobId){
   showToast('Cobertura removida','success');
 }
 
-function cobCovAdd(grupoId){
+function cobCovAdd(grupoId,categoria){
+  var cat=categoria||'cobertura';
+  var nomeMap={cobertura:'Nova cobertura',assistencia:'Nova assistencia',beneficio:'Novo beneficio'};
   var gPlanos=_cobData.planos.filter(function(p){return p.grupo===grupoId;});
   var valores={};
   gPlanos.forEach(function(p){valores[p.id]=null;});
-  _cobData.coberturas.push({id:'cob_'+Date.now(),nome:'Nova cobertura',categoria:'cobertura',destaque:false,grupo:grupoId,valores:valores});
+  _cobData.coberturas.push({id:'cob_'+Date.now(),nome:nomeMap[cat]||'Novo item',categoria:cat,destaque:false,grupo:grupoId,valores:valores});
   cobSaveData();cobRenderAccordions();
-  showToast('Cobertura adicionada','success');
+  showToast((nomeMap[cat]||'Item')+' adicionado(a)','success');
 }
 // ========= FIM COBERTURAS EDIT MODE =========
 
