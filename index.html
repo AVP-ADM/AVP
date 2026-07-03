@@ -1086,6 +1086,7 @@ tr:hover .row-actions{opacity:1}
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div style="display:flex;align-items:center;gap:10px"><span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></span> Tabela de Planos</div>
         <button class="btn btn-sm" id="tm_editBtn" onclick="tmToggleEditMode()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao</button>
+        <button class="btn btn-sm btn-green" id="tm_saveBtn" onclick="tmSaveAll()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar</button>
       </div>
       <div class="filter-row" style="margin-bottom:16px">
         <select id="tm_groupSelect" onchange="tmGroupChanged()"></select>
@@ -1111,13 +1112,6 @@ tr:hover .row-actions{opacity:1}
             <span id="tm_tableIcon"></span>
             <span class="tm-table-title" id="tm_tableTitle">Passeio</span>
             <span class="tm-table-badge" id="tm_tableBadge" style="display:none"></span>
-          </div>
-          <div class="tm-edit-toolbar" id="tm_editToolbar" style="display:none">
-            <button class="btn btn-sm" onclick="tmAddRow()">+ Linha</button>
-            <button class="btn btn-sm" onclick="tmAddColumn()">+ Coluna</button>
-            <button class="btn btn-sm btn-red" onclick="tmDeleteLastRow()">- Linha</button>
-            <button class="btn btn-sm btn-red" onclick="tmDeleteLastColumn()">- Coluna</button>
-            <button class="btn btn-sm" onclick="tmEditSheetMeta()" style="margin-left:auto">Renomear</button>
           </div>
           <div class="table-wrap">
             <table>
@@ -11163,7 +11157,7 @@ var _tmLastAction='';
 function tmScheduleSave(action){
   if(action)_tmLastAction=action;else if(!_tmLastAction)_tmLastAction='Alteração na Tabela de Planos';
   if(_tmSaveTimeout) clearTimeout(_tmSaveTimeout);
-  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmSaveToSupabase();if(_tmLastAction){tmLogHistory(_tmLastAction);_tmLastAction='';}},1500);
+  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmMarkDirty();if(_tmLastAction){tmLogHistory(_tmLastAction);_tmLastAction='';}},800);
 }
 function tmLogHistory(detalhes){
   try{
@@ -11280,7 +11274,7 @@ function tmSelectSheet(key){
   if(icon) icon.textContent=sh.icon;
   if(title) title.textContent=sh.label;
   if(tIcon){tIcon.textContent=sh.icon;tIcon.style.display=sh.icon?'':'none';}
-  if(tTitle) tTitle.textContent=sh.label;
+  if(tTitle){tTitle.textContent=sh.label;if(_tmEditMode){tTitle.style.cursor='pointer';tTitle.onclick=function(){tmEditSheetMeta();};}else{tTitle.style.cursor='';tTitle.onclick=null;}}
   tmUpdateTable();
 }
 
@@ -11335,20 +11329,23 @@ function tmUpdateTable(){
   var thead=document.getElementById('tm_thead');
   if(thead){
     var tr='<tr>';
-    if(_tmEditMode) tr+='<th style="width:30px"></th>';
+    if(_tmEditMode) tr+='<th style="width:28px"></th>';
     for(var ci=0;ci<sh.colunas.length;ci++){
       var isFixed=sh.colsFixas&&sh.colsFixas.indexOf(ci)!==-1;
       var style=ci===0?'text-align:left':'text-align:right';
       if(isFixed) style+=';opacity:.6';
       if(_tmEditMode) style+=';cursor:pointer';
-      tr+='<th style="'+style+'" data-ci="'+ci+'">'+sh.colunas[ci]+(isFixed?' <span style="font-size:.5rem;opacity:.6">(fixo)</span>':'')+'</th>';
+      tr+='<th style="'+style+'" data-ci="'+ci+'">';
+      tr+=sh.colunas[ci]+(isFixed?' <span style="font-size:.5rem;opacity:.6">(fixo)</span>':'');
+      if(_tmEditMode&&ci>0) tr+=' <button onclick="event.stopPropagation();tmDeleteColumn('+ci+')" style="background:none;border:none;color:var(--red);cursor:pointer;opacity:.3;padding:0 2px;vertical-align:middle" title="Remover coluna"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      tr+='</th>';
     }
     tr+='</tr>';
     thead.innerHTML=tr;
     if(_tmEditMode){
       var ths=thead.querySelectorAll('th[data-ci]');
       for(var i=0;i<ths.length;i++){
-        (function(th,ci){th.addEventListener('click',function(){tmStartEditHeader(th,ci);});})(ths[i],parseInt(ths[i].dataset.ci));
+        (function(th,ci){th.addEventListener('click',function(e){if(e.target.tagName==='BUTTON'||e.target.tagName==='svg'||e.target.tagName==='line')return;tmStartEditHeader(th,ci);});})(ths[i],parseInt(ths[i].dataset.ci));
       }
     }
   }
@@ -11358,7 +11355,7 @@ function tmUpdateTable(){
     var html='';
     for(var ri=0;ri<sh.dados.length;ri++){
       html+='<tr>';
-      if(_tmEditMode) html+='<td style="padding:4px"><button onclick="tmDeleteRow('+ri+')" style="width:22px;height:22px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>';
+      if(_tmEditMode) html+='<td style="padding:2px"><button onclick="tmDeleteRow('+ri+')" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;opacity:.4;transition:all .15s" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=.4;this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text3)\'"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>';
       for(var ci=0;ci<sh.dados[ri].length;ci++){
         var cell=sh.dados[ri][ci];
         if(ci===0){html+='<td style="font-size:.78rem'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+cell+'</td>';}
@@ -11384,6 +11381,22 @@ function tmUpdateTable(){
       }
     }
   }
+  // Add Row/Column buttons (edit mode)
+  if(_tmEditMode){
+    var addRowCol=document.querySelector('.tm-edit-add-buttons');
+    if(!addRowCol){
+      addRowCol=document.createElement('div');
+      addRowCol.className='tm-edit-add-buttons';
+      addRowCol.style.cssText='display:flex;gap:8px;margin-top:12px;padding:0 4px';
+      var tableCard=document.querySelector('.tm-table-card');
+      if(tableCard)tableCard.parentNode.insertBefore(addRowCol,tableCard.nextSibling);
+    }
+    addRowCol.innerHTML='<button onclick="tmAddRow()" style="flex:1;padding:8px;background:none;border:1px dashed var(--border);border-radius:var(--radius);color:var(--text3);font-size:.72rem;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text3)\'">+ Nova Linha</button><button onclick="tmAddColumn()" style="flex:1;padding:8px;background:none;border:1px dashed var(--border);border-radius:var(--radius);color:var(--text3);font-size:.72rem;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text3)\'">+ Nova Coluna</button>';
+    addRowCol.style.display='flex';
+  }else{
+    var addRowCol=document.querySelector('.tm-edit-add-buttons');
+    if(addRowCol)addRowCol.style.display='none';
+  }
   // Cota
   tmBuildCota();
   // Observações (ex: rastreador obrigatório para Trucks)
@@ -11394,24 +11407,111 @@ function tmBuildCota(){
   var sh=_tmSheets[_tmCurrentKey];
   var card=document.getElementById('tm_cotaCard');
   var body=document.getElementById('tm_cotaBody');
-  if(!card||!body||!sh||!sh.cotaInfo||Object.keys(sh.cotaInfo).length===0){if(card) card.style.display='none';return;}
+  if(!card||!body) return;
+  // Show card if has data or in edit mode
+  if((!sh||!sh.cotaInfo||Object.keys(sh.cotaInfo).length===0)&&!_tmEditMode){card.style.display='none';return;}
   card.style.display='block';
+  if(!sh.cotaInfo) sh.cotaInfo={};
   var html='';
   for(var seg in sh.cotaInfo){
     if(!sh.cotaInfo.hasOwnProperty(seg)) continue;
     var info=sh.cotaInfo[seg];
-    html+='<div class="tm-cota-segment"><div class="tm-cota-seg-label">'+seg+'</div>';
-    html+='<div class="tm-cota-row">Cota min: <span class="tm-cota-val">'+tmFmtBRL(info.cotaMin||0)+'</span></div>';
-    if(info.fipeCota){
-      for(var fi=0;fi<info.fipeCota.length;fi++){
-        var fc=info.fipeCota[fi];
-        var label=fc.fipe?'FIPE acima de '+tmFmtBRL(fc.fipe):'Geral';
-        html+='<div class="tm-cota-row">'+label+': <span class="tm-cota-val">'+fc.pct+'%</span></div>';
+    html+='<div class="tm-cota-segment"><div class="tm-cota-seg-label">'+seg;
+    if(_tmEditMode) html+=' <button onclick="tmCotaRenameSeg(\''+seg+'\')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0 3px;opacity:.5" title="Renomear"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button onclick="tmCotaDeleteSeg(\''+seg+'\')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0 3px;opacity:.4" title="Remover segmento"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    html+='</div>';
+    if(_tmEditMode){
+      html+='<div class="tm-cota-row">Cota min: <span class="tm-cota-val" style="cursor:pointer" onclick="tmCotaEditVal(this,\''+seg+'\',\'cotaMin\')">'+tmFmtBRL(info.cotaMin||0)+'</span></div>';
+      if(info.fipeCota){
+        for(var fi=0;fi<info.fipeCota.length;fi++){
+          var fc=info.fipeCota[fi];
+          var label=fc.fipe?'FIPE acima de '+tmFmtBRL(fc.fipe):'Geral';
+          html+='<div class="tm-cota-row" style="display:flex;align-items:center;gap:6px">';
+          html+='<span style="cursor:pointer" onclick="tmCotaEditFipe(this,\''+seg+'\','+fi+')">'+label+'</span>: ';
+          html+='<span class="tm-cota-val" style="cursor:pointer" onclick="tmCotaEditPct(this,\''+seg+'\','+fi+')">'+fc.pct+'%</span>';
+          html+='<button onclick="tmCotaDeleteFaixa(\''+seg+'\','+fi+')" style="background:none;border:none;color:var(--red);cursor:pointer;opacity:.3;padding:0 2px" title="Remover faixa"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+          html+='</div>';
+        }
+      }
+      html+='<button onclick="tmCotaAddFaixa(\''+seg+'\')" style="width:100%;margin-top:6px;padding:4px;background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text3);font-size:.65rem;cursor:pointer;font-family:inherit">+ Nova faixa</button>';
+    }else{
+      html+='<div class="tm-cota-row">Cota min: <span class="tm-cota-val">'+tmFmtBRL(info.cotaMin||0)+'</span></div>';
+      if(info.fipeCota){
+        for(var fi=0;fi<info.fipeCota.length;fi++){
+          var fc=info.fipeCota[fi];
+          var label=fc.fipe?'FIPE acima de '+tmFmtBRL(fc.fipe):'Geral';
+          html+='<div class="tm-cota-row">'+label+': <span class="tm-cota-val">'+fc.pct+'%</span></div>';
+        }
       }
     }
     html+='</div>';
   }
+  if(_tmEditMode) html+='<div style="padding:10px 18px"><button onclick="tmCotaAddSeg()" style="width:100%;padding:6px;background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text3);font-size:.68rem;cursor:pointer;font-family:inherit">+ Novo segmento</button></div>';
   body.innerHTML=html;
+}
+
+// Cota edit helpers
+function tmCotaEditVal(el,seg,field){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg])return;
+  var raw=sh.cotaInfo[seg][field]||0;
+  var input=document.createElement('input');input.type='number';input.step='0.01';input.value=raw;
+  input.style.cssText='width:80px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--amber);font-size:.76rem;font-weight:700;font-family:inherit;outline:none';
+  el.innerHTML='';el.appendChild(input);input.focus();input.select();
+  var commit=function(){sh.cotaInfo[seg][field]=parseFloat(input.value)||0;tmBuildCota();tmScheduleSave();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')tmBuildCota();});
+}
+function tmCotaEditFipe(el,seg,fi){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg]||!sh.cotaInfo[seg].fipeCota[fi])return;
+  var raw=sh.cotaInfo[seg].fipeCota[fi].fipe||0;
+  var input=document.createElement('input');input.type='number';input.step='0.01';input.value=raw;
+  input.style.cssText='width:90px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--text1);font-size:.76rem;font-family:inherit;outline:none';
+  el.innerHTML='';el.appendChild(input);input.focus();input.select();
+  var commit=function(){sh.cotaInfo[seg].fipeCota[fi].fipe=parseFloat(input.value)||0;tmBuildCota();tmScheduleSave();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')tmBuildCota();});
+}
+function tmCotaEditPct(el,seg,fi){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg]||!sh.cotaInfo[seg].fipeCota[fi])return;
+  var raw=sh.cotaInfo[seg].fipeCota[fi].pct||0;
+  var input=document.createElement('input');input.type='number';input.step='0.1';input.value=raw;
+  input.style.cssText='width:50px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent);border-radius:0;background:transparent;color:var(--amber);font-size:.76rem;font-weight:700;font-family:inherit;outline:none';
+  el.innerHTML='';el.appendChild(input);input.focus();input.select();
+  var commit=function(){sh.cotaInfo[seg].fipeCota[fi].pct=parseFloat(input.value)||0;tmBuildCota();tmScheduleSave();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();commit();}if(e.key==='Escape')tmBuildCota();});
+}
+function tmCotaAddFaixa(seg){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg])return;
+  if(!sh.cotaInfo[seg].fipeCota)sh.cotaInfo[seg].fipeCota=[];
+  sh.cotaInfo[seg].fipeCota.push({fipe:0,pct:0});
+  tmBuildCota();tmScheduleSave();
+}
+function tmCotaDeleteFaixa(seg,fi){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo[seg]||!sh.cotaInfo[seg].fipeCota)return;
+  sh.cotaInfo[seg].fipeCota.splice(fi,1);
+  tmBuildCota();tmScheduleSave();
+}
+function tmCotaAddSeg(){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh)return;
+  var name=prompt('Nome do novo segmento:');
+  if(!name||!name.trim())return;
+  if(!sh.cotaInfo)sh.cotaInfo={};
+  sh.cotaInfo[name.trim().toLowerCase()]={cotaMin:0,fipeCota:[]};
+  tmBuildCota();tmScheduleSave();
+}
+function tmCotaDeleteSeg(seg){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo)return;
+  if(!confirm('Remover segmento "'+seg+'"?'))return;
+  delete sh.cotaInfo[seg];
+  tmBuildCota();tmScheduleSave();
+}
+function tmCotaRenameSeg(seg){
+  var sh=_tmSheets[_tmCurrentKey];if(!sh||!sh.cotaInfo)return;
+  var name=prompt('Novo nome do segmento:',seg);
+  if(!name||!name.trim()||name.trim()===seg)return;
+  sh.cotaInfo[name.trim().toLowerCase()]=sh.cotaInfo[seg];
+  delete sh.cotaInfo[seg];
+  tmBuildCota();tmScheduleSave();
 }
 
 // ========= OBSERVAÇÕES DO PLANO (Rastreador, regras especiais) =========
@@ -11508,16 +11608,42 @@ function tmObsSaveEditor(){
 }
 // ========= FIM OBSERVAÇÕES =========
 
+var _tmDirty=false;
+
 function tmToggleEditMode(){
+  if(_tmEditMode&&_tmDirty){
+    if(!confirm('Voce tem alteracoes nao salvas. Deseja sair sem salvar?'))return;
+    _tmDirty=false;
+    var saveBtn=document.getElementById('tm_saveBtn');
+    if(saveBtn)saveBtn.style.display='none';
+    window.removeEventListener('beforeunload',tmBeforeUnload);
+  }
   _tmEditMode=!_tmEditMode;
-  var toolbar=document.getElementById('tm_editToolbar');
-  if(toolbar) toolbar.style.display=_tmEditMode?'flex':'none';
   var btn=document.getElementById('tm_editBtn');
   if(btn){
     if(_tmEditMode){btn.className='btn btn-sm btn-amber';btn.textContent='Sair da Edicao';}
     else{btn.className='btn btn-sm';btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modo Edicao';}
   }
   tmUpdateTable();
+}
+
+function tmMarkDirty(){
+  _tmDirty=true;
+  var btn=document.getElementById('tm_saveBtn');
+  if(btn)btn.style.display='inline-flex';
+  window.addEventListener('beforeunload',tmBeforeUnload);
+}
+
+function tmBeforeUnload(e){if(_tmDirty){e.preventDefault();e.returnValue='';}}
+
+function tmSaveAll(){
+  tmSaveToStorage();
+  tmSaveToSupabase();
+  _tmDirty=false;
+  var btn=document.getElementById('tm_saveBtn');
+  if(btn)btn.style.display='none';
+  window.removeEventListener('beforeunload',tmBeforeUnload);
+  showToast('Tabela de Planos salva com sucesso!','success');
 }
 
 function tmStartEditCell(td,ri,ci,isNumeric){
@@ -11565,6 +11691,7 @@ function tmAddRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var row=sh.da
 function tmDeleteLastRow(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.dados.length<=1) return;sh.dados.pop();tmUpdateTable();tmScheduleSave();}
 function tmAddColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh) return;var name=prompt('Nome da nova coluna:');if(!name) return;sh.colunas.push(name);sh.dados.forEach(function(r){r.push(0);});sh.colsDesconto.push(sh.colunas.length-1);tmUpdateTable();tmScheduleSave();}
 function tmDeleteLastColumn(){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.colunas.length<=2) return;sh.colunas.pop();sh.dados.forEach(function(r){r.pop();});var li=sh.colunas.length;sh.colsDesconto=sh.colsDesconto.filter(function(c){return c<li;});sh.colsFixas=sh.colsFixas.filter(function(c){return c<li;});tmUpdateTable();tmScheduleSave();}
+function tmDeleteColumn(ci){var sh=_tmSheets[_tmCurrentKey];if(!sh||sh.colunas.length<=2||ci===0) return;if(!confirm('Remover coluna "'+sh.colunas[ci]+'"?'))return;sh.colunas.splice(ci,1);sh.dados.forEach(function(r){r.splice(ci,1);});sh.colsDesconto=sh.colsDesconto.filter(function(c){return c!==ci;}).map(function(c){return c>ci?c-1:c;});sh.colsFixas=sh.colsFixas.filter(function(c){return c!==ci;}).map(function(c){return c>ci?c-1:c;});tmUpdateTable();tmScheduleSave();}
 
 function tmLoadDefaultData(){
   _tmSheets={
