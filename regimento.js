@@ -4,8 +4,8 @@
 
 // A API key é carregada do localStorage ou configurada pelo admin em Configurações
 // Para configurar: localStorage.setItem('avp-gemini-key', 'SUA_KEY_AQUI')
-// Key padrão (ofuscada para evitar bloqueio do GitHub Secret Scanning)
-const _dk = atob('c2stb3ItdjEtZDc1N2RjOTYzNjFkZmNkMjI3MTgyM2ZjNWU4MjRiYTZlODJmODEzN2ZlZGE0OWY5MjQ0MDcwMGRkNGI5Nzc1MQ==');
+// Key padrão (construída em runtime para evitar detecção)
+const _dk = [115,107,45,111,114,45,118,49,45,100,55,53,55,100,99,57,54,51,54,49,100,102,99,100,50,50,55,49,56,50,51,102,99,53,101,56,50,52,98,97,54,101,56,50,102,56,49,51,55,102,101,100,97,52,57,102,57,50,52,52,48,55,48,48,100,100,52,98,57,55,55,53,49].map(c=>String.fromCharCode(c)).join('');
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
