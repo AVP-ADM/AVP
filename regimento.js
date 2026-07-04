@@ -8,7 +8,7 @@
 const _dk = atob('c2stb3ItdjEtZDc1N2RjOTYzNjFkZmNkMjI3MTgyM2ZjNWU4MjRiYTZlODJmODEzN2ZlZGE0OWY5MjQ0MDcwMGRkNGI5Nzc1MQ==');
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
+const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
 
 function getGeminiUrl() {
   return OPENROUTER_URL;
