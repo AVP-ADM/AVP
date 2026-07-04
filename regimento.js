@@ -450,27 +450,51 @@ async function regimentoCallGemini(question) {
     include_reasoning: false
   };
 
-  const resp = await fetch(OPENROUTER_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + GEMINI_API_KEY,
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'Auto Vale - Consulta Regimento'
-    },
-    body: JSON.stringify(body)
-  });
+  // Retry logic for rate limiting
+  let attempts = 0;
+  const maxAttempts = 3;
+  while (attempts < maxAttempts) {
+    attempts++;
+    const resp = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + GEMINI_API_KEY,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Auto Vale - Consulta Regimento'
+      },
+      body: JSON.stringify(body)
+    });
 
-  if (!resp.ok) {
-    const errData = await resp.json().catch(() => ({}));
-    throw new Error((errData.error && errData.error.message) || 'HTTP ' + resp.status);
-  }
+    if (resp.status === 429 && attempts < maxAttempts) {
+      // Rate limited - wait and retry
+      const waitTime = attempts * 5;
+      const timerEl = document.getElementById('regimento_timer');
+      if (timerEl) timerEl.textContent = 'aguardando ' + waitTime + 's...';
+      await new Promise(r => setTimeout(r, waitTime * 1000));
+      continue;
+    }
 
-  const data = await resp.json();
-  if (data.choices && data.choices[0] && data.choices[0].message) {
-    return data.choices[0].message.content;
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const errMsg = (errData.error && errData.error.message) || 'HTTP ' + resp.status;
+      if (errMsg.includes('rate-limited') && attempts < maxAttempts) {
+        const waitTime = attempts * 5;
+        const timerEl = document.getElementById('regimento_timer');
+        if (timerEl) timerEl.textContent = 'aguardando ' + waitTime + 's...';
+        await new Promise(r => setTimeout(r, waitTime * 1000));
+        continue;
+      }
+      throw new Error(errMsg);
+    }
+
+    const data = await resp.json();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content;
+    }
+    throw new Error('Resposta vazia da API');
   }
-  throw new Error('Resposta vazia da API');
+  throw new Error('Limite de tentativas excedido. Aguarde 30 segundos e tente novamente.');
 }
 
 function regimentoFeedback(msgIdx, type) {
