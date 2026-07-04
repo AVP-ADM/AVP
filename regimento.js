@@ -358,8 +358,8 @@ async function regimentoSend() {
 }
 
 async function regimentoCallAPI(question) {
-  // Build system prompt with PDF text (truncated to fit context)
-  const textoParaPrompt = _regimentoTexto ? _regimentoTexto.substring(0, 28000) : 'Regimento nao carregado.';
+  // Find relevant sections instead of sending full text (avoids TPM limit)
+  const trechosRelevantes = regimentoBuscarTrechos(question);
   const systemPrompt = `Voce e um assistente da AUTO VALE CLUBE DE BENEFICIOS. Responda APENAS em portugues brasileiro.
 
 REGRAS CRITICAS:
@@ -371,13 +371,13 @@ REGRAS CRITICAS:
 6. Use bullet points quando listar itens.
 7. NUNCA responda em ingles.
 
-REGIMENTO INTERNO COMPLETO:
-${textoParaPrompt}`;
+TRECHOS RELEVANTES DO REGIMENTO INTERNO:
+${trechosRelevantes}`;
 
   const messages = [{ role: 'system', content: systemPrompt }];
   if (_regimentoMessages.length > 1) {
-    _regimentoMessages.slice(0, -1).slice(-4).forEach(m => {
-      messages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content });
+    _regimentoMessages.slice(0, -1).slice(-2).forEach(m => {
+      messages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.substring(0, 300) });
     });
   }
   messages.push({ role: 'user', content: question });
@@ -385,7 +385,7 @@ ${textoParaPrompt}`;
   const resp = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GEMINI_API_KEY },
-    body: JSON.stringify({ model: GROQ_MODEL, messages, temperature: 0.3, max_tokens: 800 })
+    body: JSON.stringify({ model: GROQ_MODEL, messages, temperature: 0.3, max_tokens: 600 })
   });
   if (!resp.ok) {
     const errData = await resp.json().catch(() => ({}));
@@ -394,6 +394,42 @@ ${textoParaPrompt}`;
   const data = await resp.json();
   if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
   throw new Error('Resposta vazia');
+}
+
+// Busca trechos relevantes do regimento baseado na pergunta (RAG simplificado)
+function regimentoBuscarTrechos(pergunta) {
+  if (!_regimentoTexto) return 'Regimento nao carregado.';
+  const palavrasChave = pergunta.toLowerCase()
+    .replace(/[?!.,]/g, '')
+    .split(' ')
+    .filter(p => p.length > 3 && !['como','qual','quando','quais','para','pode','tenho','minha','sobre','fazer','caso','apos','pela','pelo','esta','esse','essa','voce','estou'].includes(p));
+
+  // Split text into paragraphs/sections
+  const paragrafos = _regimentoTexto.split(/\n\n+/).filter(p => p.trim().length > 30);
+
+  // Score each paragraph by keyword relevance
+  const scored = paragrafos.map(p => {
+    const pLower = p.toLowerCase();
+    let score = 0;
+    palavrasChave.forEach(kw => {
+      if (pLower.includes(kw)) score += 2;
+    });
+    // Boost paragraphs with "Art." references
+    if (pLower.includes('art.')) score += 1;
+    return { text: p, score };
+  });
+
+  // Get top relevant paragraphs (limit to ~8000 chars to stay within TPM)
+  const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+  let resultado = '';
+  for (const item of top) {
+    if (resultado.length + item.text.length > 8000) break;
+    resultado += item.text + '\n\n';
+  }
+
+  // If nothing found, send first part of document
+  if (!resultado) resultado = _regimentoTexto.substring(0, 6000);
+  return resultado;
 }
 
 
