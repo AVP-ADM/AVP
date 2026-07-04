@@ -179,83 +179,13 @@ function regimentoRenderConsulta() {
 // ========= TAB LEITURA COMPLETA (texto do PDF) =========
 function regimentoRenderLeitura() {
   let html = '';
-  if (!_regimentoTextoCarregado) {
-    html += `<div style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto 12px"></div><div style="font-size:.82rem;color:var(--text3)">Carregando regimento...</div></div>`;
-    return html;
-  }
-  if (!_regimentoTexto) {
-    html += `<div style="text-align:center;padding:40px;color:var(--text3)">Nao foi possivel carregar o regimento. Tente recarregar a pagina.</div>`;
-    return html;
-  }
-  // Search
-  html += `<div style="margin-bottom:16px"><input type="text" id="regimento_search" placeholder="Buscar no regimento..." oninput="regimentoFilterLeitura()" style="width:100%;padding:10px 14px;border:1px solid var(--border-strong);border-radius:var(--radius-lg);font-size:.82rem;background:var(--surface);color:var(--text1)"></div>`;
-  // Full text with highlighting
-  html += `<div id="regimento_texto_completo" style="max-height:calc(100vh - 320px);overflow-y:auto;padding:16px 20px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-lg);font-size:.8rem;line-height:1.8;color:var(--text1);white-space:pre-wrap;word-wrap:break-word">${regimentoFormatTextoCompleto(_regimentoTexto)}</div>`;
+  html += `<div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);height:calc(100vh - 280px)">
+    <iframe src="${REGIMENTO_PDF_URL}" style="width:100%;height:100%;border:none" title="Regimento Interno"></iframe>
+  </div>`;
   return html;
 }
 
-function regimentoFormatTextoCompleto(texto) {
-  if (!texto) return '';
-  // Split into lines and rebuild with formatting
-  let lines = texto.split(/\n+/);
-  let html = '';
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
-    if (!line) continue;
-    // Detect main section titles (numbered: "1. INFORMAÇÕES INICIAIS", "2. DOS OBJETIVOS...")
-    if (/^\d+\.\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ\s,\/]+$/i.test(line) && line === line.toUpperCase()) {
-      html += `<div style="font-size:.95rem;font-weight:700;color:var(--primary);margin:28px 0 12px;padding:10px 14px;background:var(--primary-light);border-radius:var(--radius);border-left:3px solid var(--primary)">${escapeHtml(line)}</div>`;
-      continue;
-    }
-    // Detect section titles in caps without number (ANEXO I, TERMO DE FILIAÇÃO, etc)
-    if (line.length > 10 && line.length < 100 && line === line.toUpperCase() && !line.startsWith('Art') && !line.startsWith('(') && !/^\d/.test(line) && !/^[a-z]\)/.test(line)) {
-      html += `<div style="font-size:.88rem;font-weight:700;color:var(--text1);margin:24px 0 10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius);border-left:3px solid var(--accent)">${escapeHtml(line)}</div>`;
-      continue;
-    }
-    // Detect articles (Art. Xº, Art. XX)
-    if (/^Art\.?\s*\d+/i.test(line)) {
-      // Extract article number for anchor
-      const artMatch = line.match(/^(Art\.?\s*\d+[º°]?\s*[-–]?\s*[A-Z]?)/i);
-      const artId = artMatch ? artMatch[1].replace(/\s+/g, '').replace(/[º°]/g, '') : '';
-      html += `<div id="reg_${artId}" style="margin:14px 0 6px;padding:10px 14px;border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 var(--radius) var(--radius) 0">`;
-      html += `<span style="font-weight:700;color:var(--blue);font-size:.82rem">${escapeHtml(artMatch ? artMatch[1] : '')}</span>`;
-      html += `<span style="color:var(--text1);font-size:.8rem"> ${escapeHtml(line.substring(artMatch ? artMatch[1].length : 0))}</span>`;
-      html += `</div>`;
-      continue;
-    }
-    // Detect sub-items (a), b), c), I., II., etc)
-    if (/^[a-z]\)|^[A-Z]\.\d|^[IVX]+\.|^Parágrafo|^§/.test(line)) {
-      html += `<div style="margin:4px 0 4px 24px;padding:4px 10px;font-size:.78rem;color:var(--text2);border-left:2px solid var(--border)">${escapeHtml(line)}</div>`;
-      continue;
-    }
-    // Detect paragraph/bold markers
-    if (/^Parágrafo/i.test(line)) {
-      html += `<div style="margin:8px 0 4px 14px;padding:6px 10px;font-size:.78rem;font-weight:600;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius)">${escapeHtml(line)}</div>`;
-      continue;
-    }
-    // Regular text
-    html += `<div style="margin:4px 0;font-size:.8rem;line-height:1.7;color:var(--text1)">${escapeHtml(line)}</div>`;
-  }
-  return html;
-}
-
-function regimentoFilterLeitura() {
-  const query = (document.getElementById('regimento_search') || {}).value.toLowerCase().trim();
-  const el = document.getElementById('regimento_texto_completo');
-  if (!el) return;
-  if (!query) {
-    el.innerHTML = regimentoFormatTextoCompleto(_regimentoTexto);
-    return;
-  }
-  // Highlight search matches
-  let html = regimentoFormatTextoCompleto(_regimentoTexto);
-  const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-  html = html.replace(regex, '<mark style="background:var(--amber-light);padding:1px 3px;border-radius:2px">$1</mark>');
-  el.innerHTML = html;
-  // Scroll to first match
-  const firstMark = el.querySelector('mark');
-  if (firstMark) firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
+// regimentoFormatTextoCompleto and regimentoFilterLeitura removed - using PDF viewer instead
 
 
 // ========= MESSAGES RENDER =========
@@ -326,17 +256,10 @@ function regimentoRenderFontes(text) {
 }
 
 function regimentoNavigateToArt(artRef) {
-  // Switch to Ler Completo tab
+  // Switch to Ler Completo tab (PDF viewer with native search)
   _regimentoTab = 'leitura';
   regimentoRender();
-  // Wait for render, then search and scroll
-  setTimeout(() => {
-    const searchInput = document.getElementById('regimento_search');
-    if (searchInput) {
-      searchInput.value = artRef;
-      regimentoFilterLeitura();
-    }
-  }, 300);
+  showToast('Use Ctrl+F no PDF para buscar "' + artRef + '"', 'success');
 }
 
 
