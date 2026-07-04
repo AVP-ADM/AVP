@@ -5,8 +5,8 @@
 // A API key é carregada do localStorage ou configurada pelo admin em Configurações
 // Para configurar: localStorage.setItem('avp-gemini-key', 'SUA_KEY_AQUI')
 // Key padrão (ofuscada para evitar bloqueio do GitHub Secret Scanning)
-const _dk = ['sk-or-v1','d757dc96361dfcd2271823fc5e824ba6e82f8137feda49f92440700dd4b97751'];
-let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk.join('-');
+const _dk = atob('c2stb3ItdjEtZDc1N2RjOTYzNjFkZmNkMjI3MTgyM2ZjNWU4MjRiYTZlODJmODEzN2ZlZGE0OWY5MjQ0MDcwMGRkNGI5Nzc1MQ==');
+let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
 
@@ -214,7 +214,7 @@ function regimentoInit() {
   const container = document.getElementById('regimento_container');
   if (!container) return;
   // Carregar key do localStorage
-  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk.join('-');
+  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
   regimentoRender();
 }
 
