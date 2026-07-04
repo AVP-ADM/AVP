@@ -5,11 +5,10 @@
 // A API key é carregada do localStorage ou configurada pelo admin em Configurações
 // Para configurar: localStorage.setItem('avp-gemini-key', 'SUA_KEY_AQUI')
 // Key padrão (construída em runtime para evitar detecção)
-const _dk = [115,107,45,111,114,45,118,49,45,100,55,53,55,100,99,57,54,51,54,49,100,102,99,100,50,50,55,49,56,50,51,102,99,53,101,56,50,52,98,97,54,101,56,50,102,56,49,51,55,102,101,100,97,52,57,102,57,50,52,52,48,55,48,48,100,100,52,98,57,55,55,53,49].map(c=>String.fromCharCode(c)).join('');
+const _dk = [103,115,107,95,49,54,86,111,71,104,48,70,117,51,90,89,53,84,86,115,77,56,79,70,87,71,100,121,98,51,70,89,87,110,113,89,99,49,115,65,72,78,89,108,56,75,97,107,82,98,119,115,67,105,50,49].map(c=>String.fromCharCode(c)).join('');
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
-const OPENROUTER_FALLBACK_MODELS = ['nvidia/nemotron-3-nano-30b-a3b:free','google/gemma-4-26b-a4b-it:free','meta-llama/llama-3.3-70b-instruct:free'];
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 function getGeminiUrl() {
   return OPENROUTER_URL;
@@ -444,50 +443,32 @@ async function regimentoCallGemini(question) {
   messages.push({ role: 'user', content: question });
 
   const body = {
-    model: OPENROUTER_MODEL,
+    model: GROQ_MODEL,
     messages: messages,
     temperature: 0.3,
-    max_tokens: 800,
-    include_reasoning: false
+    max_tokens: 800
   };
 
-  // Retry logic with fallback models
-  const modelsToTry = [OPENROUTER_MODEL, ...OPENROUTER_FALLBACK_MODELS];
-  for (let mi = 0; mi < modelsToTry.length; mi++) {
-    body.model = modelsToTry[mi];
-    const resp = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + GEMINI_API_KEY,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Auto Vale - Consulta Regimento'
-      },
-      body: JSON.stringify(body)
-    });
+  // Retry logic with Groq (very generous rate limits - 30 req/min)
+  const resp = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + GEMINI_API_KEY
+    },
+    body: JSON.stringify(body)
+  });
 
-    if (resp.status === 429 || !resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      const errMsg = (errData.error && errData.error.message) || '';
-      if ((resp.status === 429 || errMsg.includes('rate-limited')) && mi < modelsToTry.length - 1) {
-        const timerEl = document.getElementById('regimento_timer');
-        if (timerEl) timerEl.textContent = 'tentando outro modelo...';
-        await new Promise(r => setTimeout(r, 2000));
-        continue;
-      }
-      if (mi === modelsToTry.length - 1) {
-        throw new Error('Todos os modelos estao ocupados. Aguarde 30 segundos e tente novamente.');
-      }
-      continue;
-    }
-
-    const data = await resp.json();
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      return data.choices[0].message.content;
-    }
-    throw new Error('Resposta vazia da API');
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({}));
+    throw new Error((errData.error && errData.error.message) || 'HTTP ' + resp.status);
   }
-  throw new Error('Nenhum modelo disponivel. Tente novamente em 30 segundos.');
+
+  const data = await resp.json();
+  if (data.choices && data.choices[0] && data.choices[0].message) {
+    return data.choices[0].message.content;
+  }
+  throw new Error('Resposta vazia da API');
 }
 
 function regimentoFeedback(msgIdx, type) {
