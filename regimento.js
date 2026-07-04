@@ -251,19 +251,7 @@ function regimentoRender() {
       <div style="font-size:1.05rem;font-weight:700;color:var(--text1)">Consulta ao Regimento Interno</div>
       <div style="font-size:.75rem;color:var(--text3)">Pergunte sobre planos, coberturas, regras e beneficios do PAM</div>
     </div>
-    <button class="btn btn-sm" onclick="regimentoConfigKey()" title="Configurar API Key" style="display:flex;align-items:center;gap:5px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      API Key
-    </button>
   </div>`;
-
-  // Aviso se key não configurada
-  if (!GEMINI_API_KEY) {
-    html += `<div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <div style="flex:1"><div style="font-size:.82rem;font-weight:600;color:var(--amber)">API Key nao configurada</div><div style="font-size:.72rem;color:var(--text2)">Clique em "API Key" acima para configurar sua chave do Google Gemini.</div></div>
-    </div>`;
-  }
 
   // FAQ Chips
   html += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px" id="regimento_chips">`;
@@ -281,6 +269,7 @@ function regimentoRender() {
       <span></span><span></span><span></span>
     </div>
     <span style="font-size:.78rem;color:var(--text3)">Consultando o regimento...</span>
+    <span id="regimento_timer" style="font-size:.72rem;color:var(--text3);margin-left:6px;font-variant-numeric:tabular-nums;display:none"></span>
   </div>`;
 
   // Input area
@@ -328,6 +317,7 @@ function regimentoRenderMessages() {
         <div class="regimento-msg-bubble regimento-msg-assistant-bubble">
           <div class="regimento-msg-content">${regimentoFormatResponse(msg.content)}</div>
           <div class="regimento-msg-feedback" data-idx="${idx}">
+            <span style="font-size:.65rem;color:var(--text3);margin-right:8px">${msg.time ? msg.time + 's' : ''}</span>
             <button class="regimento-feedback-btn" onclick="regimentoFeedback(${idx},'util')" title="Resposta util">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
             </button>
@@ -395,21 +385,33 @@ async function regimentoSend() {
 
   // Show loading
   _regimentoLoading = true;
+  const _regStartTime = Date.now();
   const loadingEl = document.getElementById('regimento_loading');
   if (loadingEl) loadingEl.style.display = 'flex';
+  // Start timer display
+  const timerEl = document.getElementById('regimento_timer');
+  if (timerEl) timerEl.style.display = 'inline';
+  let _regTimerInterval = setInterval(() => {
+    const elapsed = ((Date.now() - _regStartTime) / 1000).toFixed(0);
+    if (timerEl) timerEl.textContent = elapsed + 's';
+  }, 1000);
   const sendBtn = document.getElementById('regimento_sendBtn');
   if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = '.5'; }
 
   try {
     const response = await regimentoCallGemini(question);
-    _regimentoMessages.push({ role: 'assistant', content: response });
+    const elapsed = ((Date.now() - _regStartTime) / 1000).toFixed(1);
+    _regimentoMessages.push({ role: 'assistant', content: response, time: elapsed });
   } catch (err) {
-    _regimentoMessages.push({ role: 'assistant', content: 'Desculpe, ocorreu um erro ao consultar o regimento. Tente novamente em instantes.\n\nErro: ' + err.message });
+    const elapsed = ((Date.now() - _regStartTime) / 1000).toFixed(1);
+    _regimentoMessages.push({ role: 'assistant', content: 'Desculpe, ocorreu um erro ao consultar o regimento. Tente novamente em instantes.\n\nErro: ' + err.message, time: elapsed });
   }
 
-  // Hide loading
+  // Hide loading + stop timer
+  clearInterval(_regTimerInterval);
   _regimentoLoading = false;
   if (loadingEl) loadingEl.style.display = 'none';
+  if (timerEl) timerEl.style.display = 'none';
   if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = ''; }
   regimentoRenderMessages();
 }
