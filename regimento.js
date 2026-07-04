@@ -9,6 +9,7 @@ const _dk = [115,107,45,111,114,45,118,49,45,100,55,53,55,100,99,57,54,51,54,49,
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'google/gemma-4-31b-it:free';
+const OPENROUTER_FALLBACK_MODELS = ['nvidia/nemotron-3-nano-30b-a3b:free','google/gemma-4-26b-a4b-it:free','meta-llama/llama-3.3-70b-instruct:free'];
 
 function getGeminiUrl() {
   return OPENROUTER_URL;
@@ -450,11 +451,10 @@ async function regimentoCallGemini(question) {
     include_reasoning: false
   };
 
-  // Retry logic for rate limiting
-  let attempts = 0;
-  const maxAttempts = 3;
-  while (attempts < maxAttempts) {
-    attempts++;
+  // Retry logic with fallback models
+  const modelsToTry = [OPENROUTER_MODEL, ...OPENROUTER_FALLBACK_MODELS];
+  for (let mi = 0; mi < modelsToTry.length; mi++) {
+    body.model = modelsToTry[mi];
     const resp = await fetch(OPENROUTER_URL, {
       method: 'POST',
       headers: {
@@ -466,26 +466,19 @@ async function regimentoCallGemini(question) {
       body: JSON.stringify(body)
     });
 
-    if (resp.status === 429 && attempts < maxAttempts) {
-      // Rate limited - wait and retry
-      const waitTime = attempts * 5;
-      const timerEl = document.getElementById('regimento_timer');
-      if (timerEl) timerEl.textContent = 'aguardando ' + waitTime + 's...';
-      await new Promise(r => setTimeout(r, waitTime * 1000));
-      continue;
-    }
-
-    if (!resp.ok) {
+    if (resp.status === 429 || !resp.ok) {
       const errData = await resp.json().catch(() => ({}));
-      const errMsg = (errData.error && errData.error.message) || 'HTTP ' + resp.status;
-      if (errMsg.includes('rate-limited') && attempts < maxAttempts) {
-        const waitTime = attempts * 5;
+      const errMsg = (errData.error && errData.error.message) || '';
+      if ((resp.status === 429 || errMsg.includes('rate-limited')) && mi < modelsToTry.length - 1) {
         const timerEl = document.getElementById('regimento_timer');
-        if (timerEl) timerEl.textContent = 'aguardando ' + waitTime + 's...';
-        await new Promise(r => setTimeout(r, waitTime * 1000));
+        if (timerEl) timerEl.textContent = 'tentando outro modelo...';
+        await new Promise(r => setTimeout(r, 2000));
         continue;
       }
-      throw new Error(errMsg);
+      if (mi === modelsToTry.length - 1) {
+        throw new Error('Todos os modelos estao ocupados. Aguarde 30 segundos e tente novamente.');
+      }
+      continue;
     }
 
     const data = await resp.json();
@@ -494,7 +487,7 @@ async function regimentoCallGemini(question) {
     }
     throw new Error('Resposta vazia da API');
   }
-  throw new Error('Limite de tentativas excedido. Aguarde 30 segundos e tente novamente.');
+  throw new Error('Nenhum modelo disponivel. Tente novamente em 30 segundos.');
 }
 
 function regimentoFeedback(msgIdx, type) {
