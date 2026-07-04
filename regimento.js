@@ -177,10 +177,13 @@ function regimentoRenderConsulta() {
 }
 
 // ========= TAB LEITURA COMPLETA (texto do PDF) =========
+let _regimentoPdfPage = 1;
+
 function regimentoRenderLeitura() {
   let html = '';
+  const pdfUrl = REGIMENTO_PDF_URL + '#page=' + _regimentoPdfPage;
   html += `<div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);height:calc(100vh - 280px)">
-    <iframe src="${REGIMENTO_PDF_URL}" style="width:100%;height:100%;border:none" title="Regimento Interno"></iframe>
+    <iframe id="regimento_pdf_viewer" src="${pdfUrl}" style="width:100%;height:100%;border:none" title="Regimento Interno"></iframe>
   </div>`;
   return html;
 }
@@ -256,10 +259,48 @@ function regimentoRenderFontes(text) {
 }
 
 function regimentoNavigateToArt(artRef) {
-  // Switch to Ler Completo tab (PDF viewer with native search)
+  // Map articles to PDF pages
+  const artPageMap = {
+    '1': 2, '2': 2, '3': 2, '4': 2, '5': 2,
+    '6': 2, '7': 2, '8': 2, '9': 2, '10': 3, '11': 3, '12': 3,
+    '13': 8, '14': 8, '15': 8, '16': 8, '17': 8, '18': 8, '19': 8,
+    '20': 8, '21': 8, '22': 8, '23': 9, '24': 9, '25': 9,
+    '26': 9, '27': 9, '28': 9, '29': 9, '30': 9, '31': 9,
+    '32': 10, '33': 10, '34': 10, '35': 10, '36': 10, '37': 10,
+    '38': 10, '39': 10, '40': 10, '41': 10, '42': 10, '43': 10,
+    '44': 11, '45': 11,
+    '46': 11, '47': 11, '48': 11, '49': 11, '50': 11, '51': 11, '52': 11,
+    '53': 11, '54': 11, '55': 11, '55-A': 12, '56': 12, '57': 12, '58': 12,
+    '59': 13, '59-A': 13,
+    '60': 13, '61': 13, '62': 13, '63': 13, '64': 13, '65': 13, '66': 13,
+    '67': 13, '68': 13, '69': 13, '70': 13, '71': 14,
+    '72': 14, '73': 15, '74': 17,
+    '75': 17, '76': 17, '77': 17, '78': 18, '79': 18,
+    '80': 18, '81': 18, '82': 18, '83': 18,
+    '84': 19, '85': 19, '86': 19, '87': 19, '88': 19, '89': 19,
+    '90': 19, '91': 19, '92': 19, '93': 20, '94': 20, '95': 20,
+    '96': 20, '97': 20, '98': 20, '99': 20,
+    '100': 20, '101': 20, '102': 20, '103': 20, '104': 21, '105': 21,
+    '106': 21, '107': 21, '108': 21, '109': 21, '110': 21, '111': 21,
+    '112': 21, '113': 21, '114': 21, '115': 21, '116': 22, '117': 22,
+    '118': 22,
+    '119': 22, '120': 22, '121': 23, '122': 23, '123': 24, '124': 25,
+    '125': 25, '126': 25, '127': 25,
+    '128': 25, '129': 25, '130': 26, '131': 26, '132': 26, '133': 26,
+    '134': 26, '135': 26, '136': 26, '137': 26, '138': 26, '139': 26,
+    '140': 26, '141': 26, '142': 26, '143': 26,
+    '144': 27,
+    '145': 27, '146': 27, '147': 27, '148': 27, '149': 27
+  };
+  // Extract article number
+  const numMatch = artRef.match(/(\d+(?:-[A-Z])?)/);
+  const artNum = numMatch ? numMatch[1] : '';
+  const page = artPageMap[artNum] || 1;
+
+  // Switch to Ler Completo tab with page anchor
   _regimentoTab = 'leitura';
+  _regimentoPdfPage = page;
   regimentoRender();
-  showToast('Use Ctrl+F no PDF para buscar "' + artRef + '"', 'success');
 }
 
 
