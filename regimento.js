@@ -1,14 +1,15 @@
 // ========= REGIMENTO INTERNO - CHAT COM GEMINI =========
-// Integração com Google Gemini para consulta ao Regimento Interno
+// Integração com OpenRouter para consulta ao Regimento Interno
 // Auto Vale Clube de Benefícios
 
 // A API key é carregada do localStorage ou configurada pelo admin em Configurações
 // Para configurar: localStorage.setItem('avp-gemini-key', 'SUA_KEY_AQUI')
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || '';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
 
 function getGeminiUrl() {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  return OPENROUTER_URL;
 }
 
 let _regimentoMessages = [];
@@ -217,11 +218,11 @@ function regimentoInit() {
 
 function regimentoConfigKey() {
   const currentKey = GEMINI_API_KEY ? '****' + GEMINI_API_KEY.slice(-6) : 'Nao configurada';
-  showModal('Configurar API Key do Gemini',
+  showModal('Configurar API Key (OpenRouter)',
     '<div style="display:flex;flex-direction:column;gap:12px">' +
     '<label style="font-size:.78rem;color:var(--text2);font-weight:600">API Key atual: <span style="font-weight:400;color:var(--text3)">' + currentKey + '</span></label>' +
-    '<input id="gemini_key_input" type="password" placeholder="Cole sua API Key do Google Gemini aqui..." value="' + (GEMINI_API_KEY || '') + '" style="width:100%">' +
-    '<span style="font-size:.72rem;color:var(--text3)">Acesse <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue)">aistudio.google.com/apikey</a> para obter sua key gratuita.</span>' +
+    '<input id="gemini_key_input" type="password" placeholder="Cole sua API Key do OpenRouter aqui..." value="' + (GEMINI_API_KEY || '') + '" style="width:100%">' +
+    '<span style="font-size:.72rem;color:var(--text3)">Acesse <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--blue)">openrouter.ai/keys</a> para obter sua key gratuita.</span>' +
     '</div>',
     function() {
       var key = document.getElementById('gemini_key_input').value.trim();
@@ -413,39 +414,45 @@ async function regimentoSend() {
 
 
 async function regimentoCallGemini(question) {
-  // Build conversation history for context
-  const contents = [];
+  // Build conversation with system prompt + history
+  const messages = [];
 
-  // System instruction via first user message with context
-  contents.push({
-    role: 'user',
-    parts: [{ text: REGIMENTO_SYSTEM_PROMPT + '\n\nPergunta do usuario: ' + question }]
+  // System message with full regimento context
+  messages.push({
+    role: 'system',
+    content: REGIMENTO_SYSTEM_PROMPT
   });
 
-  // If there's conversation history, include it
-  if (_regimentoMessages.length > 2) {
-    // Add previous exchanges (skip last user msg which is the current question)
+  // Add conversation history (last 6 messages for context)
+  if (_regimentoMessages.length > 1) {
     const history = _regimentoMessages.slice(0, -1);
-    const recentHistory = history.slice(-6); // Keep last 6 messages for context
-    const historyText = recentHistory.map(m =>
-      (m.role === 'user' ? 'Pergunta anterior: ' : 'Resposta anterior: ') + m.content
-    ).join('\n');
-    contents[0].parts[0].text = REGIMENTO_SYSTEM_PROMPT + '\n\nHistorico recente da conversa:\n' + historyText + '\n\nPergunta atual do usuario: ' + question;
+    const recentHistory = history.slice(-6);
+    recentHistory.forEach(m => {
+      messages.push({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      });
+    });
   }
 
+  // Current question
+  messages.push({ role: 'user', content: question });
+
   const body = {
-    contents: contents,
-    generationConfig: {
-      temperature: 0.3,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 2048,
-    }
+    model: OPENROUTER_MODEL,
+    messages: messages,
+    temperature: 0.3,
+    max_tokens: 2048
   };
 
-  const resp = await fetch(getGeminiUrl(), {
+  const resp = await fetch(OPENROUTER_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + GEMINI_API_KEY,
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Auto Vale - Consulta Regimento'
+    },
     body: JSON.stringify(body)
   });
 
@@ -455,10 +462,10 @@ async function regimentoCallGemini(question) {
   }
 
   const data = await resp.json();
-  if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-    return data.candidates[0].content.parts.map(p => p.text).join('');
+  if (data.choices && data.choices[0] && data.choices[0].message) {
+    return data.choices[0].message.content;
   }
-  throw new Error('Resposta vazia do Gemini');
+  throw new Error('Resposta vazia da API');
 }
 
 function regimentoFeedback(msgIdx, type) {
