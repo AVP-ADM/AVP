@@ -57,7 +57,16 @@ async function regimentoCarregarPDF() {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const pageText = content.items.map(item => item.str).join(' ');
+      // Group items by Y position to detect line breaks
+      let lastY = null;
+      let pageText = '';
+      content.items.forEach(item => {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+          pageText += '\n';
+        }
+        pageText += item.str;
+        lastY = item.transform[5];
+      });
       fullText += pageText + '\n\n';
     }
     _regimentoTexto = fullText.trim();
@@ -187,11 +196,46 @@ function regimentoRenderLeitura() {
 
 function regimentoFormatTextoCompleto(texto) {
   if (!texto) return '';
-  let html = escapeHtml(texto);
-  // Highlight article references
-  html = html.replace(/(Art\.\s*\d+[º°]?\s*[-–]?\s*[A-Z]?)/gi, '<strong style="color:var(--primary)">$1</strong>');
-  // Highlight section titles
-  html = html.replace(/^(\d+\.\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ\s]+)$/gm, '<div style="font-size:.92rem;font-weight:700;color:var(--text1);margin:20px 0 8px;padding:8px 0;border-bottom:1px solid var(--border)">$1</div>');
+  // Split into lines and rebuild with formatting
+  let lines = texto.split(/\n+/);
+  let html = '';
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+    // Detect main section titles (numbered: "1. INFORMAÇÕES INICIAIS", "2. DOS OBJETIVOS...")
+    if (/^\d+\.\s+[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ\s,\/]+$/i.test(line) && line === line.toUpperCase()) {
+      html += `<div style="font-size:.95rem;font-weight:700;color:var(--primary);margin:28px 0 12px;padding:10px 14px;background:var(--primary-light);border-radius:var(--radius);border-left:3px solid var(--primary)">${escapeHtml(line)}</div>`;
+      continue;
+    }
+    // Detect section titles in caps without number (ANEXO I, TERMO DE FILIAÇÃO, etc)
+    if (line.length > 10 && line.length < 100 && line === line.toUpperCase() && !line.startsWith('Art') && !line.startsWith('(') && !/^\d/.test(line) && !/^[a-z]\)/.test(line)) {
+      html += `<div style="font-size:.88rem;font-weight:700;color:var(--text1);margin:24px 0 10px;padding:8px 12px;background:var(--surface-2);border-radius:var(--radius);border-left:3px solid var(--accent)">${escapeHtml(line)}</div>`;
+      continue;
+    }
+    // Detect articles (Art. Xº, Art. XX)
+    if (/^Art\.?\s*\d+/i.test(line)) {
+      // Extract article number for anchor
+      const artMatch = line.match(/^(Art\.?\s*\d+[º°]?\s*[-–]?\s*[A-Z]?)/i);
+      const artId = artMatch ? artMatch[1].replace(/\s+/g, '').replace(/[º°]/g, '') : '';
+      html += `<div id="reg_${artId}" style="margin:14px 0 6px;padding:10px 14px;border-left:3px solid var(--blue);background:var(--blue-bg);border-radius:0 var(--radius) var(--radius) 0">`;
+      html += `<span style="font-weight:700;color:var(--blue);font-size:.82rem">${escapeHtml(artMatch ? artMatch[1] : '')}</span>`;
+      html += `<span style="color:var(--text1);font-size:.8rem"> ${escapeHtml(line.substring(artMatch ? artMatch[1].length : 0))}</span>`;
+      html += `</div>`;
+      continue;
+    }
+    // Detect sub-items (a), b), c), I., II., etc)
+    if (/^[a-z]\)|^[A-Z]\.\d|^[IVX]+\.|^Parágrafo|^§/.test(line)) {
+      html += `<div style="margin:4px 0 4px 24px;padding:4px 10px;font-size:.78rem;color:var(--text2);border-left:2px solid var(--border)">${escapeHtml(line)}</div>`;
+      continue;
+    }
+    // Detect paragraph/bold markers
+    if (/^Parágrafo/i.test(line)) {
+      html += `<div style="margin:8px 0 4px 14px;padding:6px 10px;font-size:.78rem;font-weight:600;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius)">${escapeHtml(line)}</div>`;
+      continue;
+    }
+    // Regular text
+    html += `<div style="margin:4px 0;font-size:.8rem;line-height:1.7;color:var(--text1)">${escapeHtml(line)}</div>`;
+  }
   return html;
 }
 
