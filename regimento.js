@@ -17,14 +17,14 @@ let _regimentoTexto = ''; // Texto extraído do PDF
 let _regimentoTextoCarregado = false;
 
 const REGIMENTO_FAQ_CHIPS = [
-  'Quais sao os planos disponiveis?',
-  'O que cobre o Plano VIP?',
-  'Como funciona o reboque?',
-  'Quando perco os beneficios?',
-  'Como funciona a cota de participacao?',
-  'O que nao e coberto pelo PAM?',
-  'Como cancelar minha filiacao?',
-  'Como funciona o rastreador?'
+  'O que acontece se atrasar a mensalidade?',
+  'Qual minha cota de participacao?',
+  'Como funciona a cobertura de vidros?',
+  'O que o PAM nao cobre?',
+  'Quanto tempo tenho para registrar o B.O.?',
+  'Posso ter seguro e protecao veicular ao mesmo tempo?',
+  'Meu veiculo com GNV tem cobertura?',
+  'Quando meu veiculo sofre depreciacao na indenizacao?'
 ];
 
 
