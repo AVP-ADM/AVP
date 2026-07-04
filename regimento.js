@@ -214,7 +214,7 @@ function regimentoInit() {
   const container = document.getElementById('regimento_container');
   if (!container) return;
   // Carregar key do localStorage
-  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || '';
+  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk.join('-');
   regimentoRender();
 }
 
