@@ -1,518 +1,243 @@
-// ========= REGIMENTO INTERNO - CONSULTA IA + LEITURA =========
-// Auto Vale Clube de Benefícios - v4.0
-// Melhorias: RAG indexado, sinônimos, cache, modelo 8b, retry, pré-load
+// ========= REGIMENTO INTERNO - FAQ + BUSCA + PDF =========
+// Auto Vale Clube de Benefícios - v5.0
+// 100% determinístico: FAQ estruturado + busca textual + PDF viewer
 
 // ========= CONFIG =========
-const _dk = [103,115,107,95,49,54,86,111,71,104,48,70,117,51,90,89,53,84,86,115,77,56,79,70,87,71,100,121,98,51,70,89,87,110,113,89,99,49,115,65,72,78,89,108,56,75,97,107,82,98,119,115,67,105,50,49].map(c=>String.fromCharCode(c)).join('');
-let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile'; // Mais inteligente para entender contexto
 const REGIMENTO_PDF_URL = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/regimento/REGIMENTO%20INTERNO%20GERAL%20-%2005_2026.pdf';
 
-let _regimentoMessages = [];
-let _regimentoLoading = false;
-let _regimentoTab = 'consulta';
-let _regimentoHistory = [];
-let _regimentoTexto = '';
-let _regimentoTextoCarregado = false;
-let _regimentoArtigos = []; // Melhoria #1: artigos indexados
-let _regimentoCache = {}; // Melhoria #3: cache de respostas
+let _regimentoFAQ = null; // FAQ data loaded from JSON
+let _regimentoTab = 'consulta'; // 'consulta' | 'leitura'
+let _regimentoCategoria = null; // current category slug
+let _regimentoBusca = ''; // search query
+let _regimentoPdfPage = 1;
 
-const REGIMENTO_FAQ_CHIPS = [
-  'O que acontece se atrasar a mensalidade?',
-  'Qual minha cota de participacao?',
-  'Como funciona a cobertura de vidros?',
-  'O que o PAM nao cobre?',
-  'Quanto tempo tenho para registrar o B.O.?',
-  'Posso ter seguro e protecao veicular ao mesmo tempo?',
-  'Meu veiculo com GNV tem cobertura?',
-  'Quais veiculos sofrem depreciacao e qual o percentual?'
-];
-
-// Melhoria #2: Mapa de sinônimos/temas para busca inteligente
-const REGIMENTO_SINONIMOS = {
-  'depreciacao': ['desvalorização','desvalorizacao','abatido','abatidas','percentual','fipe','leilao','leilão','recuperado','remarcado','20%','30%'],
-  'reboque': ['guincho','remocao','remoção','km','quilometros','quilômetros','pane','mecanica','mecânica','eletrica','elétrica','remoção','deslocamento'],
-  'cancelar': ['exclusao','exclusão','desligamento','retirada','sair','cancelamento','excluido','excluído'],
-  'atraso': ['inadimplencia','inadimplência','vencido','vencida','suspenso','suspensão','suspensao','atrasado','atrasar'],
-  'vidros': ['parabrisa','para-brisa','lanternas','retrovisores','farois','faróis','vigia','vidro'],
-  'terceiros': ['terceiro','danos a terceiros','culpa','culpabilidade','colisao','colisão'],
-  'roubo': ['furto','roubado','furtado','subtração','subtracao','roubar'],
-  'rastreador': ['rastreamento','monitoramento','comodato','antifurto','bloqueador','gps','localizacao','localização'],
-  'gnv': ['gas','gás','natural','veicular','combustivel','combustível'],
-  'cota': ['participacao','participação','percentual','evento','sinistro','custos'],
-  'vistoria': ['fotos','fotografias','inspecao','inspeção','vistoriar'],
-  'filiacao': ['adesao','adesão','cadastro','proposta','documentos','filiar'],
-  'moto': ['motocicleta','motocicletas','duas rodas','cilindrada','moto'],
-  'truck': ['caminhao','caminhão','pesado','leve','carreta','agregado'],
-  'reserva': ['carro reserva','moto reserva','veiculo reserva','locacao','locação','diarias','diárias'],
-  'incendio': ['incêndio','fogo','explosao','explosão'],
-  'perda total': ['irreparavel','irreparável','indenizacao integral','indenização integral','100%','75%'],
-  'bo': ['boletim','ocorrencia','ocorrência','policia','polícia','delegacia','registrar','registro','autoridades'],
-  'prazo': ['dias','horas','tempo','periodo','período','uteis','úteis','maximo','máximo'],
-  'pneu': ['pneus','borracheiro','borracharia','furado','sos'],
-  'chaveiro': ['chave','chaves','abertura','trancado','fechadura'],
-  'hospedagem': ['hotel','diaria','diária','pernoite'],
-  'taxi': ['app','aplicativo','uber','motorista','transporte'],
-  'funeral': ['morte','falecimento','obito','óbito','acidental'],
-  'plano': ['basico','básico','vip','top','premium','start','personalizado'],
-  'pagamento': ['mensalidade','boleto','contribuicao','contribuição','pagar','pix','vencimento']
-};
-
-
-// ========= MELHORIA #1: PRÉ-INDEXAÇÃO POR ARTIGO =========
-function regimentoIndexarArtigos() {
-  if (!_regimentoTexto || _regimentoArtigos.length > 0) return;
-  // Split text by Art. references
-  const regex = /(?=Art\.?\s*\d+)/gi;
-  const partes = _regimentoTexto.split(regex).filter(p => p.trim().length > 20);
-  _regimentoArtigos = partes.map(parte => {
-    const match = parte.match(/^Art\.?\s*(\d+[º°]?)\s*[-–]?\s*([A-Z](?=\s))?/i);
-    let num = '';
-    if (match) {
-      num = match[1].trim().replace(/[º°]/g, '');
-      if (match[2]) num += '-' + match[2]; // Art. 59-A, Art. 55-A
-    }
-    return { num, texto: parte.trim() };
-  }).filter(a => a.num && a.num.length <= 5);
-}
-
-// ========= MELHORIA #2: BUSCA COM SINÔNIMOS =========
-function regimentoExpandirPalavras(palavras) {
-  const expandidas = new Set(palavras);
-  palavras.forEach(p => {
-    Object.keys(REGIMENTO_SINONIMOS).forEach(chave => {
-      if (chave.includes(p) || p.includes(chave)) {
-        REGIMENTO_SINONIMOS[chave].forEach(sin => expandidas.add(sin.toLowerCase()));
-        expandidas.add(chave);
-      }
-      REGIMENTO_SINONIMOS[chave].forEach(sin => {
-        if (sin.toLowerCase().includes(p) || p.includes(sin.toLowerCase())) {
-          expandidas.add(chave);
-          REGIMENTO_SINONIMOS[chave].forEach(s2 => expandidas.add(s2.toLowerCase()));
-        }
-      });
-    });
-  });
-  return [...expandidas];
-}
-
-// ========= RAG MELHORADO (Melhorias #1 + #2 + #4) =========
-function regimentoBuscarTrechos(pergunta) {
-  if (!_regimentoTexto) return 'Regimento nao carregado.';
-  regimentoIndexarArtigos();
-
-  const palavrasBase = pergunta.toLowerCase()
-    .replace(/[?!.,;:()]/g, '')
-    .split(' ')
-    .filter(p => p.length > 2 && !['como','qual','quando','quais','para','pode','tenho','minha','sobre','fazer','caso','apos','pela','pelo','esta','esse','essa','voce','estou','seria','teria','nao','sim','que','uma','com','por','tem','sao','dos','das'].includes(p));
-
-  // Melhoria #2: expandir com sinônimos
-  const palavrasExpandidas = regimentoExpandirPalavras(palavrasBase);
-
-  // Melhoria #1: buscar nos artigos indexados
-  if (_regimentoArtigos.length > 0) {
-    const scored = _regimentoArtigos.map(art => {
-      const textoLower = art.texto.toLowerCase();
-      let score = 0;
-      palavrasExpandidas.forEach(kw => {
-        if (textoLower.includes(kw)) score += 2;
-      });
-      // Boost: match direto com palavras originais vale mais
-      palavrasBase.forEach(kw => {
-        if (textoLower.includes(kw)) score += 3;
-      });
-      return { ...art, score };
-    });
-    const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score);
-    let resultado = '';
-    for (const item of top) {
-      if (resultado.length + item.texto.length > 9000) break;
-      resultado += item.texto + '\n\n';
-    }
-    if (resultado) return resultado;
-  }
-
-  // Fallback: busca por parágrafos (caso artigos não indexados)
-  const paragrafos = _regimentoTexto.split(/\n\n+/).filter(p => p.trim().length > 30);
-  const scored = paragrafos.map(p => {
-    const pLower = p.toLowerCase();
-    let score = 0;
-    palavrasExpandidas.forEach(kw => { if (pLower.includes(kw)) score += 2; });
-    palavrasBase.forEach(kw => { if (pLower.includes(kw)) score += 3; });
-    return { text: p, score };
-  });
-  const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score);
-  let resultado = '';
-  for (const item of top) {
-    if (resultado.length + item.text.length > 9000) break;
-    resultado += item.text + '\n\n';
-  }
-  if (!resultado) resultado = _regimentoTexto.substring(0, 7000);
-  return resultado;
-}
-
-
-// ========= SEND / API (Melhorias #3, #5, #6) =========
-function regimentoAsk(question) {
-  const input = document.getElementById('regimento_input');
-  if (input) input.value = question;
-  regimentoSend();
-}
-
-async function regimentoSend() {
-  const input = document.getElementById('regimento_input');
-  if (!input) return;
-  const question = input.value.trim();
-  if (!question || _regimentoLoading) return;
-  if (!GEMINI_API_KEY) { showToast('API Key nao configurada.', 'error'); return; }
-
-  // Ensure PDF is loaded
-  if (!_regimentoTextoCarregado) await regimentoCarregarPDF();
-
-  // Melhoria #3: verificar cache antes de chamar API
-  const cacheKey = question.toLowerCase().trim();
-  if (_regimentoCache[cacheKey]) {
-    _regimentoMessages.push({ role: 'user', content: question });
-    _regimentoMessages.push({ role: 'assistant', content: _regimentoCache[cacheKey].answer, time: '0.0', cached: true });
-    regimentoRenderMessages();
-    const chips = document.getElementById('regimento_chips');
-    if (chips) chips.style.display = 'none';
-    return;
-  }
-
-  _regimentoMessages.push({ role: 'user', content: question });
-  input.value = '';
-  regimentoRenderMessages();
-  const chips = document.getElementById('regimento_chips');
-  if (chips) chips.style.display = 'none';
-
-  _regimentoLoading = true;
-  const startTime = Date.now();
-  const loadingEl = document.getElementById('regimento_loading');
-  if (loadingEl) loadingEl.style.display = 'flex';
-  const timerEl = document.getElementById('regimento_timer');
-  if (timerEl) timerEl.style.display = 'inline';
-  let timerInterval = setInterval(() => {
-    if (timerEl) timerEl.textContent = ((Date.now() - startTime) / 1000).toFixed(0) + 's';
-  }, 1000);
-  const sendBtn = document.getElementById('regimento_sendBtn');
-  if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = '.5'; }
-
-  try {
-    const response = await regimentoCallAPI(question);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    _regimentoMessages.push({ role: 'assistant', content: response, time: elapsed });
-    // Melhoria #3: salvar no cache
-    _regimentoCache[cacheKey] = { answer: response, date: Date.now() };
-    regimentoSaveHistory(question, response);
-  } catch (err) {
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    _regimentoMessages.push({ role: 'assistant', content: 'Desculpe, ocorreu um erro. Tente novamente.\n\nErro: ' + err.message, time: elapsed });
-  }
-
-  clearInterval(timerInterval);
-  _regimentoLoading = false;
-  if (loadingEl) loadingEl.style.display = 'none';
-  if (timerEl) timerEl.style.display = 'none';
-  if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = ''; }
-  regimentoRenderMessages();
-}
-
-async function regimentoCallAPI(question) {
-  const trechosRelevantes = regimentoBuscarTrechos(question);
-  const systemPrompt = `Voce e um assistente da AUTO VALE CLUBE DE BENEFICIOS. Responda APENAS em portugues brasileiro.
-
-REGRAS:
-1. Responda com base no texto do Regimento Interno abaixo.
-2. Sempre encontre o artigo MAIS RELEVANTE para a pergunta, mesmo que nao seja uma correspondencia exata.
-3. Seja BREVE e DIRETO — maximo 3-5 frases.
-4. Cite o artigo entre parenteses. Ex: (Art. 81)
-5. Use bullet points quando listar itens.
-6. NUNCA responda em ingles.
-7. NUNCA invente informacoes. Se o texto abaixo nao tiver a resposta exata, cite o artigo mais proximo e diga que e o mais relacionado.
-
-TRECHOS DO REGIMENTO INTERNO:
-${trechosRelevantes}`;
-
-  const messages = [{ role: 'system', content: systemPrompt }];
-  if (_regimentoMessages.length > 1) {
-    _regimentoMessages.slice(0, -1).slice(-2).forEach(m => {
-      messages.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content.substring(0, 200) });
-    });
-  }
-  messages.push({ role: 'user', content: question });
-
-  // Melhoria #6: retry automático com delay
-  let attempts = 0;
-  while (attempts < 3) {
-    attempts++;
-    const resp = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GEMINI_API_KEY },
-      body: JSON.stringify({ model: GROQ_MODEL, messages, temperature: 0.2, max_tokens: 500 })
-    });
-    if (resp.status === 429 && attempts < 3) {
-      // Rate limited — wait and retry
-      const retryAfter = parseInt(resp.headers.get('retry-after') || '5');
-      const timerEl = document.getElementById('regimento_timer');
-      if (timerEl) timerEl.textContent = 'aguardando ' + retryAfter + 's...';
-      await new Promise(r => setTimeout(r, retryAfter * 1000));
-      continue;
-    }
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      throw new Error((errData.error && errData.error.message) || 'HTTP ' + resp.status);
-    }
-    const data = await resp.json();
-    if (data.choices && data.choices[0] && data.choices[0].message) return data.choices[0].message.content;
-    throw new Error('Resposta vazia');
-  }
-  throw new Error('Limite de tentativas. Aguarde 30s e tente novamente.');
-}
-
-
-// ========= PDF LOADING (Melhoria #7: pré-carrega no login) =========
-async function regimentoCarregarPDF() {
-  if (_regimentoTextoCarregado && _regimentoTexto) return _regimentoTexto;
-  try {
-    if (!window.pdfjsLib) {
-      await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
-    // Check localStorage cache
-    const cached = localStorage.getItem('avp-regimento-texto');
-    const cachedVersion = localStorage.getItem('avp-regimento-version');
-    if (cached && cachedVersion === REGIMENTO_PDF_URL) {
-      _regimentoTexto = cached;
-      _regimentoTextoCarregado = true;
-      regimentoIndexarArtigos(); // Melhoria #1: indexar após carregar
-      return _regimentoTexto;
-    }
-    // Extract PDF
-    const pdf = await pdfjsLib.getDocument(REGIMENTO_PDF_URL).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      let lastY = null;
-      let pageText = '';
-      content.items.forEach(item => {
-        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) pageText += '\n';
-        pageText += item.str;
-        lastY = item.transform[5];
-      });
-      fullText += pageText + '\n\n';
-    }
-    _regimentoTexto = fullText.trim();
-    _regimentoTextoCarregado = true;
-    regimentoIndexarArtigos(); // Melhoria #1: indexar após carregar
-    try {
-      localStorage.setItem('avp-regimento-texto', _regimentoTexto);
-      localStorage.setItem('avp-regimento-version', REGIMENTO_PDF_URL);
-    } catch(e) {}
-    return _regimentoTexto;
-  } catch(err) {
-    console.error('Erro ao carregar PDF:', err);
-    _regimentoTexto = '';
-    return '';
-  }
-}
-
-// Melhoria #7: Pré-carregar PDF em background após login
-function regimentoPreload() {
-  setTimeout(() => { regimentoCarregarPDF(); }, 3000); // Aguarda 3s após login para não competir com outros loads
-}
-// Chamar automaticamente se o sistema já estiver carregado
-if (typeof dataLoaded !== 'undefined' && dataLoaded) regimentoPreload();
 
 // ========= INIT =========
-function regimentoInit() {
+async function regimentoInit() {
   const container = document.getElementById('regimento_container');
   if (!container) return;
-  GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
-  _regimentoHistory = JSON.parse(localStorage.getItem('avp-regimento-history') || '[]');
-  // Melhoria #3: carregar cache de respostas
-  try { _regimentoCache = JSON.parse(localStorage.getItem('avp-regimento-cache') || '{}'); } catch(e) { _regimentoCache = {}; }
+  // Load FAQ JSON
+  if (!_regimentoFAQ) {
+    try {
+      const resp = await fetch('faq-regimento-interno-autovale.json');
+      _regimentoFAQ = await resp.json();
+    } catch(e) {
+      console.error('Erro ao carregar FAQ:', e);
+      container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red)">Erro ao carregar FAQ do regimento.</div>';
+      return;
+    }
+  }
   regimentoRender();
-  if (!_regimentoTextoCarregado) regimentoCarregarPDF().then(() => { if (_regimentoTab === 'leitura') regimentoRender(); });
 }
-
 
 // ========= RENDER PRINCIPAL =========
 function regimentoRender() {
   const container = document.getElementById('regimento_container');
-  if (!container) return;
+  if (!container || !_regimentoFAQ) return;
   const isAdmin = typeof currentProfile !== 'undefined' && currentProfile && currentProfile.nivel === 'admin';
   let html = '';
+
+  // Header
   html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
     <div style="width:44px;height:44px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
     </div>
     <div style="flex:1">
       <div style="font-size:1.05rem;font-weight:700;color:var(--text1)">Regimento Interno</div>
-      <div style="font-size:.72rem;color:var(--text3)">Auto Vale Clube de Beneficios</div>
+      <div style="font-size:.72rem;color:var(--text3)">Auto Vale Clube de Beneficios - ${_regimentoFAQ.total_perguntas} perguntas frequentes</div>
     </div>
     ${isAdmin ? '<button class="btn btn-sm" onclick="regimentoAdminUpload()" style="display:flex;align-items:center;gap:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Atualizar</button>' : ''}
   </div>`;
+
+  // Tabs
   html += `<div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
-    <button class="reg-tab ${_regimentoTab==='consulta'?'active':''}" onclick="regimentoSwitchTab('consulta')">Consulta</button>
+    <button class="reg-tab ${_regimentoTab==='consulta'?'active':''}" onclick="regimentoSwitchTab('consulta')">Consultar</button>
     <button class="reg-tab ${_regimentoTab==='leitura'?'active':''}" onclick="regimentoSwitchTab('leitura')">Ler Completo</button>
   </div>`;
-  if (_regimentoTab === 'consulta') { html += regimentoRenderConsulta(); }
-  else { html += regimentoRenderLeitura(); }
+
+  if (_regimentoTab === 'consulta') {
+    html += regimentoRenderConsulta();
+  } else {
+    html += regimentoRenderLeitura();
+  }
   container.innerHTML = html;
-  if (_regimentoTab === 'consulta') regimentoRenderMessages();
 }
 
-function regimentoSwitchTab(tab) { _regimentoTab = tab; regimentoRender(); }
+function regimentoSwitchTab(tab) { _regimentoTab = tab; _regimentoCategoria = null; _regimentoBusca = ''; regimentoRender(); }
 
-// ========= TAB CONSULTA =========
+
+// ========= TAB CONSULTA (FAQ + BUSCA) =========
 function regimentoRenderConsulta() {
   let html = '';
-  html += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="regimento_chips">`;
-  REGIMENTO_FAQ_CHIPS.forEach(chip => { html += `<button class="regimento-chip" onclick="regimentoAsk('${chip.replace(/'/g, "\\'")}')">${chip}</button>`; });
-  html += `</div>`;
-  if (_regimentoHistory.length > 0 && _regimentoMessages.length === 0) {
-    const recentes = _regimentoHistory.slice(0, 5);
-    html += `<div style="margin-bottom:16px"><div style="font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Pesquisas recentes</div><div style="display:flex;flex-wrap:wrap;gap:6px">`;
-    recentes.forEach(h => { const shortQ = h.question.length > 35 ? h.question.substring(0,35)+'...' : h.question; html += `<button class="regimento-chip" style="background:var(--surface-2);border-color:var(--border-light);font-size:.7rem" onclick="regimentoAsk('${h.question.replace(/'/g, "\\'")}')">${escapeHtml(shortQ)}</button>`; });
-    html += `</div></div>`;
+
+  // Search bar
+  html += `<div style="margin-bottom:20px;position:relative">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:14px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="regimento_busca" value="${escapeHtml(_regimentoBusca)}" placeholder="Buscar duvida no regimento..." oninput="regimentoBuscar(this.value)" style="width:100%;padding:12px 16px 12px 42px;border:1px solid var(--border-strong);border-radius:var(--radius-lg);font-size:.85rem;background:var(--surface);color:var(--text1)">
+    ${_regimentoBusca ? '<button onclick="regimentoBuscar(\'\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem">&times;</button>' : ''}
+  </div>`;
+
+  // If searching, show results
+  if (_regimentoBusca.length >= 2) {
+    html += regimentoRenderResultados();
+    return html;
   }
-  html += `<div id="regimento_messages" class="regimento-messages"></div>`;
-  html += `<div id="regimento_loading" class="regimento-loading" style="display:none"><div class="regimento-loading-dots"><span></span><span></span><span></span></div><span style="font-size:.78rem;color:var(--text3)">Consultando o regimento...</span><span id="regimento_timer" style="font-size:.72rem;color:var(--text3);margin-left:6px;font-variant-numeric:tabular-nums;display:none"></span></div>`;
-  html += `<div class="regimento-input-area"><div class="regimento-input-wrap"><input type="text" id="regimento_input" placeholder="Digite sua pergunta sobre o regimento..." autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();regimentoSend()}"><button class="regimento-send-btn" onclick="regimentoSend()" title="Enviar" id="regimento_sendBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div><div style="font-size:.62rem;color:var(--text3);margin-top:6px;text-align:center">Respostas geradas por IA com base no Regimento Interno.</div></div>`;
+
+  // If viewing a category
+  if (_regimentoCategoria) {
+    html += regimentoRenderCategoria();
+    return html;
+  }
+
+  // Default: show categories grid
+  html += regimentoRenderCategorias();
   return html;
 }
 
-// ========= TAB LEITURA =========
-let _regimentoPdfPage = 1;
+// ========= CATEGORIAS GRID =========
+function regimentoRenderCategorias() {
+  const icons = {
+    'associacao-pam-e-regras-gerais': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    'filiacao-cadastro-e-analise': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>',
+    'permanencia-cancelamento-e-exclusao': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    'pagamentos-boletos-e-inadimplencia': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    'planos-de-carros': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+    'planos-de-motos': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M12 17h7"/><path d="M5 17l3-9h4l3 9"/></svg>',
+    'rastreador-e-monitoramento': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8a4 4 0 1 0 4 4"/><line x1="21" y1="3" x2="14" y2="10"/></svg>',
+    'assistencia-24h-reboque-e-guincho': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    'hipoteses-sem-cobertura-ou-negativa': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    'cotas-de-participacao': '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+  };
+  const defaultIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">`;
+  _regimentoFAQ.categorias.forEach(cat => {
+    const icon = icons[cat.slug_categoria] || defaultIcon;
+    html += `<div class="reg-cat-card" onclick="regimentoAbrirCategoria('${cat.slug_categoria}')">
+      <div class="reg-cat-icon">${icon}</div>
+      <div class="reg-cat-name">${escapeHtml(cat.categoria)}</div>
+      <div class="reg-cat-count">${cat.itens.length} perguntas</div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+
+// ========= CATEGORIA DETAIL =========
+function regimentoAbrirCategoria(slug) {
+  _regimentoCategoria = slug;
+  _regimentoBusca = '';
+  regimentoRender();
+}
+
+function regimentoRenderCategoria() {
+  const cat = _regimentoFAQ.categorias.find(c => c.slug_categoria === _regimentoCategoria);
+  if (!cat) return '<div>Categoria nao encontrada.</div>';
+
+  let html = `<button class="btn btn-sm" onclick="_regimentoCategoria=null;regimentoRender()" style="margin-bottom:16px;display:flex;align-items:center;gap:5px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Voltar
+  </button>`;
+  html += `<div style="font-size:.95rem;font-weight:700;color:var(--text1);margin-bottom:16px">${escapeHtml(cat.categoria)}</div>`;
+  html += `<div style="display:flex;flex-direction:column;gap:10px">`;
+  cat.itens.forEach(item => {
+    html += regimentoRenderItem(item);
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ========= SEARCH RESULTS =========
+function regimentoBuscar(query) {
+  _regimentoBusca = query;
+  _regimentoCategoria = null;
+  regimentoRender();
+  // Re-focus input
+  setTimeout(() => {
+    const input = document.getElementById('regimento_busca');
+    if (input) { input.focus(); input.setSelectionRange(query.length, query.length); }
+  }, 50);
+}
+
+function regimentoRenderResultados() {
+  const query = _regimentoBusca.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const palavras = query.split(' ').filter(p => p.length >= 2);
+  let resultados = [];
+
+  _regimentoFAQ.categorias.forEach(cat => {
+    cat.itens.forEach(item => {
+      let score = 0;
+      const perguntaNorm = item.pergunta_principal.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const respostaNorm = item.resposta_curta.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const kwNorm = (item.palavras_chave || []).join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      palavras.forEach(p => {
+        if (perguntaNorm.includes(p)) score += 5;
+        if (kwNorm.includes(p)) score += 3;
+        if (respostaNorm.includes(p)) score += 2;
+      });
+      // Exact match bonus
+      if (perguntaNorm.includes(query)) score += 10;
+
+      if (score > 0) resultados.push({ ...item, score, categoria: cat.categoria });
+    });
+  });
+
+  resultados.sort((a, b) => b.score - a.score);
+  const top = resultados.slice(0, 15);
+
+  if (!top.length) {
+    return `<div style="text-align:center;padding:30px;color:var(--text3)">
+      <div style="font-size:.85rem;margin-bottom:8px">Nenhum resultado para "${escapeHtml(_regimentoBusca)}"</div>
+      <div style="font-size:.75rem">Tente outras palavras ou consulte o PDF completo na aba "Ler Completo"</div>
+    </div>`;
+  }
+
+  let html = `<div style="font-size:.75rem;color:var(--text3);margin-bottom:12px">${top.length} resultado${top.length>1?'s':''} para "${escapeHtml(_regimentoBusca)}"</div>`;
+  html += `<div style="display:flex;flex-direction:column;gap:10px">`;
+  top.forEach(item => { html += regimentoRenderItem(item); });
+  html += `</div>`;
+  return html;
+}
+
+
+// ========= FAQ ITEM RENDER =========
+function regimentoRenderItem(item) {
+  const id = item.id;
+  return `<div class="reg-faq-item" id="reg_item_${id}">
+    <div class="reg-faq-header" onclick="regimentoToggleItem('${id}')">
+      <div class="reg-faq-question">${escapeHtml(item.pergunta_principal)}</div>
+      <svg class="reg-faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="reg-faq-body" id="reg_body_${id}" style="display:none">
+      <div class="reg-faq-answer">${escapeHtml(item.resposta_completa || item.resposta_curta)}</div>
+      <div class="reg-faq-ref">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>${escapeHtml(item.referencia_regimento || '')}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function regimentoToggleItem(id) {
+  const body = document.getElementById('reg_body_' + id);
+  const item = document.getElementById('reg_item_' + id);
+  if (!body || !item) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  item.classList.toggle('open', !isOpen);
+}
+
+// ========= TAB LEITURA (PDF VIEWER) =========
 function regimentoRenderLeitura() {
   const pdfUrl = REGIMENTO_PDF_URL + '#page=' + _regimentoPdfPage;
   return `<div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);height:calc(100vh - 280px)"><iframe id="regimento_pdf_viewer" src="${pdfUrl}" style="width:100%;height:100%;border:none" title="Regimento Interno"></iframe></div>`;
 }
 
-
-// ========= MESSAGES RENDER =========
-function regimentoRenderMessages() {
-  const el = document.getElementById('regimento_messages');
-  if (!el) return;
-  if (_regimentoMessages.length === 0) {
-    el.innerHTML = `<div class="regimento-welcome"><div style="width:48px;height:48px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div style="font-size:.85rem;font-weight:600;color:var(--text1);margin-bottom:4px">Como posso ajudar?</div><div style="font-size:.75rem;color:var(--text3);max-width:340px;margin:0 auto">Selecione uma pergunta acima ou digite sua duvida sobre o Regimento Interno.</div></div>`;
-    return;
-  }
-  let html = '';
-  _regimentoMessages.forEach((msg, idx) => {
-    if (msg.role === 'user') {
-      html += `<div class="regimento-msg regimento-msg-user"><div class="regimento-msg-bubble regimento-msg-user-bubble">${escapeHtml(msg.content)}</div></div>`;
-    } else {
-      const cachedLabel = msg.cached ? ' <span style="font-size:.6rem;background:var(--green-bg);color:var(--green);padding:1px 5px;border-radius:3px">cache</span>' : '';
-      html += `<div class="regimento-msg regimento-msg-assistant"><div class="regimento-msg-avatar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div class="regimento-msg-bubble regimento-msg-assistant-bubble"><div class="regimento-msg-content">${regimentoFormatResponse(msg.content)}</div>${regimentoRenderFontes(msg.content)}<div class="regimento-msg-footer"><span style="font-size:.65rem;color:var(--text3)">${msg.time ? msg.time + 's' : ''}${cachedLabel}</span><div class="regimento-msg-feedback" data-idx="${idx}"><button class="regimento-feedback-btn" onclick="regimentoFeedback(${idx},'util')" title="Util"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button><button class="regimento-feedback-btn" onclick="regimentoFeedback(${idx},'nao_util')" title="Nao util"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button></div></div></div></div>`;
-    }
-  });
-  el.innerHTML = html;
-  el.scrollTop = el.scrollHeight;
-}
-
-// ========= FONTES =========
-function regimentoRenderFontes(text) {
-  const artigos = [];
-  const matches = text.matchAll(/\(Art\.\s*(\d+[º°]?(?:-[A-Z])?)\)/g);
-  for (const m of matches) { const ref = 'Art. ' + m[1].replace(/[º°]/g,''); if (!artigos.includes(ref)) artigos.push(ref); }
-  if (!artigos.length) return '';
-  let html = `<div class="reg-sources"><button class="reg-sources-toggle" onclick="this.parentElement.classList.toggle('open')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Fontes (${artigos.length} ${artigos.length===1?'artigo':'artigos'})</span><svg class="reg-sources-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="reg-sources-body">`;
-  artigos.forEach(ref => { html += `<div class="reg-source-item" style="cursor:pointer" onclick="regimentoNavigateToArt('${ref.replace(/'/g,"\\'")}')"><div style="display:flex;align-items:center;justify-content:space-between"><span class="reg-source-ref">${escapeHtml(ref)}</span><span style="font-size:.65rem;color:var(--blue);font-weight:500">Ver no regimento →</span></div></div>`; });
-  html += `</div></div>`;
-  return html;
-}
-
-function regimentoNavigateToArt(artRef) {
-  // Opção C: Modal com texto completo do artigo
-  regimentoIndexarArtigos();
-  const numMatch = artRef.match(/(\d+(?:-[A-Z])?)/);
-  const artNum = numMatch ? numMatch[1].replace(/[º°]/g, '') : '';
-
-  // Buscar texto do artigo no índice
-  let textoArtigo = '';
-  if (_regimentoArtigos.length > 0) {
-    const artigo = _regimentoArtigos.find(a => a.num === artNum);
-    if (artigo) textoArtigo = artigo.texto;
-  }
-  // Se não encontrou no índice, buscar no texto bruto
-  if (!textoArtigo && _regimentoTexto) {
-    const escaped = artNum.replace('-', '\\s*[-–]\\s*');
-    const regex = new RegExp('(Art\\.?\\s*' + escaped + '[º°]?\\s*[-–][\\s\\S]*?)(?=Art\\.?\\s*\\d+[º°]?\\s*[-–]|$)', 'i');
-    const match = _regimentoTexto.match(regex);
-    if (match) textoArtigo = match[1].trim().substring(0, 2000); // Limitar tamanho
-  }
-  if (!textoArtigo) textoArtigo = 'Texto do artigo nao encontrado. Tente limpar o cache: localStorage.removeItem("avp-regimento-texto") e recarregue.';
-
-  // Determinar página no PDF
-  const artPageMap = {'1':2,'2':2,'3':2,'4':2,'5':2,'6':2,'7':2,'8':2,'9':2,'10':3,'11':3,'12':3,'13':8,'14':8,'15':8,'16':8,'17':8,'18':8,'19':8,'20':8,'21':8,'22':8,'23':9,'24':9,'25':9,'26':9,'27':9,'28':9,'29':9,'30':9,'31':9,'32':10,'33':10,'34':10,'35':10,'36':10,'37':10,'38':10,'39':10,'40':10,'41':10,'42':10,'43':10,'44':11,'45':11,'46':11,'47':11,'48':11,'49':11,'50':11,'51':11,'52':11,'53':11,'54':11,'55':11,'55-A':12,'56':12,'57':12,'58':12,'59':13,'59-A':13,'60':13,'61':13,'62':13,'63':13,'64':13,'65':13,'66':13,'67':13,'68':13,'69':13,'70':13,'71':14,'72':14,'73':15,'74':17,'75':17,'76':17,'77':17,'78':18,'79':18,'80':18,'81':18,'82':18,'83':18,'84':19,'85':19,'86':19,'87':19,'88':19,'89':19,'90':19,'91':19,'92':19,'93':20,'94':20,'95':20,'96':20,'97':20,'98':20,'99':20,'100':20,'101':20,'102':20,'103':20,'104':21,'105':21,'106':21,'107':21,'108':21,'109':21,'110':21,'111':21,'112':21,'113':21,'114':21,'115':21,'116':22,'117':22,'118':22,'119':22,'120':22,'121':23,'122':23,'123':24,'124':25,'125':25,'126':25,'127':25,'128':25,'129':25,'130':26,'131':26,'132':26,'133':26,'134':26,'135':26,'136':26,'137':26,'138':26,'139':26,'140':26,'141':26,'142':26,'143':26,'144':27,'145':27,'146':27,'147':27,'148':27,'149':27};
-  const page = artPageMap[artNum] || 1;
-
-  // Abrir modal com texto do artigo
-  showModal(artRef,
-    `<div style="max-height:60vh;overflow-y:auto;padding:4px 0">
-      <div style="font-size:.82rem;line-height:1.8;color:var(--text1);white-space:pre-wrap;word-wrap:break-word">${escapeHtml(textoArtigo)}</div>
-    </div>
-    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:.7rem;color:var(--text3)">Pagina ${page} do PDF</span>
-      <button class="btn btn-sm" onclick="closeModal();_regimentoTab='leitura';_regimentoPdfPage=${page};regimentoRender();" style="font-size:.72rem">Ver pagina no PDF</button>
-    </div>`,
-    function() { closeModal(); }, 'blue');
-  // Trocar botão de confirmar por apenas "Fechar"
-  setTimeout(() => {
-    const actions = document.getElementById('modalActions');
-    if (actions) actions.innerHTML = '<button class="btn" onclick="closeModal()">Fechar</button>';
-  }, 50);
-}
-
-
-// ========= UTILS =========
-function regimentoFormatResponse(text) {
-  if (!text) return '';
-  let html = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^- (.*$)/gm, '<li style="margin-bottom:3px">$1</li>')
-    .replace(/\n\n/g, '</p><p style="margin:6px 0">')
-    .replace(/\n/g, '<br>');
-  html = html.replace(/(<li[^>]*>.*?<\/li>(\s*<br>)?)+/g, match => '<ul style="padding-left:16px;margin:6px 0">' + match.replace(/<br>/g,'') + '</ul>');
-  html = html.replace(/\(Art\.\s*(\d+[º°]?(?:-[A-Z])?)\)/g, '<strong style="color:var(--primary)">(Art. $1)</strong>');
-  return '<p style="margin:6px 0">' + html + '</p>';
-}
-
-function regimentoFeedback(msgIdx, type) {
-  const el = document.querySelector(`.regimento-msg-feedback[data-idx="${msgIdx}"]`);
-  if (!el) return;
-  el.innerHTML = `<span style="font-size:.65rem;color:var(--text3)">${type==='util'?'Obrigado!':'Vamos melhorar!'}</span>`;
-}
-
-function regimentoSaveHistory(question, answer) {
-  const entry = { question, answer: answer.substring(0,150), date: new Date().toISOString() };
-  _regimentoHistory.unshift(entry);
-  if (_regimentoHistory.length > 50) _regimentoHistory = _regimentoHistory.slice(0,50);
-  localStorage.setItem('avp-regimento-history', JSON.stringify(_regimentoHistory));
-  // Melhoria #3: salvar cache persistente
-  try { localStorage.setItem('avp-regimento-cache', JSON.stringify(_regimentoCache)); } catch(e) {}
-  // Salvar no Supabase (analytics)
-  try {
-    if (typeof supabase!=='undefined' && supabase.insert) {
-      supabase.insert('regimento_historico', { usuario_id: currentProfile?currentProfile.id:null, usuario_nome: currentUser||'anonimo', pergunta: question, resposta_resumo: answer.substring(0,200), created_at: new Date().toISOString() });
-    }
-  } catch(e) {}
-}
-
+// ========= ADMIN UPLOAD =========
 function regimentoAdminUpload() {
   showModal('Atualizar Regimento',
-    `<div style="display:flex;flex-direction:column;gap:14px"><p style="font-size:.82rem;color:var(--text2)">Suba um novo PDF para substituir o regimento atual.</p><input type="file" id="regUploadFile" accept=".pdf" style="font-size:.78rem"><div style="font-size:.72rem;color:var(--text3)">O arquivo sera salvo no bucket "regimento" do Supabase.</div></div>`,
+    '<div style="display:flex;flex-direction:column;gap:14px"><p style="font-size:.82rem;color:var(--text2)">Suba um novo PDF para substituir o regimento atual.</p><input type="file" id="regUploadFile" accept=".pdf" style="font-size:.78rem"><div style="font-size:.72rem;color:var(--text3)">O arquivo sera salvo no bucket "regimento" do Supabase.</div></div>',
     async function() {
       const fileInput = document.getElementById('regUploadFile');
       if (!fileInput||!fileInput.files[0]) { showToast('Selecione um PDF','error'); return; }
@@ -523,12 +248,8 @@ function regimentoAdminUpload() {
         const token = supabase.getToken() || SUPABASE_ANON_KEY;
         const resp = await fetch(SUPABASE_URL+'/storage/v1/object/regimento/'+encodeURIComponent(file.name),{ method:'POST', headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/pdf','x-upsert':'true'}, body:file });
         if (!resp.ok) throw new Error('HTTP '+resp.status);
-        localStorage.removeItem('avp-regimento-texto');
-        localStorage.removeItem('avp-regimento-version');
-        localStorage.removeItem('avp-regimento-cache');
-        _regimentoCache = {};
         closeModal();
-        showToast('Regimento atualizado! Recarregue a pagina.','success');
+        showToast('Regimento atualizado!','success');
       } catch(e) { showToast('Erro: '+e.message,'error'); }
     },'green','Enviar');
 }
