@@ -6,7 +6,7 @@
 const _dk = [103,115,107,95,49,54,86,111,71,104,48,70,117,51,90,89,53,84,86,115,77,56,79,70,87,71,100,121,98,51,70,89,87,110,113,89,99,49,115,65,72,78,89,108,56,75,97,107,82,98,119,115,67,105,50,49].map(c=>String.fromCharCode(c)).join('');
 let GEMINI_API_KEY = localStorage.getItem('avp-gemini-key') || _dk;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.1-8b-instant'; // Melhoria #5: 20k TPM + 3x mais rápido
+const GROQ_MODEL = 'llama-3.3-70b-versatile'; // Mais inteligente para entender contexto
 const REGIMENTO_PDF_URL = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/regimento/REGIMENTO%20INTERNO%20GERAL%20-%2005_2026.pdf';
 
 let _regimentoMessages = [];
@@ -31,23 +31,32 @@ const REGIMENTO_FAQ_CHIPS = [
 
 // Melhoria #2: Mapa de sinônimos/temas para busca inteligente
 const REGIMENTO_SINONIMOS = {
-  'depreciacao': ['desvalorização','desvalorizacao','abatido','abatidas','percentual','fipe','leilao','leilão','recuperado','remarcado'],
-  'reboque': ['guincho','remocao','remoção','km','quilometros','quilômetros','pane','mecanica','mecânica','eletrica','elétrica'],
-  'cancelar': ['exclusao','exclusão','desligamento','retirada','sair','cancelamento'],
-  'atraso': ['inadimplencia','inadimplência','vencido','vencida','suspenso','suspensão','suspensao'],
-  'vidros': ['parabrisa','para-brisa','lanternas','retrovisores','farois','faróis','vigia'],
-  'terceiros': ['terceiro','danos a terceiros','culpa','culpabilidade'],
-  'roubo': ['furto','roubado','furtado','subtração','subtracao'],
-  'rastreador': ['rastreamento','monitoramento','comodato','antifurto','bloqueador','gps'],
+  'depreciacao': ['desvalorização','desvalorizacao','abatido','abatidas','percentual','fipe','leilao','leilão','recuperado','remarcado','20%','30%'],
+  'reboque': ['guincho','remocao','remoção','km','quilometros','quilômetros','pane','mecanica','mecânica','eletrica','elétrica','remoção','deslocamento'],
+  'cancelar': ['exclusao','exclusão','desligamento','retirada','sair','cancelamento','excluido','excluído'],
+  'atraso': ['inadimplencia','inadimplência','vencido','vencida','suspenso','suspensão','suspensao','atrasado','atrasar'],
+  'vidros': ['parabrisa','para-brisa','lanternas','retrovisores','farois','faróis','vigia','vidro'],
+  'terceiros': ['terceiro','danos a terceiros','culpa','culpabilidade','colisao','colisão'],
+  'roubo': ['furto','roubado','furtado','subtração','subtracao','roubar'],
+  'rastreador': ['rastreamento','monitoramento','comodato','antifurto','bloqueador','gps','localizacao','localização'],
   'gnv': ['gas','gás','natural','veicular','combustivel','combustível'],
-  'cota': ['participacao','participação','percentual','evento','sinistro'],
-  'vistoria': ['fotos','fotografias','inspecao','inspeção'],
-  'filiacao': ['adesao','adesão','cadastro','proposta','documentos'],
-  'moto': ['motocicleta','motocicletas','duas rodas','cilindrada'],
+  'cota': ['participacao','participação','percentual','evento','sinistro','custos'],
+  'vistoria': ['fotos','fotografias','inspecao','inspeção','vistoriar'],
+  'filiacao': ['adesao','adesão','cadastro','proposta','documentos','filiar'],
+  'moto': ['motocicleta','motocicletas','duas rodas','cilindrada','moto'],
   'truck': ['caminhao','caminhão','pesado','leve','carreta','agregado'],
   'reserva': ['carro reserva','moto reserva','veiculo reserva','locacao','locação','diarias','diárias'],
   'incendio': ['incêndio','fogo','explosao','explosão'],
-  'perda total': ['irreparavel','irreparável','indenizacao integral','indenização integral','100%']
+  'perda total': ['irreparavel','irreparável','indenizacao integral','indenização integral','100%','75%'],
+  'bo': ['boletim','ocorrencia','ocorrência','policia','polícia','delegacia','registrar','registro','autoridades'],
+  'prazo': ['dias','horas','tempo','periodo','período','uteis','úteis','maximo','máximo'],
+  'pneu': ['pneus','borracheiro','borracharia','furado','sos'],
+  'chaveiro': ['chave','chaves','abertura','trancado','fechadura'],
+  'hospedagem': ['hotel','diaria','diária','pernoite'],
+  'taxi': ['app','aplicativo','uber','motorista','transporte'],
+  'funeral': ['morte','falecimento','obito','óbito','acidental'],
+  'plano': ['basico','básico','vip','top','premium','start','personalizado'],
+  'pagamento': ['mensalidade','boleto','contribuicao','contribuição','pagar','pix','vencimento']
 };
 
 
@@ -118,7 +127,7 @@ function regimentoBuscarTrechos(pergunta) {
     const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score);
     let resultado = '';
     for (const item of top) {
-      if (resultado.length + item.texto.length > 7000) break;
+      if (resultado.length + item.texto.length > 9000) break;
       resultado += item.texto + '\n\n';
     }
     if (resultado) return resultado;
@@ -136,10 +145,10 @@ function regimentoBuscarTrechos(pergunta) {
   const top = scored.filter(s => s.score > 0).sort((a, b) => b.score - a.score);
   let resultado = '';
   for (const item of top) {
-    if (resultado.length + item.text.length > 7000) break;
+    if (resultado.length + item.text.length > 9000) break;
     resultado += item.text + '\n\n';
   }
-  if (!resultado) resultado = _regimentoTexto.substring(0, 5000);
+  if (!resultado) resultado = _regimentoTexto.substring(0, 7000);
   return resultado;
 }
 
@@ -214,16 +223,16 @@ async function regimentoCallAPI(question) {
   const trechosRelevantes = regimentoBuscarTrechos(question);
   const systemPrompt = `Voce e um assistente da AUTO VALE CLUBE DE BENEFICIOS. Responda APENAS em portugues brasileiro.
 
-REGRAS CRITICAS:
-1. Responda EXCLUSIVAMENTE com base no texto do Regimento Interno abaixo. NUNCA invente, suponha ou complemente com informacoes externas.
-2. Se a informacao NAO estiver explicitamente no documento, diga: "O Regimento Interno nao menciona isso diretamente. O artigo mais relacionado ao assunto e:" e cite o artigo mais proximo.
-3. NUNCA diga "geralmente", "e comum que", "em geral" — isso indica informacao inventada.
-4. Seja BREVE e DIRETO — maximo 3-5 frases.
-5. Cite o artigo entre parenteses. Ex: (Art. 81)
-6. Use bullet points quando listar itens.
-7. NUNCA responda em ingles.
+REGRAS:
+1. Responda com base no texto do Regimento Interno abaixo.
+2. Sempre encontre o artigo MAIS RELEVANTE para a pergunta, mesmo que nao seja uma correspondencia exata.
+3. Seja BREVE e DIRETO — maximo 3-5 frases.
+4. Cite o artigo entre parenteses. Ex: (Art. 81)
+5. Use bullet points quando listar itens.
+6. NUNCA responda em ingles.
+7. NUNCA invente informacoes. Se o texto abaixo nao tiver a resposta exata, cite o artigo mais proximo e diga que e o mais relacionado.
 
-TRECHOS RELEVANTES DO REGIMENTO INTERNO:
+TRECHOS DO REGIMENTO INTERNO:
 ${trechosRelevantes}`;
 
   const messages = [{ role: 'system', content: systemPrompt }];
