@@ -26,7 +26,7 @@ const REGIMENTO_FAQ_CHIPS = [
   'Quanto tempo tenho para registrar o B.O.?',
   'Posso ter seguro e protecao veicular ao mesmo tempo?',
   'Meu veiculo com GNV tem cobertura?',
-  'Quando meu veiculo sofre depreciacao na indenizacao?'
+  'Quais veiculos sofrem depreciacao e qual o percentual?'
 ];
 
 // Melhoria #2: Mapa de sinônimos/temas para busca inteligente
