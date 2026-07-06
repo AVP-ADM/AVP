@@ -377,7 +377,24 @@ var WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxkweGF0qOC-Aam_pZR1L
 var dashboardData = null;
 var STORAGE_KEY = 'avp-demandas-changes';
 
-var SETORES = ['(Sem setor)','Financeiro','Comercial','TI / Sistemas','Operacional','Assistencia','Rastreador','Cadastro','Integracao','App / Mobile'];
+var SETORES_KEY = 'avp-demandas-setores';
+
+function getSetores(){
+  try{var s=localStorage.getItem(SETORES_KEY);return s?JSON.parse(s):['(Sem setor)'];}catch(e){return ['(Sem setor)'];}
+}
+function salvarSetores(arr){
+  localStorage.setItem(SETORES_KEY,JSON.stringify(arr));
+}
+function adicionarSetor(nome){
+  if(!nome||nome.trim()==='')return;
+  nome=nome.trim();
+  var setores=getSetores();
+  if(setores.indexOf(nome)===-1){
+    setores.push(nome);
+    salvarSetores(setores);
+  }
+}
+
 var PRIORIDADES = [
   {value:'',label:'(Sem prioridade)'},
   {value:'1',label:'1 - Critico'},
@@ -600,12 +617,43 @@ function getPriorityClass(val){
 function buildSetorSelect(ticket,currentValue){
   var changes=getLocalChanges();
   var val=(changes[ticket]&&changes[ticket].setor!==undefined)?changes[ticket].setor:(currentValue||'(Sem setor)');
-  var h='<select class="cell-select" data-ticket="'+ticket+'" data-field="setor" onchange="onFieldChange(\''+ticket+'\',\'setor\',this.value)">';
-  SETORES.forEach(function(s){
+  var setores=getSetores();
+  // Se o valor atual não está na lista, adicionar
+  if(val&&val!=='(Sem setor)'&&setores.indexOf(val)===-1){
+    setores.push(val);
+    salvarSetores(setores);
+  }
+  var h='<select class="cell-select" data-ticket="'+ticket+'" data-field="setor" onchange="onSetorChange(this,\''+ticket+'\')">';
+  setores.forEach(function(s){
     h+='<option value="'+s+'"'+(s===val?' selected':'')+'>'+s+'</option>';
   });
+  h+='<option value="__add__">+ Adicionar setor...</option>';
   h+='</select>';
   return h;
+}
+
+function onSetorChange(el,ticket){
+  var val=el.value;
+  if(val==='__add__'){
+    var novo=prompt('Digite o nome do novo setor:');
+    if(novo&&novo.trim()){
+      novo=novo.trim();
+      adicionarSetor(novo);
+      onFieldChange(ticket,'setor',novo);
+      // Re-render para atualizar todos os dropdowns
+      if(dashboardData){
+        var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+        emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
+        renderTableAberto(emAberto);
+      }
+    } else {
+      // Cancelou — volta ao valor anterior
+      var changes=getLocalChanges();
+      el.value=(changes[ticket]&&changes[ticket].setor)||'(Sem setor)';
+    }
+  } else {
+    onFieldChange(ticket,'setor',val);
+  }
 }
 
 function buildPrioridadeSelect(ticket,currentValue){
