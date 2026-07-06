@@ -402,6 +402,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 <script>
 // ==================== CONFIG ====================
 var dashboardData = null;
+var isAdmin = false;
 
 var SETORES_KEY = 'avp-demandas-setores';
 
@@ -643,6 +644,10 @@ function getPriorityClass(val){
 
 function buildSetorSelect(ticket, currentValue){
   var val = currentValue || '(Sem setor)';
+  // Read-only mode: show as text
+  if(!isAdmin){
+    return '<span style="font-size:.72rem;color:var(--text2)">'+val+'</span>';
+  }
   var setores = getSetores();
   if(val && val!=='(Sem setor)' && setores.indexOf(val)===-1){
     setores.push(val);
@@ -678,6 +683,13 @@ function onSetorChange(el, ticket){
 function buildPrioridadeSelect(ticket, currentValue){
   var val = currentValue || '';
   var cls = getPriorityClass(val);
+  // Read-only mode: show as colored badge
+  if(!isAdmin){
+    if(!val) return '<span style="font-size:.72rem;color:var(--text3)">-</span>';
+    var dotCls = cls;
+    var label = findPrioLabel(val);
+    return '<span class="cell-select-wrap"><span class="cell-select-dot '+dotCls+'" style="height:14px;width:4px"></span><span style="font-size:.72rem;font-weight:600" class="'+cls+'">'+label+'</span></span>';
+  }
   var dotCls = cls || 'none';
   var h='<div class="cell-select-wrap"><div class="cell-select-dot '+dotCls+'"></div><select class="cell-select '+cls+'" data-ticket="'+ticket+'" data-field="prioridade" onchange="onPrioridadeChange(this,\''+ticket+'\')">';
   PRIORIDADES.forEach(function(p){
@@ -1051,7 +1063,29 @@ function sortTable(col){
 }
 
 // ==================== INIT ====================
-carregarDados();
+async function init(){
+  // Detect admin session
+  try{
+    var session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
+    if(session && session.access_token && session.user){
+      var profile = await supabase.getProfile(session.user.id);
+      if(profile && (profile.nivel === 'admin' || profile.setor === 'TI')){
+        isAdmin = true;
+      }
+    }
+  }catch(e){ isAdmin = false; }
+  
+  // Apply read-only mode if not admin
+  if(!isAdmin){
+    // Hide "Atualizar via PDF" from settings dropdown
+    var uploadItem = document.querySelector('.settings-item[onclick*="openUploadModal"]');
+    if(uploadItem) uploadItem.style.display = 'none';
+  }
+  
+  // Load data
+  carregarDados();
+}
+init();
 </script>
 </body>
 </html>
