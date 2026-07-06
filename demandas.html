@@ -53,8 +53,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .header-right{display:flex;align-items:center;gap:12px}
 .header-meta{font-size:.72rem;color:var(--text3);text-align:right;display:flex;align-items:center;gap:6px}
 .header-meta svg{width:13px;height:13px;opacity:.7}
-.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s ease;display:flex;align-items:center}
-.theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
 .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);transition:all .2s ease}
 .back-link:hover{color:var(--text1);background:var(--surface-2);border-color:var(--border-strong)}
 
@@ -216,15 +214,28 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 [data-theme="dark"] .bar-btn-save{background:#D97706;color:#fff}
 
 
-/* Upload Accordion */
-.upload-accordion{border-top:1px solid var(--border);margin-top:20px}
-.upload-accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer;user-select:none;transition:all .2s ease}
-.upload-accordion-header:hover{opacity:.8}
-.upload-accordion-header .card-title{margin:0;font-size:.88rem}
-.upload-accordion-chevron{color:var(--text3);transition:transform .2s ease;display:flex;align-items:center}
-.upload-accordion-chevron.collapsed{transform:rotate(-90deg)}
-.upload-accordion-body{display:block;padding-bottom:8px}
-.upload-accordion-body.hidden{display:none}
+/* Settings Dropdown */
+.settings-wrap{position:relative}
+.settings-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s ease;display:flex;align-items:center}
+.settings-btn:hover{background:var(--blue-bg);border-color:var(--blue)}
+.settings-dropdown{position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:110;display:none;min-width:200px;padding:6px 0;animation:fadeIn .15s ease}
+.settings-dropdown.open{display:block}
+.settings-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:.82rem;color:var(--text1);cursor:pointer;transition:background .15s;white-space:nowrap}
+.settings-item:hover{background:var(--surface-2)}
+.settings-item svg{color:var(--text2);flex-shrink:0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Upload Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+.modal-overlay.open{display:flex}
+[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.7)}
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-lg);max-width:500px;width:100%;animation:slideUp .25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;border-radius:var(--radius);transition:all .15s}
+.modal-close:hover{color:var(--text1);background:var(--surface-2)}
+
+/* Upload Zone */
 .upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s ease;background:var(--bg)}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-bg)}
 .upload-zone.has-file{border-color:var(--green);background:var(--green-bg)}
@@ -286,7 +297,13 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
   </div>
   <div class="header-right">
     <div class="header-meta" id="headerMeta"></div>
-    <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
+    <div class="settings-wrap">
+      <button class="settings-btn" onclick="toggleSettingsMenu()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <div class="settings-item" onclick="openUploadModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Atualizar via PDF</span></div>
+        <div class="settings-item" onclick="toggleTheme();toggleSettingsMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><span>Alternar tema</span></div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -339,24 +356,23 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
       <div class="tab-content active" id="tab-aberto"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status_atual">Status</th><th data-col="dias">Dias</th><th data-col="setor">Setor</th><th data-col="prioridade">Prioridade</th></tr></thead><tbody id="tblAberto"></tbody></table></div></div>
       <div class="tab-content" id="tab-entregues"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="data_entrega">Entrega</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblEntregues"></tbody></table></div></div>
       <div class="tab-content" id="tab-todas"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status">Status</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblTodas"></tbody></table></div></div>
-
-
-      <!-- Upload section - Accordion closed by default -->
-      <div class="upload-accordion">
-        <div class="upload-accordion-header" onclick="toggleUploadAccordion()">
-          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Atualizar via PDF</div>
-          <div class="upload-accordion-chevron collapsed" id="uploadChevron"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        </div>
-        <div class="upload-accordion-body hidden" id="uploadBody">
-          <div class="upload-zone" id="uploadZone"><div class="uz-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p><strong>Arraste o PDF aqui</strong> ou clique para selecionar</p><p class="formats">Relatorio South Tecnologia (.pdf)</p></div>
-          <input type="file" id="fileInput" accept=".pdf" style="display:none">
-          <div class="upload-actions">
-            <button class="btn btn-primary" id="btnProcessar" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Processar e Atualizar</button>
-          </div>
-          <div class="status-bar" id="statusBar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="statusText"></span></div>
-        </div>
-      </div>
     </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Atualizar via PDF</div>
+      <button class="modal-close" onclick="closeUploadModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="upload-zone" id="uploadZone"><div class="uz-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p><strong>Arraste o PDF aqui</strong> ou clique para selecionar</p><p class="formats">Relatorio South Tecnologia (.pdf)</p></div>
+    <input type="file" id="fileInput" accept=".pdf" style="display:none">
+    <div class="upload-actions">
+      <button class="btn btn-primary" id="btnProcessar" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Processar e Atualizar</button>
+    </div>
+    <div class="status-bar" id="statusBar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="statusText"></span></div>
   </div>
 </div>
 
@@ -429,13 +445,31 @@ function togglePriorityCriteria(){
   }
 }
 
-// ==================== UPLOAD ACCORDION TOGGLE ====================
-function toggleUploadAccordion(){
-  var body=document.getElementById('uploadBody');
-  var chevron=document.getElementById('uploadChevron');
-  body.classList.toggle('hidden');
-  chevron.classList.toggle('collapsed');
+// ==================== SETTINGS MENU ====================
+function toggleSettingsMenu(){
+  var dd=document.getElementById('settingsDropdown');
+  dd.classList.toggle('open');
 }
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  var wrap=document.querySelector('.settings-wrap');
+  if(wrap&&!wrap.contains(e.target)){
+    document.getElementById('settingsDropdown').classList.remove('open');
+  }
+});
+
+// ==================== UPLOAD MODAL ====================
+function openUploadModal(){
+  document.getElementById('uploadModal').classList.add('open');
+  document.getElementById('settingsDropdown').classList.remove('open');
+}
+function closeUploadModal(){
+  document.getElementById('uploadModal').classList.remove('open');
+}
+// Close modal on overlay click
+document.getElementById('uploadModal').addEventListener('click',function(e){
+  if(e.target===this)closeUploadModal();
+});
 
 // ==================== LOCAL STORAGE HELPERS ====================
 function getLocalChanges(){
