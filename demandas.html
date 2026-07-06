@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="supabase-client.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:13px;height:100%}
@@ -59,7 +60,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 /* Container */
 .container{max-width:1280px;margin:0 auto;padding:28px 32px 80px}
 
-
 /* KPI Grid - Premium */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
 .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);border-left:4px solid var(--border);transition:all .2s ease;position:relative;overflow:hidden}
@@ -102,7 +102,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-title{font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text1)}
 .card-title svg{width:18px;height:18px;color:var(--text2)}
-
 
 /* Priority Criteria Card - Collapsed by default, compact */
 .priority-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px;box-shadow:var(--shadow);margin-bottom:28px;transition:all .2s ease}
@@ -152,7 +151,6 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 /* Title truncation */
 .cell-title{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 
-
 /* Aging badges - tighter */
 .aging-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:.68rem;font-weight:600;white-space:nowrap}
 .aging-green{background:var(--green-light);color:var(--green)}
@@ -194,26 +192,6 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 [data-theme="dark"] .cell-select.p3{color:#FCD34D}
 [data-theme="dark"] .cell-select.p4{color:#6EE7B7}
 
-
-/* Unsaved changes bar */
-.changes-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:16px;font-size:.82rem;font-weight:500;transform:translateY(100%);transition:transform .3s ease,background .3s ease;box-shadow:0 -2px 12px rgba(0,0,0,.1)}
-.changes-bar.visible{transform:translateY(0)}
-.changes-bar.pending{background:var(--amber-bg);border-top:2px solid var(--amber);color:var(--amber)}
-.changes-bar.saved{background:var(--green-bg);border-top:2px solid var(--green);color:var(--green)}
-[data-theme="dark"] .changes-bar.pending{background:#451A03;color:#FCD34D}
-[data-theme="dark"] .changes-bar.saved{background:#022C22;color:#6EE7B7}
-.changes-bar .bar-text{display:flex;align-items:center;gap:8px}
-.changes-bar .bar-text svg{width:16px;height:16px}
-.bar-actions{display:flex;gap:8px}
-.bar-btn{padding:6px 14px;border-radius:var(--radius);font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .2s ease}
-.bar-btn-discard{background:transparent;border-color:var(--amber);color:var(--amber)}
-.bar-btn-discard:hover{background:var(--amber-light)}
-.bar-btn-save{background:var(--amber);color:#fff;border-color:var(--amber)}
-.bar-btn-save:hover{opacity:.9}
-[data-theme="dark"] .bar-btn-discard{border-color:#FCD34D;color:#FCD34D}
-[data-theme="dark"] .bar-btn-save{background:#D97706;color:#fff}
-
-
 /* Settings Dropdown */
 .settings-wrap{position:relative}
 .settings-btn{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s ease;display:flex;align-items:center}
@@ -224,6 +202,7 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 .settings-item:hover{background:var(--surface-2)}
 .settings-item svg{color:var(--text2);flex-shrink:0}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
 
 /* Upload Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
@@ -297,6 +276,7 @@ th .sort-arrow{display:inline-block;margin-left:3px;opacity:0;font-size:.6rem;tr
 th.sorted-asc .sort-arrow,th.sorted-desc .sort-arrow{opacity:1;color:var(--accent)}
 th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 
+
 /* Loading & Empty states */
 .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px}
@@ -347,9 +327,10 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 </header>
 
 
+
 <div class="container">
   <!-- Loading -->
-  <div class="loading-overlay" id="loadingState"><div class="spinner"></div><p>Carregando dados da planilha...</p></div>
+  <div class="loading-overlay" id="loadingState"><div class="spinner"></div><p>Carregando dados...</p></div>
   <!-- Dashboard content (hidden until loaded) -->
   <div id="dashboardContent" style="display:none">
     <!-- KPIs -->
@@ -399,6 +380,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
   </div>
 </div>
 
+
 <!-- Upload Modal -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal-content">
@@ -416,21 +398,10 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 </div>
 
 
-<!-- Unsaved Changes Bar -->
-<div class="changes-bar" id="changesBar">
-  <div class="bar-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span id="changesText">0 alteracoes nao salvas</span></div>
-  <div class="bar-actions">
-    <button class="bar-btn bar-btn-discard" onclick="discardChanges()">Descartar</button>
-    <button class="bar-btn bar-btn-save" onclick="saveChanges()">Salvar na Planilha</button>
-  </div>
-</div>
-
 
 <script>
 // ==================== CONFIG ====================
-var WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxkweGF0qOC-Aam_pZR1L31E_JkYFPXURenaHqoww0_h7NaeEgl94eP5OBzgY5HN-u6/exec';
 var dashboardData = null;
-var STORAGE_KEY = 'avp-demandas-changes';
 
 var SETORES_KEY = 'avp-demandas-setores';
 
@@ -468,7 +439,6 @@ function toggleTheme(){
 
 // ==================== PDF.JS ====================
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
 
 // ==================== PRIORITY CRITERIA TOGGLE ====================
 function togglePriorityCriteria(){
@@ -510,97 +480,79 @@ document.getElementById('uploadModal').addEventListener('click',function(e){
   if(e.target===this)closeUploadModal();
 });
 
-// ==================== LOCAL STORAGE HELPERS ====================
-function getLocalChanges(){
-  try{var d=localStorage.getItem(STORAGE_KEY);return d?JSON.parse(d):{};}catch(e){return {};}
-}
-function setLocalChanges(obj){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(obj));
-}
-function clearLocalChanges(){
-  localStorage.removeItem(STORAGE_KEY);
-}
 
-
-// ==================== CHANGES BAR ====================
-function updateChangesBar(){
-  var changes=getLocalChanges();
-  var count=Object.keys(changes).length;
-  var bar=document.getElementById('changesBar');
-  var text=document.getElementById('changesText');
-  if(count>0){
-    text.textContent=count+' alterac'+(count===1?'ao':'oes')+' nao salva'+(count===1?'':'s');
-    bar.className='changes-bar visible pending';
-  } else {
-    bar.className='changes-bar';
-  }
+// ==================== INSTANT SAVE (Supabase) ====================
+function onFieldChange(ticket, field, value){
+  var updateData = {};
+  updateData[field] = value;
+  updateData.updated_at = new Date().toISOString();
+  supabase.update('demandas', updateData, 'ticket=eq.'+encodeURIComponent(ticket))
+    .then(function(){ console.log('Saved:', ticket, field, value); })
+    .catch(function(err){ console.error('Save failed:', err); alert('Erro ao salvar: '+err.message); });
 }
 
-function discardChanges(){
-  clearLocalChanges();
-  updateChangesBar();
-  if(dashboardData){
-    var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
-    emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
-    renderTableAberto(emAberto);
-  }
-}
-
-async function saveChanges(){
-  var changes=getLocalChanges();
-  if(!Object.keys(changes).length)return;
-  var alteracoes=[];
-  for(var ticket in changes){
-    alteracoes.push({ticket:ticket,setor:changes[ticket].setor||'',prioridade:changes[ticket].prioridade||''});
-  }
-  var bar=document.getElementById('changesBar');
-  var text=document.getElementById('changesText');
-  text.textContent='Salvando...';
-  try{
-    var resp=await fetch(WEBHOOK_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'update_campos',alteracoes:alteracoes}),
-      redirect:'follow'
-    });
-    var result=await resp.json();
-    if(result.status==='success'||result.status==='ok'){
-      clearLocalChanges();
-      bar.className='changes-bar visible saved';
-      text.textContent='Salvo!';
-      setTimeout(function(){bar.className='changes-bar';},3000);
-    } else {
-      text.textContent='Erro ao salvar: '+(result.message||'tente novamente');
-      setTimeout(function(){updateChangesBar();},3000);
-    }
-  }catch(err){
-    text.textContent='Erro de conexao: '+err.message;
-    setTimeout(function(){updateChangesBar();},3000);
-  }
-}
-
-function onFieldChange(ticket,field,value){
-  var changes=getLocalChanges();
-  if(!changes[ticket])changes[ticket]={};
-  changes[ticket][field]=value;
-  setLocalChanges(changes);
-  updateChangesBar();
-}
-
-
-// ==================== LOAD DATA ON OPEN ====================
+// ==================== LOAD DATA FROM SUPABASE ====================
 async function carregarDados(){
   try{
-    var resp=await fetch(WEBHOOK_URL,{redirect:'follow'});
-    var data=await resp.json();
-    if(data.status==='success'){
-      dashboardData=data;
-      renderDashboard(data);
-    } else {
-      showError('Erro ao carregar: '+(data.message||'desconhecido'));
-    }
+    var aberto = await supabase.select('demandas', { filter: 'tipo=eq.aberto', order: 'data_criacao.asc' });
+    var entregues = await supabase.select('demandas', { filter: 'tipo=eq.entregue', order: 'data_entrega.desc' });
+
+    // Calculate dias for aberto (today - data_criacao)
+    var hoje = new Date();
+    aberto.forEach(function(d){
+      if(d.data_criacao){
+        var parts = d.data_criacao.split('/');
+        if(parts.length===3){
+          var dc = new Date(parts[2], parts[1]-1, parts[0]);
+          d.dias = Math.max(0, Math.round((hoje - dc) / 86400000));
+        } else { d.dias = 0; }
+      } else { d.dias = 0; }
+    });
+
+    // Calculate dias for entregues (data_entrega - data_criacao)
+    entregues.forEach(function(d){
+      if(d.data_criacao && d.data_entrega){
+        var p1 = d.data_criacao.split('/');
+        var p2 = d.data_entrega.split('/');
+        if(p1.length===3 && p2.length===3){
+          var dc = new Date(p1[2], p1[1]-1, p1[0]);
+          var de = new Date(p2[2], p2[1]-1, p2[0]);
+          d.dias = Math.max(0, Math.round((de - dc) / 86400000));
+        } else { d.dias = 0; }
+      } else { d.dias = 0; }
+    });
+
+    var totalAberto = aberto.length;
+    var totalEntregues = entregues.length;
+    var total = totalAberto + totalEntregues;
+    var taxaEntrega = total > 0 ? Math.round((totalEntregues / total) * 100) : 0;
+
+    var somaAberto = 0, cAberto = 0;
+    aberto.forEach(function(d){ if(d.dias>0){somaAberto+=d.dias;cAberto++;} });
+    var mediaAberto = cAberto > 0 ? Math.round(somaAberto/cAberto) : 0;
+
+    var somaEntregues = 0, cEntregues = 0;
+    entregues.forEach(function(d){ if(d.dias>0){somaEntregues+=d.dias;cEntregues++;} });
+    var mediaEntregues = cEntregues > 0 ? Math.round(somaEntregues/cEntregues) : 0;
+
+    var criticas = 0;
+    aberto.forEach(function(d){ if(d.dias>90) criticas++; });
+
+    var semPrevisao = 0;
+    aberto.forEach(function(d){
+      var s = (d.status_atual||'').toLowerCase();
+      if(s.indexOf('an')!==-1 || s.indexOf('desenvolvimento')!==-1) semPrevisao++;
+    });
+
+    dashboardData = {
+      metricas: { total:total, entregues:totalEntregues, em_aberto:totalAberto, taxa_entrega:taxaEntrega, media_dias_entrega:mediaEntregues, media_dias_aberto:mediaAberto, criticas:criticas, sem_previsao:semPrevisao },
+      entregues: entregues,
+      em_aberto: aberto
+    };
+
+    renderDashboard(dashboardData);
   }catch(err){
-    showError('Falha na conexao: '+err.message);
+    showError('Falha ao carregar: '+err.message);
   }
 }
 
@@ -608,11 +560,15 @@ function showError(msg){
   document.getElementById('loadingState').innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><p>'+msg+'</p></div>';
 }
 
+
 // ==================== RENDER DASHBOARD ====================
 function renderDashboard(data){
   document.getElementById('loadingState').style.display='none';
   document.getElementById('dashboardContent').style.display='block';
-  document.getElementById('headerMeta').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Atualizado: '+data.ultima_atualizacao;
+  var agora = new Date();
+  var hh = ('0'+agora.getHours()).slice(-2);
+  var mm = ('0'+agora.getMinutes()).slice(-2);
+  document.getElementById('headerMeta').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Atualizado: '+hh+':'+mm;
   renderKPIs(data.metricas);
   renderInsights(data.metricas);
   var entregues=data.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
@@ -620,9 +576,7 @@ function renderDashboard(data){
   entregues.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.data_entrega=normalizarData(d.data_entrega);});
   emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
   renderTables(entregues,emAberto);
-  updateChangesBar();
 }
-
 
 function normalizarData(val){
   if(!val)return '';
@@ -687,12 +641,10 @@ function getPriorityClass(val){
   return '';
 }
 
-function buildSetorSelect(ticket,currentValue){
-  var changes=getLocalChanges();
-  var val=(changes[ticket]&&changes[ticket].setor!==undefined)?changes[ticket].setor:(currentValue||'(Sem setor)');
-  var setores=getSetores();
-  // Se o valor atual não está na lista, adicionar
-  if(val&&val!=='(Sem setor)'&&setores.indexOf(val)===-1){
+function buildSetorSelect(ticket, currentValue){
+  var val = currentValue || '(Sem setor)';
+  var setores = getSetores();
+  if(val && val!=='(Sem setor)' && setores.indexOf(val)===-1){
     setores.push(val);
     salvarSetores(setores);
   }
@@ -705,35 +657,28 @@ function buildSetorSelect(ticket,currentValue){
   return h;
 }
 
-function onSetorChange(el,ticket){
-  var val=el.value;
+function onSetorChange(el, ticket){
+  var val = el.value;
   if(val==='__add__'){
-    var novo=prompt('Digite o nome do novo setor:');
-    if(novo&&novo.trim()){
-      novo=novo.trim();
+    var novo = prompt('Digite o nome do novo setor:');
+    if(novo && novo.trim()){
+      novo = novo.trim();
       adicionarSetor(novo);
-      onFieldChange(ticket,'setor',novo);
-      // Re-render para atualizar todos os dropdowns
-      if(dashboardData){
-        var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
-        emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
-        renderTableAberto(emAberto);
-      }
+      onFieldChange(ticket, 'setor', novo);
+      // Re-render to update all dropdowns
+      carregarDados();
     } else {
-      // Cancelou — volta ao valor anterior
-      var changes=getLocalChanges();
-      el.value=(changes[ticket]&&changes[ticket].setor)||'(Sem setor)';
+      el.value = '(Sem setor)';
     }
   } else {
-    onFieldChange(ticket,'setor',val);
+    onFieldChange(ticket, 'setor', val);
   }
 }
 
-function buildPrioridadeSelect(ticket,currentValue){
-  var changes=getLocalChanges();
-  var val=(changes[ticket]&&changes[ticket].prioridade!==undefined)?changes[ticket].prioridade:(currentValue||'');
-  var cls=getPriorityClass(val);
-  var dotCls=cls||'none';
+function buildPrioridadeSelect(ticket, currentValue){
+  var val = currentValue || '';
+  var cls = getPriorityClass(val);
+  var dotCls = cls || 'none';
   var h='<div class="cell-select-wrap"><div class="cell-select-dot '+dotCls+'"></div><select class="cell-select '+cls+'" data-ticket="'+ticket+'" data-field="prioridade" onchange="onPrioridadeChange(this,\''+ticket+'\')">';
   PRIORIDADES.forEach(function(p){
     h+='<option value="'+p.value+'"'+(p.value===val?' selected':'')+'>'+p.label+'</option>';
@@ -742,47 +687,46 @@ function buildPrioridadeSelect(ticket,currentValue){
   return h;
 }
 
-function onPrioridadeChange(el,ticket){
-  var val=el.value;
-  el.className='cell-select '+getPriorityClass(val);
-  var dot=el.parentElement.querySelector('.cell-select-dot');
-  if(dot) dot.className='cell-select-dot '+(getPriorityClass(val)||'none');
-  onFieldChange(ticket,'prioridade',val);
+function onPrioridadeChange(el, ticket){
+  var val = el.value;
+  el.className = 'cell-select ' + getPriorityClass(val);
+  var dot = el.parentElement.querySelector('.cell-select-dot');
+  if(dot) dot.className = 'cell-select-dot ' + (getPriorityClass(val)||'none');
+  onFieldChange(ticket, 'prioridade', val);
 }
 
 
 function renderTableAberto(data){
   var tb=document.getElementById('tblAberto');
   if(!data.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda em aberto</td></tr>';return;}
-  
+
   // Sort
   var col=sortState.col;
   var dir=sortState.dir;
-  var changes=getLocalChanges();
   data.sort(function(a,b){
     var va,vb;
     if(col==='dias'){va=Number(a.dias)||0;vb=Number(b.dias)||0;}
     else if(col==='ticket'){va=a.ticket;vb=b.ticket;}
-    else if(col==='titulo'){va=a.titulo.toLowerCase();vb=b.titulo.toLowerCase();}
+    else if(col==='titulo'){va=(a.titulo||'').toLowerCase();vb=(b.titulo||'').toLowerCase();}
     else if(col==='data_criacao'){va=a.data_criacao;vb=b.data_criacao;}
     else if(col==='status_atual'){va=a.status_atual;vb=b.status_atual;}
-    else if(col==='setor'){va=(changes[a.ticket]&&changes[a.ticket].setor)||a.setor||'';vb=(changes[b.ticket]&&changes[b.ticket].setor)||b.setor||'';}
-    else if(col==='prioridade'){va=(changes[a.ticket]&&changes[a.ticket].prioridade)||a.prioridade||'9';vb=(changes[b.ticket]&&changes[b.ticket].prioridade)||b.prioridade||'9';}
+    else if(col==='setor'){va=a.setor||'';vb=b.setor||'';}
+    else if(col==='prioridade'){va=a.prioridade||'9';vb=b.prioridade||'9';}
     else{va=0;vb=0;}
     if(va<vb)return dir==='asc'?-1:1;
     if(va>vb)return dir==='asc'?1:-1;
     return 0;
   });
-  
+
   var h='';
   data.forEach(function(d){
-    var setorVal=(changes[d.ticket]&&changes[d.ticket].setor)||d.setor||'(Sem setor)';
-    var prioVal=(changes[d.ticket]&&changes[d.ticket].prioridade)||d.prioridade||'';
+    var setorVal=d.setor||'(Sem setor)';
+    var prioVal=d.prioridade||'';
     h+='<tr class="expand-row" data-ticket="'+d.ticket+'" data-setor="'+setorVal+'" data-prioridade="'+prioVal+'" onclick="toggleExpandRow(\''+d.ticket+'\')">';
     h+='<td><strong>'+d.ticket+'</strong></td>';
-    h+='<td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td>';
-    h+='<td>'+d.data_criacao+'</td>';
-    h+='<td>'+d.status_atual+'</td>';
+    h+='<td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td>';
+    h+='<td>'+(d.data_criacao||'')+'</td>';
+    h+='<td>'+(d.status_atual||'')+'</td>';
     h+='<td>'+agingBadge(d.dias)+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildSetorSelect(d.ticket,d.setor||'')+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildPrioridadeSelect(d.ticket,d.prioridade||'')+'</td>';
@@ -790,11 +734,11 @@ function renderTableAberto(data){
     // Expanded detail row
     var prioLabel=prioVal?findPrioLabel(prioVal):'Nao definida';
     h+='<tr class="expanded-detail" id="detail-'+d.ticket+'">';
-    h+='<td colspan="7"><div class="detail-title">'+d.titulo+'</div>';
+    h+='<td colspan="7"><div class="detail-title">'+(d.titulo||'')+'</div>';
     h+='</td></tr>';
   });
   tb.innerHTML=h;
-  
+
   // Update sort indicators on headers
   document.querySelectorAll('#tab-aberto th').forEach(function(th){
     th.classList.remove('sorted-asc','sorted-desc');
@@ -806,7 +750,7 @@ function renderTableAberto(data){
       th.classList.add('sorted-'+sortState.dir);
     }
   });
-  
+
   populateFilterSetor();
   applyFilters();
 }
@@ -816,7 +760,7 @@ function renderTableEntregues(data){
   if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda entregue</td></tr>';return;}
   var h='';
   data.forEach(function(d){
-    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td><td>'+d.data_criacao+'</td><td>'+d.data_entrega+'</td><td>'+(d.dias||0)+' dias</td></tr>';
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td><td>'+(d.data_criacao||'')+'</td><td>'+(d.data_entrega||'')+'</td><td>'+(d.dias||0)+' dias</td></tr>';
   });
   tb.innerHTML=h;
 }
@@ -830,7 +774,7 @@ function renderTableTodas(entregues,emAberto){
   var h='';
   todas.forEach(function(d){
     var statusHtml=d.tipo==='entregue'?'<span class="aging-badge aging-green">Entregue</span>':d.status;
-    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td><td>'+d.data_criacao+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td><td>'+(d.data_criacao||'')+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
   });
   tb.innerHTML=h;
 }
@@ -873,31 +817,51 @@ function handleFile(file){
 }
 
 
-btnProcessar.addEventListener('click',async function(){
-  if(!pdfFile)return;
-  btnProcessar.disabled=true;
+btnProcessar.addEventListener('click', async function(){
+  if(!pdfFile) return;
+  btnProcessar.disabled = true;
   showStatus('Extraindo dados do PDF...','info');
   try{
-    var ab=await pdfFile.arrayBuffer();
-    var pdf=await pdfjsLib.getDocument({data:ab}).promise;
-    var fullText='';
-    for(var i=1;i<=pdf.numPages;i++){var pg=await pdf.getPage(i);var tc=await pg.getTextContent();fullText+=tc.items.map(function(it){return it.str;}).join(' ')+' ';}
-    var extracted=parsePDFText(fullText);
-    showStatus('Enviando para planilha...','info');
-    var resp=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(extracted),redirect:'follow'});
-    var result=await resp.json();
-    if(result.status==='success'){
-      var dt=result.detalhes||{};
-      showStatus('Atualizado! Novas entregues: '+dt.novasEntregues+' | Movidas: '+dt.movidasParaEntregues+' | Novas aberto: '+dt.novasAberto+' | Atualizadas: '+dt.atualizadasAberto,'success');
-      setTimeout(function(){carregarDados();},1500);
-    } else {
-      showStatus('Erro: '+(result.message||'desconhecido'),'error');
+    var ab = await pdfFile.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    var fullText = '';
+    for(var i=1; i<=pdf.numPages; i++){
+      var pg = await pdf.getPage(i);
+      var tc = await pg.getTextContent();
+      fullText += tc.items.map(function(it){return it.str;}).join(' ')+' ';
     }
+    var extracted = parsePDFText(fullText);
+    showStatus('Salvando no banco de dados...','info');
+
+    // Prepare rows for upsert
+    var rows = [];
+    extracted.entregues.forEach(function(d){
+      rows.push({ ticket: d.ticket, titulo: d.titulo, data_criacao: d.data_criacao, data_entrega: d.data_entrega, status_atual: d.data_entrega || 'Entregue', tipo: 'entregue', updated_at: new Date().toISOString() });
+    });
+    extracted.em_aberto.forEach(function(d){
+      rows.push({ ticket: d.ticket, titulo: d.titulo, data_criacao: d.data_criacao, data_entrega: '', status_atual: d.status_atual, tipo: 'aberto', updated_at: new Date().toISOString() });
+    });
+
+    // Upsert in chunks of 50
+    var CHUNK = 50;
+    for(var i=0; i<rows.length; i+=CHUNK){
+      await supabase.insert('demandas', rows.slice(i, i+CHUNK), { upsert: true });
+    }
+
+    // Also update any that changed from aberto to entregue
+    var entregueTickets = extracted.entregues.map(function(d){return d.ticket;});
+    for(var j=0; j<entregueTickets.length; j++){
+      await supabase.update('demandas', {tipo:'entregue', updated_at: new Date().toISOString()}, 'ticket=eq.'+encodeURIComponent(entregueTickets[j]));
+    }
+
+    showStatus('Dados salvos! '+rows.length+' demandas processadas.','success');
+    setTimeout(function(){ carregarDados(); closeUploadModal(); }, 1500);
   }catch(err){
     showStatus('Erro: '+err.message,'error');
   }
-  btnProcessar.disabled=false;
+  btnProcessar.disabled = false;
 });
+
 
 // ==================== PDF PARSER ====================
 function parsePDFText(text){
@@ -913,7 +877,6 @@ function parsePDFText(text){
   var emAberto=textoAberto?extrairDemandas(textoAberto):[];
   return{entregues:entregues,em_aberto:emAberto};
 }
-
 
 function extrairDemandas(texto){
   var demandas=[];
@@ -945,6 +908,7 @@ function showStatus(msg,type){
   document.getElementById('statusText').textContent=msg;
 }
 
+
 // ==================== FILTERS ====================
 var currentFilterSetor='';
 var currentFilterPrioridade='';
@@ -958,32 +922,29 @@ function populateFilterSetor(){
     if(s==='(Sem setor)')return;
     sel.innerHTML+='<option value="'+s+'">'+s+'</option>';
   });
-  // Restore current filter selection
   if(currentFilterSetor)sel.value=currentFilterSetor;
 }
 
 function applyFilters(){
   currentFilterSetor=document.getElementById('filterSetor').value;
   currentFilterPrioridade=document.getElementById('filterPrioridade').value;
-  
+
   var rows=document.querySelectorAll('#tblAberto tr.expand-row');
   var shown=0,total=rows.length;
-  var changes=getLocalChanges();
-  
+
   rows.forEach(function(tr){
-    var ticket=tr.getAttribute('data-ticket');
-    var setor=(changes[ticket]&&changes[ticket].setor)||tr.getAttribute('data-setor')||'(Sem setor)';
-    var prio=(changes[ticket]&&changes[ticket].prioridade)||tr.getAttribute('data-prioridade')||'';
-    
+    var setor=tr.getAttribute('data-setor')||'(Sem setor)';
+    var prio=tr.getAttribute('data-prioridade')||'';
+
     var showSetor=!currentFilterSetor||setor===currentFilterSetor;
     var showPrio=true;
     if(currentFilterPrioridade==='none'){showPrio=!prio||prio==='';}
     else if(currentFilterPrioridade){showPrio=prio===currentFilterPrioridade;}
-    
+
     // Also apply search
     var q=document.getElementById('searchInput').value.toLowerCase();
     var showSearch=!q||tr.textContent.toLowerCase().indexOf(q)!==-1;
-    
+
     var visible=showSetor&&showPrio&&showSearch;
     tr.style.display=visible?'':'none';
     // Also hide expanded detail if row is hidden
@@ -993,14 +954,14 @@ function applyFilters(){
     }
     if(visible)shown++;
   });
-  
+
   // Also apply search to other tabs
   var q=document.getElementById('searchInput').value.toLowerCase();
   document.querySelectorAll('#tblEntregues tr, #tblTodas tr').forEach(function(tr){
     var text=tr.textContent.toLowerCase();
     tr.style.display=!q||text.indexOf(q)!==-1?'':'none';
   });
-  
+
   // Counter
   var counter=document.getElementById('filterCounter');
   if(currentFilterSetor||currentFilterPrioridade||document.getElementById('searchInput').value){
@@ -1008,13 +969,13 @@ function applyFilters(){
   } else {
     counter.textContent='';
   }
-  
+
   // Clear button
   document.getElementById('filterClear').style.display=(currentFilterSetor||currentFilterPrioridade)?'inline-flex':'none';
-  
+
   // Chips
   renderFilterChips();
-  
+
   // Empty state
   var tbody=document.getElementById('tblAberto');
   var existingEmpty=tbody.querySelector('.filter-empty-row');
@@ -1054,6 +1015,7 @@ function findPrioLabel(val){
   }
   return val;
 }
+
 
 // ==================== EXPANDABLE ROWS ====================
 function toggleExpandRow(ticket){
