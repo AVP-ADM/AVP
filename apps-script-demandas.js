@@ -49,14 +49,131 @@ function doPost(e) {
   }
 }
 
-// Permite teste via GET
+// Permite teste via GET — retorna todos os dados da planilha
 function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      status: 'ok',
-      message: 'Webhook de demandas ativo. Envie dados via POST.'
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var abaEntregues = ss.getSheetByName(CONFIG.ABA_ENTREGUES);
+    var abaAberto = ss.getSheetByName(CONFIG.ABA_ABERTO);
+    
+    var entregues = [];
+    var emAberto = [];
+    
+    // Ler aba Entregues (a partir da linha 2, pular cabeçalho)
+    if (abaEntregues && abaEntregues.getLastRow() > 1) {
+      var dadosEntregues = abaEntregues.getRange(2, 1, abaEntregues.getLastRow() - 1, 5).getValues();
+      for (var i = 0; i < dadosEntregues.length; i++) {
+        var row = dadosEntregues[i];
+        if (!row[0]) continue;
+        entregues.push({
+          ticket: String(row[0]).trim(),
+          titulo: String(row[1]).trim(),
+          data_criacao: formatarDataOutput(row[2]),
+          data_entrega: formatarDataOutput(row[3]),
+          dias: row[4] || 0
+        });
+      }
+    }
+    
+    // Ler aba Em Aberto (a partir da linha 2, pular cabeçalho)
+    if (abaAberto && abaAberto.getLastRow() > 1) {
+      var dadosAberto = abaAberto.getRange(2, 1, abaAberto.getLastRow() - 1, 7).getValues();
+      for (var j = 0; j < dadosAberto.length; j++) {
+        var rowA = dadosAberto[j];
+        if (!rowA[0]) continue;
+        
+        // Recalcular dias desde criação (hoje - data criação)
+        var dataCriacaoAberto = parseData(formatarDataOutput(rowA[2]));
+        var diasAtual = dataCriacaoAberto ? calcularDias(dataCriacaoAberto, new Date()) : (rowA[4] || 0);
+        
+        emAberto.push({
+          ticket: String(rowA[0]).trim(),
+          titulo: String(rowA[1]).trim(),
+          data_criacao: formatarDataOutput(rowA[2]),
+          status_atual: String(rowA[3]).trim(),
+          dias: diasAtual,
+          setor: String(rowA[5] || '').trim(),
+          prioridade: String(rowA[6] || '').trim()
+        });
+      }
+    }
+    
+    // Calcular métricas
+    var totalEntregues = entregues.length;
+    var totalAberto = emAberto.length;
+    var total = totalEntregues + totalAberto;
+    var taxaEntrega = total > 0 ? Math.round((totalEntregues / total) * 100) : 0;
+    
+    // Média dias entregues
+    var somaEntregues = 0, countEntregues = 0;
+    for (var k = 0; k < entregues.length; k++) {
+      var d = Number(entregues[k].dias);
+      if (!isNaN(d) && d > 0) { somaEntregues += d; countEntregues++; }
+    }
+    var mediaEntregues = countEntregues > 0 ? Math.round(somaEntregues / countEntregues) : 0;
+    
+    // Média dias aberto
+    var somaAberto = 0, countAberto = 0;
+    for (var l = 0; l < emAberto.length; l++) {
+      var da = Number(emAberto[l].dias);
+      if (!isNaN(da) && da > 0) { somaAberto += da; countAberto++; }
+    }
+    var mediaAberto = countAberto > 0 ? Math.round(somaAberto / countAberto) : 0;
+    
+    // Demandas críticas (>90 dias em aberto)
+    var criticas = 0;
+    for (var m = 0; m < emAberto.length; m++) {
+      if (Number(emAberto[m].dias) > 90) criticas++;
+    }
+    
+    // Sem previsão (Em análise/desenvolvimento)
+    var semPrevisao = 0;
+    for (var n = 0; n < emAberto.length; n++) {
+      var status = emAberto[n].status_atual.toLowerCase();
+      if (status.indexOf('an') !== -1 || status.indexOf('desenvolvimento') !== -1) {
+        semPrevisao++;
+      }
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'success',
+        ultima_atualizacao: Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm'),
+        metricas: {
+          total: total,
+          entregues: totalEntregues,
+          em_aberto: totalAberto,
+          taxa_entrega: taxaEntrega,
+          media_dias_entrega: mediaEntregues,
+          media_dias_aberto: mediaAberto,
+          criticas: criticas,
+          sem_previsao: semPrevisao
+        },
+        entregues: entregues,
+        em_aberto: emAberto
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'error',
+        message: error.message
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Formata valor de célula como string de data dd/mm/yyyy
+ * Aceita Date objects ou strings
+ */
+function formatarDataOutput(valor) {
+  if (!valor) return '';
+  if (valor instanceof Date) {
+    return formatarData(valor);
+  }
+  return String(valor).trim();
 }
 
 // ==================== PROCESSAMENTO PRINCIPAL ====================
