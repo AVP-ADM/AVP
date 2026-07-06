@@ -791,7 +791,6 @@ function renderTableAberto(data){
     var prioLabel=prioVal?findPrioLabel(prioVal):'Nao definida';
     h+='<tr class="expanded-detail" id="detail-'+d.ticket+'">';
     h+='<td colspan="7"><div class="detail-title">'+d.titulo+'</div>';
-    h+='<div class="detail-meta"><span>Criado: '+d.data_criacao+'</span><span>Status: '+d.status_atual+'</span><span>Dias: '+(d.dias||0)+'</span><span>Setor: '+setorVal+'</span><span>Prioridade: '+prioLabel+'</span></div>';
     h+='</td></tr>';
   });
   tb.innerHTML=h;
