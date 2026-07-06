@@ -360,187 +360,116 @@ function parsePDFText(text) {
   var entregues = [];
   var emAberto = [];
   
-  // Normalizar texto
-  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  // Normalizar: remover non-breaking spaces, colapsar espaços múltiplos
+  text = text.replace(/\u00A0/g, ' ').replace(/\r\n/g, ' ').replace(/\r/g, ' ').replace(/\n/g, ' ');
+  text = text.replace(/\s{2,}/g, ' ').trim();
   
-  // Dividir em linhas e limpar
-  var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+  // Detectar onde começa cada seção
+  var posEntregues = text.search(/Demandas\s+Entregues/i);
+  var posAberto = text.search(/Demandas\s+em\s+Aberto/i);
   
-  var secaoAtual = null; // 'entregues' ou 'aberto'
+  var textoEntregues = '';
+  var textoAberto = '';
   
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var lineLower = line.toLowerCase();
-    
-    // Detectar secoes
-    if (lineLower.indexOf('demandas entregues') !== -1 || lineLower.indexOf('entregues') !== -1 && lineLower.indexOf('demanda') !== -1) {
-      secaoAtual = 'entregues';
-      continue;
-    }
-    if (lineLower.indexOf('demandas em aberto') !== -1 || (lineLower.indexOf('em aberto') !== -1 && lineLower.indexOf('demanda') !== -1)) {
-      secaoAtual = 'aberto';
-      continue;
-    }
-    
-    // Ignorar cabeçalhos de tabela
-    if (lineLower.indexOf('ticket') !== -1 && lineLower.indexOf('titulo') !== -1) continue;
-    if (lineLower.indexOf('ticket') !== -1 && lineLower.indexOf('título') !== -1) continue;
-    
-    // Tentar extrair demanda da linha
-    var demanda = extrairDemandaLinha(line, lines, i);
-    if (demanda && secaoAtual) {
-      if (secaoAtual === 'entregues') {
-        entregues.push(demanda);
-      } else if (secaoAtual === 'aberto') {
-        emAberto.push(demanda);
-      }
-    }
+  if (posEntregues >= 0 && posAberto >= 0) {
+    textoEntregues = text.substring(posEntregues, posAberto);
+    textoAberto = text.substring(posAberto);
+  } else if (posEntregues >= 0) {
+    textoEntregues = text.substring(posEntregues);
+  } else if (posAberto >= 0) {
+    textoAberto = text.substring(posAberto);
+  } else {
+    // Não encontrou seções, tenta tudo como aberto
+    textoAberto = text;
   }
   
-  // Se não detectou seções, tenta abordagem alternativa com regex em bloco
-  if (entregues.length === 0 && emAberto.length === 0) {
-    var resultado = parseBlocoAlternativo(text);
-    entregues = resultado.entregues;
-    emAberto = resultado.emAberto;
+  // Extrair demandas de cada seção
+  if (textoEntregues) {
+    entregues = extrairDemandasDeTexto(textoEntregues);
   }
+  if (textoAberto) {
+    emAberto = extrairDemandasDeTexto(textoAberto);
+  }
+  
+  console.log('Entregues encontradas:', entregues.length);
+  console.log('Em aberto encontradas:', emAberto.length);
   
   return { entregues: entregues, em_aberto: emAberto };
 }
 
-function extrairDemandaLinha(line, allLines, idx) {
-  // Formatos do PDF South Tecnologia:
-  // "64700 Título: Divergência em Novos Veículos - Fv Data de entrega estimada: 30/06/2026 Data de criação: 30/06/2026"
-  // "2028 Ticket: 68108 Título: [INCIDENTE] Texto... Data de entrega estimada: Em análise/desenvolvimento Data de criação: 13/03/2026"
+function extrairDemandasDeTexto(texto) {
+  var demandas = [];
   
-  // Normalizar espaços (non-breaking space, multiple spaces)
-  line = line.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+  // Dividir o texto em blocos por "Ticket:" — cada bloco é uma demanda
+  // O split vai criar: ["Demandas Entregues ", "64700 Título: ...", "68108 Título: ...", ...]
+  var blocos = texto.split(/Ticket\s*:\s*/i);
   
-  // Precisa ter pelo menos um número de 3-6 dígitos (ticket)
-  var ticketMatch = line.match(/\b(\d{3,6})\b/);
-  if (!ticketMatch) return null;
-  
-  // Ignorar se a linha não tem "Título:" ou "Titulo:"
-  var temTitulo = /t[ií]tulo\s*:/i.test(line);
-  if (!temTitulo) return null;
-  
-  var ticket = ticketMatch[1];
-  
-  // Se tem "Ticket: XXXX" antes, pegar esse número
-  var ticketExplicito = line.match(/Ticket\s*:\s*(\d{3,6})/i);
-  if (ticketExplicito) {
-    ticket = ticketExplicito[1];
-  }
-  
-  // === ABORDAGEM POR SPLIT ===
-  // Dividir a linha nos rótulos conhecidos para isolar cada campo
-  // Rótulos: "Título:", "Data de entrega estimada:", "Data de entrega:", "Data de criação:", "Setor:", "Prioridade:"
-  var partes = line.split(/(?=T[ií]tulo\s*:|Data de entrega\s*(?:estimada\s*)?:|Data de cria[cç][aã]o\s*:|Setor\s*:|Prioridade\s*:)/i);
-  
-  var titulo = '';
-  var dataCriacao = '';
-  var dataEntrega = '';
-  var statusAtual = '';
-  var setor = '';
-  var prioridade = '';
-  
-  for (var p = 0; p < partes.length; p++) {
-    var parte = partes[p].trim();
-    var parteLower = parte.toLowerCase();
+  for (var i = 0; i < blocos.length; i++) {
+    var bloco = blocos[i].trim();
+    if (!bloco) continue;
     
-    if (/^t[ií]tulo\s*:/i.test(parte)) {
-      // Extrair valor após "Título:"
-      titulo = parte.replace(/^t[ií]tulo\s*:\s*/i, '').trim();
-    } else if (/^data de entrega/i.test(parte)) {
-      // "Data de entrega estimada: XX" ou "Data de entrega: XX"
-      var valEntrega = parte.replace(/^data de entrega\s*(?:estimada\s*)?:\s*/i, '').trim();
-      // Verificar se é data ou status texto
+    // O bloco começa com o número do ticket
+    var ticketMatch = bloco.match(/^(\d{3,6})\b/);
+    if (!ticketMatch) continue;
+    
+    var ticket = ticketMatch[1];
+    var resto = bloco.substring(ticket.length).trim();
+    
+    // Extrair campos usando split nos rótulos
+    var titulo = '';
+    var dataCriacao = '';
+    var dataEntrega = '';
+    var statusAtual = '';
+    
+    // Extrair Título: texto entre "Título:" e "Data de entrega"
+    var tituloMatch = resto.match(/T[ií]tulo\s*:\s*(.+?)(?=\s*Data de entrega)/i);
+    if (tituloMatch) {
+      titulo = tituloMatch[1].trim();
+    } else {
+      // Fallback: pegar tudo após "Título:" até o fim
+      var tituloFallback = resto.match(/T[ií]tulo\s*:\s*(.+)/i);
+      if (tituloFallback) {
+        titulo = tituloFallback[1].trim();
+        // Limpar campos que possam ter vazado
+        titulo = titulo.replace(/\s*Data de entrega.*$/i, '');
+        titulo = titulo.replace(/\s*Data de cria.*$/i, '');
+      }
+    }
+    
+    // Extrair Data de entrega estimada
+    var entregaMatch = resto.match(/Data de entrega(?:\s+estimada)?\s*:\s*(.+?)(?=\s*Data de cria)/i);
+    if (entregaMatch) {
+      var valEntrega = entregaMatch[1].trim();
       var dataE = valEntrega.match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);
       if (dataE) {
         dataEntrega = dataE[1];
         statusAtual = dataE[1];
       } else {
-        // É texto como "Em análise/desenvolvimento"
-        statusAtual = valEntrega;
+        statusAtual = valEntrega; // "Em análise/desenvolvimento"
       }
-    } else if (/^data de cria/i.test(parte)) {
-      var valCriacao = parte.replace(/^data de cria[cç][aã]o\s*:\s*/i, '').trim();
-      var dataC = valCriacao.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
-      if (dataC) {
-        dataCriacao = dataC[1];
-      }
-    } else if (/^setor\s*:/i.test(parte)) {
-      setor = parte.replace(/^setor\s*:\s*/i, '').trim();
-    } else if (/^prioridade\s*:/i.test(parte)) {
-      prioridade = parte.replace(/^prioridade\s*:\s*/i, '').trim();
     }
-  }
-  
-  // Fallback: se não achou datas pelos rótulos, extrair datas soltas
-  if (!dataCriacao) {
-    var todasDatas = line.match(/\d{1,2}\/\d{1,2}\/\d{4}/g) || [];
-    if (todasDatas.length > 0) {
-      dataCriacao = todasDatas[todasDatas.length - 1];
-    }
-    if (todasDatas.length >= 2 && !dataEntrega) {
-      dataEntrega = todasDatas[0];
-    }
-  }
-  
-  if (!statusAtual) {
-    statusAtual = dataEntrega || 'Em análise';
-  }
-  
-  // Limpar título de qualquer lixo residual (por segurança)
-  titulo = titulo.replace(/\s*Data de entrega.*$/i, '');
-  titulo = titulo.replace(/\s*Data de cria.*$/i, '');
-  titulo = titulo.replace(/\s*Ticket\s*:\s*\d+/i, '');
-  titulo = titulo.replace(/[\s\-\|:]+$/, '').trim();
-  
-  return {
-    ticket: ticket,
-    titulo: titulo || 'Sem titulo',
-    data_criacao: dataCriacao,
-    data_entrega: dataEntrega || dataCriacao,
-    data_estimada: dataEntrega,
-    status_atual: statusAtual,
-    setor: setor,
-    prioridade: prioridade
-  };
-}
-
-function parseBlocoAlternativo(text) {
-  var entregues = [];
-  var emAberto = [];
-  
-  // Tentar encontrar blocos de tickets com regex global
-  var ticketRegex = /#?(\d{3,6})\s+(.+?)\s+(\d{1,2}\/\d{1,2}\/\d{4})/g;
-  var match;
-  
-  var secaoEntregue = text.toLowerCase().indexOf('entregue');
-  var secaoAberto = text.toLowerCase().indexOf('em aberto');
-  
-  while ((match = ticketRegex.exec(text)) !== null) {
-    var pos = match.index;
-    var demanda = {
-      ticket: match[1],
-      titulo: match[2].trim(),
-      data_criacao: match[3],
-      data_entrega: match[3],
-      data_estimada: '',
-      status_atual: 'Em análise'
-    };
     
-    // Decidir seção baseado na posição
-    if (secaoAberto > 0 && pos > secaoAberto) {
-      emAberto.push(demanda);
-    } else if (secaoEntregue >= 0 && pos > secaoEntregue) {
-      entregues.push(demanda);
-    } else {
-      emAberto.push(demanda);
+    // Extrair Data de criação
+    var criacaoMatch = resto.match(/Data de cria[cç][aã]o\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i);
+    if (criacaoMatch) {
+      dataCriacao = criacaoMatch[1];
     }
+    
+    if (!statusAtual) {
+      statusAtual = dataEntrega || 'Em análise';
+    }
+    
+    demandas.push({
+      ticket: ticket,
+      titulo: titulo || 'Sem titulo',
+      data_criacao: dataCriacao,
+      data_entrega: dataEntrega || dataCriacao,
+      data_estimada: dataEntrega,
+      status_atual: statusAtual
+    });
   }
   
-  return { entregues: entregues, emAberto: emAberto };
+  return demandas;
 }
 
 // ==================== RENDER PREVIEW ====================
