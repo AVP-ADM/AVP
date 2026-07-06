@@ -339,6 +339,10 @@ btnExtrair.addEventListener('click', async function() {
       fullText += pageText + '\n';
     }
     
+    console.log('=== TEXTO EXTRAIDO DO PDF (primeiras 3000 chars) ===');
+    console.log(fullText.substring(0, 3000));
+    console.log('=== FIM ===');
+    
     extractedData = parsePDFText(fullText);
     renderPreview(extractedData);
     btnEnviar.disabled = false;
@@ -407,75 +411,71 @@ function extrairDemandaLinha(line, allLines, idx) {
   // Formatos do PDF South Tecnologia:
   // "64700 Título: Divergência em Novos Veículos - Fv Data de entrega estimada: 30/06/2026 Data de criação: 30/06/2026"
   // "2028 Ticket: 68108 Título: [INCIDENTE] Texto... Data de entrega estimada: Em análise/desenvolvimento Data de criação: 13/03/2026"
-  // "60041 Título: Solicitação de melhorias... Data de entrega estimada: Em análise/desenvolvimento Data de criação: 06/11/2025"
+  
+  // Normalizar espaços (non-breaking space, multiple spaces)
+  line = line.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
   
   // Precisa ter pelo menos um número de 3-6 dígitos (ticket)
   var ticketMatch = line.match(/\b(\d{3,6})\b/);
   if (!ticketMatch) return null;
   
-  // Ignorar se a linha não tem "Título:" ou "Titulo:" — provavelmente não é uma demanda
-  if (!/t[ií]tulo:/i.test(line)) return null;
+  // Ignorar se a linha não tem "Título:" ou "Titulo:"
+  var temTitulo = /t[ií]tulo\s*:/i.test(line);
+  if (!temTitulo) return null;
   
   var ticket = ticketMatch[1];
   
   // Se tem "Ticket: XXXX" antes, pegar esse número
-  var ticketExplicito = line.match(/Ticket:\s*(\d{3,6})/i);
+  var ticketExplicito = line.match(/Ticket\s*:\s*(\d{3,6})/i);
   if (ticketExplicito) {
     ticket = ticketExplicito[1];
   }
   
-  // TÍTULO: tudo entre "Título:" e o próximo campo rotulado
-  // Campos rotulados: "Data de entrega estimada:", "Data de entrega:", "Data de criação:", "Setor:", "Prioridade:"
+  // === ABORDAGEM POR SPLIT ===
+  // Dividir a linha nos rótulos conhecidos para isolar cada campo
+  // Rótulos: "Título:", "Data de entrega estimada:", "Data de entrega:", "Data de criação:", "Setor:", "Prioridade:"
+  var partes = line.split(/(?=T[ií]tulo\s*:|Data de entrega\s*(?:estimada\s*)?:|Data de cria[cç][aã]o\s*:|Setor\s*:|Prioridade\s*:)/i);
+  
   var titulo = '';
-  
-  // Primeiro, tentar extrair com lookahead para campos conhecidos
-  var tituloMatch = line.match(/T[ií]tulo:\s*(.+?)\s*(?:Data de entrega|Data de cria)/i);
-  if (tituloMatch) {
-    titulo = tituloMatch[1].trim();
-  } else {
-    // Fallback: pegar tudo após "Título:" e limpar depois
-    var tituloFallback = line.match(/T[ií]tulo:\s*(.+)/i);
-    if (tituloFallback) {
-      titulo = tituloFallback[1].trim();
-    }
-  }
-  
-  // Limpar qualquer rótulo que tenha vazado para o título
-  titulo = titulo.replace(/\s*Data de entrega.*$/i, '');
-  titulo = titulo.replace(/\s*Data de cria[cç][aã]o.*$/i, '');
-  titulo = titulo.replace(/\s*Ticket:\s*\d+/i, '');
-  titulo = titulo.replace(/\s*Em an[aá]lise.*$/i, '');
-  titulo = titulo.replace(/\s*Em desenvolvimento.*$/i, '');
-  titulo = titulo.replace(/\s*Em homologa[cç].*$/i, '');
-  titulo = titulo.replace(/\s*Setor:.*$/i, '');
-  titulo = titulo.replace(/\s*Prioridade:.*$/i, '');
-  titulo = titulo.replace(/[\s\-\|]+$/, '').trim();
-  
-  // DATA DE CRIAÇÃO
   var dataCriacao = '';
-  var dataCriacaoMatch = line.match(/Data de cria[cç][aã]o:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i);
-  if (dataCriacaoMatch) {
-    dataCriacao = dataCriacaoMatch[1];
-  }
-  
-  // DATA DE ENTREGA (pode ser data ou texto como "Em análise/desenvolvimento")
   var dataEntrega = '';
   var statusAtual = '';
-  var entregaMatch = line.match(/Data de entrega(?:\s+estimada)?:\s*([^\n]+?)(?=\s+Data de cria[cç]|$)/i);
-  if (entregaMatch) {
-    var valorEntrega = entregaMatch[1].trim();
-    // Verificar se é uma data
-    var dataMatch = valorEntrega.match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);
-    if (dataMatch) {
-      dataEntrega = dataMatch[1];
-      statusAtual = dataMatch[1];
-    } else {
-      // É um texto de status (Ex: "Em análise/desenvolvimento")
-      statusAtual = valorEntrega.replace(/\s*Data de cria[cç][aã]o.*$/i, '').trim();
+  var setor = '';
+  var prioridade = '';
+  
+  for (var p = 0; p < partes.length; p++) {
+    var parte = partes[p].trim();
+    var parteLower = parte.toLowerCase();
+    
+    if (/^t[ií]tulo\s*:/i.test(parte)) {
+      // Extrair valor após "Título:"
+      titulo = parte.replace(/^t[ií]tulo\s*:\s*/i, '').trim();
+    } else if (/^data de entrega/i.test(parte)) {
+      // "Data de entrega estimada: XX" ou "Data de entrega: XX"
+      var valEntrega = parte.replace(/^data de entrega\s*(?:estimada\s*)?:\s*/i, '').trim();
+      // Verificar se é data ou status texto
+      var dataE = valEntrega.match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);
+      if (dataE) {
+        dataEntrega = dataE[1];
+        statusAtual = dataE[1];
+      } else {
+        // É texto como "Em análise/desenvolvimento"
+        statusAtual = valEntrega;
+      }
+    } else if (/^data de cria/i.test(parte)) {
+      var valCriacao = parte.replace(/^data de cria[cç][aã]o\s*:\s*/i, '').trim();
+      var dataC = valCriacao.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+      if (dataC) {
+        dataCriacao = dataC[1];
+      }
+    } else if (/^setor\s*:/i.test(parte)) {
+      setor = parte.replace(/^setor\s*:\s*/i, '').trim();
+    } else if (/^prioridade\s*:/i.test(parte)) {
+      prioridade = parte.replace(/^prioridade\s*:\s*/i, '').trim();
     }
   }
   
-  // Fallback: extrair datas soltas se não encontrou pelos rótulos
+  // Fallback: se não achou datas pelos rótulos, extrair datas soltas
   if (!dataCriacao) {
     var todasDatas = line.match(/\d{1,2}\/\d{1,2}\/\d{4}/g) || [];
     if (todasDatas.length > 0) {
@@ -490,13 +490,21 @@ function extrairDemandaLinha(line, allLines, idx) {
     statusAtual = dataEntrega || 'Em análise';
   }
   
+  // Limpar título de qualquer lixo residual (por segurança)
+  titulo = titulo.replace(/\s*Data de entrega.*$/i, '');
+  titulo = titulo.replace(/\s*Data de cria.*$/i, '');
+  titulo = titulo.replace(/\s*Ticket\s*:\s*\d+/i, '');
+  titulo = titulo.replace(/[\s\-\|:]+$/, '').trim();
+  
   return {
     ticket: ticket,
     titulo: titulo || 'Sem titulo',
     data_criacao: dataCriacao,
     data_entrega: dataEntrega || dataCriacao,
     data_estimada: dataEntrega,
-    status_atual: statusAtual
+    status_atual: statusAtual,
+    setor: setor,
+    prioridade: prioridade
   };
 }
 
