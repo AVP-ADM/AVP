@@ -28,6 +28,20 @@ var CONFIG = {
 function doPost(e) {
   try {
     var payload = JSON.parse(e.postData.contents);
+    
+    // Verificar se é atualização de campos (setor/prioridade)
+    if (payload.action === 'update_campos') {
+      var resultado = atualizarCampos(payload.alteracoes || []);
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: 'success',
+          message: 'Campos atualizados',
+          detalhes: resultado
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Processamento padrão (PDF import)
     var resultado = processarDemandas(payload);
     
     return ContentService
@@ -499,4 +513,52 @@ function calcularDias(dataInicio, dataFim) {
   
   var diff = dataFim.getTime() - dataInicio.getTime();
   return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
+}
+
+
+/**
+ * Atualiza campos Setor e Prioridade na aba "Em Aberto"
+ * Recebe array de {ticket, setor, prioridade}
+ */
+function atualizarCampos(alteracoes) {
+  if (!alteracoes || !alteracoes.length) return { atualizados: 0 };
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var abaAberto = ss.getSheetByName(CONFIG.ABA_ABERTO);
+  if (!abaAberto) return { atualizados: 0, erro: 'Aba não encontrada' };
+  
+  var lastRow = abaAberto.getLastRow();
+  if (lastRow < 2) return { atualizados: 0 };
+  
+  var tickets = abaAberto.getRange(2, 1, lastRow - 1, 1).getValues();
+  var atualizados = 0;
+  
+  for (var i = 0; i < alteracoes.length; i++) {
+    var alt = alteracoes[i];
+    var ticket = String(alt.ticket).trim();
+    if (!ticket) continue;
+    
+    // Encontrar a linha do ticket
+    for (var j = 0; j < tickets.length; j++) {
+      if (String(tickets[j][0]).trim() === ticket) {
+        var rowNum = j + 2; // +2 porque começa na linha 2
+        
+        // Atualizar Setor (coluna 6)
+        if (alt.setor !== undefined) {
+          var setor = alt.setor === '(Sem setor)' ? '' : alt.setor;
+          abaAberto.getRange(rowNum, 6).setValue(setor);
+        }
+        
+        // Atualizar Prioridade (coluna 7)
+        if (alt.prioridade !== undefined) {
+          abaAberto.getRange(rowNum, 7).setValue(alt.prioridade);
+        }
+        
+        atualizados++;
+        break;
+      }
+    }
+  }
+  
+  return { atualizados: atualizados, total: alteracoes.length };
 }
