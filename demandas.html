@@ -550,20 +550,34 @@ btnEnviar.addEventListener('click', async function() {
   btnEnviar.disabled = true;
   showStatus('Enviando dados para a planilha...', 'info');
   
+  // Google Apps Script web app aceita POST com redirect
+  // Usar fetch sem mode:'no-cors' — Apps Script retorna com CORS headers se configurado como "Qualquer pessoa"
   try {
     var response = await fetch(webhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
-      mode: 'no-cors'
+      redirect: 'follow'
     });
     
-    // Com no-cors não temos acesso ao body da resposta,
-    // mas se não houver erro de rede, consideramos sucesso
-    showStatus('Dados enviados para a planilha! Verifique o Google Sheets para confirmar a atualizacao.', 'success');
+    var responseText = await response.text();
+    var result = null;
+    try {
+      result = JSON.parse(responseText);
+    } catch(e) {}
+    
+    if (result && result.status === 'success') {
+      var det = result.detalhes || {};
+      showStatus('Planilha atualizada! Novas entregues: ' + (det.novasEntregues || 0) + ' | Movidas para entregues: ' + (det.movidasParaEntregues || 0) + ' | Novas em aberto: ' + (det.novasAberto || 0) + ' | Atualizadas: ' + (det.atualizadasAberto || 0), 'success');
+    } else if (result && result.status === 'error') {
+      showStatus('Erro no Apps Script: ' + (result.message || 'desconhecido'), 'error');
+    } else {
+      showStatus('Resposta recebida. Verifique a planilha.', 'success');
+    }
     btnEnviar.disabled = false;
   } catch (err) {
-    showStatus('Erro ao enviar: ' + err.message, 'error');
+    console.error('Fetch error:', err);
+    showStatus('Erro de conexao: ' + err.message + '. Verifique se o Apps Script esta implantado como "Qualquer pessoa".', 'error');
     btnEnviar.disabled = false;
   }
 });
