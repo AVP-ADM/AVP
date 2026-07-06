@@ -7,10 +7,11 @@
 <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:13px;height:100%}
 :root{
   --bg:#F8FAFC;--surface:#FFFFFF;--surface-2:#F1F5F9;--border:#E2E8F0;--border-strong:#CBD5E1;
   --text1:#0F172A;--text2:#475569;--text3:#94A3B8;
@@ -21,10 +22,10 @@
   --amber:#D97706;--amber-light:#FEF3C7;--amber-bg:#FFFBEB;
   --red:#DC2626;--red-light:#FEE2E2;--red-bg:#FEF2F2;
   --purple:#7C3AED;--purple-light:#EDE9FE;
-  --radius:6px;--radius-lg:10px;
-  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.05),0 2px 4px -2px rgba(0,0,0,.03);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.06),0 4px 6px -4px rgba(0,0,0,.03);
+  --radius:8px;--radius-lg:12px;
+  --shadow:0 2px 8px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.08),0 16px 48px rgba(0,0,0,.06);
   --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 [data-theme="dark"]{
@@ -37,100 +38,125 @@
   --amber:#FBBF24;--amber-light:#78350F;--amber-bg:#451A03;
   --red:#F87171;--red-light:#7F1D1D;--red-bg:#450A0A;
   --purple:#A78BFA;--purple-light:#2E1065;
-  --shadow:0 1px 3px rgba(0,0,0,.2);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.3);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.4);
+  --shadow:0 2px 8px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.4),0 16px 48px rgba(0,0,0,.5);
 }
-
-
-html{font-size:13px;height:100%}
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100%;line-height:1.5;padding:0;margin:0}
 
+
 /* Header */
-.page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
-.page-header .logo{font-size:1.1rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
-.page-header .logo span{color:var(--text2);font-weight:400;font-size:.78rem;margin-left:4px}
+.page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);position:sticky;top:0;z-index:100;transition:all .2s ease}
+.page-header .logo-group{display:flex;flex-direction:column}
+.page-header .logo{font-size:1.15rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
+.page-header .logo-subtitle{font-size:.7rem;color:var(--text3);font-weight:400;margin-top:1px;letter-spacing:.3px}
 .header-right{display:flex;align-items:center;gap:12px}
-.header-meta{font-size:.72rem;color:var(--text3);text-align:right}
-.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s;display:flex;align-items:center}
+.header-meta{font-size:.72rem;color:var(--text3);text-align:right;display:flex;align-items:center;gap:6px}
+.header-meta svg{width:13px;height:13px;opacity:.7}
+.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s ease;display:flex;align-items:center}
 .theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
-.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);transition:all .15s}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);transition:all .2s ease}
 .back-link:hover{color:var(--text1);background:var(--surface-2);border-color:var(--border-strong)}
 
 /* Container */
-.container{max-width:1200px;margin:0 auto;padding:24px 24px 80px}
+.container{max-width:1280px;margin:0 auto;padding:28px 32px 80px}
 
-/* KPI Grid */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;box-shadow:var(--shadow);border-left:3px solid var(--border);transition:all .2s}
-.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+
+/* KPI Grid - Premium */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);border-left:4px solid var(--border);transition:all .2s ease;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s ease;border-radius:var(--radius-lg);pointer-events:none}
+.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.kpi-card:hover::after{opacity:1}
 .kpi-card.blue{border-left-color:var(--blue)}
+.kpi-card.blue::after{background:linear-gradient(135deg,rgba(37,99,235,.03),transparent)}
 .kpi-card.green{border-left-color:var(--green)}
+.kpi-card.green::after{background:linear-gradient(135deg,rgba(13,159,79,.03),transparent)}
 .kpi-card.amber{border-left-color:var(--amber)}
+.kpi-card.amber::after{background:linear-gradient(135deg,rgba(217,119,6,.03),transparent)}
 .kpi-card.red{border-left-color:var(--red)}
+.kpi-card.red::after{background:linear-gradient(135deg,rgba(220,38,38,.03),transparent)}
 .kpi-card.purple{border-left-color:var(--purple)}
-.kpi-icon{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.kpi-icon svg{color:var(--text3);width:20px;height:20px}
-.kpi-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)}
-.kpi-value{font-size:1.6rem;font-weight:700;margin-top:2px}
+.kpi-card.purple::after{background:linear-gradient(135deg,rgba(124,58,237,.03),transparent)}
+.kpi-value{font-size:2.2rem;font-weight:800;line-height:1.1}
 .kpi-card.blue .kpi-value{color:var(--blue)}
 .kpi-card.green .kpi-value{color:var(--green)}
 .kpi-card.amber .kpi-value{color:var(--amber)}
 .kpi-card.red .kpi-value{color:var(--red)}
 .kpi-card.purple .kpi-value{color:var(--purple)}
-.kpi-sub{font-size:.7rem;color:var(--text3);margin-top:4px}
+.kpi-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-top:8px}
+.kpi-sub{font-size:.68rem;color:var(--text3);margin-top:2px}
 
+
+/* Insights Row - Compact horizontal strip */
+.insights-strip{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 28px;margin-bottom:28px;box-shadow:var(--shadow);gap:0}
+.insight-item{display:flex;align-items:center;gap:10px;flex:1;padding:4px 0}
+.insight-item:not(:last-child){border-right:1px solid var(--border);padding-right:24px;margin-right:24px}
+.insight-item svg{width:18px;height:18px;flex-shrink:0}
+.insight-item.red svg{color:var(--red)}
+.insight-item.amber svg{color:var(--amber)}
+.insight-item.green svg{color:var(--green)}
+.insight-value{font-size:1.3rem;font-weight:700;color:var(--text1)}
+.insight-label{font-size:.7rem;color:var(--text3);white-space:nowrap}
 
 /* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;box-shadow:var(--shadow);margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;box-shadow:var(--shadow);margin-bottom:28px;transition:all .2s ease}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-title{font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text1)}
 .card-title svg{width:18px;height:18px;color:var(--text2)}
 
-/* Insights row */
-.insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px}
-.insight-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;display:flex;align-items:center;gap:14px}
-.insight-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.insight-icon.red{background:var(--red-bg);color:var(--red)}
-.insight-icon.amber{background:var(--amber-bg);color:var(--amber)}
-.insight-icon.green{background:var(--green-bg);color:var(--green)}
-.insight-icon.blue{background:var(--blue-bg);color:var(--blue)}
-.insight-icon svg{width:20px;height:20px}
-.insight-data .insight-value{font-size:1.2rem;font-weight:700;color:var(--text1)}
-.insight-data .insight-label{font-size:.72rem;color:var(--text3)}
 
-/* Priority Criteria Card */
-.priority-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;box-shadow:var(--shadow);margin-bottom:20px}
+/* Priority Criteria Card - Collapsed by default, compact */
+.priority-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px;box-shadow:var(--shadow);margin-bottom:28px;transition:all .2s ease}
 .priority-card-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
-.priority-card-header .card-title{margin:0}
-.priority-toggle-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center;transition:transform .2s}
+.priority-card-header .card-title{margin:0;font-size:.88rem}
+.priority-collapsed-preview{display:flex;align-items:center;gap:14px;margin-left:auto;margin-right:16px;font-size:.75rem;color:var(--text2)}
+.priority-collapsed-preview .pdot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.priority-collapsed-preview .pdot.p1{background:var(--red)}
+.priority-collapsed-preview .pdot.p2{background:#C2410C}
+.priority-collapsed-preview .pdot.p3{background:var(--amber)}
+.priority-collapsed-preview .pdot.p4{background:var(--green)}
+.priority-collapsed-preview span{display:inline-flex;align-items:center;gap:4px}
+.priority-toggle-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center;transition:transform .2s ease}
 .priority-toggle-btn.collapsed{transform:rotate(-90deg)}
-.priority-body{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.priority-body{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .priority-body.hidden{display:none}
-.priority-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
-.priority-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.priority-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
+.priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
 .priority-dot.p1{background:var(--red)}
 .priority-dot.p2{background:#C2410C}
 .priority-dot.p3{background:var(--amber)}
 .priority-dot.p4{background:var(--green)}
-.priority-item-text{font-size:.75rem;color:var(--text2);line-height:1.4}
+.priority-item-text{font-size:.72rem;color:var(--text2);line-height:1.4}
 .priority-item-text strong{color:var(--text1);font-weight:600}
 
 
-/* Table */
+/* Table - Premium styling */
 .table-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
-.table-search{padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:240px;transition:border .2s}
+.search-wrapper{position:relative;width:260px}
+.search-wrapper svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text3);pointer-events:none}
+.table-search{padding:10px 14px 10px 36px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:100%;transition:all .2s ease}
 .table-search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
 [data-theme="dark"] .table-search{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+[data-theme="dark"] .table-search:focus{box-shadow:0 0 0 3px rgba(52,208,88,.12)}
 .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:.8rem}
 thead{background:var(--surface-2)}
-th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;user-select:none}
+th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;user-select:none;transition:background .15s ease}
 th:hover{background:var(--blue-bg)}
-td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text1)}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text1);transition:background .15s ease}
 tr:last-child td{border-bottom:none}
-tr:hover{background:var(--surface-2)}
-.aging-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600}
+tr:hover td{background:var(--surface-2)}
+/* Zebra striping */
+tbody tr:nth-child(even) td{background:rgba(0,0,0,.015)}
+[data-theme="dark"] tbody tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+tbody tr:nth-child(even):hover td{background:var(--surface-2)}
+/* Title truncation */
+.cell-title{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+
+
+/* Aging badges - tighter */
+.aging-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:.68rem;font-weight:600;white-space:nowrap}
 .aging-green{background:var(--green-light);color:var(--green)}
 .aging-amber{background:var(--amber-light);color:var(--amber)}
 .aging-orange{background:#FED7AA;color:#C2410C}
@@ -139,8 +165,10 @@ tr:hover{background:var(--surface-2)}
 [data-theme="dark"] .aging-amber{background:#451A03;color:#FCD34D}
 [data-theme="dark"] .aging-orange{background:#431407;color:#FB923C}
 [data-theme="dark"] .aging-red{background:#450A0A;color:#FCA5A5}
-.tabs{display:flex;gap:2px;padding:0}
-.tab-btn{padding:10px 18px;font-size:.82rem;font-weight:500;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font)}
+
+/* Tabs - with bottom border on container */
+.tabs{display:flex;gap:2px;padding:0;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab-btn{padding:10px 18px;font-size:.82rem;font-weight:500;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s ease;font-family:var(--font);margin-bottom:-1px}
 .tab-btn:hover{color:var(--text1)}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .tab-content{display:none}
@@ -148,8 +176,15 @@ tr:hover{background:var(--surface-2)}
 .tab-count{font-size:.68rem;background:var(--surface-2);padding:1px 6px;border-radius:10px;margin-left:4px;color:var(--text3)}
 
 
-/* Inline select for table */
-.cell-select{font-family:var(--font);font-size:.72rem;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text1);cursor:pointer;max-width:130px;width:100%;appearance:auto}
+/* Inline select for table - styled with colored indicator */
+.cell-select-wrap{display:flex;align-items:center;gap:0}
+.cell-select-dot{width:4px;height:22px;border-radius:2px;flex-shrink:0;margin-right:6px}
+.cell-select-dot.p1{background:var(--red)}
+.cell-select-dot.p2{background:#C2410C}
+.cell-select-dot.p3{background:var(--amber)}
+.cell-select-dot.p4{background:var(--green)}
+.cell-select-dot.none{background:var(--border)}
+.cell-select{font-family:var(--font);font-size:.72rem;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1);cursor:pointer;max-width:130px;width:100%;appearance:auto;transition:all .2s ease}
 .cell-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,122,61,.1)}
 [data-theme="dark"] .cell-select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
 .cell-select.p1{color:var(--red)}
@@ -161,8 +196,9 @@ tr:hover{background:var(--surface-2)}
 [data-theme="dark"] .cell-select.p3{color:#FCD34D}
 [data-theme="dark"] .cell-select.p4{color:#6EE7B7}
 
+
 /* Unsaved changes bar */
-.changes-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:16px;font-size:.82rem;font-weight:500;transform:translateY(100%);transition:transform .3s ease,background .3s ease;box-shadow:0 -2px 8px rgba(0,0,0,.1)}
+.changes-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:12px 24px;display:flex;align-items:center;justify-content:center;gap:16px;font-size:.82rem;font-weight:500;transform:translateY(100%);transition:transform .3s ease,background .3s ease;box-shadow:0 -2px 12px rgba(0,0,0,.1)}
 .changes-bar.visible{transform:translateY(0)}
 .changes-bar.pending{background:var(--amber-bg);border-top:2px solid var(--amber);color:var(--amber)}
 .changes-bar.saved{background:var(--green-bg);border-top:2px solid var(--green);color:var(--green)}
@@ -171,7 +207,7 @@ tr:hover{background:var(--surface-2)}
 .changes-bar .bar-text{display:flex;align-items:center;gap:8px}
 .changes-bar .bar-text svg{width:16px;height:16px}
 .bar-actions{display:flex;gap:8px}
-.bar-btn{padding:6px 14px;border-radius:var(--radius);font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s}
+.bar-btn{padding:6px 14px;border-radius:var(--radius);font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .2s ease}
 .bar-btn-discard{background:transparent;border-color:var(--amber);color:var(--amber)}
 .bar-btn-discard:hover{background:var(--amber-light)}
 .bar-btn-save{background:var(--amber);color:#fff;border-color:var(--amber)}
@@ -180,9 +216,16 @@ tr:hover{background:var(--surface-2)}
 [data-theme="dark"] .bar-btn-save{background:#D97706;color:#fff}
 
 
-/* Upload */
-.upload-section{border-top:1px solid var(--border);padding-top:20px;margin-top:8px}
-.upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+/* Upload Accordion */
+.upload-accordion{border-top:1px solid var(--border);margin-top:20px}
+.upload-accordion-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;cursor:pointer;user-select:none;transition:all .2s ease}
+.upload-accordion-header:hover{opacity:.8}
+.upload-accordion-header .card-title{margin:0;font-size:.88rem}
+.upload-accordion-chevron{color:var(--text3);transition:transform .2s ease;display:flex;align-items:center}
+.upload-accordion-chevron.collapsed{transform:rotate(-90deg)}
+.upload-accordion-body{display:block;padding-bottom:8px}
+.upload-accordion-body.hidden{display:none}
+.upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s ease;background:var(--bg)}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-bg)}
 .upload-zone.has-file{border-color:var(--green);background:var(--green-bg)}
 .upload-zone .uz-icon{margin-bottom:8px;color:var(--text3)}
@@ -190,48 +233,64 @@ tr:hover{background:var(--surface-2)}
 .upload-zone p{color:var(--text2);font-size:.82rem}
 .upload-zone .formats{font-size:.7rem;color:var(--text3);margin-top:4px}
 .upload-actions{display:flex;gap:10px;margin-top:14px;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface);color:var(--text1);transition:all .15s;font-family:var(--font)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius);font-size:.82rem;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface);color:var(--text1);transition:all .2s ease;font-family:var(--font)}
 .btn:hover{box-shadow:var(--shadow)}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.5;pointer-events:none}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn-primary:hover{background:var(--accent-hover)}
-.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn-blue:hover{background:#1d4ed8}
 .status-bar{margin-top:14px;padding:12px 16px;border-radius:var(--radius);font-size:.8rem;display:none;align-items:center;gap:10px}
 .status-bar.info{display:flex;background:var(--blue-bg);border:1px solid var(--blue-light);color:var(--blue)}
 .status-bar.success{display:flex;background:var(--green-bg);border:1px solid var(--green-light);color:var(--green)}
 .status-bar.error{display:flex;background:var(--red-bg);border:1px solid var(--red-light);color:var(--red)}
 .status-bar.warning{display:flex;background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber)}
 .status-bar svg{flex-shrink:0;width:16px;height:16px}
+
+
+/* Loading & Empty states */
 .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
 .empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
 .empty-state p{font-size:.85rem}
+
+/* Responsive */
+@media(max-width:1100px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+}
 @media(max-width:768px){
-  .container{padding:16px 12px 80px}
+  .container{padding:16px 14px 80px}
+  .page-header{padding:12px 16px}
   .kpi-grid{grid-template-columns:1fr 1fr}
-  .insights-grid{grid-template-columns:1fr}
+  .insights-strip{flex-direction:column;padding:14px 18px;gap:12px}
+  .insight-item:not(:last-child){border-right:none;border-bottom:1px solid var(--border);padding-right:0;margin-right:0;padding-bottom:12px;margin-bottom:0}
   .table-search{width:100%}
+  .search-wrapper{width:100%}
   .priority-body{grid-template-columns:1fr}
+  .priority-collapsed-preview{display:none}
 }
 </style>
 </head>
+
 
 
 <body>
 <header class="page-header">
   <div style="display:flex;align-items:center;gap:16px">
     <a href="index.html" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>Voltar</a>
-    <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>AutoVale <span>Demandas</span></div>
+    <div class="logo-group">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>AutoVale Demandas</div>
+      <div class="logo-subtitle">Dashboard de Acompanhamento</div>
+    </div>
   </div>
   <div class="header-right">
     <div class="header-meta" id="headerMeta"></div>
     <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
   </div>
 </header>
+
+
 <div class="container">
   <!-- Loading -->
   <div class="loading-overlay" id="loadingState"><div class="spinner"></div><p>Carregando dados da planilha...</p></div>
@@ -239,21 +298,26 @@ tr:hover{background:var(--surface-2)}
   <div id="dashboardContent" style="display:none">
     <!-- KPIs -->
     <div class="kpi-grid" id="kpiGrid"></div>
-    <!-- Insights -->
-    <div class="insights-grid" id="insightsGrid"></div>
+    <!-- Insights Strip -->
+    <div class="insights-strip" id="insightsStrip"></div>
 
-
-    <!-- Priority Criteria Card -->
+    <!-- Priority Criteria Card - Collapsed by default -->
     <div class="priority-card" id="priorityCard">
       <div class="priority-card-header" onclick="togglePriorityCriteria()">
-        <div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Criterios de Prioridade</div>
-        <button class="priority-toggle-btn" id="priorityToggleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Criterios de Prioridade</div>
+        <div class="priority-collapsed-preview" id="priorityPreview">
+          <span><i class="pdot p1"></i> Critico</span>
+          <span><i class="pdot p2"></i> Alto</span>
+          <span><i class="pdot p3"></i> Medio</span>
+          <span><i class="pdot p4"></i> Baixo</span>
+        </div>
+        <button class="priority-toggle-btn collapsed" id="priorityToggleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       </div>
-      <div class="priority-body" id="priorityBody">
-        <div class="priority-item"><svg class="priority-dot p1" viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5" fill="currentColor"/></svg><div class="priority-item-text"><strong>1 - Critico</strong><br>Impacta diretamente a operacao da empresa, impede o funcionamento do sistema ou afeta varios usuarios/processos ao mesmo tempo.</div></div>
-        <div class="priority-item"><svg class="priority-dot p2" viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5" fill="currentColor"/></svg><div class="priority-item-text"><strong>2 - Alto</strong><br>Afeta parcialmente a operacao, mas possui alternativa temporaria ou atinge numero menor de usuarios.</div></div>
-        <div class="priority-item"><svg class="priority-dot p3" viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5" fill="currentColor"/></svg><div class="priority-item-text"><strong>3 - Medio</strong><br>Causa desconforto ou dificuldade operacional, mas nao impede a continuidade das atividades.</div></div>
-        <div class="priority-item"><svg class="priority-dot p4" viewBox="0 0 10 10" width="10" height="10"><circle cx="5" cy="5" r="5" fill="currentColor"/></svg><div class="priority-item-text"><strong>4 - Baixo</strong><br>Solicitacao sem impacto operacional direto, melhoria, duvida geral ou configuracao simples.</div></div>
+      <div class="priority-body hidden" id="priorityBody">
+        <div class="priority-item"><div class="priority-dot p1"></div><div class="priority-item-text"><strong>1 - Critico</strong><br>Impacta diretamente a operacao da empresa, impede o funcionamento do sistema ou afeta varios usuarios/processos ao mesmo tempo.</div></div>
+        <div class="priority-item"><div class="priority-dot p2"></div><div class="priority-item-text"><strong>2 - Alto</strong><br>Afeta parcialmente a operacao, mas possui alternativa temporaria ou atinge numero menor de usuarios.</div></div>
+        <div class="priority-item"><div class="priority-dot p3"></div><div class="priority-item-text"><strong>3 - Medio</strong><br>Causa desconforto ou dificuldade operacional, mas nao impede a continuidade das atividades.</div></div>
+        <div class="priority-item"><div class="priority-dot p4"></div><div class="priority-item-text"><strong>4 - Baixo</strong><br>Solicitacao sem impacto operacional direto, melhoria, duvida geral ou configuracao simples.</div></div>
       </div>
     </div>
 
@@ -262,7 +326,10 @@ tr:hover{background:var(--surface-2)}
     <div class="card">
       <div class="card-header">
         <div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Demandas</div>
-        <input type="text" class="table-search" id="searchInput" placeholder="Buscar ticket ou titulo...">
+        <div class="search-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="table-search" id="searchInput" placeholder="Buscar ticket ou titulo...">
+        </div>
       </div>
       <div class="tabs" id="tableTabs">
         <button class="tab-btn active" data-tab="aberto">Em Aberto<span class="tab-count" id="countAberto">0</span></button>
@@ -274,19 +341,25 @@ tr:hover{background:var(--surface-2)}
       <div class="tab-content" id="tab-todas"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status">Status</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblTodas"></tbody></table></div></div>
 
 
-      <!-- Upload section inside card -->
-      <div class="upload-section">
-        <div class="card-title" style="margin-bottom:12px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Atualizar via PDF</div>
-        <div class="upload-zone" id="uploadZone"><div class="uz-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p><strong>Arraste o PDF aqui</strong> ou clique para selecionar</p><p class="formats">Relatorio South Tecnologia (.pdf)</p></div>
-        <input type="file" id="fileInput" accept=".pdf" style="display:none">
-        <div class="upload-actions">
-          <button class="btn btn-primary" id="btnProcessar" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Processar e Atualizar</button>
+      <!-- Upload section - Accordion closed by default -->
+      <div class="upload-accordion">
+        <div class="upload-accordion-header" onclick="toggleUploadAccordion()">
+          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Atualizar via PDF</div>
+          <div class="upload-accordion-chevron collapsed" id="uploadChevron"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         </div>
-        <div class="status-bar" id="statusBar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="statusText"></span></div>
+        <div class="upload-accordion-body hidden" id="uploadBody">
+          <div class="upload-zone" id="uploadZone"><div class="uz-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p><strong>Arraste o PDF aqui</strong> ou clique para selecionar</p><p class="formats">Relatorio South Tecnologia (.pdf)</p></div>
+          <input type="file" id="fileInput" accept=".pdf" style="display:none">
+          <div class="upload-actions">
+            <button class="btn btn-primary" id="btnProcessar" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Processar e Atualizar</button>
+          </div>
+          <div class="status-bar" id="statusBar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="statusText"></span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- Unsaved Changes Bar -->
 <div class="changes-bar" id="changesBar">
@@ -324,12 +397,27 @@ function toggleTheme(){
 // ==================== PDF.JS ====================
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+
 // ==================== PRIORITY CRITERIA TOGGLE ====================
 function togglePriorityCriteria(){
   var body=document.getElementById('priorityBody');
   var btn=document.getElementById('priorityToggleBtn');
+  var preview=document.getElementById('priorityPreview');
   body.classList.toggle('hidden');
   btn.classList.toggle('collapsed');
+  if(body.classList.contains('hidden')){
+    preview.style.display='flex';
+  } else {
+    preview.style.display='none';
+  }
+}
+
+// ==================== UPLOAD ACCORDION TOGGLE ====================
+function toggleUploadAccordion(){
+  var body=document.getElementById('uploadBody');
+  var chevron=document.getElementById('uploadChevron');
+  body.classList.toggle('hidden');
+  chevron.classList.toggle('collapsed');
 }
 
 // ==================== LOCAL STORAGE HELPERS ====================
@@ -361,7 +449,6 @@ function updateChangesBar(){
 function discardChanges(){
   clearLocalChanges();
   updateChangesBar();
-  // Re-render table with original data
   if(dashboardData){
     var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
     emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
@@ -435,7 +522,7 @@ function showError(msg){
 function renderDashboard(data){
   document.getElementById('loadingState').style.display='none';
   document.getElementById('dashboardContent').style.display='block';
-  document.getElementById('headerMeta').innerHTML='Atualizado: '+data.ultima_atualizacao;
+  document.getElementById('headerMeta').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Atualizado: '+data.ultima_atualizacao;
   renderKPIs(data.metricas);
   renderInsights(data.metricas);
   var entregues=data.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
@@ -445,6 +532,7 @@ function renderDashboard(data){
   renderTables(entregues,emAberto);
   updateChangesBar();
 }
+
 
 function normalizarData(val){
   if(!val)return '';
@@ -465,23 +553,22 @@ function normalizarStatus(val){
   return val;
 }
 
-
 function renderKPIs(m){
   var h='';
-  h+='<div class="kpi-card blue"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="kpi-label">Total Demandas</div><div class="kpi-value">'+m.total+'</div></div>';
-  h+='<div class="kpi-card green"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="kpi-label">Entregues</div><div class="kpi-value">'+m.entregues+'</div></div>';
-  h+='<div class="kpi-card amber"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="kpi-label">Em Aberto</div><div class="kpi-value">'+m.em_aberto+'</div></div>';
-  h+='<div class="kpi-card purple"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="kpi-label">Taxa de Entrega</div><div class="kpi-value">'+m.taxa_entrega+'%</div></div>';
-  h+='<div class="kpi-card red"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="kpi-label">Media Dias (Aberto)</div><div class="kpi-value">'+m.media_dias_aberto+'<span style="font-size:.7rem;font-weight:400;color:var(--text3)"> dias</span></div></div>';
+  h+='<div class="kpi-card blue"><div class="kpi-value">'+m.total+'</div><div class="kpi-label">Total Demandas</div></div>';
+  h+='<div class="kpi-card green"><div class="kpi-value">'+m.entregues+'</div><div class="kpi-label">Entregues</div></div>';
+  h+='<div class="kpi-card amber"><div class="kpi-value">'+m.em_aberto+'</div><div class="kpi-label">Em Aberto</div></div>';
+  h+='<div class="kpi-card purple"><div class="kpi-value">'+m.taxa_entrega+'<span style="font-size:1rem;font-weight:600">%</span></div><div class="kpi-label">Taxa de Entrega</div></div>';
+  h+='<div class="kpi-card red"><div class="kpi-value">'+m.media_dias_aberto+'</div><div class="kpi-label">Media Dias (Aberto)</div><div class="kpi-sub">dias em media</div></div>';
   document.getElementById('kpiGrid').innerHTML=h;
 }
 
 function renderInsights(m){
   var h='';
-  h+='<div class="insight-card"><div class="insight-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="insight-data"><div class="insight-value">'+m.criticas+'</div><div class="insight-label">Criticas (&gt;90 dias em aberto)</div></div></div>';
-  h+='<div class="insight-card"><div class="insight-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="insight-data"><div class="insight-value">'+m.sem_previsao+'</div><div class="insight-label">Sem previsao de entrega</div></div></div>';
-  h+='<div class="insight-card"><div class="insight-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="insight-data"><div class="insight-value">'+m.media_dias_entrega+'<span style="font-size:.75rem;font-weight:400"> dias</span></div><div class="insight-label">Tempo medio de resolucao</div></div></div>';
-  document.getElementById('insightsGrid').innerHTML=h;
+  h+='<div class="insight-item red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><span class="insight-value">'+m.criticas+'</span> <span class="insight-label">Criticas (&gt;90 dias)</span></div></div>';
+  h+='<div class="insight-item amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><span class="insight-value">'+m.sem_previsao+'</span> <span class="insight-label">Sem previsao</span></div></div>';
+  h+='<div class="insight-item green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><span class="insight-value">'+m.media_dias_entrega+'</span> <span class="insight-label">Tempo medio resolucao (dias)</span></div></div>';
+  document.getElementById('insightsStrip').innerHTML=h;
 }
 
 
@@ -496,10 +583,10 @@ function renderTables(entregues,emAberto){
 
 function agingBadge(dias){
   var d=Number(dias)||0;
-  if(d<=30) return '<span class="aging-badge aging-green">'+d+' dias</span>';
-  if(d<=60) return '<span class="aging-badge aging-amber">'+d+' dias</span>';
-  if(d<=90) return '<span class="aging-badge aging-orange">'+d+' dias</span>';
-  return '<span class="aging-badge aging-red">'+d+' dias</span>';
+  if(d<=30) return '<span class="aging-badge aging-green">'+d+'d</span>';
+  if(d<=60) return '<span class="aging-badge aging-amber">'+d+'d</span>';
+  if(d<=90) return '<span class="aging-badge aging-orange">'+d+'d</span>';
+  return '<span class="aging-badge aging-red">'+d+'d</span>';
 }
 
 function getPriorityClass(val){
@@ -525,17 +612,20 @@ function buildPrioridadeSelect(ticket,currentValue){
   var changes=getLocalChanges();
   var val=(changes[ticket]&&changes[ticket].prioridade!==undefined)?changes[ticket].prioridade:(currentValue||'');
   var cls=getPriorityClass(val);
-  var h='<select class="cell-select '+cls+'" data-ticket="'+ticket+'" data-field="prioridade" onchange="onPrioridadeChange(this,\''+ticket+'\')">';
+  var dotCls=cls||'none';
+  var h='<div class="cell-select-wrap"><div class="cell-select-dot '+dotCls+'"></div><select class="cell-select '+cls+'" data-ticket="'+ticket+'" data-field="prioridade" onchange="onPrioridadeChange(this,\''+ticket+'\')">';
   PRIORIDADES.forEach(function(p){
     h+='<option value="'+p.value+'"'+(p.value===val?' selected':'')+'>'+p.label+'</option>';
   });
-  h+='</select>';
+  h+='</select></div>';
   return h;
 }
 
 function onPrioridadeChange(el,ticket){
   var val=el.value;
   el.className='cell-select '+getPriorityClass(val);
+  var dot=el.parentElement.querySelector('.cell-select-dot');
+  if(dot) dot.className='cell-select-dot '+(getPriorityClass(val)||'none');
   onFieldChange(ticket,'prioridade',val);
 }
 
@@ -548,7 +638,7 @@ function renderTableAberto(data){
   data.forEach(function(d){
     h+='<tr>';
     h+='<td><strong>'+d.ticket+'</strong></td>';
-    h+='<td>'+d.titulo+'</td>';
+    h+='<td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td>';
     h+='<td>'+d.data_criacao+'</td>';
     h+='<td>'+d.status_atual+'</td>';
     h+='<td>'+agingBadge(d.dias)+'</td>';
@@ -563,7 +653,9 @@ function renderTableEntregues(data){
   var tb=document.getElementById('tblEntregues');
   if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda entregue</td></tr>';return;}
   var h='';
-  data.forEach(function(d){h+='<tr><td><strong>'+d.ticket+'</strong></td><td>'+d.titulo+'</td><td>'+d.data_criacao+'</td><td>'+d.data_entrega+'</td><td>'+(d.dias||0)+' dias</td></tr>';});
+  data.forEach(function(d){
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td><td>'+d.data_criacao+'</td><td>'+d.data_entrega+'</td><td>'+(d.dias||0)+' dias</td></tr>';
+  });
   tb.innerHTML=h;
 }
 
@@ -576,7 +668,7 @@ function renderTableTodas(entregues,emAberto){
   var h='';
   todas.forEach(function(d){
     var statusHtml=d.tipo==='entregue'?'<span class="aging-badge aging-green">Entregue</span>':d.status;
-    h+='<tr><td><strong>'+d.ticket+'</strong></td><td>'+d.titulo+'</td><td>'+d.data_criacao+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td><td>'+d.data_criacao+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
   });
   tb.innerHTML=h;
 }
