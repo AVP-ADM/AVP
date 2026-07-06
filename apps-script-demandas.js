@@ -64,7 +64,7 @@ function doGet(e) {
       var dadosEntregues = abaEntregues.getRange(2, 1, abaEntregues.getLastRow() - 1, 5).getValues();
       for (var i = 0; i < dadosEntregues.length; i++) {
         var row = dadosEntregues[i];
-        if (!row[0]) continue;
+        if (!row[0] || String(row[0]).toLowerCase() === 'ticket') continue;
         entregues.push({
           ticket: String(row[0]).trim(),
           titulo: String(row[1]).trim(),
@@ -80,7 +80,7 @@ function doGet(e) {
       var dadosAberto = abaAberto.getRange(2, 1, abaAberto.getLastRow() - 1, 7).getValues();
       for (var j = 0; j < dadosAberto.length; j++) {
         var rowA = dadosAberto[j];
-        if (!rowA[0]) continue;
+        if (!rowA[0] || String(rowA[0]).toLowerCase() === 'ticket') continue;
         
         // Recalcular dias desde criação (hoje - data criação)
         var dataCriacaoAberto = parseData(formatarDataOutput(rowA[2]));

@@ -211,7 +211,7 @@ tr:hover{background:var(--surface-2)}
 </div>
 <script>
 // ==================== CONFIG ====================
-var WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyFF41zzQKe1OjCCVw_RJz18Ea5Y6vr9C8_wTsYXeUIgy0UPcEMM19Nf7Mwdr7C5p4cdg/exec';
+var WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzGdwiK3iNkwkuqqvQ3ZBJhHQx0cU-5eG7lfNM0yAKiOuszg3UliDT7YGcsUoLdrBn_Lg/exec';
 var dashboardData = null;
 
 // ==================== THEME ====================
@@ -248,7 +248,38 @@ function renderDashboard(data){
   document.getElementById('headerMeta').innerHTML='Atualizado: '+data.ultima_atualizacao;
   renderKPIs(data.metricas);
   renderInsights(data.metricas);
-  renderTables(data.entregues,data.em_aberto);
+  // Filtrar linhas de cabeçalho (primeira linha pode ser header da planilha)
+  var entregues=data.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+  var emAberto=data.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+  // Normalizar datas
+  entregues.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.data_entrega=normalizarData(d.data_entrega);});
+  emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
+  renderTables(entregues,emAberto);
+}
+
+function normalizarData(val){
+  if(!val)return '';
+  // Se já está em dd/mm/yyyy
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val))return val;
+  // Se é Date string tipo "Thu Feb 19 2026 05:00:00 GMT..."
+  var d=new Date(val);
+  if(!isNaN(d.getTime())){
+    var dd=('0'+d.getDate()).slice(-2);
+    var mm=('0'+(d.getMonth()+1)).slice(-2);
+    return dd+'/'+mm+'/'+d.getFullYear();
+  }
+  return val;
+}
+
+function normalizarStatus(val){
+  if(!val)return 'Em análise';
+  // Se é uma data em formato Date string, converter
+  if(/^\w{3}\s\w{3}\s\d/.test(val)){
+    return normalizarData(val);
+  }
+  // Se é dd/mm/yyyy, manter
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val))return val;
+  return val;
 }
 
 function renderKPIs(m){
