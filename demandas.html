@@ -74,7 +74,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .upload-zone.has-file .uz-icon{color:var(--green)}
 
 /* Config section */
-.config-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.config-section{display:grid;grid-template-columns:1fr;gap:16px;margin-top:20px;max-width:400px}
 .config-field label{display:block;font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
 .config-field input{width:100%;padding:10px 14px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.84rem;font-family:var(--font);background:var(--surface);color:var(--text1);transition:all .2s}
 .config-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
@@ -198,14 +198,11 @@ tr:hover{background:var(--surface-2)}
     <!-- Config -->
     <div class="config-section">
       <div class="config-field">
-        <label>URL do Apps Script (Webhook)</label>
-        <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/.../exec">
-      </div>
-      <div class="config-field">
         <label>Setor Padrao (opcional)</label>
         <input type="text" id="setorPadrao" placeholder="Ex: Financeiro, TI, Comercial">
       </div>
     </div>
+    <input type="hidden" id="webhookUrl" value="https://script.google.com/macros/s/AKfycbxsidD6covyA00W8CnBd8s5zt6rlx7xrwtPo0f97HR9DD9AF3U9SIMv3GAeyjwBfCtxzA/exec">
 
     <!-- Actions -->
     <div class="btn-row">
@@ -539,10 +536,6 @@ btnEnviar.addEventListener('click', async function() {
   if (!extractedData) return;
   
   var webhookUrl = document.getElementById('webhookUrl').value.trim();
-  if (!webhookUrl) {
-    showStatus('Informe a URL do Apps Script (webhook) na configuracao acima.', 'error');
-    return;
-  }
   
   var setor = document.getElementById('setorPadrao').value.trim();
   
@@ -608,14 +601,9 @@ function showStatus(msg, type) {
 
 // ==================== PERSIST CONFIG ====================
 (function() {
-  var savedUrl = localStorage.getItem('avp-webhook-url');
   var savedSetor = localStorage.getItem('avp-setor-padrao');
-  if (savedUrl) document.getElementById('webhookUrl').value = savedUrl;
   if (savedSetor) document.getElementById('setorPadrao').value = savedSetor;
   
-  document.getElementById('webhookUrl').addEventListener('change', function() {
-    localStorage.setItem('avp-webhook-url', this.value);
-  });
   document.getElementById('setorPadrao').addEventListener('change', function() {
     localStorage.setItem('avp-setor-padrao', this.value);
   });
