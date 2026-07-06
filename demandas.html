@@ -404,62 +404,87 @@ function parsePDFText(text) {
 }
 
 function extrairDemandaLinha(line, allLines, idx) {
-  // Padrão: ticket no início (numeros, pode ter # ou letras)
-  var ticketMatch = line.match(/^#?(\d{3,6})\b/);
-  if (!ticketMatch) {
-    // Tentar padrão com ticket entre outros dados
-    ticketMatch = line.match(/\b(\d{3,6})\b/);
-  }
+  // O PDF tem formato com rótulos como:
+  // "Ticket: 60041 Título: Texto da demanda Data de entrega estimada: 15/01/2026 Data de criação: 06/11/2025"
+  // ou "2028 Ticket: 65808 Título: Texto... Data de entrega estimada: Em análise/desenvolvimento Data de criação: 13/03/2026"
+  
+  // Extrair ticket
+  var ticketMatch = line.match(/(?:Ticket:\s*)?#?(\d{3,6})\b/i);
   if (!ticketMatch) return null;
   
   var ticket = ticketMatch[1];
-  var restante = line.substring(line.indexOf(ticket) + ticket.length).trim();
   
-  // Extrair datas (dd/mm/yyyy)
-  var datas = restante.match(/\d{1,2}\/\d{1,2}\/\d{4}/g) || [];
+  // Extrair título: texto entre "Título:" e o próximo rótulo
+  var tituloMatch = line.match(/T[ií]tulo:\s*(.+?)(?:\s*Data de entrega estimada:|\s*Data de entrega:|\s*Data de cria[cç][aã]o:|\s*Status:|\s*Setor:|\s*Prioridade:|$)/i);
+  var titulo = tituloMatch ? tituloMatch[1].trim() : '';
   
-  // Extrair titulo (texto entre ticket e primeira data, ou texto principal)
-  var titulo = '';
-  if (datas.length > 0) {
-    var primeiraDataPos = restante.indexOf(datas[0]);
-    titulo = restante.substring(0, primeiraDataPos).trim();
-  } else {
-    // Verificar se ha texto com "Em analise" ou "Em desenvolvimento"
-    var statusMatch = restante.match(/(em\s+an[aá]lise|em\s+desenvolvimento)/i);
-    if (statusMatch) {
-      titulo = restante.substring(0, restante.indexOf(statusMatch[0])).trim();
-    } else {
-      titulo = restante.replace(/\d{1,2}\/\d{1,2}\/\d{4}/g, '').trim();
-    }
+  // Se não achou com rótulo "Título:", tenta pegar texto após o ticket até a primeira data ou rótulo
+  if (!titulo) {
+    var restante = line.substring(line.indexOf(ticket) + ticket.length).trim();
+    // Remover prefixo "Título:" se existir
+    restante = restante.replace(/^[\s\-\|]*T[ií]tulo:\s*/i, '');
+    // Cortar em qualquer rótulo conhecido
+    var corte = restante.match(/(.+?)(?:\s*Data de entrega estimada:|\s*Data de entrega:|\s*Data de cria[cç][aã]o:|\s*Em an[aá]lise|\s*Em desenvolvimento|\s*\d{1,2}\/\d{1,2}\/\d{4})/i);
+    titulo = corte ? corte[1].trim() : restante.trim();
   }
   
-  // Limpar titulo de separadores
+  // Limpar título de rótulos residuais
+  titulo = titulo.replace(/\s*Data de entrega estimada:.*$/i, '');
+  titulo = titulo.replace(/\s*Data de entrega:.*$/i, '');
+  titulo = titulo.replace(/\s*Data de cria[cç][aã]o:.*$/i, '');
+  titulo = titulo.replace(/\s*Status:.*$/i, '');
+  titulo = titulo.replace(/\s*Setor:.*$/i, '');
+  titulo = titulo.replace(/\s*Prioridade:.*$/i, '');
+  titulo = titulo.replace(/^Ticket:\s*\d+\s*/i, '');
+  titulo = titulo.replace(/^T[ií]tulo:\s*/i, '');
   titulo = titulo.replace(/^[\s\-\|]+/, '').replace(/[\s\-\|]+$/, '').trim();
   
-  if (!titulo && idx + 1 < allLines.length) {
-    // Titulo pode estar na proxima linha
-    var nextLine = allLines[idx + 1];
-    if (!nextLine.match(/^\d{3,6}/) && !nextLine.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
-      titulo = nextLine.trim();
-    }
+  // Extrair todas as datas (dd/mm/yyyy)
+  var datas = line.match(/\d{1,2}\/\d{1,2}\/\d{4}/g) || [];
+  
+  // Extrair data de criação (após "Data de criação:")
+  var dataCriacao = '';
+  var dataCriacaoMatch = line.match(/Data de cria[cç][aã]o:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i);
+  if (dataCriacaoMatch) {
+    dataCriacao = dataCriacaoMatch[1];
+  } else if (datas.length > 0) {
+    dataCriacao = datas[datas.length - 1]; // Última data geralmente é criação
   }
   
-  // Detectar status (para em aberto)
-  var statusAtual = '';
-  var statusCheck = restante.match(/(em\s+an[aá]lise|em\s+desenvolvimento|em\s+homologa[cç][aã]o)/i);
-  if (statusCheck) {
-    statusAtual = statusCheck[0];
+  // Extrair data de entrega estimada
+  var dataEntrega = '';
+  var dataEntregaMatch = line.match(/Data de entrega(?:\s+estimada)?:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i);
+  if (dataEntregaMatch) {
+    dataEntrega = dataEntregaMatch[1];
   } else if (datas.length >= 2) {
-    statusAtual = datas[datas.length - 1]; // Ultima data como estimativa
+    // Primeira data antes da data de criação
+    dataEntrega = datas[0] !== dataCriacao ? datas[0] : '';
+  }
+  
+  // Detectar status (Em análise, Em desenvolvimento, etc.)
+  var statusAtual = '';
+  var statusCheck = line.match(/Data de entrega estimada:\s*(Em\s+an[aá]lise(?:\/desenvolvimento)?|Em\s+desenvolvimento|Em\s+homologa[cç][aã]o)/i);
+  if (statusCheck) {
+    statusAtual = statusCheck[1];
+  } else if (dataEntrega) {
+    statusAtual = dataEntrega;
+  } else {
+    // Verificar se tem status solto
+    var statusSolto = line.match(/(Em\s+an[aá]lise(?:\/desenvolvimento)?|Em\s+desenvolvimento|Em\s+homologa[cç][aã]o)/i);
+    if (statusSolto) {
+      statusAtual = statusSolto[1];
+    } else {
+      statusAtual = 'Em análise';
+    }
   }
   
   return {
     ticket: ticket,
     titulo: titulo || 'Sem titulo',
-    data_criacao: datas.length > 0 ? datas[0] : '',
-    data_entrega: datas.length >= 2 ? datas[1] : (datas.length === 1 ? datas[0] : ''),
-    data_estimada: datas.length >= 2 ? datas[datas.length - 1] : '',
-    status_atual: statusAtual || (datas.length >= 2 ? datas[datas.length - 1] : 'Em análise')
+    data_criacao: dataCriacao,
+    data_entrega: dataEntrega || dataCriacao,
+    data_estimada: dataEntrega,
+    status_atual: statusAtual
   };
 }
 
