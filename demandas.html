@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoVale — Demandas South Tecnologia</title>
+<link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F8FAFC;--surface:#FFFFFF;--surface-2:#F1F5F9;--border:#E2E8F0;--border-strong:#CBD5E1;
+  --text1:#0F172A;--text2:#475569;--text3:#94A3B8;
+  --primary:#1A2B6B;--primary-light:#E8EDF8;
+  --accent:#1B7A3D;--accent-hover:#146B32;--accent-light:#ECFDF5;
+  --blue:#2563EB;--blue-light:#DBEAFE;--blue-bg:#EFF6FF;
+  --green:#0D9F4F;--green-light:#D1FAE5;--green-bg:#ECFDF5;
+  --amber:#D97706;--amber-light:#FEF3C7;--amber-bg:#FFFBEB;
+  --red:#DC2626;--red-light:#FEE2E2;--red-bg:#FEF2F2;
+  --purple:#7C3AED;--purple-light:#EDE9FE;
+  --radius:6px;--radius-lg:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.03);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.05),0 2px 4px -2px rgba(0,0,0,.03);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.06),0 4px 6px -4px rgba(0,0,0,.03);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#0B1121;--surface:#131B2E;--surface-2:#1A2540;--border:#1E293B;--border-strong:#334155;
+  --text1:#F1F5F9;--text2:#94A3B8;--text3:#4B5563;
+  --primary:#4B7BF5;--primary-light:#1E2D4A;
+  --accent:#34D058;--accent-hover:#2EA84B;--accent-light:#052E16;
+  --blue:#60A5FA;--blue-light:#1E3A5F;--blue-bg:#172554;
+  --green:#2DD06B;--green-light:#064E3B;--green-bg:#022C22;
+  --amber:#FBBF24;--amber-light:#78350F;--amber-bg:#451A03;
+  --red:#F87171;--red-light:#7F1D1D;--red-bg:#450A0A;
+  --purple:#A78BFA;--purple-light:#2E1065;
+  --shadow:0 1px 3px rgba(0,0,0,.2);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.3);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.4);
+}
+html{font-size:13px;height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100%;line-height:1.5;padding:0;margin:0}
+
+/* Header */
+.page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
+.page-header .logo{font-size:1.1rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
+.page-header .logo span{color:var(--text2);font-weight:400;font-size:.78rem;margin-left:4px}
+.header-actions{display:flex;align-items:center;gap:10px}
+.theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;color:var(--text1);transition:all .2s;display:flex;align-items:center;gap:6px}
+.theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);transition:all .15s}
+.back-link:hover{color:var(--text1);background:var(--surface-2);border-color:var(--border-strong)}
+
+/* Main container */
+.container{max-width:1100px;margin:0 auto;padding:32px 24px}
+.page-title{font-size:1.4rem;font-weight:700;color:var(--text1);margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.page-subtitle{color:var(--text2);font-size:.85rem;margin-bottom:28px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-title{font-size:1rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:var(--text1)}
+
+/* Upload area */
+.upload-zone{border:2px dashed var(--border-strong);border-radius:var(--radius-lg);padding:48px 32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-zone .uz-icon{margin-bottom:12px;color:var(--text3)}
+.upload-zone .uz-icon svg{width:48px;height:48px}
+.upload-zone p{color:var(--text2);font-size:.88rem;margin-bottom:4px}
+.upload-zone .formats{font-size:.72rem;color:var(--text3)}
+.upload-zone.has-file{border-color:var(--green);background:var(--green-bg)}
+.upload-zone.has-file .uz-icon{color:var(--green)}
+
+/* Config section */
+.config-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.config-field label{display:block;font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px}
+.config-field input{width:100%;padding:10px 14px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.84rem;font-family:var(--font);background:var(--surface);color:var(--text1);transition:all .2s}
+.config-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
+[data-theme="dark"] .config-field input{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--radius);font-size:.84rem;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface);color:var(--text1);transition:all .15s;font-family:var(--font)}
+.btn:hover{box-shadow:var(--shadow)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-blue:hover{background:#1d4ed8}
+.btn-row{display:flex;gap:12px;margin-top:20px;align-items:center}
+
+/* Status/Log */
+.status-bar{margin-top:20px;padding:14px 18px;border-radius:var(--radius);font-size:.82rem;display:none;align-items:center;gap:10px}
+.status-bar.info{display:flex;background:var(--blue-bg);border:1px solid var(--blue-light);color:var(--blue)}
+.status-bar.success{display:flex;background:var(--green-bg);border:1px solid var(--green-light);color:var(--green)}
+.status-bar.error{display:flex;background:var(--red-bg);border:1px solid var(--red-light);color:var(--red)}
+.status-bar.warning{display:flex;background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber)}
+.status-bar svg{flex-shrink:0;width:18px;height:18px}
+
+/* Preview table */
+.preview-section{margin-top:24px;display:none}
+.preview-section.visible{display:block}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead{background:var(--surface-2)}
+th{padding:10px 14px;text-align:left;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px}
+td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text1)}
+tr:last-child td{border-bottom:none}
+tr:hover{background:var(--surface-2)}
+[data-theme="dark"] thead{background:var(--surface-2)}
+[data-theme="dark"] tr:hover{background:var(--surface-2)}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;border-left:3px solid var(--border)}
+.kpi-card.green{border-left-color:var(--green)}
+.kpi-card.amber{border-left-color:var(--amber)}
+.kpi-card.blue{border-left-color:var(--blue)}
+.kpi-card.purple{border-left-color:var(--purple)}
+.kpi-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px}
+.kpi-value{font-size:1.4rem;font-weight:700}
+.kpi-card.green .kpi-value{color:var(--green)}
+.kpi-card.amber .kpi-value{color:var(--amber)}
+.kpi-card.blue .kpi-value{color:var(--blue)}
+.kpi-card.purple .kpi-value{color:var(--purple)}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{padding:10px 18px;font-size:.82rem;font-weight:500;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font)}
+.tab-btn:hover{color:var(--text1)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:768px){
+  .config-section{grid-template-columns:1fr}
+  .container{padding:20px 16px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<header class="page-header">
+  <div style="display:flex;align-items:center;gap:16px">
+    <a href="index.html" class="back-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Voltar
+    </a>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      AutoVale <span>Demandas</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <svg id="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="container">
+  <h1 class="page-title">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Importar Demandas PDF
+  </h1>
+  <p class="page-subtitle">Extraia dados do relatorio South Tecnologia e envie para a planilha Google Sheets automaticamente.</p>
+
+  <!-- UPLOAD CARD -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      Upload do Relatorio PDF
+    </div>
+    <div class="upload-zone" id="uploadZone">
+      <div class="uz-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <p><strong>Arraste o PDF aqui</strong> ou clique para selecionar</p>
+      <p class="formats">Aceita: PDF do relatorio South Tecnologia</p>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf" style="display:none">
+
+    <!-- Config -->
+    <div class="config-section">
+      <div class="config-field">
+        <label>URL do Apps Script (Webhook)</label>
+        <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
+      <div class="config-field">
+        <label>Setor Padrao (opcional)</label>
+        <input type="text" id="setorPadrao" placeholder="Ex: Financeiro, TI, Comercial">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnExtrair" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Extrair Dados do PDF
+      </button>
+      <button class="btn btn-blue" id="btnEnviar" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar para Planilha
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar" id="statusBar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="statusText"></span>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-section" id="previewSection">
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Pre-visualizacao dos Dados Extraidos
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="entregues">Entregues</button>
+        <button class="tab-btn" data-tab="aberto">Em Aberto</button>
+      </div>
+
+      <!-- Tab: Entregues -->
+      <div class="tab-content active" id="tab-entregues">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ticket</th><th>Titulo</th><th>Data Criacao</th><th>Data Entrega</th><th>Dias</th></tr></thead>
+            <tbody id="tblEntregues"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Em Aberto -->
+      <div class="tab-content" id="tab-aberto">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ticket</th><th>Titulo</th><th>Data Criacao</th><th>Status/Estimativa</th><th>Dias</th></tr></thead>
+            <tbody id="tblAberto"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+// ==================== THEME ====================
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme');
+  html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  localStorage.setItem('avp-theme', html.getAttribute('data-theme'));
+}
+(function(){
+  var saved = localStorage.getItem('avp-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ==================== STATE ====================
+var extractedData = null;
+var pdfFile = null;
+
+// ==================== PDF.JS CONFIG ====================
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ==================== UPLOAD ====================
+var uploadZone = document.getElementById('uploadZone');
+var fileInput = document.getElementById('fileInput');
+var btnExtrair = document.getElementById('btnExtrair');
+var btnEnviar = document.getElementById('btnEnviar');
+
+uploadZone.addEventListener('click', function() { fileInput.click(); });
+uploadZone.addEventListener('dragover', function(e) {
+  e.preventDefault(); uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', function() {
+  uploadZone.classList.remove('dragover');
+});
+uploadZone.addEventListener('drop', function(e) {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function() {
+  if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  if (file.type !== 'application/pdf') {
+    showStatus('Selecione um arquivo PDF valido.', 'error');
+    return;
+  }
+  pdfFile = file;
+  uploadZone.classList.add('has-file');
+  uploadZone.querySelector('p').innerHTML = '<strong>' + file.name + '</strong>';
+  uploadZone.querySelector('.formats').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  btnExtrair.disabled = false;
+  showStatus('PDF carregado. Clique em "Extrair Dados do PDF" para processar.', 'info');
+}
+
+// ==================== EXTRACTION ====================
+btnExtrair.addEventListener('click', async function() {
+  if (!pdfFile) return;
+  btnExtrair.disabled = true;
+  showStatus('Extraindo dados do PDF...', 'info');
+
+  try {
+    var arrayBuffer = await pdfFile.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    var fullText = '';
+    
+    for (var i = 1; i <= pdf.numPages; i++) {
+      var page = await pdf.getPage(i);
+      var textContent = await page.getTextContent();
+      var pageText = textContent.items.map(function(item) { return item.str; }).join(' ');
+      fullText += pageText + '\n';
+    }
+    
+    extractedData = parsePDFText(fullText);
+    renderPreview(extractedData);
+    btnEnviar.disabled = false;
+    btnExtrair.disabled = false;
+    showStatus('Dados extraidos com sucesso! Verifique a pre-visualizacao abaixo.', 'success');
+  } catch (err) {
+    btnExtrair.disabled = false;
+    showStatus('Erro ao extrair PDF: ' + err.message, 'error');
+    console.error(err);
+  }
+});
+
+// ==================== PDF PARSER ====================
+function parsePDFText(text) {
+  var entregues = [];
+  var emAberto = [];
+  
+  // Normalizar texto
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  
+  // Dividir em linhas e limpar
+  var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+  
+  var secaoAtual = null; // 'entregues' ou 'aberto'
+  
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var lineLower = line.toLowerCase();
+    
+    // Detectar secoes
+    if (lineLower.indexOf('demandas entregues') !== -1 || lineLower.indexOf('entregues') !== -1 && lineLower.indexOf('demanda') !== -1) {
+      secaoAtual = 'entregues';
+      continue;
+    }
+    if (lineLower.indexOf('demandas em aberto') !== -1 || (lineLower.indexOf('em aberto') !== -1 && lineLower.indexOf('demanda') !== -1)) {
+      secaoAtual = 'aberto';
+      continue;
+    }
+    
+    // Ignorar cabeçalhos de tabela
+    if (lineLower.indexOf('ticket') !== -1 && lineLower.indexOf('titulo') !== -1) continue;
+    if (lineLower.indexOf('ticket') !== -1 && lineLower.indexOf('título') !== -1) continue;
+    
+    // Tentar extrair demanda da linha
+    var demanda = extrairDemandaLinha(line, lines, i);
+    if (demanda && secaoAtual) {
+      if (secaoAtual === 'entregues') {
+        entregues.push(demanda);
+      } else if (secaoAtual === 'aberto') {
+        emAberto.push(demanda);
+      }
+    }
+  }
+  
+  // Se não detectou seções, tenta abordagem alternativa com regex em bloco
+  if (entregues.length === 0 && emAberto.length === 0) {
+    var resultado = parseBlocoAlternativo(text);
+    entregues = resultado.entregues;
+    emAberto = resultado.emAberto;
+  }
+  
+  return { entregues: entregues, em_aberto: emAberto };
+}
+
+function extrairDemandaLinha(line, allLines, idx) {
+  // Padrão: ticket no início (numeros, pode ter # ou letras)
+  var ticketMatch = line.match(/^#?(\d{3,6})\b/);
+  if (!ticketMatch) {
+    // Tentar padrão com ticket entre outros dados
+    ticketMatch = line.match(/\b(\d{3,6})\b/);
+  }
+  if (!ticketMatch) return null;
+  
+  var ticket = ticketMatch[1];
+  var restante = line.substring(line.indexOf(ticket) + ticket.length).trim();
+  
+  // Extrair datas (dd/mm/yyyy)
+  var datas = restante.match(/\d{1,2}\/\d{1,2}\/\d{4}/g) || [];
+  
+  // Extrair titulo (texto entre ticket e primeira data, ou texto principal)
+  var titulo = '';
+  if (datas.length > 0) {
+    var primeiraDataPos = restante.indexOf(datas[0]);
+    titulo = restante.substring(0, primeiraDataPos).trim();
+  } else {
+    // Verificar se ha texto com "Em analise" ou "Em desenvolvimento"
+    var statusMatch = restante.match(/(em\s+an[aá]lise|em\s+desenvolvimento)/i);
+    if (statusMatch) {
+      titulo = restante.substring(0, restante.indexOf(statusMatch[0])).trim();
+    } else {
+      titulo = restante.replace(/\d{1,2}\/\d{1,2}\/\d{4}/g, '').trim();
+    }
+  }
+  
+  // Limpar titulo de separadores
+  titulo = titulo.replace(/^[\s\-\|]+/, '').replace(/[\s\-\|]+$/, '').trim();
+  
+  if (!titulo && idx + 1 < allLines.length) {
+    // Titulo pode estar na proxima linha
+    var nextLine = allLines[idx + 1];
+    if (!nextLine.match(/^\d{3,6}/) && !nextLine.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
+      titulo = nextLine.trim();
+    }
+  }
+  
+  // Detectar status (para em aberto)
+  var statusAtual = '';
+  var statusCheck = restante.match(/(em\s+an[aá]lise|em\s+desenvolvimento|em\s+homologa[cç][aã]o)/i);
+  if (statusCheck) {
+    statusAtual = statusCheck[0];
+  } else if (datas.length >= 2) {
+    statusAtual = datas[datas.length - 1]; // Ultima data como estimativa
+  }
+  
+  return {
+    ticket: ticket,
+    titulo: titulo || 'Sem titulo',
+    data_criacao: datas.length > 0 ? datas[0] : '',
+    data_entrega: datas.length >= 2 ? datas[1] : (datas.length === 1 ? datas[0] : ''),
+    data_estimada: datas.length >= 2 ? datas[datas.length - 1] : '',
+    status_atual: statusAtual || (datas.length >= 2 ? datas[datas.length - 1] : 'Em análise')
+  };
+}
+
+function parseBlocoAlternativo(text) {
+  var entregues = [];
+  var emAberto = [];
+  
+  // Tentar encontrar blocos de tickets com regex global
+  var ticketRegex = /#?(\d{3,6})\s+(.+?)\s+(\d{1,2}\/\d{1,2}\/\d{4})/g;
+  var match;
+  
+  var secaoEntregue = text.toLowerCase().indexOf('entregue');
+  var secaoAberto = text.toLowerCase().indexOf('em aberto');
+  
+  while ((match = ticketRegex.exec(text)) !== null) {
+    var pos = match.index;
+    var demanda = {
+      ticket: match[1],
+      titulo: match[2].trim(),
+      data_criacao: match[3],
+      data_entrega: match[3],
+      data_estimada: '',
+      status_atual: 'Em análise'
+    };
+    
+    // Decidir seção baseado na posição
+    if (secaoAberto > 0 && pos > secaoAberto) {
+      emAberto.push(demanda);
+    } else if (secaoEntregue >= 0 && pos > secaoEntregue) {
+      entregues.push(demanda);
+    } else {
+      emAberto.push(demanda);
+    }
+  }
+  
+  return { entregues: entregues, emAberto: emAberto };
+}
+
+// ==================== RENDER PREVIEW ====================
+function renderPreview(data) {
+  var section = document.getElementById('previewSection');
+  section.classList.add('visible');
+  
+  var totalEntregues = data.entregues.length;
+  var totalAberto = data.em_aberto.length;
+  var total = totalEntregues + totalAberto;
+  
+  // KPIs
+  var kpiHtml = '';
+  kpiHtml += '<div class="kpi-card blue"><div class="kpi-label">Total Demandas</div><div class="kpi-value">' + total + '</div></div>';
+  kpiHtml += '<div class="kpi-card green"><div class="kpi-label">Entregues</div><div class="kpi-value">' + totalEntregues + '</div></div>';
+  kpiHtml += '<div class="kpi-card amber"><div class="kpi-label">Em Aberto</div><div class="kpi-value">' + totalAberto + '</div></div>';
+  
+  var pctEntregue = total > 0 ? Math.round((totalEntregues / total) * 100) : 0;
+  kpiHtml += '<div class="kpi-card purple"><div class="kpi-label">Taxa Entrega</div><div class="kpi-value">' + pctEntregue + '%</div></div>';
+  document.getElementById('kpiGrid').innerHTML = kpiHtml;
+  
+  // Tabela Entregues
+  var tbEntregues = document.getElementById('tblEntregues');
+  tbEntregues.innerHTML = '';
+  data.entregues.forEach(function(d) {
+    var dias = calcDias(d.data_criacao, d.data_entrega);
+    tbEntregues.innerHTML += '<tr><td><span class="badge badge-green">' + d.ticket + '</span></td><td>' + d.titulo + '</td><td>' + d.data_criacao + '</td><td>' + d.data_entrega + '</td><td>' + dias + '</td></tr>';
+  });
+  if (data.entregues.length === 0) {
+    tbEntregues.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">Nenhuma demanda entregue encontrada</td></tr>';
+  }
+  
+  // Tabela Em Aberto
+  var tbAberto = document.getElementById('tblAberto');
+  tbAberto.innerHTML = '';
+  data.em_aberto.forEach(function(d) {
+    var dias = calcDiasHoje(d.data_criacao);
+    tbAberto.innerHTML += '<tr><td><span class="badge badge-amber">' + d.ticket + '</span></td><td>' + d.titulo + '</td><td>' + d.data_criacao + '</td><td>' + d.status_atual + '</td><td>' + dias + '</td></tr>';
+  });
+  if (data.em_aberto.length === 0) {
+    tbAberto.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">Nenhuma demanda em aberto encontrada</td></tr>';
+  }
+}
+
+function calcDias(dataIni, dataFim) {
+  if (!dataIni || !dataFim) return '-';
+  var parts1 = dataIni.split('/');
+  var parts2 = dataFim.split('/');
+  if (parts1.length !== 3 || parts2.length !== 3) return '-';
+  var d1 = new Date(parts1[2], parts1[1] - 1, parts1[0]);
+  var d2 = new Date(parts2[2], parts2[1] - 1, parts2[0]);
+  if (isNaN(d1) || isNaN(d2)) return '-';
+  return Math.max(0, Math.round((d2 - d1) / 86400000));
+}
+
+function calcDiasHoje(dataIni) {
+  if (!dataIni) return '-';
+  var parts = dataIni.split('/');
+  if (parts.length !== 3) return '-';
+  var d1 = new Date(parts[2], parts[1] - 1, parts[0]);
+  if (isNaN(d1)) return '-';
+  return Math.max(0, Math.round((new Date() - d1) / 86400000));
+}
+
+// ==================== SEND TO SHEETS ====================
+btnEnviar.addEventListener('click', async function() {
+  if (!extractedData) return;
+  
+  var webhookUrl = document.getElementById('webhookUrl').value.trim();
+  if (!webhookUrl) {
+    showStatus('Informe a URL do Apps Script (webhook) na configuracao acima.', 'error');
+    return;
+  }
+  
+  var setor = document.getElementById('setorPadrao').value.trim();
+  
+  // Adicionar setor se configurado
+  var payload = JSON.parse(JSON.stringify(extractedData));
+  if (setor) {
+    payload.em_aberto.forEach(function(d) {
+      if (!d.setor) d.setor = setor;
+    });
+  }
+  
+  btnEnviar.disabled = true;
+  showStatus('Enviando dados para a planilha...', 'info');
+  
+  try {
+    var response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      mode: 'no-cors'
+    });
+    
+    // Com no-cors não temos acesso ao body da resposta,
+    // mas se não houver erro de rede, consideramos sucesso
+    showStatus('Dados enviados para a planilha! Verifique o Google Sheets para confirmar a atualizacao.', 'success');
+    btnEnviar.disabled = false;
+  } catch (err) {
+    showStatus('Erro ao enviar: ' + err.message, 'error');
+    btnEnviar.disabled = false;
+  }
+});
+
+// ==================== TABS ====================
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ==================== STATUS ====================
+function showStatus(msg, type) {
+  var bar = document.getElementById('statusBar');
+  var text = document.getElementById('statusText');
+  bar.className = 'status-bar ' + type;
+  text.textContent = msg;
+  
+  // Update icon based on type
+  var iconSvg = '';
+  if (type === 'success') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  } else if (type === 'error') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  } else if (type === 'warning') {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  } else {
+    iconSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  }
+  bar.querySelector('svg').outerHTML = iconSvg;
+}
+
+// ==================== PERSIST CONFIG ====================
+(function() {
+  var savedUrl = localStorage.getItem('avp-webhook-url');
+  var savedSetor = localStorage.getItem('avp-setor-padrao');
+  if (savedUrl) document.getElementById('webhookUrl').value = savedUrl;
+  if (savedSetor) document.getElementById('setorPadrao').value = savedSetor;
+  
+  document.getElementById('webhookUrl').addEventListener('change', function() {
+    localStorage.setItem('avp-webhook-url', this.value);
+  });
+  document.getElementById('setorPadrao').addEventListener('change', function() {
+    localStorage.setItem('avp-setor-padrao', this.value);
+  });
+})();
+</script>
+</body>
+</html>
