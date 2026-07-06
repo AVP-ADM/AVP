@@ -430,6 +430,14 @@ var PRIORIDADES = [
   {value:'4',label:'4 - Baixo'}
 ];
 
+// ==================== SECURITY: HTML ESCAPE ====================
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+var MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB
+
 // ==================== THEME ====================
 function toggleTheme(){
   var h=document.documentElement;
@@ -646,7 +654,7 @@ function buildSetorSelect(ticket, currentValue){
   var val = currentValue || '(Sem setor)';
   // Read-only mode: show as text
   if(!isAdmin){
-    return '<span style="font-size:.72rem;color:var(--text2)">'+val+'</span>';
+    return '<span style="font-size:.72rem;color:var(--text2)">'+escapeHtml(val)+'</span>';
   }
   var setores = getSetores();
   if(val && val!=='(Sem setor)' && setores.indexOf(val)===-1){
@@ -736,9 +744,9 @@ function renderTableAberto(data){
     var prioVal=d.prioridade||'';
     h+='<tr class="expand-row" data-ticket="'+d.ticket+'" data-setor="'+setorVal+'" data-prioridade="'+prioVal+'" onclick="toggleExpandRow(\''+d.ticket+'\')">';
     h+='<td><strong>'+d.ticket+'</strong></td>';
-    h+='<td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td>';
-    h+='<td>'+(d.data_criacao||'')+'</td>';
-    h+='<td>'+(d.status_atual||'')+'</td>';
+    h+='<td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td>';
+    h+='<td>'+escapeHtml(d.data_criacao||'')+'</td>';
+    h+='<td>'+escapeHtml(d.status_atual||'')+'</td>';
     h+='<td>'+agingBadge(d.dias)+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildSetorSelect(d.ticket,d.setor||'')+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildPrioridadeSelect(d.ticket,d.prioridade||'')+'</td>';
@@ -746,7 +754,7 @@ function renderTableAberto(data){
     // Expanded detail row
     var prioLabel=prioVal?findPrioLabel(prioVal):'Nao definida';
     h+='<tr class="expanded-detail" id="detail-'+d.ticket+'">';
-    h+='<td colspan="7"><div class="detail-title">'+(d.titulo||'')+'</div>';
+    h+='<td colspan="7"><div class="detail-title">'+escapeHtml(d.titulo||'')+'</div>';
     h+='</td></tr>';
   });
   tb.innerHTML=h;
@@ -772,7 +780,7 @@ function renderTableEntregues(data){
   if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda entregue</td></tr>';return;}
   var h='';
   data.forEach(function(d){
-    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td><td>'+(d.data_criacao||'')+'</td><td>'+(d.data_entrega||'')+'</td><td>'+(d.dias||0)+' dias</td></tr>';
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td><td>'+escapeHtml(d.data_criacao||'')+'</td><td>'+escapeHtml(d.data_entrega||'')+'</td><td>'+(d.dias||0)+' dias</td></tr>';
   });
   tb.innerHTML=h;
 }
@@ -786,7 +794,7 @@ function renderTableTodas(entregues,emAberto){
   var h='';
   todas.forEach(function(d){
     var statusHtml=d.tipo==='entregue'?'<span class="aging-badge aging-green">Entregue</span>':d.status;
-    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+(d.titulo||'').replace(/"/g,'&quot;')+'">'+(d.titulo||'')+'</span></td><td>'+(d.data_criacao||'')+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
+    h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td><td>'+escapeHtml(d.data_criacao||'')+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
   });
   tb.innerHTML=h;
 }
@@ -821,6 +829,7 @@ fileInput.addEventListener('change',function(){if(fileInput.files.length>0)handl
 
 function handleFile(file){
   if(file.type!=='application/pdf'){showStatus('Selecione um arquivo PDF.','error');return;}
+  if(file.size > MAX_PDF_SIZE){showStatus('Arquivo muito grande. Maximo permitido: 5MB.','error');return;}
   pdfFile=file;
   uploadZone.classList.add('has-file');
   uploadZone.querySelector('p').innerHTML='<strong>'+file.name+'</strong>';
@@ -845,13 +854,15 @@ btnProcessar.addEventListener('click', async function(){
     var extracted = parsePDFText(fullText);
     showStatus('Salvando no banco de dados...','info');
 
-    // Prepare rows for upsert
+    // Prepare rows for upsert (sanitize data)
     var rows = [];
     extracted.entregues.forEach(function(d){
-      rows.push({ ticket: d.ticket, titulo: d.titulo, data_criacao: d.data_criacao, data_entrega: d.data_entrega, status_atual: d.data_entrega || 'Entregue', tipo: 'entregue', updated_at: new Date().toISOString() });
+      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return; // Skip invalid tickets
+      rows.push({ ticket: d.ticket, titulo: (d.titulo||'').substring(0,500), data_criacao: d.data_criacao, data_entrega: d.data_entrega, status_atual: (d.data_entrega || 'Entregue').substring(0,200), tipo: 'entregue', updated_at: new Date().toISOString() });
     });
     extracted.em_aberto.forEach(function(d){
-      rows.push({ ticket: d.ticket, titulo: d.titulo, data_criacao: d.data_criacao, data_entrega: '', status_atual: d.status_atual, tipo: 'aberto', updated_at: new Date().toISOString() });
+      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return; // Skip invalid tickets
+      rows.push({ ticket: d.ticket, titulo: (d.titulo||'').substring(0,500), data_criacao: d.data_criacao, data_entrega: '', status_atual: (d.status_atual||'').substring(0,200), tipo: 'aberto', updated_at: new Date().toISOString() });
     });
 
     // Upsert in chunks of 50
