@@ -258,6 +258,45 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 .status-bar svg{flex-shrink:0;width:16px;height:16px}
 
 
+/* Filters */
+.filters-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;gap:10px;flex-wrap:wrap}
+.filters-left{display:flex;align-items:center;gap:8px}
+.filters-left>svg{color:var(--text3);flex-shrink:0}
+.filter-select{font-family:var(--font);font-size:.78rem;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1);cursor:pointer;transition:all .2s ease}
+.filter-select:focus{outline:none;border-color:var(--accent)}
+[data-theme="dark"] .filter-select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.filter-clear{display:inline-flex;align-items:center;gap:4px;font-family:var(--font);font-size:.72rem;padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);background:none;color:var(--text2);cursor:pointer;transition:all .15s}
+.filter-clear:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.filter-counter{font-size:.72rem;color:var(--text3)}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:8px}
+.filter-chips:empty{display:none;padding:0}
+.filter-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:500;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-light);cursor:pointer;transition:all .15s}
+.filter-chip:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-light)}
+.filter-chip svg{width:10px;height:10px}
+[data-theme="dark"] .filter-chip{background:#172554;color:#93C5FD;border-color:#1E3A5F}
+[data-theme="dark"] .filter-chip:hover{background:#450A0A;color:#FCA5A5;border-color:#7F1D1D}
+.filter-empty{text-align:center;padding:32px 20px;color:var(--text3)}
+.filter-empty svg{width:36px;height:36px;margin-bottom:8px;opacity:.4}
+.filter-empty p{font-size:.82rem;margin-bottom:8px}
+.filter-empty button{font-family:var(--font);font-size:.78rem;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text1);cursor:pointer;transition:all .15s}
+.filter-empty button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Expanded row */
+.expand-row{cursor:pointer}
+.expand-row:hover td{background:var(--surface-2)}
+.expanded-detail{display:none}
+.expanded-detail.visible{display:table-row}
+.expanded-detail td{padding:14px 20px;background:var(--surface-2);border-left:3px solid var(--accent);font-size:.8rem;line-height:1.5;color:var(--text1)}
+[data-theme="dark"] .expanded-detail td{background:var(--surface-2);border-left-color:var(--accent)}
+.expanded-detail .detail-title{font-weight:600;margin-bottom:6px;font-size:.84rem}
+.expanded-detail .detail-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:.72rem;color:var(--text2)}
+.expanded-detail .detail-meta span{display:inline-flex;align-items:center;gap:4px}
+
+/* Sort indicator */
+th .sort-arrow{display:inline-block;margin-left:3px;opacity:0;font-size:.6rem;transition:opacity .15s}
+th.sorted-asc .sort-arrow,th.sorted-desc .sort-arrow{opacity:1;color:var(--accent)}
+th.sorted-desc .sort-arrow{transform:rotate(180deg)}
+
 /* Loading & Empty states */
 .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px}
@@ -353,7 +392,7 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
         <button class="tab-btn" data-tab="entregues">Entregues<span class="tab-count" id="countEntregues">0</span></button>
         <button class="tab-btn" data-tab="todas">Todas<span class="tab-count" id="countTodas">0</span></button>
       </div>
-      <div class="tab-content active" id="tab-aberto"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status_atual">Status</th><th data-col="dias">Dias</th><th data-col="setor">Setor</th><th data-col="prioridade">Prioridade</th></tr></thead><tbody id="tblAberto"></tbody></table></div></div>
+      <div class="tab-content active" id="tab-aberto"><div class="filters-row" id="filtersRow"><div class="filters-left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><select class="filter-select" id="filterSetor" onchange="applyFilters()"><option value="">Setor: Todos</option></select><select class="filter-select" id="filterPrioridade" onchange="applyFilters()"><option value="">Prioridade: Todas</option><option value="1">1 - Critico</option><option value="2">2 - Alto</option><option value="3">3 - Medio</option><option value="4">4 - Baixo</option><option value="none">(Sem prioridade)</option></select><button class="filter-clear" id="filterClear" onclick="clearFilters()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar</button></div><div class="filter-counter" id="filterCounter"></div></div><div class="filter-chips" id="filterChips"></div><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status_atual">Status</th><th data-col="dias">Dias</th><th data-col="setor">Setor</th><th data-col="prioridade">Prioridade</th></tr></thead><tbody id="tblAberto"></tbody></table></div></div>
       <div class="tab-content" id="tab-entregues"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="data_entrega">Entrega</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblEntregues"></tbody></table></div></div>
       <div class="tab-content" id="tab-todas"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status">Status</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblTodas"></tbody></table></div></div>
     </div>
@@ -715,20 +754,62 @@ function onPrioridadeChange(el,ticket){
 function renderTableAberto(data){
   var tb=document.getElementById('tblAberto');
   if(!data.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda em aberto</td></tr>';return;}
+  
+  // Sort
+  var col=sortState.col;
+  var dir=sortState.dir;
+  var changes=getLocalChanges();
+  data.sort(function(a,b){
+    var va,vb;
+    if(col==='dias'){va=Number(a.dias)||0;vb=Number(b.dias)||0;}
+    else if(col==='ticket'){va=a.ticket;vb=b.ticket;}
+    else if(col==='titulo'){va=a.titulo.toLowerCase();vb=b.titulo.toLowerCase();}
+    else if(col==='data_criacao'){va=a.data_criacao;vb=b.data_criacao;}
+    else if(col==='status_atual'){va=a.status_atual;vb=b.status_atual;}
+    else if(col==='setor'){va=(changes[a.ticket]&&changes[a.ticket].setor)||a.setor||'';vb=(changes[b.ticket]&&changes[b.ticket].setor)||b.setor||'';}
+    else if(col==='prioridade'){va=(changes[a.ticket]&&changes[a.ticket].prioridade)||a.prioridade||'9';vb=(changes[b.ticket]&&changes[b.ticket].prioridade)||b.prioridade||'9';}
+    else{va=0;vb=0;}
+    if(va<vb)return dir==='asc'?-1:1;
+    if(va>vb)return dir==='asc'?1:-1;
+    return 0;
+  });
+  
   var h='';
-  data.sort(function(a,b){return(Number(b.dias)||0)-(Number(a.dias)||0);});
   data.forEach(function(d){
-    h+='<tr>';
+    var setorVal=(changes[d.ticket]&&changes[d.ticket].setor)||d.setor||'(Sem setor)';
+    var prioVal=(changes[d.ticket]&&changes[d.ticket].prioridade)||d.prioridade||'';
+    h+='<tr class="expand-row" data-ticket="'+d.ticket+'" data-setor="'+setorVal+'" data-prioridade="'+prioVal+'" onclick="toggleExpandRow(\''+d.ticket+'\')">';
     h+='<td><strong>'+d.ticket+'</strong></td>';
     h+='<td><span class="cell-title" title="'+d.titulo.replace(/"/g,'&quot;')+'">'+d.titulo+'</span></td>';
     h+='<td>'+d.data_criacao+'</td>';
     h+='<td>'+d.status_atual+'</td>';
     h+='<td>'+agingBadge(d.dias)+'</td>';
-    h+='<td>'+buildSetorSelect(d.ticket,d.setor||'')+'</td>';
-    h+='<td>'+buildPrioridadeSelect(d.ticket,d.prioridade||'')+'</td>';
+    h+='<td onclick="event.stopPropagation()">'+buildSetorSelect(d.ticket,d.setor||'')+'</td>';
+    h+='<td onclick="event.stopPropagation()">'+buildPrioridadeSelect(d.ticket,d.prioridade||'')+'</td>';
     h+='</tr>';
+    // Expanded detail row
+    var prioLabel=prioVal?findPrioLabel(prioVal):'Nao definida';
+    h+='<tr class="expanded-detail" id="detail-'+d.ticket+'">';
+    h+='<td colspan="7"><div class="detail-title">'+d.titulo+'</div>';
+    h+='<div class="detail-meta"><span>Criado: '+d.data_criacao+'</span><span>Status: '+d.status_atual+'</span><span>Dias: '+(d.dias||0)+'</span><span>Setor: '+setorVal+'</span><span>Prioridade: '+prioLabel+'</span></div>';
+    h+='</td></tr>';
   });
   tb.innerHTML=h;
+  
+  // Update sort indicators on headers
+  document.querySelectorAll('#tab-aberto th').forEach(function(th){
+    th.classList.remove('sorted-asc','sorted-desc');
+    th.onclick=function(){sortTable(th.getAttribute('data-col'));};
+    if(!th.querySelector('.sort-arrow')){
+      th.innerHTML+='<span class="sort-arrow">\u25B2</span>';
+    }
+    if(th.getAttribute('data-col')===sortState.col){
+      th.classList.add('sorted-'+sortState.dir);
+    }
+  });
+  
+  populateFilterSetor();
+  applyFilters();
 }
 
 function renderTableEntregues(data){
@@ -768,11 +849,7 @@ document.querySelectorAll('.tab-btn').forEach(function(btn){
 
 // ==================== SEARCH ====================
 document.getElementById('searchInput').addEventListener('input',function(){
-  var q=this.value.toLowerCase();
-  document.querySelectorAll('#tblAberto tr, #tblEntregues tr, #tblTodas tr').forEach(function(tr){
-    var text=tr.textContent.toLowerCase();
-    tr.style.display=text.indexOf(q)!==-1?'':'none';
-  });
+  applyFilters();
 });
 
 // ==================== UPLOAD + PROCESS ====================
@@ -867,6 +944,149 @@ function showStatus(msg,type){
   var bar=document.getElementById('statusBar');
   bar.className='status-bar '+type;
   document.getElementById('statusText').textContent=msg;
+}
+
+// ==================== FILTERS ====================
+var currentFilterSetor='';
+var currentFilterPrioridade='';
+
+function populateFilterSetor(){
+  var sel=document.getElementById('filterSetor');
+  if(!sel)return;
+  var setores=getSetores();
+  sel.innerHTML='<option value="">Setor: Todos</option>';
+  setores.forEach(function(s){
+    if(s==='(Sem setor)')return;
+    sel.innerHTML+='<option value="'+s+'">'+s+'</option>';
+  });
+  // Restore current filter selection
+  if(currentFilterSetor)sel.value=currentFilterSetor;
+}
+
+function applyFilters(){
+  currentFilterSetor=document.getElementById('filterSetor').value;
+  currentFilterPrioridade=document.getElementById('filterPrioridade').value;
+  
+  var rows=document.querySelectorAll('#tblAberto tr.expand-row');
+  var shown=0,total=rows.length;
+  var changes=getLocalChanges();
+  
+  rows.forEach(function(tr){
+    var ticket=tr.getAttribute('data-ticket');
+    var setor=(changes[ticket]&&changes[ticket].setor)||tr.getAttribute('data-setor')||'(Sem setor)';
+    var prio=(changes[ticket]&&changes[ticket].prioridade)||tr.getAttribute('data-prioridade')||'';
+    
+    var showSetor=!currentFilterSetor||setor===currentFilterSetor;
+    var showPrio=true;
+    if(currentFilterPrioridade==='none'){showPrio=!prio||prio==='';}
+    else if(currentFilterPrioridade){showPrio=prio===currentFilterPrioridade;}
+    
+    // Also apply search
+    var q=document.getElementById('searchInput').value.toLowerCase();
+    var showSearch=!q||tr.textContent.toLowerCase().indexOf(q)!==-1;
+    
+    var visible=showSetor&&showPrio&&showSearch;
+    tr.style.display=visible?'':'none';
+    // Also hide expanded detail if row is hidden
+    var detail=tr.nextElementSibling;
+    if(detail&&detail.classList.contains('expanded-detail')&&!visible){
+      detail.style.display='none';
+    }
+    if(visible)shown++;
+  });
+  
+  // Also apply search to other tabs
+  var q=document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('#tblEntregues tr, #tblTodas tr').forEach(function(tr){
+    var text=tr.textContent.toLowerCase();
+    tr.style.display=!q||text.indexOf(q)!==-1?'':'none';
+  });
+  
+  // Counter
+  var counter=document.getElementById('filterCounter');
+  if(currentFilterSetor||currentFilterPrioridade||document.getElementById('searchInput').value){
+    counter.textContent='Mostrando '+shown+' de '+total+' demandas';
+  } else {
+    counter.textContent='';
+  }
+  
+  // Clear button
+  document.getElementById('filterClear').style.display=(currentFilterSetor||currentFilterPrioridade)?'inline-flex':'none';
+  
+  // Chips
+  renderFilterChips();
+  
+  // Empty state
+  var tbody=document.getElementById('tblAberto');
+  var existingEmpty=tbody.querySelector('.filter-empty-row');
+  if(existingEmpty)existingEmpty.remove();
+  if(shown===0&&total>0){
+    var emptyRow=document.createElement('tr');
+    emptyRow.className='filter-empty-row';
+    emptyRow.innerHTML='<td colspan="7"><div class="filter-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><p>Nenhuma demanda encontrada com esses filtros.</p><button onclick="clearFilters()">Limpar filtros</button></div></td>';
+    tbody.appendChild(emptyRow);
+  }
+}
+
+function clearFilters(){
+  document.getElementById('filterSetor').value='';
+  document.getElementById('filterPrioridade').value='';
+  currentFilterSetor='';
+  currentFilterPrioridade='';
+  applyFilters();
+}
+
+function renderFilterChips(){
+  var container=document.getElementById('filterChips');
+  var h='';
+  if(currentFilterSetor){
+    h+='<span class="filter-chip" onclick="document.getElementById(\'filterSetor\').value=\'\';applyFilters();">'+currentFilterSetor+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+  }
+  if(currentFilterPrioridade){
+    var label=currentFilterPrioridade==='none'?'Sem prioridade':findPrioLabel(currentFilterPrioridade);
+    h+='<span class="filter-chip" onclick="document.getElementById(\'filterPrioridade\').value=\'\';applyFilters();">'+label+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+  }
+  container.innerHTML=h;
+}
+
+function findPrioLabel(val){
+  for(var i=0;i<PRIORIDADES.length;i++){
+    if(PRIORIDADES[i].value===val)return PRIORIDADES[i].label;
+  }
+  return val;
+}
+
+// ==================== EXPANDABLE ROWS ====================
+function toggleExpandRow(ticket){
+  var detail=document.getElementById('detail-'+ticket);
+  if(!detail)return;
+  detail.classList.toggle('visible');
+  if(detail.style.display==='none')detail.style.display='';
+}
+
+// ==================== COLUMN SORTING ====================
+var sortState={col:'dias',dir:'desc'};
+
+function sortTable(col){
+  if(sortState.col===col){
+    sortState.dir=sortState.dir==='desc'?'asc':'desc';
+  } else {
+    sortState.col=col;
+    sortState.dir=col==='dias'?'desc':'asc';
+  }
+  // Re-render with sort
+  if(dashboardData){
+    var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+    emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
+    renderTableAberto(emAberto);
+  }
+  // Update header indicators
+  document.querySelectorAll('#tab-aberto th').forEach(function(th){
+    th.classList.remove('sorted-asc','sorted-desc');
+    if(th.getAttribute('data-col')===col){
+      th.classList.add('sorted-'+sortState.dir);
+    }
+  });
 }
 
 // ==================== INIT ====================
