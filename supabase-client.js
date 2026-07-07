@@ -95,7 +95,7 @@ const supabase = {
   _headers() {
     const token = supabase.getToken();
     const headers = { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token && token !== 'null' && token !== 'undefined') headers['Authorization'] = `Bearer ${token}`;
     return headers;
   },
 
@@ -110,6 +110,9 @@ const supabase = {
       const refreshed = await supabase.refreshSession();
       if (refreshed) {
         resp = await fetch(url, { headers: supabase._headers() });
+      } else {
+        // Retry without auth (for public SELECT via RLS anon)
+        resp = await fetch(url, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' } });
       }
     }
     if (!resp.ok) throw new Error(`Select ${table} failed: ${resp.status}`);
