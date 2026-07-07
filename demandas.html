@@ -412,6 +412,23 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
   .search-wrapper{width:100%}
   .priority-collapsed-preview{display:none}
 }
+
+/* Changelog */
+.changelog-entry{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px;background:var(--surface-1)}
+.changelog-date{font-size:.8rem;font-weight:600;color:var(--text1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.changelog-date svg{color:var(--text3)}
+.changelog-group{margin-bottom:8px}
+.changelog-group-title{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.changelog-group-title.novos{color:var(--blue)}
+.changelog-group-title.entregues{color:var(--green)}
+.changelog-group-title.atualizados{color:var(--amber)}
+.changelog-item{font-size:.75rem;color:var(--text2);padding:3px 0 3px 20px;line-height:1.5}
+.changelog-item strong{color:var(--text1)}
+.changelog-item .change-detail{color:var(--text3);font-size:.7rem}
+.changelog-item .old-val{text-decoration:line-through;color:var(--red);opacity:.7}
+.changelog-item .new-val{color:var(--green)}
+.changelog-summary{font-size:.72rem;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.changelog-empty{text-align:center;color:var(--text3);padding:32px 16px;font-size:.8rem}
 </style>
 </head>
 
@@ -433,6 +450,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
       <div class="settings-dropdown" id="settingsDropdown">
         <div class="settings-item" onclick="openUploadModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Atualizar via PDF</span></div>
         <div class="settings-item" id="settingsSetores" onclick="openSetoresModal()" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg><span>Gerenciar Setores</span></div>
+        <div class="settings-item" id="settingsHistorico" onclick="openChangelogModal()" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg><span>Historico de atualizacoes</span></div>
         <div class="settings-item" onclick="toggleTheme();toggleSettingsMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><span>Alternar tema</span></div>
       </div>
     </div>
@@ -521,6 +539,17 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 
 <!-- Custom Confirm Modal -->
 <div class="confirm-overlay" id="confirmOverlay">
+
+<!-- Changelog Modal -->
+<div class="modal-overlay" id="changelogModal">
+  <div class="modal-content" style="max-width:600px">
+    <div class="modal-header">
+      <div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>Historico de Atualizacoes</div>
+      <button class="modal-close" onclick="closeChangelogModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="changelogContent" style="max-height:60vh;overflow-y:auto;padding:4px 0"></div>
+  </div>
+</div>
   <div class="confirm-box">
     <div class="confirm-icon" id="confirmIcon"></div>
     <div class="confirm-title" id="confirmTitle"></div>
@@ -1343,18 +1372,60 @@ btnProcessar.addEventListener('click', async function(){
       fullText += tc.items.map(function(it){return it.str;}).join(' ')+' ';
     }
     var extracted = parsePDFText(fullText);
-    showStatus('Salvando no banco de dados...','info');
+    showStatus('Comparando com dados existentes...','info');
+
+    // Load current data from DB for comparison
+    var existingAberto = await supabase.select('demandas', { filter: 'tipo=eq.aberto' });
+    var existingEntregue = await supabase.select('demandas', { filter: 'tipo=eq.entregue' });
+    var existingMap = {};
+    existingAberto.forEach(function(d){ existingMap[d.ticket] = d; });
+    existingEntregue.forEach(function(d){ existingMap[d.ticket] = d; });
 
     // Prepare rows for upsert (sanitize data)
     var rows = [];
     extracted.entregues.forEach(function(d){
-      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return; // Skip invalid tickets
+      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return;
       rows.push({ ticket: d.ticket, titulo: (d.titulo||'').substring(0,500), data_criacao: d.data_criacao, data_entrega: d.data_entrega, status_atual: (d.data_entrega || 'Entregue').substring(0,200), tipo: 'entregue', updated_at: new Date().toISOString() });
     });
     extracted.em_aberto.forEach(function(d){
-      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return; // Skip invalid tickets
+      if(!d.ticket || !/^\d{3,6}$/.test(d.ticket)) return;
       rows.push({ ticket: d.ticket, titulo: (d.titulo||'').substring(0,500), data_criacao: d.data_criacao, data_entrega: '', status_atual: (d.status_atual||'').substring(0,200), tipo: 'aberto', updated_at: new Date().toISOString() });
     });
+
+    // Compare and classify changes
+    var changelog = { novos: [], entregues: [], atualizados: [], sem_alteracao: 0 };
+    rows.forEach(function(row){
+      var existing = existingMap[row.ticket];
+      if(!existing){
+        // New ticket
+        changelog.novos.push({ ticket: row.ticket, titulo: row.titulo, tipo: row.tipo });
+      } else if(existing.tipo === 'aberto' && row.tipo === 'entregue'){
+        // Changed to entregue
+        changelog.entregues.push({ ticket: row.ticket, titulo: row.titulo, data_entrega: row.data_entrega });
+      } else {
+        // Check for field changes
+        var changes = [];
+        if(existing.titulo && row.titulo && existing.titulo !== row.titulo){
+          changes.push({ campo: 'Titulo', de: existing.titulo, para: row.titulo });
+        }
+        if((existing.status_atual||'') !== (row.status_atual||'')){
+          changes.push({ campo: 'Status', de: existing.status_atual||'(vazio)', para: row.status_atual||'(vazio)' });
+        }
+        if(row.tipo === 'aberto' && (existing.data_entrega||'') !== (row.data_entrega||'')){
+          // Only track data_entrega change for aberto tickets (for entregue it's expected)
+        }
+        if(existing.tipo === 'entregue' && row.tipo === 'entregue' && (existing.data_entrega||'') !== (row.data_entrega||'')){
+          changes.push({ campo: 'Data entrega', de: existing.data_entrega||'(vazio)', para: row.data_entrega||'(vazio)' });
+        }
+        if(changes.length > 0){
+          changelog.atualizados.push({ ticket: row.ticket, titulo: row.titulo, changes: changes });
+        } else {
+          changelog.sem_alteracao++;
+        }
+      }
+    });
+
+    showStatus('Salvando no banco de dados...','info');
 
     // Upsert in chunks of 50
     var CHUNK = 50;
@@ -1368,8 +1439,32 @@ btnProcessar.addEventListener('click', async function(){
       await supabase.update('demandas', {tipo:'entregue', updated_at: new Date().toISOString()}, 'ticket=eq.'+encodeURIComponent(entregueTickets[j]));
     }
 
-    showStatus('Dados salvos! '+rows.length+' demandas processadas.','success');
-    setTimeout(function(){ carregarDados(); closeUploadModal(); }, 1500);
+    // Save changelog to Supabase
+    var changelogEntry = {
+      chave: 'changelog_' + Date.now(),
+      valor: JSON.stringify({
+        data: new Date().toISOString(),
+        total_processados: rows.length,
+        novos: changelog.novos,
+        entregues: changelog.entregues,
+        atualizados: changelog.atualizados,
+        sem_alteracao: changelog.sem_alteracao
+      }),
+      updated_at: new Date().toISOString()
+    };
+    await supabase.insert('demandas_config', [changelogEntry], { upsert: true });
+
+    // Show results summary
+    var resumo = rows.length + ' demandas processadas';
+    if(changelog.novos.length) resumo += ' | ' + changelog.novos.length + ' novas';
+    if(changelog.entregues.length) resumo += ' | ' + changelog.entregues.length + ' entregues';
+    if(changelog.atualizados.length) resumo += ' | ' + changelog.atualizados.length + ' atualizadas';
+    showStatus(resumo, 'success');
+
+    // Show changelog in upload modal
+    showChangelogResumo(changelog);
+
+    setTimeout(function(){ carregarDados(); }, 1500);
   }catch(err){
     showStatus('Erro: '+err.message,'error');
   }
@@ -2039,6 +2134,95 @@ async function reabrirTicket(ticket){
     .catch(function(err){customAlert({title:'Erro ao reabrir',message:err.message,confirmColor:'red'});});
 }
 
+// ==================== CHANGELOG ====================
+function openChangelogModal(){
+  document.getElementById('changelogModal').classList.add('open');
+  document.getElementById('settingsDropdown').classList.remove('open');
+  loadChangelogHistory();
+}
+function closeChangelogModal(){
+  document.getElementById('changelogModal').classList.remove('open');
+}
+
+function showChangelogResumo(changelog){
+  var container = document.getElementById('statusBar');
+  if(!container) return;
+  var h = '';
+  if(changelog.novos.length > 0 || changelog.entregues.length > 0 || changelog.atualizados.length > 0){
+    h += '<div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface-1);max-height:250px;overflow-y:auto">';
+    if(changelog.novos.length > 0){
+      h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + changelog.novos.length + ')</div>';
+      changelog.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
+      h += '</div>';
+    }
+    if(changelog.entregues.length > 0){
+      h += '<div class="changelog-group"><div class="changelog-group-title entregues"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Entregues (' + changelog.entregues.length + ')</div>';
+      changelog.entregues.forEach(function(e){ h += '<div class="changelog-item"><strong>' + e.ticket + '</strong> — ' + escapeHtml(e.titulo) + (e.data_entrega ? ' <span class="change-detail">(entrega: ' + e.data_entrega + ')</span>' : '') + '</div>'; });
+      h += '</div>';
+    }
+    if(changelog.atualizados.length > 0){
+      h += '<div class="changelog-group"><div class="changelog-group-title atualizados"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Atualizados (' + changelog.atualizados.length + ')</div>';
+      changelog.atualizados.forEach(function(u){
+        var detalhes = u.changes.map(function(c){ return c.campo + ': <span class="old-val">' + escapeHtml(c.de) + '</span> → <span class="new-val">' + escapeHtml(c.para) + '</span>'; }).join(', ');
+        h += '<div class="changelog-item"><strong>' + u.ticket + '</strong> — <span class="change-detail">' + detalhes + '</span></div>';
+      });
+      h += '</div>';
+    }
+    if(changelog.sem_alteracao > 0){
+      h += '<div class="changelog-summary">Sem alteracao: ' + changelog.sem_alteracao + ' tickets</div>';
+    }
+    h += '</div>';
+  }
+  container.insertAdjacentHTML('afterend', h);
+}
+
+async function loadChangelogHistory(){
+  var container = document.getElementById('changelogContent');
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Carregando...</div>';
+  try{
+    var allConfig = await supabase.select('demandas_config', { filter: 'chave=like.changelog_%', order: 'chave.desc' });
+    if(!allConfig || allConfig.length === 0){
+      container.innerHTML = '<div class="changelog-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg><br>Nenhuma atualizacao registrada ainda.<br><span style="font-size:.7rem">O historico sera gerado na proxima vez que processar um PDF.</span></div>';
+      return;
+    }
+    var h = '';
+    allConfig.forEach(function(entry){
+      var data;
+      try{ data = typeof entry.valor === 'string' ? JSON.parse(entry.valor) : entry.valor; }catch(e){ return; }
+      if(!data || !data.data) return;
+      var dt = new Date(data.data);
+      var dataStr = ('0'+dt.getDate()).slice(-2) + '/' + ('0'+(dt.getMonth()+1)).slice(-2) + '/' + dt.getFullYear() + ' — ' + ('0'+dt.getHours()).slice(-2) + ':' + ('0'+dt.getMinutes()).slice(-2);
+      h += '<div class="changelog-entry">';
+      h += '<div class="changelog-date"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + dataStr + ' <span style="font-size:.68rem;color:var(--text3);margin-left:auto">' + data.total_processados + ' tickets</span></div>';
+      if(data.novos && data.novos.length > 0){
+        h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + data.novos.length + ')</div>';
+        data.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
+        h += '</div>';
+      }
+      if(data.entregues && data.entregues.length > 0){
+        h += '<div class="changelog-group"><div class="changelog-group-title entregues"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Entregues (' + data.entregues.length + ')</div>';
+        data.entregues.forEach(function(e){ h += '<div class="changelog-item"><strong>' + e.ticket + '</strong> — ' + escapeHtml(e.titulo) + (e.data_entrega ? ' <span class="change-detail">(entrega: ' + e.data_entrega + ')</span>' : '') + '</div>'; });
+        h += '</div>';
+      }
+      if(data.atualizados && data.atualizados.length > 0){
+        h += '<div class="changelog-group"><div class="changelog-group-title atualizados"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Atualizados (' + data.atualizados.length + ')</div>';
+        data.atualizados.forEach(function(u){
+          var detalhes = u.changes.map(function(c){ return c.campo + ': <span class="old-val">' + escapeHtml(c.de) + '</span> → <span class="new-val">' + escapeHtml(c.para) + '</span>'; }).join(', ');
+          h += '<div class="changelog-item"><strong>' + u.ticket + '</strong> — <span class="change-detail">' + detalhes + '</span></div>';
+        });
+        h += '</div>';
+      }
+      if(data.sem_alteracao > 0){
+        h += '<div class="changelog-summary">Sem alteracao: ' + data.sem_alteracao + ' tickets</div>';
+      }
+      h += '</div>';
+    });
+    container.innerHTML = h;
+  }catch(err){
+    container.innerHTML = '<div class="changelog-empty">Erro ao carregar historico: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
 // ==================== INIT ====================
 async function init(){
   // Load config (setores/prioridades) from Supabase first
@@ -2065,6 +2249,9 @@ async function init(){
     // Show "Gerenciar Setores" for admin
     var setoresItem = document.getElementById('settingsSetores');
     if(setoresItem) setoresItem.style.display = '';
+    // Show "Historico de atualizacoes" for admin
+    var historicoItem = document.getElementById('settingsHistorico');
+    if(historicoItem) historicoItem.style.display = '';
   }
   
   // Load data
