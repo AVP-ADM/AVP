@@ -1305,9 +1305,13 @@ function renderTableTodas(entregues,emAberto){
       h+='<button class="detail-finalize-btn" onclick="finalizarTicket(\''+d.ticket+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Finalizar ticket</button>';
       h+='</div>';
     } else {
-      // Read-only panel for entregues or non-admin
-      h+='<div class="detail-section"><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div>';
-      if(d.observacao){h+='<div class="detail-section"><span class="detail-label">Observacao:</span><p class="detail-obs-text">'+escapeHtml(d.observacao)+'</p></div>';}
+      // Panel for entregues or non-admin (same as Entregues tab)
+      h+='<div class="detail-section"><div class="detail-section-row"><span class="detail-label">Titulo:</span><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div></div>';
+      // Observation
+      h+='<div class="detail-section"><span class="detail-label">Observacao:</span>';
+      h+='<p class="detail-obs-text">'+(d.observacao?escapeHtml(d.observacao):'<em style="color:var(--text3)">Sem observacao</em>')+'</p>';
+      h+='</div>';
+      // Attachments
       var anexosT = parseAnexos(d.anexos);
       if(anexosT.length > 0){
         h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosT.length+'):</span><div class="detail-attachments-grid">';
@@ -1319,6 +1323,12 @@ function renderTableTodas(entregues,emAberto){
           }
         });
         h+='</div></div>';
+      }
+      // Reopen button (admin only, entregue tickets)
+      if(isAdmin && d.tipo==='entregue'){
+        h+='<div class="detail-section detail-actions-row">';
+        h+='<button class="detail-reopen-btn" onclick="reabrirTicket(\''+d.ticket+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Reabrir ticket</button>';
+        h+='</div>';
       }
     }
     h+='</div></td></tr>';
