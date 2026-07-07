@@ -722,9 +722,9 @@ function normalizarStatus(val){
 
 function renderKPIs(m){
   var h='';
-  h+='<div class="kpi-card blue"><div class="kpi-value">'+m.total+'</div><div class="kpi-label">Total Demandas</div></div>';
-  h+='<div class="kpi-card green"><div class="kpi-value">'+m.entregues+'</div><div class="kpi-label">Entregues</div></div>';
-  h+='<div class="kpi-card amber"><div class="kpi-value">'+m.em_aberto+'</div><div class="kpi-label">Em Aberto</div></div>';
+  h+='<div class="kpi-card blue" onclick="kpiClick(\'todas\')" style="cursor:pointer"><div class="kpi-value">'+m.total+'</div><div class="kpi-label">Total Demandas</div></div>';
+  h+='<div class="kpi-card green" onclick="kpiClick(\'entregues\')" style="cursor:pointer"><div class="kpi-value">'+m.entregues+'</div><div class="kpi-label">Entregues</div></div>';
+  h+='<div class="kpi-card amber" onclick="kpiClick(\'aberto\')" style="cursor:pointer"><div class="kpi-value">'+m.em_aberto+'</div><div class="kpi-label">Em Aberto</div></div>';
   h+='<div class="kpi-card purple"><div class="kpi-value">'+m.taxa_entrega+'<span style="font-size:1rem;font-weight:600">%</span></div><div class="kpi-label">Taxa de Entrega</div></div>';
   h+='<div class="kpi-card red"><div class="kpi-value">'+m.media_dias_aberto+'</div><div class="kpi-label">Media Dias (Aberto)</div><div class="kpi-sub">dias em media</div></div>';
   document.getElementById('kpiGrid').innerHTML=h;
@@ -732,10 +732,79 @@ function renderKPIs(m){
 
 function renderInsights(m){
   var h='';
-  h+='<div class="insight-item red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><span class="insight-value">'+m.criticas+'</span> <span class="insight-label">Criticas (&gt;90 dias)</span></div></div>';
-  h+='<div class="insight-item amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><span class="insight-value">'+m.sem_previsao+'</span> <span class="insight-label">Sem previsao</span></div></div>';
+  h+='<div class="insight-item red" onclick="insightClick(\'criticas\')" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><span class="insight-value">'+m.criticas+'</span> <span class="insight-label">Criticas (&gt;90 dias)</span></div></div>';
+  h+='<div class="insight-item amber" onclick="insightClick(\'sem_previsao\')" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><span class="insight-value">'+m.sem_previsao+'</span> <span class="insight-label">Sem previsao</span></div></div>';
   h+='<div class="insight-item green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><span class="insight-value">'+m.media_dias_entrega+'</span> <span class="insight-label">Tempo medio resolucao (dias)</span></div></div>';
   document.getElementById('insightsStrip').innerHTML=h;
+}
+
+// ==================== KPI & INSIGHT CLICKS ====================
+function kpiClick(tab){
+  // Activate the tab
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+  var tabBtn=document.querySelector('.tab-btn[data-tab="'+tab+'"]');
+  if(tabBtn) tabBtn.classList.add('active');
+  var tabContent=document.getElementById('tab-'+tab);
+  if(tabContent) tabContent.classList.add('active');
+  // Clear any active filters
+  clearFilters();
+  // Scroll to table
+  var tableCard=document.querySelector('.card:last-of-type');
+  if(tableCard) tableCard.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function insightClick(tipo){
+  // Activate "Em Aberto" tab
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+  var tabBtn=document.querySelector('.tab-btn[data-tab="aberto"]');
+  if(tabBtn) tabBtn.classList.add('active');
+  var tabContent=document.getElementById('tab-aberto');
+  if(tabContent) tabContent.classList.add('active');
+  // Apply specific filter
+  if(tipo==='criticas'){
+    // Sort by dias desc and filter manually (show only >90 days)
+    document.getElementById('filterSetor').value='';
+    document.getElementById('filterPrioridade').value='';
+    document.getElementById('searchInput').value='';
+    // Custom filter: hide rows with dias <= 90
+    var rows=document.querySelectorAll('#tblAberto tr.expand-row');
+    var shown=0,total=rows.length;
+    rows.forEach(function(tr){
+      var diasText=tr.querySelector('.aging-badge');
+      var dias=diasText?parseInt(diasText.textContent):0;
+      var visible=dias>90;
+      tr.style.display=visible?'':'none';
+      var detail=tr.nextElementSibling;
+      if(detail&&detail.classList.contains('expanded-detail')&&!visible) detail.style.display='none';
+      if(visible) shown++;
+    });
+    document.getElementById('filterCounter').textContent='Mostrando '+shown+' de '+total+' demandas (criticas >90 dias)';
+    document.getElementById('filterClear').style.display='inline-flex';
+    renderFilterChips();
+  } else if(tipo==='sem_previsao'){
+    // Filter by status containing "análise" or "desenvolvimento"
+    document.getElementById('filterSetor').value='';
+    document.getElementById('filterPrioridade').value='';
+    document.getElementById('searchInput').value='';
+    var rows=document.querySelectorAll('#tblAberto tr.expand-row');
+    var shown=0,total=rows.length;
+    rows.forEach(function(tr){
+      var text=tr.textContent.toLowerCase();
+      var visible=text.indexOf('an')!==-1&&(text.indexOf('lise')!==-1||text.indexOf('desenvolvimento')!==-1);
+      tr.style.display=visible?'':'none';
+      var detail=tr.nextElementSibling;
+      if(detail&&detail.classList.contains('expanded-detail')&&!visible) detail.style.display='none';
+      if(visible) shown++;
+    });
+    document.getElementById('filterCounter').textContent='Mostrando '+shown+' de '+total+' demandas (sem previsao)';
+    document.getElementById('filterClear').style.display='inline-flex';
+    renderFilterChips();
+  }
+  // Scroll to table
+  var tableCard=document.querySelector('.card:last-of-type');
+  if(tableCard) tableCard.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 
