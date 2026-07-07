@@ -578,8 +578,9 @@ tr:hover .row-actions{opacity:1}
   .app-sidebar.mobile-open{left:0}
   .app-sidebar.collapsed{left:-64px}
   .app-main{padding:16px}
+  .app-layout{overflow:visible;overflow-y:auto}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .drawer{width:100vw}
+  .drawer{width:100vw;max-width:100vw}
   .comp-section{grid-template-columns:1fr!important}
   .export-grid{grid-template-columns:1fr}
   .mgmt-grid{grid-template-columns:1fr}
@@ -588,18 +589,29 @@ tr:hover .row-actions{opacity:1}
   .card{padding:16px}
   .tm-layout{grid-template-columns:1fr;min-height:auto}
   .tm-sidebar{max-height:200px;border-right:none;border-bottom:1px solid var(--border)}
+  .search-box{width:95vw}
+  .header-actions .btn-import,.header-actions .btn-sync,.header-actions .btn-export-xlsx{display:none}
+  .dashboard-top{grid-template-columns:repeat(2,1fr)}
+  /* Settings panel grid */
+  .settings-content-grid{grid-template-columns:1fr!important}
+  .settings-sidebar{display:none}
 }
 @media(max-width:480px){
   /* Header */
   .app-header{padding:8px 12px;height:44px}
   .app-logo{font-size:.95rem;gap:6px}
   .app-logo span{display:none}
+  .app-logo img{height:24px;width:24px}
   .header-actions{gap:6px}
   .header-right{gap:6px}
   .theme-toggle{padding:6px 8px;font-size:.85rem}
+  .theme-toggle .label{display:none}
+  .settings-btn{padding:6px 8px}
+  .header-btn{padding:6px 8px;font-size:.72rem}
 
   /* Main content */
-  .app-layout{height:calc(100vh - 44px);margin-top:44px}
+  .app-layout{height:calc(100vh - 44px);margin-top:44px;overflow:visible;overflow-y:auto}
+  .app-sidebar{top:44px;height:calc(100vh - 44px)}
   .app-main{padding:12px 10px 60px}
   .app-main-inner{max-width:100%}
 
@@ -610,8 +622,9 @@ tr:hover .row-actions{opacity:1}
   .kpi-label{font-size:.65rem}
 
   /* Dashboard top */
-  .dashboard-top{gap:10px;margin-bottom:16px}
+  .dashboard-top{grid-template-columns:1fr!important;gap:10px;margin-bottom:16px}
   .integrity-card{padding:14px 16px}
+  .integrity-value{font-size:1.4rem}
 
   /* Cards */
   .card{padding:14px 12px;margin-bottom:14px;border-radius:var(--radius)}
@@ -621,6 +634,7 @@ tr:hover .row-actions{opacity:1}
   table{font-size:.73rem}
   th{padding:8px 10px;font-size:.63rem}
   td{padding:7px 10px}
+  .table-wrap{margin:0 -4px;border-radius:var(--radius)}
 
   /* Forms & Inputs */
   input,select{min-height:40px;font-size:.82rem}
@@ -634,18 +648,25 @@ tr:hover .row-actions{opacity:1}
   /* Drawer */
   .drawer{padding:18px 14px;max-width:100vw;width:100vw}
   .drawer-title{font-size:1.05rem;margin-bottom:14px}
-  .drawer-toolbar{flex-wrap:wrap}
+  .drawer-subtitle{font-size:.72rem}
+  .drawer-toolbar{flex-wrap:wrap;gap:6px}
   .drawer-toolbar input{min-height:36px}
-  .drawer-toolbar select{min-height:36px}
+  .drawer-toolbar select{min-height:36px;max-width:100%}
   .drawer-toolbar .btn{min-height:36px}
+  .drawer-table{font-size:.72rem}
+  .drawer-table th{padding:6px 8px;font-size:.62rem}
+  .drawer-table td{padding:5px 8px}
 
   /* Mgmt & Export */
   .mgmt-grid{gap:10px}
   .mgmt-card{padding:14px}
+  .mgmt-card h4{font-size:.84rem}
+  .mgmt-card p{font-size:.72rem}
   .export-grid{gap:10px}
   .export-card{padding:16px}
 
   /* Compatibility section */
+  .comp-tabs{gap:4px}
   .comp-tab{padding:6px 10px;font-size:.72rem}
 
   /* Settings */
@@ -656,10 +677,18 @@ tr:hover .row-actions{opacity:1}
   .reg-tab{padding:8px 14px;font-size:.78rem}
   .reg-accordion-header{padding:12px 14px}
   .reg-faq-header{padding:12px 14px}
+  .reg-cat-card{padding:12px}
 
   /* Tabela Master */
   .tm-layout{grid-template-columns:1fr;min-height:auto}
   .tm-sidebar{max-height:160px;border-right:none;border-bottom:1px solid var(--border)}
+
+  /* Search overlay */
+  .search-box{width:100%;max-width:100vw;border-radius:var(--radius)}
+  .search-overlay{padding-top:5vh}
+  .search-tabs{flex-wrap:wrap;gap:4px;padding:10px 12px 8px}
+  .search-tab{padding:5px 10px;font-size:.7rem}
+  .search-input-wrap{padding:10px 12px}
 
   /* Login */
   .login-card{padding:28px 20px;width:100%;max-width:100%;border-radius:12px}
@@ -678,6 +707,23 @@ tr:hover .row-actions{opacity:1}
 
   /* Notification panel */
   .notif-panel{width:100vw;max-width:100vw;right:0}
+
+  /* Sidebar overlay position */
+  #sidebarMobileOverlay{top:44px!important}
+
+  /* Pagination */
+  .pagination{flex-wrap:wrap}
+  .pagination button{padding:6px 10px;font-size:.72rem}
+
+  /* Staging bar */
+  .staging-bar{flex-direction:column;gap:8px;align-items:flex-start;padding:10px 14px}
+
+  /* Section titles */
+  .section-title{font-size:.88rem}
+
+  /* Coberturas */
+  .cob-hero-grid{grid-template-columns:1fr!important}
+  .cob-accordion-header{padding:12px 14px}
 }
 @media(min-width:769px){
   .mobile-menu-btn{display:none!important}
