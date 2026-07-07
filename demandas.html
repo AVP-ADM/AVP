@@ -1274,7 +1274,7 @@ function renderPriorityCard(){
   
   // Body (expanded)
   var body=document.getElementById('priorityBody');
-  var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px" id="prioGrid">';
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px" id="prioGrid">';
   prios.forEach(function(p,idx){
     if(editingPrioIdx===idx && isAdmin){
       // EDIT MODE - inline inputs
