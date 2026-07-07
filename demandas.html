@@ -113,6 +113,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .priority-collapsed-preview .pdot.p2{background:#C2410C}
 .priority-collapsed-preview .pdot.p3{background:var(--amber)}
 .priority-collapsed-preview .pdot.p4{background:var(--green)}
+.priority-collapsed-preview .pdot.p5{background:var(--blue)}
+.priority-collapsed-preview .pdot.p6{background:var(--purple)}
 .priority-collapsed-preview span{display:inline-flex;align-items:center;gap:4px}
 .priority-toggle-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center;transition:transform .2s ease}
 .priority-toggle-btn.collapsed{transform:rotate(-90deg)}
@@ -124,6 +126,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .priority-dot.p2{background:#C2410C}
 .priority-dot.p3{background:var(--amber)}
 .priority-dot.p4{background:var(--green)}
+.priority-dot.p5{background:var(--blue)}
+.priority-dot.p6{background:var(--purple)}
 .priority-item-text{font-size:.72rem;color:var(--text2);line-height:1.4}
 .priority-item-text strong{color:var(--text1);font-weight:600}
 
@@ -179,6 +183,8 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 .cell-select-dot.p2{background:#C2410C}
 .cell-select-dot.p3{background:var(--amber)}
 .cell-select-dot.p4{background:var(--green)}
+.cell-select-dot.p5{background:var(--blue)}
+.cell-select-dot.p6{background:var(--purple)}
 .cell-select-dot.none{background:var(--border)}
 .cell-select{font-family:var(--font);font-size:.72rem;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text1);cursor:pointer;max-width:130px;width:100%;appearance:auto;transition:all .2s ease}
 .cell-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,122,61,.1)}
@@ -187,10 +193,14 @@ tbody tr:nth-child(even):hover td{background:var(--surface-2)}
 .cell-select.p2{color:#C2410C}
 .cell-select.p3{color:var(--amber)}
 .cell-select.p4{color:var(--green)}
+.cell-select.p5{color:var(--blue)}
+.cell-select.p6{color:var(--purple)}
 [data-theme="dark"] .cell-select.p1{color:#FCA5A5}
 [data-theme="dark"] .cell-select.p2{color:#FB923C}
 [data-theme="dark"] .cell-select.p3{color:#FCD34D}
 [data-theme="dark"] .cell-select.p4{color:#6EE7B7}
+[data-theme="dark"] .cell-select.p5{color:#93C5FD}
+[data-theme="dark"] .cell-select.p6{color:#C4B5FD}
 
 /* Settings Dropdown */
 .settings-wrap{position:relative}
@@ -277,16 +287,37 @@ th.sorted-asc .sort-arrow,th.sorted-desc .sort-arrow{opacity:1;color:var(--accen
 th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 
 
+/* Priority inline editing */
+.priority-item-editing{flex-direction:column;align-items:stretch;padding:12px;gap:0}
+.prio-edit-form{display:flex;flex-direction:column;gap:8px;width:100%}
+.prio-edit-row{display:flex;flex-direction:column;gap:2px}
+.prio-inline-input{width:100%;padding:7px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1);transition:border .2s}
+.prio-inline-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(27,122,61,.08)}
+.prio-inline-desc{font-size:.72rem}
+[data-theme="dark"] .prio-inline-input{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.prio-color-picker{display:flex;gap:6px;align-items:center;padding:4px 0}
+.prio-color-opt{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .15s;padding:0}
+.prio-color-opt:hover{transform:scale(1.2)}
+.prio-color-opt.selected{border-color:var(--text1);transform:scale(1.2);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text3)}
+.prio-color-opt.p1{background:var(--red)}
+.prio-color-opt.p2{background:#C2410C}
+.prio-color-opt.p3{background:var(--amber)}
+.prio-color-opt.p4{background:var(--green)}
+.prio-color-opt.p5{background:var(--blue)}
+.prio-color-opt.p6{background:var(--purple)}
+.prio-edit-actions{display:flex;gap:6px;margin-top:4px}
+.priority-item-add{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border-style:dashed;min-height:80px;transition:all .2s}
+.priority-item-add:hover{border-color:var(--accent);background:var(--accent-light)}
+.priority-item-add svg{color:var(--text3)}
+.setor-item-editing{gap:8px}
+.setor-item-editing .prio-inline-input{font-size:.82rem}
+
 /* Priority item actions (admin) */
 .priority-item-actions{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
 .priority-item-actions button{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;color:var(--text3);transition:all .15s;display:inline-flex;align-items:center}
 .priority-item-actions button:hover{background:var(--surface-2);color:var(--text1)}
 .priority-item-actions button.delete:hover{background:var(--red-bg);color:var(--red)}
 .priority-item-actions button svg{width:13px;height:13px}
-.priority-add-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.priority-add-row input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1)}
-.priority-add-row input:focus{outline:none;border-color:var(--accent)}
-[data-theme="dark"] .priority-add-row input{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
 
 /* Setores management modal */
 .setor-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
@@ -727,10 +758,10 @@ function agingBadge(dias){
 }
 
 function getPriorityClass(val){
-  if(val==='1')return 'p1';
-  if(val==='2')return 'p2';
-  if(val==='3')return 'p3';
-  if(val==='4')return 'p4';
+  var prios=getPrioridades();
+  for(var i=0;i<prios.length;i++){
+    if(prios[i].value===val) return prios[i].color||'p1';
+  }
   return '';
 }
 
@@ -757,16 +788,9 @@ function buildSetorSelect(ticket, currentValue){
 function onSetorChange(el, ticket){
   var val = el.value;
   if(val==='__add__'){
-    var novo = prompt('Digite o nome do novo setor:');
-    if(novo && novo.trim()){
-      novo = novo.trim();
-      adicionarSetor(novo);
-      onFieldChange(ticket, 'setor', novo);
-      // Re-render to update all dropdowns
-      carregarDados();
-    } else {
-      el.value = '(Sem setor)';
-    }
+    // Open setores modal in add mode instead of prompt
+    openSetoresModal();
+    el.value = '(Sem setor)';
   } else {
     onFieldChange(ticket, 'setor', val);
   }
@@ -1227,7 +1251,16 @@ function sortTableTodas(col){
 }
 
 // ==================== PRIORITY CRITERIA MANAGEMENT ====================
-var PRIO_COLORS = ['p1','p2','p3','p4','p1','p2','p3','p4']; // cycle colors if >4
+var PRIO_COLORS_AVAILABLE = [
+  {id:'p1',label:'Vermelho',hex:'var(--red)'},
+  {id:'p2',label:'Laranja',hex:'#C2410C'},
+  {id:'p3',label:'Amarelo',hex:'var(--amber)'},
+  {id:'p4',label:'Verde',hex:'var(--green)'},
+  {id:'p5',label:'Azul',hex:'var(--blue)'},
+  {id:'p6',label:'Roxo',hex:'var(--purple)'}
+];
+
+var editingPrioIdx = -1; // -1 = not editing, >= 0 = editing that index, 'new' = adding new
 
 function renderPriorityCard(){
   var prios=getPrioridades();
@@ -1241,69 +1274,129 @@ function renderPriorityCard(){
   
   // Body (expanded)
   var body=document.getElementById('priorityBody');
-  var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">';
+  var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px" id="prioGrid">';
   prios.forEach(function(p,idx){
-    h+='<div class="priority-item" style="align-items:center">';
-    h+='<div class="priority-dot '+(p.color||PRIO_COLORS[idx]||'p1')+'"></div>';
-    h+='<div class="priority-item-text" style="flex:1"><strong>'+escapeHtml(p.label)+'</strong><br>'+escapeHtml(p.desc)+'</div>';
-    if(isAdmin){
-      h+='<div class="priority-item-actions">';
-      h+='<button onclick="event.stopPropagation();editPrioridade('+idx+')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-      h+='<button class="delete" onclick="event.stopPropagation();removePrioridade('+idx+')" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
+    if(editingPrioIdx===idx && isAdmin){
+      // EDIT MODE - inline inputs
+      h+='<div class="priority-item priority-item-editing" onclick="event.stopPropagation()">';
+      h+='<div class="prio-edit-form">';
+      h+='<div class="prio-edit-row"><input type="text" class="prio-inline-input" id="prioEditName'+idx+'" value="'+escapeHtml(p.label)+'" placeholder="Nome"></div>';
+      h+='<div class="prio-edit-row"><input type="text" class="prio-inline-input prio-inline-desc" id="prioEditDesc'+idx+'" value="'+escapeHtml(p.desc)+'" placeholder="Descricao do criterio"></div>';
+      h+='<div class="prio-edit-row"><label style="font-size:.7rem;color:var(--text3);margin-bottom:2px;display:block">Cor:</label><div class="prio-color-picker" id="prioColorPicker'+idx+'">';
+      PRIO_COLORS_AVAILABLE.forEach(function(c){
+        var selected=(p.color===c.id)?' selected':'';
+        h+='<button class="prio-color-opt '+c.id+selected+'" data-color="'+c.id+'" onclick="event.stopPropagation();selectPrioColor('+idx+',\''+c.id+'\')" title="'+c.label+'"></button>';
+      });
+      h+='</div></div>';
+      h+='<div class="prio-edit-actions"><button class="btn btn-primary" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();savePrioEdit('+idx+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button><button class="btn" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();cancelPrioEdit()">Cancelar</button></div>';
+      h+='</div></div>';
+    } else {
+      // VIEW MODE
+      h+='<div class="priority-item" style="align-items:center">';
+      h+='<div class="priority-dot '+(p.color||'p1')+'"></div>';
+      h+='<div class="priority-item-text" style="flex:1"><strong>'+escapeHtml(p.label)+'</strong><br>'+escapeHtml(p.desc)+'</div>';
+      if(isAdmin){
+        h+='<div class="priority-item-actions">';
+        h+='<button onclick="event.stopPropagation();startEditPrio('+idx+')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+        h+='<button class="delete" onclick="event.stopPropagation();removePrioridade('+idx+')" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
+        h+='</div>';
+      }
       h+='</div>';
     }
-    h+='</div>';
   });
-  h+='</div>';
+  // Add new card
   if(isAdmin){
-    h+='<div class="priority-add-row">';
-    h+='<input type="text" id="novoPrioNome" placeholder="Nome (ex: 5 - Urgente)">';
-    h+='<input type="text" id="novoPrioDesc" placeholder="Descricao do criterio..." style="flex:2">';
-    h+='<button class="btn btn-primary" onclick="event.stopPropagation();addPrioridade()" style="padding:7px 12px;font-size:.75rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar</button>';
-    h+='</div>';
+    if(editingPrioIdx==='new'){
+      h+='<div class="priority-item priority-item-editing" onclick="event.stopPropagation()">';
+      h+='<div class="prio-edit-form">';
+      h+='<div class="prio-edit-row"><input type="text" class="prio-inline-input" id="prioNewName" placeholder="Nome (ex: 5 - Urgente)"></div>';
+      h+='<div class="prio-edit-row"><input type="text" class="prio-inline-input prio-inline-desc" id="prioNewDesc" placeholder="Descricao do criterio"></div>';
+      h+='<div class="prio-edit-row"><label style="font-size:.7rem;color:var(--text3);margin-bottom:2px;display:block">Cor:</label><div class="prio-color-picker" id="prioColorPickerNew">';
+      var defaultColor=PRIO_COLORS_AVAILABLE[prios.length%PRIO_COLORS_AVAILABLE.length].id;
+      PRIO_COLORS_AVAILABLE.forEach(function(c){
+        var selected=(c.id===defaultColor)?' selected':'';
+        h+='<button class="prio-color-opt '+c.id+selected+'" data-color="'+c.id+'" onclick="event.stopPropagation();selectNewPrioColor(\''+c.id+'\')" title="'+c.label+'"></button>';
+      });
+      h+='</div></div>';
+      h+='<div class="prio-edit-actions"><button class="btn btn-primary" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();saveNewPrio()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button><button class="btn" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();cancelPrioEdit()">Cancelar</button></div>';
+      h+='</div></div>';
+    } else {
+      h+='<div class="priority-item priority-item-add" onclick="event.stopPropagation();startNewPrio()">';
+      h+='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      h+='<span style="font-size:.78rem;color:var(--text3)">Adicionar criterio</span>';
+      h+='</div>';
+    }
   }
+  h+='</div>';
   body.innerHTML=h;
 }
 
-function addPrioridade(){
-  var nome=document.getElementById('novoPrioNome').value.trim();
-  var desc=document.getElementById('novoPrioDesc').value.trim();
-  if(!nome){alert('Informe o nome da prioridade.');return;}
+var newPrioColor='p1';
+
+function startEditPrio(idx){editingPrioIdx=idx;renderPriorityCard();}
+function startNewPrio(){var prios=getPrioridades();newPrioColor=PRIO_COLORS_AVAILABLE[prios.length%PRIO_COLORS_AVAILABLE.length].id;editingPrioIdx='new';renderPriorityCard();}
+function cancelPrioEdit(){editingPrioIdx=-1;renderPriorityCard();}
+
+function selectPrioColor(idx,colorId){
+  document.querySelectorAll('#prioColorPicker'+idx+' .prio-color-opt').forEach(function(b){b.classList.remove('selected');});
+  var btn=document.querySelector('#prioColorPicker'+idx+' [data-color="'+colorId+'"]');
+  if(btn) btn.classList.add('selected');
+}
+
+function selectNewPrioColor(colorId){
+  newPrioColor=colorId;
+  document.querySelectorAll('#prioColorPickerNew .prio-color-opt').forEach(function(b){b.classList.remove('selected');});
+  var btn=document.querySelector('#prioColorPickerNew [data-color="'+colorId+'"]');
+  if(btn) btn.classList.add('selected');
+}
+
+function savePrioEdit(idx){
+  var nome=document.getElementById('prioEditName'+idx).value.trim();
+  var desc=document.getElementById('prioEditDesc'+idx).value.trim();
+  if(!nome) return;
+  // Get selected color
+  var colorBtn=document.querySelector('#prioColorPicker'+idx+' .prio-color-opt.selected');
+  var color=colorBtn?colorBtn.getAttribute('data-color'):'p1';
   var prios=getPrioridades();
-  var nextVal=String(prios.length+1);
-  var colorIdx=prios.length%PRIO_COLORS.length;
-  prios.push({value:nextVal,label:nome,desc:desc||'',color:PRIO_COLORS[colorIdx]});
+  prios[idx].label=nome;
+  prios[idx].desc=desc;
+  prios[idx].color=color;
   salvarPrioridades(prios);
   PRIORIDADES=getPrioridadesSelect();
+  editingPrioIdx=-1;
+  renderPriorityCard();
+}
+
+function saveNewPrio(){
+  var nome=document.getElementById('prioNewName').value.trim();
+  var desc=document.getElementById('prioNewDesc').value.trim();
+  if(!nome) return;
+  var colorBtn=document.querySelector('#prioColorPickerNew .prio-color-opt.selected');
+  var color=colorBtn?colorBtn.getAttribute('data-color'):newPrioColor;
+  var prios=getPrioridades();
+  var nextVal=String(prios.length+1);
+  prios.push({value:nextVal,label:nome,desc:desc,color:color});
+  salvarPrioridades(prios);
+  PRIORIDADES=getPrioridadesSelect();
+  editingPrioIdx=-1;
   renderPriorityCard();
   if(dashboardData) carregarDados();
 }
 
-function editPrioridade(idx){
-  var prios=getPrioridades();
-  var p=prios[idx];
-  if(!p) return;
-  var novoNome=prompt('Nome da prioridade:',p.label);
-  if(!novoNome||!novoNome.trim()) return;
-  var novaDesc=prompt('Descricao:',p.desc);
-  if(novaDesc===null) return;
-  prios[idx].label=novoNome.trim();
-  prios[idx].desc=novaDesc.trim();
-  salvarPrioridades(prios);
-  PRIORIDADES=getPrioridadesSelect();
-  renderPriorityCard();
-}
+function addPrioridade(){startNewPrio();}
+
+function editPrioridade(idx){startEditPrio(idx);}
 
 function removePrioridade(idx){
   var prios=getPrioridades();
   var p=prios[idx];
   if(!p) return;
-  if(!confirm('Excluir a prioridade "'+p.label+'"?\n\nDemandas com essa prioridade nao serao alteradas, mas ela nao aparecera mais como opcao.')) return;
+  if(!confirm('Excluir a prioridade "'+p.label+'"?')) return;
   prios.splice(idx,1);
-  // Re-number values
-  prios.forEach(function(pr,i){pr.value=String(i+1);pr.color=PRIO_COLORS[i%PRIO_COLORS.length];});
+  prios.forEach(function(pr,i){pr.value=String(i+1);});
   salvarPrioridades(prios);
   PRIORIDADES=getPrioridadesSelect();
+  editingPrioIdx=-1;
   renderPriorityCard();
 }
 
@@ -1330,15 +1423,31 @@ function renderSetoresList(){
   var h='<div class="setor-list">';
   setores.forEach(function(s){
     if(s==='(Sem setor)') return;
-    h+='<div class="setor-item">';
-    h+='<span class="setor-item-name">'+escapeHtml(s)+'</span>';
-    h+='<div class="setor-item-actions">';
-    h+='<button class="setor-item-btn" onclick="renameSetor(\''+escapeHtml(s).replace(/'/g,"\\'")+'\')" title="Renomear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Renomear</button>';
-    h+='<button class="setor-item-btn delete" onclick="deleteSetor(\''+escapeHtml(s).replace(/'/g,"\\'")+'\')" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Excluir</button>';
-    h+='</div></div>';
+    if(editingSetorName===s){
+      // INLINE EDIT MODE
+      h+='<div class="setor-item setor-item-editing">';
+      h+='<input type="text" class="prio-inline-input" id="setorRenameInput" value="'+escapeHtml(s)+'" style="flex:1" onkeydown="if(event.key===\'Enter\')saveSetorRename(\''+escapeHtml(s).replace(/'/g,"\\'")+'\');">';
+      h+='<div class="setor-item-actions">';
+      h+='<button class="setor-item-btn" onclick="saveSetorRename(\''+escapeHtml(s).replace(/'/g,"\\'")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>';
+      h+='<button class="setor-item-btn" onclick="cancelSetorEdit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+      h+='</div></div>';
+    } else {
+      // VIEW MODE
+      h+='<div class="setor-item">';
+      h+='<span class="setor-item-name">'+escapeHtml(s)+'</span>';
+      h+='<div class="setor-item-actions">';
+      h+='<button class="setor-item-btn" onclick="renameSetor(\''+escapeHtml(s).replace(/'/g,"\\'")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Renomear</button>';
+      h+='<button class="setor-item-btn delete" onclick="deleteSetor(\''+escapeHtml(s).replace(/'/g,"\\'")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Excluir</button>';
+      h+='</div></div>';
+    }
   });
   h+='</div>';
   container.innerHTML=h;
+  // Focus the input if in edit mode
+  if(editingSetorName){
+    var inp=document.getElementById('setorRenameInput');
+    if(inp){inp.focus();inp.select();}
+  }
 }
 
 function addSetorFromModal(){
@@ -1350,18 +1459,33 @@ function addSetorFromModal(){
   renderSetoresList();
 }
 
+var editingSetorName = null;
+
 async function renameSetor(nomeAntigo){
-  var novoNome=prompt('Renomear setor "'+nomeAntigo+'" para:',nomeAntigo);
-  if(!novoNome||!novoNome.trim()||novoNome.trim()===nomeAntigo) return;
-  novoNome=novoNome.trim();
-  // Atualizar lista local
+  // Switch to inline edit mode
+  editingSetorName = nomeAntigo;
+  renderSetoresList();
+}
+
+function cancelSetorEdit(){
+  editingSetorName = null;
+  renderSetoresList();
+}
+
+async function saveSetorRename(nomeAntigo){
+  var input = document.getElementById('setorRenameInput');
+  if(!input) return;
+  var novoNome = input.value.trim();
+  if(!novoNome || novoNome === nomeAntigo){editingSetorName=null;renderSetoresList();return;}
+  // Update local list
   var setores=getSetores();
   var idx=setores.indexOf(nomeAntigo);
   if(idx!==-1){setores[idx]=novoNome;salvarSetores(setores);}
-  // Atualizar no Supabase: todas demandas com setor antigo
+  // Update in Supabase
   try{
     await supabase.update('demandas',{setor:novoNome,updated_at:new Date().toISOString()},'setor=eq.'+encodeURIComponent(nomeAntigo));
   }catch(e){console.error('Rename setor failed:',e);}
+  editingSetorName=null;
   renderSetoresList();
   carregarDados();
 }
