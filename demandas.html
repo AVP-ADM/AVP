@@ -2295,8 +2295,21 @@ async function loadChangelogHistory(){
       h += '</div>';
     });
     container.innerHTML = h;
+    // Add clear button at the end
+    container.innerHTML += '<div style="text-align:center;padding:12px 0;border-top:1px solid var(--border);margin-top:8px"><button onclick="clearChangelogHistory()" style="font-family:var(--font);font-size:.72rem;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius);background:none;color:var(--text3);cursor:pointer;transition:all .15s">Limpar historico</button></div>';
   }catch(err){
     container.innerHTML = '<div class="changelog-empty">Erro ao carregar historico: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+async function clearChangelogHistory(){
+  var confirmed = await customConfirm({title:'Limpar historico?',message:'Todos os registros de atualizacoes serao removidos permanentemente.',confirmText:'Limpar',confirmColor:'red',icon:'trash'});
+  if(!confirmed) return;
+  try{
+    await supabase.delete('demandas_config', 'chave=like.changelog_*');
+    loadChangelogHistory();
+  }catch(err){
+    customAlert({title:'Erro',message:err.message,confirmColor:'red'});
   }
 }
 
