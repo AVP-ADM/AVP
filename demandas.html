@@ -417,7 +417,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
         <button class="tab-btn" data-tab="entregues">Entregues<span class="tab-count" id="countEntregues">0</span></button>
         <button class="tab-btn" data-tab="todas">Todas<span class="tab-count" id="countTodas">0</span></button>
       </div>
-      <div class="tab-content active" id="tab-aberto"><div class="filters-row" id="filtersRow"><div class="filters-left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><select class="filter-select" id="filterSetor" onchange="applyFilters()"><option value="">Setor: Todos</option></select><select class="filter-select" id="filterPrioridade" onchange="applyFilters()"><option value="">Prioridade: Todas</option><option value="1">1 - Critico</option><option value="2">2 - Alto</option><option value="3">3 - Medio</option><option value="4">4 - Baixo</option><option value="none">(Sem prioridade)</option></select><button class="filter-clear" id="filterClear" onclick="clearFilters()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar</button></div><div class="filter-counter" id="filterCounter"></div></div><div class="filter-chips" id="filterChips"></div><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status_atual">Prev. Entrega</th><th data-col="dias">Dias</th><th data-col="setor">Setor</th><th data-col="prioridade">Prioridade</th></tr></thead><tbody id="tblAberto"></tbody></table></div></div>
+      <div class="tab-content active" id="tab-aberto"><div class="filters-row" id="filtersRow"><div class="filters-left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><select class="filter-select" id="filterSetor" onchange="applyFilters()"><option value="">Setor: Todos</option></select><select class="filter-select" id="filterPrioridade" onchange="applyFilters()"><option value="">Prioridade: Todas</option><option value="1">1 - Critico</option><option value="2">2 - Alto</option><option value="3">3 - Medio</option><option value="4">4 - Baixo</option><option value="none">(Sem prioridade)</option></select><select class="filter-select" id="filterStatus" onchange="applyFilters()"><option value="">Status: Todos</option><option value="criticas">Criticas (&gt;90 dias)</option><option value="sem_previsao">Sem previsao</option><option value="com_data">Com data estimada</option></select><button class="filter-clear" id="filterClear" onclick="clearFilters()" style="display:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar</button></div><div class="filter-counter" id="filterCounter"></div></div><div class="filter-chips" id="filterChips"></div><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status_atual">Prev. Entrega</th><th data-col="dias">Dias</th><th data-col="setor">Setor</th><th data-col="prioridade">Prioridade</th></tr></thead><tbody id="tblAberto"></tbody></table></div></div>
       <div class="tab-content" id="tab-entregues"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="data_entrega">Entrega</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblEntregues"></tbody></table></div></div>
       <div class="tab-content" id="tab-todas"><div class="table-wrap"><table><thead><tr><th data-col="ticket">Ticket</th><th data-col="titulo">Titulo</th><th data-col="data_criacao">Criacao</th><th data-col="status">Status</th><th data-col="dias">Dias</th></tr></thead><tbody id="tblTodas"></tbody></table></div></div>
     </div>
@@ -762,46 +762,12 @@ function insightClick(tipo){
   if(tabBtn) tabBtn.classList.add('active');
   var tabContent=document.getElementById('tab-aberto');
   if(tabContent) tabContent.classList.add('active');
-  // Apply specific filter
-  if(tipo==='criticas'){
-    // Sort by dias desc and filter manually (show only >90 days)
-    document.getElementById('filterSetor').value='';
-    document.getElementById('filterPrioridade').value='';
-    document.getElementById('searchInput').value='';
-    // Custom filter: hide rows with dias <= 90
-    var rows=document.querySelectorAll('#tblAberto tr.expand-row');
-    var shown=0,total=rows.length;
-    rows.forEach(function(tr){
-      var diasText=tr.querySelector('.aging-badge');
-      var dias=diasText?parseInt(diasText.textContent):0;
-      var visible=dias>90;
-      tr.style.display=visible?'':'none';
-      var detail=tr.nextElementSibling;
-      if(detail&&detail.classList.contains('expanded-detail')&&!visible) detail.style.display='none';
-      if(visible) shown++;
-    });
-    document.getElementById('filterCounter').textContent='Mostrando '+shown+' de '+total+' demandas (criticas >90 dias)';
-    document.getElementById('filterClear').style.display='inline-flex';
-    renderFilterChips();
-  } else if(tipo==='sem_previsao'){
-    // Filter by status containing "análise" or "desenvolvimento"
-    document.getElementById('filterSetor').value='';
-    document.getElementById('filterPrioridade').value='';
-    document.getElementById('searchInput').value='';
-    var rows=document.querySelectorAll('#tblAberto tr.expand-row');
-    var shown=0,total=rows.length;
-    rows.forEach(function(tr){
-      var text=tr.textContent.toLowerCase();
-      var visible=text.indexOf('an')!==-1&&(text.indexOf('lise')!==-1||text.indexOf('desenvolvimento')!==-1);
-      tr.style.display=visible?'':'none';
-      var detail=tr.nextElementSibling;
-      if(detail&&detail.classList.contains('expanded-detail')&&!visible) detail.style.display='none';
-      if(visible) shown++;
-    });
-    document.getElementById('filterCounter').textContent='Mostrando '+shown+' de '+total+' demandas (sem previsao)';
-    document.getElementById('filterClear').style.display='inline-flex';
-    renderFilterChips();
-  }
+  // Set the status filter dropdown and apply
+  document.getElementById('filterSetor').value='';
+  document.getElementById('filterPrioridade').value='';
+  document.getElementById('filterStatus').value=tipo;
+  document.getElementById('searchInput').value='';
+  applyFilters();
   // Scroll to table
   var tableCard=document.querySelector('.card:last-of-type');
   if(tableCard) tableCard.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1155,6 +1121,7 @@ function showStatus(msg,type){
 // ==================== FILTERS ====================
 var currentFilterSetor='';
 var currentFilterPrioridade='';
+var currentFilterStatus='';
 
 function populateFilterSetor(){
   var sel=document.getElementById('filterSetor');
@@ -1171,6 +1138,7 @@ function populateFilterSetor(){
 function applyFilters(){
   currentFilterSetor=document.getElementById('filterSetor').value;
   currentFilterPrioridade=document.getElementById('filterPrioridade').value;
+  currentFilterStatus=document.getElementById('filterStatus').value;
 
   var rows=document.querySelectorAll('#tblAberto tr.expand-row');
   var shown=0,total=rows.length;
@@ -1184,13 +1152,27 @@ function applyFilters(){
     if(currentFilterPrioridade==='none'){showPrio=!prio||prio==='';}
     else if(currentFilterPrioridade){showPrio=prio===currentFilterPrioridade;}
 
+    // Status filter
+    var showStatus=true;
+    if(currentFilterStatus){
+      var diasText=tr.querySelector('.aging-badge');
+      var dias=diasText?parseInt(diasText.textContent):0;
+      var rowText=tr.textContent.toLowerCase();
+      if(currentFilterStatus==='criticas'){
+        showStatus=dias>90;
+      } else if(currentFilterStatus==='sem_previsao'){
+        showStatus=rowText.indexOf('an')!==-1&&(rowText.indexOf('lise')!==-1||rowText.indexOf('desenvolvimento')!==-1);
+      } else if(currentFilterStatus==='com_data'){
+        showStatus=!/an[aá]lise|desenvolvimento/i.test(rowText)||/\d{1,2}\/\d{1,2}\/\d{4}/.test(tr.children[3]?tr.children[3].textContent:'');
+      }
+    }
+
     // Also apply search
     var q=document.getElementById('searchInput').value.toLowerCase();
     var showSearch=!q||tr.textContent.toLowerCase().indexOf(q)!==-1;
 
-    var visible=showSetor&&showPrio&&showSearch;
+    var visible=showSetor&&showPrio&&showStatus&&showSearch;
     tr.style.display=visible?'':'none';
-    // Also hide expanded detail if row is hidden
     var detail=tr.nextElementSibling;
     if(detail&&detail.classList.contains('expanded-detail')&&!visible){
       detail.style.display='none';
@@ -1207,14 +1189,18 @@ function applyFilters(){
 
   // Counter
   var counter=document.getElementById('filterCounter');
-  if(currentFilterSetor||currentFilterPrioridade||document.getElementById('searchInput').value){
-    counter.textContent='Mostrando '+shown+' de '+total+' demandas';
+  var statusLabel='';
+  if(currentFilterStatus==='criticas') statusLabel=' (criticas >90 dias)';
+  else if(currentFilterStatus==='sem_previsao') statusLabel=' (sem previsao)';
+  else if(currentFilterStatus==='com_data') statusLabel=' (com data estimada)';
+  if(currentFilterSetor||currentFilterPrioridade||currentFilterStatus||document.getElementById('searchInput').value){
+    counter.textContent='Mostrando '+shown+' de '+total+' demandas'+statusLabel;
   } else {
     counter.textContent='';
   }
 
   // Clear button
-  document.getElementById('filterClear').style.display=(currentFilterSetor||currentFilterPrioridade)?'inline-flex':'none';
+  document.getElementById('filterClear').style.display=(currentFilterSetor||currentFilterPrioridade||currentFilterStatus)?'inline-flex':'none';
 
   // Chips
   renderFilterChips();
@@ -1234,8 +1220,10 @@ function applyFilters(){
 function clearFilters(){
   document.getElementById('filterSetor').value='';
   document.getElementById('filterPrioridade').value='';
+  document.getElementById('filterStatus').value='';
   currentFilterSetor='';
   currentFilterPrioridade='';
+  currentFilterStatus='';
   applyFilters();
 }
 
@@ -1248,6 +1236,10 @@ function renderFilterChips(){
   if(currentFilterPrioridade){
     var label=currentFilterPrioridade==='none'?'Sem prioridade':findPrioLabel(currentFilterPrioridade);
     h+='<span class="filter-chip" onclick="document.getElementById(\'filterPrioridade\').value=\'\';applyFilters();">'+label+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+  }
+  if(currentFilterStatus){
+    var sLabel=currentFilterStatus==='criticas'?'Criticas (>90d)':currentFilterStatus==='sem_previsao'?'Sem previsao':'Com data estimada';
+    h+='<span class="filter-chip" onclick="document.getElementById(\'filterStatus\').value=\'\';applyFilters();">'+sLabel+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
   }
   container.innerHTML=h;
 }
