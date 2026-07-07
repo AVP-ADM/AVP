@@ -120,7 +120,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .priority-toggle-btn.collapsed{transform:rotate(-90deg)}
 .priority-body{margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .priority-body.hidden{display:none}
-.priority-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);flex:1;min-width:150px}
+.priority-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);flex:1}
 .priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
 .priority-dot.p1{background:var(--red)}
 .priority-dot.p2{background:#C2410C}
@@ -1274,7 +1274,7 @@ function renderPriorityCard(){
   
   // Body (expanded)
   var body=document.getElementById('priorityBody');
-  var h='<div style="display:flex;gap:8px;flex-wrap:wrap" id="prioGrid">';
+  var h='<div style="display:flex;gap:8px" id="prioGrid">';
   prios.forEach(function(p,idx){
     if(editingPrioIdx===idx && isAdmin){
       // EDIT MODE - inline inputs
