@@ -550,6 +550,12 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 .changelog-item .new-val{color:var(--green)}
 .changelog-summary{font-size:.72rem;color:var(--text3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
 .changelog-empty{text-align:center;color:var(--text3);padding:32px 16px;font-size:.8rem}
+
+/* Session toast notification */
+.session-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--amber-bg);border:1px solid var(--amber-light);color:var(--amber);padding:10px 20px;border-radius:var(--radius);font-size:.78rem;font-weight:500;display:flex;align-items:center;gap:8px;z-index:500;box-shadow:var(--shadow-md);animation:slideDown .3s ease;max-width:90%}
+.session-toast svg{flex-shrink:0;width:16px;height:16px}
+@keyframes slideDown{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+.session-toast.fade-out{opacity:0;transition:opacity .4s ease}
 </style>
 </head>
 
@@ -2422,18 +2428,46 @@ async function loadChangelogHistory(){
 }
 
 // ==================== INIT ====================
+function showSessionToast(msg){
+  var toast = document.createElement('div');
+  toast.className = 'session-toast';
+  toast.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>' + msg + '</span>';
+  document.body.appendChild(toast);
+  setTimeout(function(){ toast.classList.add('fade-out'); }, 4500);
+  setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 5000);
+}
+
 async function init(){
   // Load config (setores/prioridades) from Supabase first
   await loadConfigFromSupabase();
   PRIORIDADES = getPrioridadesSelect();
   
   // Detect admin session
+  var sessionExpiredAdmin = false;
   try{
     var session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
     if(session && session.access_token && session.user){
-      var profile = await supabase.getProfile(session.user.id);
-      if(profile && (profile.nivel === 'admin' || profile.setor === 'TI')){
-        isAdmin = true;
+      // Try to refresh the token to validate session
+      var refreshed = await supabase.refreshSession();
+      if(refreshed){
+        // Session is valid — check if admin
+        var profile = await supabase.getProfile(session.user.id);
+        if(profile && (profile.nivel === 'admin' || profile.setor === 'TI')){
+          isAdmin = true;
+        }
+      } else {
+        // Session expired — check if it was an admin before clearing
+        var oldProfile = null;
+        try{
+          // Try to get profile without auth (public select on perfis)
+          oldProfile = await supabase.getProfile(session.user.id);
+        }catch(e){}
+        if(oldProfile && (oldProfile.nivel === 'admin' || oldProfile.setor === 'TI')){
+          sessionExpiredAdmin = true;
+        }
+        // Clear expired session
+        localStorage.removeItem('avp-supabase-session');
+        isAdmin = false;
       }
     }
   }catch(e){ isAdmin = false; }
@@ -2454,6 +2488,11 @@ async function init(){
   
   // Load data
   carregarDados();
+
+  // Show toast if admin session expired (after page loads)
+  if(sessionExpiredAdmin){
+    setTimeout(function(){ showSessionToast('Sessao expirada. Para editar, faca login novamente.'); }, 500);
+  }
 }
 init();
 </script>
