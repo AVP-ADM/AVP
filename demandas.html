@@ -311,6 +311,16 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 .detail-reopen-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:.75rem;font-weight:600;font-family:var(--font);background:var(--amber);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:all .15s}
 .detail-reopen-btn:hover{opacity:.9}
 
+/* Attachments grid */
+.detail-attachments-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.detail-attach-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
+.detail-attach-item .detail-thumb{width:90px;height:68px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:transform .15s}
+.detail-attach-item video.detail-thumb{cursor:default}
+.detail-attach-item .detail-thumb:hover{transform:scale(1.05)}
+.detail-attach-name{font-size:.6rem;color:var(--text3);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.detail-attach-item .detail-action-btn{position:absolute;top:2px;right:2px;background:var(--red-bg);padding:2px;border-radius:50%}
+.detail-attach-item .detail-action-btn:hover{background:var(--red);color:#fff}
+
 /* Priority inline editing */
 .priority-item-editing{flex-direction:column;align-items:stretch;padding:12px;gap:0}
 .prio-edit-form{display:flex;flex-direction:column;gap:8px;width:100%}
@@ -1060,17 +1070,29 @@ function renderTableAberto(data){
     }
     h+='</div>';
     // Attachment section
-    h+='<div class="detail-section"><span class="detail-label">Anexo:</span>';
-    if(d.anexo_url){
-      h+='<div class="detail-attachment"><img src="'+d.anexo_url+'" class="detail-thumb" onclick="window.open(\''+d.anexo_url+'\',\'_blank\')">';
-      if(isAdmin) h+='<button class="detail-action-btn delete" onclick="removeAnexo(\''+d.ticket+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Remover</button>';
+    var anexos = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    h+='<div class="detail-section"><span class="detail-label">Anexos'+(anexos.length?' ('+anexos.length+')':'')+':</span>';
+    if(anexos.length > 0){
+      h+='<div class="detail-attachments-grid">';
+      anexos.forEach(function(a, aIdx){
+        if(a.tipo==='video'){
+          h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video>';
+          h+='<span class="detail-attach-name">'+escapeHtml(a.nome)+'</span>';
+          if(isAdmin) h+='<button class="detail-action-btn delete" onclick="removeAnexo(\''+d.ticket+'\','+aIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+          h+='</div>';
+        } else {
+          h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')">';
+          h+='<span class="detail-attach-name">'+escapeHtml(a.nome)+'</span>';
+          if(isAdmin) h+='<button class="detail-action-btn delete" onclick="removeAnexo(\''+d.ticket+'\','+aIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+          h+='</div>';
+        }
+      });
       h+='</div>';
-    } else {
-      if(isAdmin){
-        h+='<label class="detail-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Anexar imagem<input type="file" accept="image/*" style="display:none" onchange="uploadAnexo(\''+d.ticket+'\',this)"></label>';
-      } else {
-        h+='<span style="font-size:.72rem;color:var(--text3)">Sem anexo</span>';
-      }
+    }
+    if(isAdmin){
+      h+='<label class="detail-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Adicionar anexo<input type="file" accept="image/*,video/mp4,video/webm" style="display:none" onchange="uploadAnexo(\''+d.ticket+'\',this)"></label>';
+    } else if(anexos.length===0){
+      h+='<span style="font-size:.72rem;color:var(--text3)">Sem anexos</span>';
     }
     h+='</div>';
     // Finalize button (admin only, Em Aberto tab)
@@ -1134,8 +1156,17 @@ function renderTableEntregues(data){
     h+='<p class="detail-obs-text">'+(d.observacao?escapeHtml(d.observacao):'<em style="color:var(--text3)">Sem observacao</em>')+'</p>';
     h+='</div>';
     // Attachment
-    if(d.anexo_url){
-      h+='<div class="detail-section"><span class="detail-label">Anexo:</span><div class="detail-attachment"><img src="'+d.anexo_url+'" class="detail-thumb" onclick="window.open(\''+d.anexo_url+'\',\'_blank\')"></div></div>';
+    var anexosE = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    if(anexosE.length > 0){
+      h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosE.length+'):</span><div class="detail-attachments-grid">';
+      anexosE.forEach(function(a){
+        if(a.tipo==='video'){
+          h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+        } else {
+          h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')"><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+        }
+      });
+      h+='</div></div>';
     }
     // Reopen button (admin only)
     if(isAdmin){
@@ -1157,8 +1188,8 @@ function renderTableEntregues(data){
 function renderTableTodas(entregues,emAberto){
   var tb=document.getElementById('tblTodas');
   var todas=[];
-  emAberto.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:d.status_atual,dias:d.dias,tipo:'aberto',observacao:d.observacao,anexo_url:d.anexo_url});});
-  entregues.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:'Entregue ('+d.data_entrega+')',dias:d.dias,tipo:'entregue',observacao:d.observacao,anexo_url:d.anexo_url});});
+  emAberto.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:d.status_atual,dias:d.dias,tipo:'aberto',observacao:d.observacao,anexos:d.anexos});});
+  entregues.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:'Entregue ('+d.data_entrega+')',dias:d.dias,tipo:'entregue',observacao:d.observacao,anexos:d.anexos});});
   var col=sortStateTodas.col;
   var dir=sortStateTodas.dir;
   todas.sort(function(a,b){
@@ -1188,7 +1219,18 @@ function renderTableTodas(entregues,emAberto){
     h+='<td colspan="5"><div class="detail-panel" onclick="event.stopPropagation()">';
     h+='<div class="detail-section"><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div>';
     if(d.observacao){h+='<div class="detail-section"><span class="detail-label">Observacao:</span><p class="detail-obs-text">'+escapeHtml(d.observacao)+'</p></div>';}
-    if(d.anexo_url){h+='<div class="detail-section"><span class="detail-label">Anexo:</span><div class="detail-attachment"><img src="'+d.anexo_url+'" class="detail-thumb" onclick="window.open(\''+d.anexo_url+'\',\'_blank\')"></div></div>';}
+    var anexosT = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    if(anexosT.length > 0){
+      h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosT.length+'):</span><div class="detail-attachments-grid">';
+      anexosT.forEach(function(a){
+        if(a.tipo==='video'){
+          h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+        } else {
+          h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')"><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+        }
+      });
+      h+='</div></div>';
+    }
     h+='</div></td></tr>';
   });
   tb.innerHTML=h;
@@ -1816,27 +1858,83 @@ function saveObservacao(ticket){
     .catch(function(err){customAlert({title:'Erro ao salvar',message:err.message,confirmColor:'red'});});
 }
 
-function uploadAnexo(ticket,input){
-  var file=input.files[0];
+async function uploadAnexo(ticket, input){
+  var file = input.files[0];
   if(!file) return;
-  if(file.size>500*1024){customAlert({title:'Imagem muito grande',message:'Maximo permitido: 500KB.',confirmColor:'amber'});return;}
-  if(!file.type.startsWith('image/')){customAlert({title:'Formato invalido',message:'Selecione um arquivo de imagem.',confirmColor:'amber'});return;}
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var base64=e.target.result;
-    supabase.update('demandas',{anexo_url:base64,updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
-      .then(function(){carregarDados();})
-      .catch(function(err){customAlert({title:'Erro ao anexar',message:err.message,confirmColor:'red'});});
-  };
-  reader.readAsDataURL(file);
+  if(file.size > 5*1024*1024){customAlert({title:'Arquivo muito grande',message:'Maximo permitido: 5MB.',confirmColor:'amber'});return;}
+  if(!file.type.startsWith('image/') && !file.type.startsWith('video/')){customAlert({title:'Formato invalido',message:'Selecione uma imagem ou video.',confirmColor:'amber'});return;}
+  
+  var tipo = file.type.startsWith('video/') ? 'video' : 'image';
+  var ext = file.name.split('.').pop().toLowerCase();
+  var fileName = Date.now() + '.' + ext;
+  var path = ticket + '/' + fileName;
+  
+  try{
+    // Upload to Supabase Storage
+    var uploadUrl = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/demandas/' + path;
+    var resp = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': 'sb_publishable_VMEfbrcWX4dHBAZZSsc3yQ_RniWyTz9',
+        'Authorization': 'Bearer ' + (supabase.getToken() || ''),
+        'Content-Type': file.type,
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    if(!resp.ok) throw new Error('Upload falhou: ' + resp.status);
+    
+    // Get public URL
+    var publicUrl = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/demandas/' + path;
+    
+    // Add to anexos array
+    var currentAnexos = [];
+    if(dashboardData){
+      var allData = dashboardData.em_aberto.concat(dashboardData.entregues);
+      var found = allData.filter(function(d){return d.ticket===ticket;})[0];
+      if(found && found.anexos && Array.isArray(found.anexos)) currentAnexos = found.anexos.slice();
+    }
+    currentAnexos.push({url: publicUrl, nome: file.name, tipo: tipo});
+    
+    await supabase.update('demandas', {anexos: JSON.stringify(currentAnexos), updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
+    carregarDados();
+  }catch(err){
+    customAlert({title:'Erro ao anexar',message:err.message,confirmColor:'red'});
+  }
 }
 
-async function removeAnexo(ticket){
-  var confirmed = await customConfirm({title:'Remover anexo?',message:'A imagem sera removida permanentemente.',confirmText:'Remover',confirmColor:'red',icon:'trash'});
+async function removeAnexo(ticket, idx){
+  var confirmed = await customConfirm({title:'Remover anexo?',message:'O arquivo sera removido permanentemente.',confirmText:'Remover',confirmColor:'red',icon:'trash'});
   if(!confirmed) return;
-  supabase.update('demandas',{anexo_url:'',updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
-    .then(function(){carregarDados();})
-    .catch(function(err){customAlert({title:'Erro',message:err.message,confirmColor:'red'});});
+  
+  try{
+    // Get current anexos
+    var currentAnexos = [];
+    if(dashboardData){
+      var allData = dashboardData.em_aberto.concat(dashboardData.entregues);
+      var found = allData.filter(function(d){return d.ticket===ticket;})[0];
+      if(found && found.anexos && Array.isArray(found.anexos)) currentAnexos = found.anexos.slice();
+    }
+    
+    // Remove from Storage (try, don't fail if it errors)
+    var anexo = currentAnexos[idx];
+    if(anexo && anexo.url){
+      var storagePath = anexo.url.replace('https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/demandas/', '');
+      try{
+        await fetch('https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/demandas/' + storagePath, {
+          method: 'DELETE',
+          headers: {'apikey': 'sb_publishable_VMEfbrcWX4dHBAZZSsc3yQ_RniWyTz9', 'Authorization': 'Bearer ' + (supabase.getToken() || '')}
+        });
+      }catch(e){console.warn('Storage delete failed:', e);}
+    }
+    
+    // Remove from array
+    currentAnexos.splice(idx, 1);
+    await supabase.update('demandas', {anexos: JSON.stringify(currentAnexos), updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
+    carregarDados();
+  }catch(err){
+    customAlert({title:'Erro',message:err.message,confirmColor:'red'});
+  }
 }
 
 async function finalizarTicket(ticket){
