@@ -444,6 +444,9 @@ function getSetores(){
 }
 function salvarSetores(arr){
   localStorage.setItem(SETORES_KEY,JSON.stringify(arr));
+  // Persist to Supabase
+  supabase.insert('demandas_config',[{chave:'setores',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true})
+    .catch(function(e){console.warn('Salvar setores no Supabase falhou:',e);});
 }
 function adicionarSetor(nome){
   if(!nome||nome.trim()==='')return;
@@ -468,6 +471,30 @@ function getPrioridades(){
 }
 function salvarPrioridades(arr){
   localStorage.setItem(PRIORIDADES_KEY,JSON.stringify(arr));
+  // Persist to Supabase
+  supabase.insert('demandas_config',[{chave:'prioridades',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true})
+    .catch(function(e){console.warn('Salvar prioridades no Supabase falhou:',e);});
+}
+
+// Load config from Supabase on init (syncs to localStorage)
+async function loadConfigFromSupabase(){
+  try{
+    var rows=await supabase.select('demandas_config',{});
+    rows.forEach(function(row){
+      if(row.chave==='setores'){
+        var val=typeof row.valor==='string'?JSON.parse(row.valor):row.valor;
+        if(Array.isArray(val)&&val.length>0){
+          localStorage.setItem(SETORES_KEY,JSON.stringify(val));
+        }
+      }
+      if(row.chave==='prioridades'){
+        var val2=typeof row.valor==='string'?JSON.parse(row.valor):row.valor;
+        if(Array.isArray(val2)&&val2.length>0){
+          localStorage.setItem(PRIORIDADES_KEY,JSON.stringify(val2));
+        }
+      }
+    });
+  }catch(e){console.warn('Load config from Supabase failed:',e);}
 }
 
 // Build PRIORIDADES array for selects (with empty option)
@@ -1355,6 +1382,10 @@ async function deleteSetor(nome){
 
 // ==================== INIT ====================
 async function init(){
+  // Load config (setores/prioridades) from Supabase first
+  await loadConfigFromSupabase();
+  PRIORIDADES = getPrioridadesSelect();
+  
   // Detect admin session
   try{
     var session = JSON.parse(localStorage.getItem('avp-supabase-session') || 'null');
