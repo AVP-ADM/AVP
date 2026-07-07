@@ -2148,32 +2148,31 @@ function closeChangelogModal(){
 function showChangelogResumo(changelog){
   var container = document.getElementById('statusBar');
   if(!container) return;
-  var h = '';
-  if(changelog.novos.length > 0 || changelog.entregues.length > 0 || changelog.atualizados.length > 0){
-    h += '<div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface-1);max-height:250px;overflow-y:auto">';
-    if(changelog.novos.length > 0){
-      h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + changelog.novos.length + ')</div>';
-      changelog.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
-      h += '</div>';
-    }
-    if(changelog.entregues.length > 0){
-      h += '<div class="changelog-group"><div class="changelog-group-title entregues"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Entregues (' + changelog.entregues.length + ')</div>';
-      changelog.entregues.forEach(function(e){ h += '<div class="changelog-item"><strong>' + e.ticket + '</strong> — ' + escapeHtml(e.titulo) + (e.data_entrega ? ' <span class="change-detail">(entrega: ' + e.data_entrega + ')</span>' : '') + '</div>'; });
-      h += '</div>';
-    }
-    if(changelog.atualizados.length > 0){
-      h += '<div class="changelog-group"><div class="changelog-group-title atualizados"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Atualizados (' + changelog.atualizados.length + ')</div>';
-      changelog.atualizados.forEach(function(u){
-        var detalhes = u.changes.map(function(c){ return c.campo + ': <span class="old-val">' + escapeHtml(c.de) + '</span> → <span class="new-val">' + escapeHtml(c.para) + '</span>'; }).join(', ');
-        h += '<div class="changelog-item"><strong>' + u.ticket + '</strong> — <span class="change-detail">' + detalhes + '</span></div>';
-      });
-      h += '</div>';
-    }
-    if(changelog.sem_alteracao > 0){
-      h += '<div class="changelog-summary">Sem alteracao: ' + changelog.sem_alteracao + ' tickets</div>';
-    }
+  var h = '<div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface-1);max-height:250px;overflow-y:auto">';
+  if(changelog.novos.length > 0){
+    h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + changelog.novos.length + ')</div>';
+    changelog.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
     h += '</div>';
   }
+  if(changelog.entregues.length > 0){
+    h += '<div class="changelog-group"><div class="changelog-group-title entregues"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Entregues (' + changelog.entregues.length + ')</div>';
+    changelog.entregues.forEach(function(e){ h += '<div class="changelog-item"><strong>' + e.ticket + '</strong> — ' + escapeHtml(e.titulo) + (e.data_entrega ? ' <span class="change-detail">(entrega: ' + e.data_entrega + ')</span>' : '') + '</div>'; });
+    h += '</div>';
+  }
+  if(changelog.atualizados.length > 0){
+    h += '<div class="changelog-group"><div class="changelog-group-title atualizados"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Atualizados (' + changelog.atualizados.length + ')</div>';
+    changelog.atualizados.forEach(function(u){
+      var detalhes = u.changes.map(function(c){ return c.campo + ': <span class="old-val">' + escapeHtml(c.de) + '</span> → <span class="new-val">' + escapeHtml(c.para) + '</span>'; }).join(', ');
+      h += '<div class="changelog-item"><strong>' + u.ticket + '</strong> — <span class="change-detail">' + detalhes + '</span></div>';
+    });
+    h += '</div>';
+  }
+  if(changelog.novos.length === 0 && changelog.entregues.length === 0 && changelog.atualizados.length === 0){
+    h += '<div style="text-align:center;padding:8px;color:var(--text3);font-size:.75rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Nenhuma alteracao detectada. Todos os ' + changelog.sem_alteracao + ' tickets estao atualizados.</div>';
+  } else if(changelog.sem_alteracao > 0){
+    h += '<div class="changelog-summary">Sem alteracao: ' + changelog.sem_alteracao + ' tickets</div>';
+  }
+  h += '</div>';
   container.insertAdjacentHTML('afterend', h);
 }
 
@@ -2181,7 +2180,7 @@ async function loadChangelogHistory(){
   var container = document.getElementById('changelogContent');
   container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Carregando...</div>';
   try{
-    var allConfig = await supabase.select('demandas_config', { filter: 'chave=like.changelog_%', order: 'chave.desc' });
+    var allConfig = await supabase.select('demandas_config', { filter: 'chave=like.changelog_*', order: 'chave.desc' });
     if(!allConfig || allConfig.length === 0){
       container.innerHTML = '<div class="changelog-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg><br>Nenhuma atualizacao registrada ainda.<br><span style="font-size:.7rem">O historico sera gerado na proxima vez que processar um PDF.</span></div>';
       return;
@@ -2213,7 +2212,10 @@ async function loadChangelogHistory(){
         });
         h += '</div>';
       }
-      if(data.sem_alteracao > 0){
+      var temMudancas = (data.novos && data.novos.length > 0) || (data.entregues && data.entregues.length > 0) || (data.atualizados && data.atualizados.length > 0);
+      if(!temMudancas){
+        h += '<div style="font-size:.73rem;color:var(--text3);padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Nenhuma alteracao — todos os tickets ja estavam atualizados.</div>';
+      } else if(data.sem_alteracao > 0){
         h += '<div class="changelog-summary">Sem alteracao: ' + data.sem_alteracao + ' tickets</div>';
       }
       h += '</div>';
