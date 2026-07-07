@@ -1196,8 +1196,8 @@ function renderTableEntregues(data){
 function renderTableTodas(entregues,emAberto){
   var tb=document.getElementById('tblTodas');
   var todas=[];
-  emAberto.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:d.status_atual,dias:d.dias,tipo:'aberto',observacao:d.observacao,anexos:d.anexos});});
-  entregues.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:'Entregue ('+d.data_entrega+')',dias:d.dias,tipo:'entregue',observacao:d.observacao,anexos:d.anexos});});
+  emAberto.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:d.status_atual,dias:d.dias,tipo:'aberto',observacao:d.observacao,anexos:d.anexos,setor:d.setor,prioridade:d.prioridade});});
+  entregues.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:'Entregue ('+d.data_entrega+')',dias:d.dias,tipo:'entregue',observacao:d.observacao,anexos:d.anexos,setor:d.setor,prioridade:d.prioridade});});
   var col=sortStateTodas.col;
   var dir=sortStateTodas.dir;
   todas.sort(function(a,b){
@@ -1225,19 +1225,59 @@ function renderTableTodas(entregues,emAberto){
     // Expanded detail
     h+='<tr class="expanded-detail" id="detail-t-'+d.ticket+'">';
     h+='<td colspan="5"><div class="detail-panel" onclick="event.stopPropagation()">';
-    h+='<div class="detail-section"><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div>';
-    if(d.observacao){h+='<div class="detail-section"><span class="detail-label">Observacao:</span><p class="detail-obs-text">'+escapeHtml(d.observacao)+'</p></div>';}
-    var anexosT = parseAnexos(d.anexos);
-    if(anexosT.length > 0){
-      h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosT.length+'):</span><div class="detail-attachments-grid">';
-      anexosT.forEach(function(a){
-        if(a.tipo==='video'){
-          h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
-        } else {
-          h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')"><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
-        }
-      });
+    if(d.tipo==='aberto' && isAdmin){
+      // Full editable panel for open tickets (same as Em Aberto tab)
+      h+='<div class="detail-section"><div class="detail-section-row"><span class="detail-label">Titulo:</span>';
+      h+='<span class="detail-title-text" id="titleText-t-'+d.ticket+'">'+escapeHtml(d.titulo)+'</span>';
+      h+='<button class="detail-action-btn" onclick="startEditTitle(\''+d.ticket+'\',\''+escapeHtml(d.titulo).replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
       h+='</div></div>';
+      // Observation
+      h+='<div class="detail-section"><span class="detail-label">Observacao:</span>';
+      h+='<textarea class="detail-textarea" id="obs-'+d.ticket+'" placeholder="Adicionar observacao...">'+(d.observacao?escapeHtml(d.observacao):'')+'</textarea>';
+      h+='<button class="detail-save-btn" onclick="saveObservacao(\''+d.ticket+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>';
+      h+='</div>';
+      // Attachments
+      var anexosT = parseAnexos(d.anexos);
+      h+='<div class="detail-section" id="anexos-section-'+d.ticket+'"><span class="detail-label">Anexos'+(anexosT.length?' ('+anexosT.length+')':'')+':</span>';
+      if(anexosT.length > 0){
+        h+='<div class="detail-attachments-grid">';
+        anexosT.forEach(function(a, aIdx){
+          if(a.tipo==='video'){
+            h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video>';
+            h+='<span class="detail-attach-name">'+escapeHtml(a.nome)+'</span>';
+            h+='<button class="detail-action-btn delete" onclick="removeAnexo(\''+d.ticket+'\','+aIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+            h+='</div>';
+          } else {
+            h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')">';
+            h+='<span class="detail-attach-name">'+escapeHtml(a.nome)+'</span>';
+            h+='<button class="detail-action-btn delete" onclick="removeAnexo(\''+d.ticket+'\','+aIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+            h+='</div>';
+          }
+        });
+        h+='</div>';
+      }
+      h+='<label class="detail-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Adicionar anexo<input type="file" accept="image/*,video/mp4,video/webm" style="display:none" onchange="uploadAnexo(\''+d.ticket+'\',this)"></label>';
+      h+='</div>';
+      // Finalize button
+      h+='<div class="detail-section detail-actions-row">';
+      h+='<button class="detail-finalize-btn" onclick="finalizarTicket(\''+d.ticket+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Finalizar ticket</button>';
+      h+='</div>';
+    } else {
+      // Read-only panel for entregues or non-admin
+      h+='<div class="detail-section"><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div>';
+      if(d.observacao){h+='<div class="detail-section"><span class="detail-label">Observacao:</span><p class="detail-obs-text">'+escapeHtml(d.observacao)+'</p></div>';}
+      var anexosT = parseAnexos(d.anexos);
+      if(anexosT.length > 0){
+        h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosT.length+'):</span><div class="detail-attachments-grid">';
+        anexosT.forEach(function(a){
+          if(a.tipo==='video'){
+            h+='<div class="detail-attach-item"><video src="'+a.url+'" class="detail-thumb" controls></video><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+          } else {
+            h+='<div class="detail-attach-item"><img src="'+a.url+'" class="detail-thumb" onclick="window.open(\''+a.url+'\',\'_blank\')"><span class="detail-attach-name">'+escapeHtml(a.nome)+'</span></div>';
+          }
+        });
+        h+='</div></div>';
+      }
     }
     h+='</div></td></tr>';
   });
