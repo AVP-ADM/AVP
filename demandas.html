@@ -470,6 +470,13 @@ function escapeHtml(str){
 
 var MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB
 
+function parseDateToNum(str){
+  if(!str) return 0;
+  var p = str.split('/');
+  if(p.length!==3) return 0;
+  return parseInt(p[2]+p[1]+p[0]);
+}
+
 // ==================== THEME ====================
 function toggleTheme(){
   var h=document.documentElement;
@@ -760,7 +767,7 @@ function renderTableAberto(data){
     if(col==='dias'){va=Number(a.dias)||0;vb=Number(b.dias)||0;}
     else if(col==='ticket'){va=a.ticket;vb=b.ticket;}
     else if(col==='titulo'){va=(a.titulo||'').toLowerCase();vb=(b.titulo||'').toLowerCase();}
-    else if(col==='data_criacao'){va=a.data_criacao;vb=b.data_criacao;}
+    else if(col==='data_criacao'){va=parseDateToNum(a.data_criacao);vb=parseDateToNum(b.data_criacao);}
     else if(col==='status_atual'){va=a.status_atual;vb=b.status_atual;}
     else if(col==='setor'){va=a.setor||'';vb=b.setor||'';}
     else if(col==='prioridade'){va=a.prioridade||'9';vb=b.prioridade||'9';}
