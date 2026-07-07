@@ -133,7 +133,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 
 
 /* Table - Premium styling */
-.table-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .search-wrapper{position:relative;width:260px}
 .search-wrapper svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text3);pointer-events:none}
 .table-search{padding:10px 14px 10px 36px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:100%;transition:all .2s ease}
@@ -300,7 +299,6 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 .detail-action-btn{display:inline-flex;align-items:center;gap:3px;padding:3px 6px;font-size:.7rem;font-family:var(--font);background:none;border:none;color:var(--text3);cursor:pointer;border-radius:4px;transition:all .15s}
 .detail-action-btn:hover{background:var(--surface-2);color:var(--text1)}
 .detail-action-btn.delete:hover{background:var(--red-bg);color:var(--red)}
-.detail-attachment{display:flex;align-items:center;gap:10px}
 .detail-thumb{width:80px;height:60px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:transform .15s}
 .detail-thumb:hover{transform:scale(1.05)}
 .detail-upload-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:.75rem;font-weight:500;font-family:var(--font);color:var(--text2);border:1px dashed var(--border-strong);border-radius:var(--radius);cursor:pointer;transition:all .15s}
@@ -617,6 +615,8 @@ function escapeHtml(str){
 }
 
 var MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB
+var SUPABASE_STORAGE_URL = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object';
+var SUPABASE_PUBLIC_URL = SUPABASE_STORAGE_URL + '/public/demandas/';
 
 function parseDateToNum(str){
   if(!str) return 0;
@@ -1488,7 +1488,7 @@ function renderFilterChips(){
   var container=document.getElementById('filterChips');
   var h='';
   if(currentFilterSetor){
-    h+='<span class="filter-chip" onclick="document.getElementById(\'filterSetor\').value=\'\';applyFilters();">'+currentFilterSetor+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+    h+='<span class="filter-chip" onclick="document.getElementById(\'filterSetor\').value=\'\';applyFilters();">'+escapeHtml(currentFilterSetor)+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
   }
   if(currentFilterPrioridade){
     var label=currentFilterPrioridade==='none'?'Sem prioridade':findPrioLabel(currentFilterPrioridade);
@@ -1515,7 +1515,6 @@ function toggleExpandRow(ticket){
   var detail=document.getElementById('detail-'+ticket);
   if(!detail)return;
   detail.classList.toggle('visible');
-  if(detail.style.display==='none')detail.style.display='';
 }
 
 // ==================== COLUMN SORTING ====================
@@ -1697,23 +1696,19 @@ function saveNewPrio(){
   if(dashboardData) carregarDados();
 }
 
-function addPrioridade(){startNewPrio();}
-
-function editPrioridade(idx){startEditPrio(idx);}
-
-function removePrioridade(idx){
+async function removePrioridade(idx){
   var prios=getPrioridades();
   var p=prios[idx];
   if(!p) return;
-  customConfirm({title:'Excluir prioridade?',message:'A prioridade "'+p.label+'" sera removida.',confirmText:'Excluir',confirmColor:'red',icon:'trash'}).then(function(confirmed){
+  var confirmed = await customConfirm({title:'Excluir prioridade?',message:'A prioridade "'+p.label+'" sera removida.',confirmText:'Excluir',confirmColor:'red',icon:'trash'});
   if(!confirmed) return;
-  prios.splice(idx,1);
-  prios.forEach(function(pr,i){pr.value=String(i+1);});
-  salvarPrioridades(prios);
+  var priosUpdated=getPrioridades();
+  priosUpdated.splice(idx,1);
+  priosUpdated.forEach(function(pr,i){pr.value=String(i+1);});
+  salvarPrioridades(priosUpdated);
   PRIORIDADES=getPrioridadesSelect();
   editingPrioIdx=-1;
   renderPriorityCard();
-  });
 }
 
 // ==================== SETORES MANAGEMENT ====================
@@ -1864,14 +1859,17 @@ async function uploadAnexo(ticket, input){
   if(file.size > 5*1024*1024){customAlert({title:'Arquivo muito grande',message:'Maximo permitido: 5MB.',confirmColor:'amber'});return;}
   if(!file.type.startsWith('image/') && !file.type.startsWith('video/')){customAlert({title:'Formato invalido',message:'Selecione uma imagem ou video.',confirmColor:'amber'});return;}
   
-  var tipo = file.type.startsWith('video/') ? 'video' : 'image';
+  var allowedExts = ['jpg','jpeg','png','webp','gif','mp4','webm','mov'];
   var ext = file.name.split('.').pop().toLowerCase();
+  if(allowedExts.indexOf(ext)===-1){customAlert({title:'Extensao nao permitida',message:'Formatos aceitos: '+allowedExts.join(', '),confirmColor:'amber'});return;}
+  
+  var tipo = file.type.startsWith('video/') ? 'video' : 'image';
   var fileName = Date.now() + '.' + ext;
   var path = ticket + '/' + fileName;
   
   try{
     // Upload to Supabase Storage
-    var uploadUrl = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/demandas/' + path;
+    var uploadUrl = SUPABASE_STORAGE_URL + '/demandas/' + path;
     var resp = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
@@ -1885,7 +1883,7 @@ async function uploadAnexo(ticket, input){
     if(!resp.ok) throw new Error('Upload falhou: ' + resp.status);
     
     // Get public URL
-    var publicUrl = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/demandas/' + path;
+    var publicUrl = SUPABASE_PUBLIC_URL + path;
     
     // Add to anexos array
     var currentAnexos = [];
@@ -1919,9 +1917,9 @@ async function removeAnexo(ticket, idx){
     // Remove from Storage (try, don't fail if it errors)
     var anexo = currentAnexos[idx];
     if(anexo && anexo.url){
-      var storagePath = anexo.url.replace('https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/public/demandas/', '');
+      var storagePath = anexo.url.replace(SUPABASE_PUBLIC_URL, '');
       try{
-        await fetch('https://thchtjwbytdphmviympg.supabase.co/storage/v1/object/demandas/' + storagePath, {
+        await fetch(SUPABASE_STORAGE_URL + '/demandas/' + storagePath, {
           method: 'DELETE',
           headers: {'apikey': 'sb_publishable_VMEfbrcWX4dHBAZZSsc3yQ_RniWyTz9', 'Authorization': 'Bearer ' + (supabase.getToken() || '')}
         });
