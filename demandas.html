@@ -618,6 +618,14 @@ var MAX_PDF_SIZE = 5 * 1024 * 1024; // 5MB
 var SUPABASE_STORAGE_URL = 'https://thchtjwbytdphmviympg.supabase.co/storage/v1/object';
 var SUPABASE_PUBLIC_URL = SUPABASE_STORAGE_URL + '/public/demandas/';
 
+function parseAnexos(val){
+  if(Array.isArray(val)) return val;
+  if(typeof val === 'string' && val.length > 0){
+    try{ var parsed = JSON.parse(val); if(Array.isArray(parsed)) return parsed; }catch(e){}
+  }
+  return [];
+}
+
 function parseDateToNum(str){
   if(!str) return 0;
   var p = str.split('/');
@@ -1070,7 +1078,7 @@ function renderTableAberto(data){
     }
     h+='</div>';
     // Attachment section
-    var anexos = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    var anexos = parseAnexos(d.anexos);
     h+='<div class="detail-section"><span class="detail-label">Anexos'+(anexos.length?' ('+anexos.length+')':'')+':</span>';
     if(anexos.length > 0){
       h+='<div class="detail-attachments-grid">';
@@ -1156,7 +1164,7 @@ function renderTableEntregues(data){
     h+='<p class="detail-obs-text">'+(d.observacao?escapeHtml(d.observacao):'<em style="color:var(--text3)">Sem observacao</em>')+'</p>';
     h+='</div>';
     // Attachment
-    var anexosE = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    var anexosE = parseAnexos(d.anexos);
     if(anexosE.length > 0){
       h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosE.length+'):</span><div class="detail-attachments-grid">';
       anexosE.forEach(function(a){
@@ -1219,7 +1227,7 @@ function renderTableTodas(entregues,emAberto){
     h+='<td colspan="5"><div class="detail-panel" onclick="event.stopPropagation()">';
     h+='<div class="detail-section"><span class="detail-title-text">'+escapeHtml(d.titulo)+'</span></div>';
     if(d.observacao){h+='<div class="detail-section"><span class="detail-label">Observacao:</span><p class="detail-obs-text">'+escapeHtml(d.observacao)+'</p></div>';}
-    var anexosT = (d.anexos && Array.isArray(d.anexos)) ? d.anexos : [];
+    var anexosT = parseAnexos(d.anexos);
     if(anexosT.length > 0){
       h+='<div class="detail-section"><span class="detail-label">Anexos ('+anexosT.length+'):</span><div class="detail-attachments-grid">';
       anexosT.forEach(function(a){
@@ -1890,11 +1898,11 @@ async function uploadAnexo(ticket, input){
     if(dashboardData){
       var allData = dashboardData.em_aberto.concat(dashboardData.entregues);
       var found = allData.filter(function(d){return d.ticket===ticket;})[0];
-      if(found && found.anexos && Array.isArray(found.anexos)) currentAnexos = found.anexos.slice();
+      if(found) currentAnexos = parseAnexos(found.anexos);
     }
     currentAnexos.push({url: publicUrl, nome: file.name, tipo: tipo});
     
-    await supabase.update('demandas', {anexos: JSON.stringify(currentAnexos), updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
+    await supabase.update('demandas', {anexos: currentAnexos, updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
     carregarDados();
   }catch(err){
     customAlert({title:'Erro ao anexar',message:err.message,confirmColor:'red'});
@@ -1911,7 +1919,7 @@ async function removeAnexo(ticket, idx){
     if(dashboardData){
       var allData = dashboardData.em_aberto.concat(dashboardData.entregues);
       var found = allData.filter(function(d){return d.ticket===ticket;})[0];
-      if(found && found.anexos && Array.isArray(found.anexos)) currentAnexos = found.anexos.slice();
+      if(found) currentAnexos = parseAnexos(found.anexos);
     }
     
     // Remove from Storage (try, don't fail if it errors)
@@ -1928,7 +1936,7 @@ async function removeAnexo(ticket, idx){
     
     // Remove from array
     currentAnexos.splice(idx, 1);
-    await supabase.update('demandas', {anexos: JSON.stringify(currentAnexos), updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
+    await supabase.update('demandas', {anexos: currentAnexos, updated_at: new Date().toISOString()}, 'ticket=eq.' + encodeURIComponent(ticket));
     carregarDados();
   }catch(err){
     customAlert({title:'Erro',message:err.message,confirmColor:'red'});
