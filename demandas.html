@@ -355,6 +355,33 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 .setor-item-btn svg{width:13px;height:13px}
 .setor-empty{text-align:center;padding:20px;font-size:.8rem;color:var(--text3)}
 
+/* Custom Confirm Modal */
+.confirm-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.open{display:flex}
+[data-theme="dark"] .confirm-overlay{background:rgba(0,0,0,.7)}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-lg);max-width:380px;width:100%;text-align:center;animation:slideUp .2s ease}
+.confirm-icon{margin-bottom:16px}
+.confirm-icon svg{width:40px;height:40px}
+.confirm-icon.green svg{color:var(--green)}
+.confirm-icon.amber svg{color:var(--amber)}
+.confirm-icon.red svg{color:var(--red)}
+.confirm-icon.blue svg{color:var(--blue)}
+.confirm-title{font-size:1rem;font-weight:600;color:var(--text1);margin-bottom:6px}
+.confirm-message{font-size:.82rem;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.confirm-buttons{display:flex;gap:10px;justify-content:center}
+.confirm-btn{padding:8px 20px;border-radius:var(--radius);font-size:.82rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;border:1px solid var(--border)}
+.confirm-cancel{background:var(--surface);color:var(--text1)}
+.confirm-cancel:hover{background:var(--surface-2)}
+.confirm-ok{color:#fff;border:none}
+.confirm-ok.green{background:var(--green)}
+.confirm-ok.green:hover{background:var(--accent-hover)}
+.confirm-ok.amber{background:var(--amber)}
+.confirm-ok.amber:hover{opacity:.9}
+.confirm-ok.red{background:var(--red)}
+.confirm-ok.red:hover{opacity:.9}
+.confirm-ok.blue{background:var(--blue)}
+.confirm-ok.blue:hover{opacity:.9}
+
 /* Loading & Empty states */
 .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px}
@@ -484,6 +511,19 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
   </div>
 </div>
 
+<!-- Custom Confirm Modal -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon"></div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-message" id="confirmMessage"></div>
+    <div class="confirm-buttons">
+      <button class="confirm-btn confirm-cancel" id="confirmCancel">Cancelar</button>
+      <button class="confirm-btn confirm-ok" id="confirmOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -575,6 +615,86 @@ function parseDateToNum(str){
   return parseInt(p[2]+p[1]+p[0]);
 }
 
+// ==================== CUSTOM CONFIRM MODAL ====================
+function customConfirm(options){
+  return new Promise(function(resolve){
+    var overlay=document.getElementById('confirmOverlay');
+    var iconEl=document.getElementById('confirmIcon');
+    var titleEl=document.getElementById('confirmTitle');
+    var msgEl=document.getElementById('confirmMessage');
+    var okBtn=document.getElementById('confirmOk');
+    var cancelBtn=document.getElementById('confirmCancel');
+    
+    titleEl.textContent=options.title||'Confirmar';
+    msgEl.textContent=options.message||'';
+    okBtn.textContent=options.confirmText||'Confirmar';
+    okBtn.className='confirm-btn confirm-ok '+(options.confirmColor||'green');
+    
+    // Icon
+    var iconSvg='';
+    var iconColor=options.confirmColor||'green';
+    if(options.icon==='check'||iconColor==='green'){
+      iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+    } else if(options.icon==='reopen'||iconColor==='amber'){
+      iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>';
+    } else if(options.icon==='warning'||options.icon==='trash'||iconColor==='red'){
+      iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+    } else {
+      iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    }
+    iconEl.className='confirm-icon '+iconColor;
+    iconEl.innerHTML=iconSvg;
+    
+    overlay.classList.add('open');
+    
+    function cleanup(){
+      overlay.classList.remove('open');
+      okBtn.onclick=null;
+      cancelBtn.onclick=null;
+      overlay.onclick=null;
+    }
+    
+    okBtn.onclick=function(){cleanup();resolve(true);};
+    cancelBtn.onclick=function(){cleanup();resolve(false);};
+    overlay.onclick=function(e){if(e.target===overlay){cleanup();resolve(false);}};
+  });
+}
+
+function customAlert(options){
+  return new Promise(function(resolve){
+    var overlay=document.getElementById('confirmOverlay');
+    var iconEl=document.getElementById('confirmIcon');
+    var titleEl=document.getElementById('confirmTitle');
+    var msgEl=document.getElementById('confirmMessage');
+    var okBtn=document.getElementById('confirmOk');
+    var cancelBtn=document.getElementById('confirmCancel');
+    
+    titleEl.textContent=options.title||'Aviso';
+    msgEl.textContent=options.message||'';
+    okBtn.textContent='OK';
+    okBtn.className='confirm-btn confirm-ok '+(options.confirmColor||'blue');
+    cancelBtn.style.display='none';
+    
+    var iconColor=options.confirmColor||'blue';
+    var iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    if(iconColor==='red') iconSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    iconEl.className='confirm-icon '+iconColor;
+    iconEl.innerHTML=iconSvg;
+    
+    overlay.classList.add('open');
+    
+    function cleanup(){
+      overlay.classList.remove('open');
+      okBtn.onclick=null;
+      cancelBtn.style.display='';
+      overlay.onclick=null;
+    }
+    
+    okBtn.onclick=function(){cleanup();resolve();};
+    overlay.onclick=function(e){if(e.target===overlay){cleanup();resolve();}};
+  });
+}
+
 // ==================== THEME ====================
 function toggleTheme(){
   var h=document.documentElement;
@@ -634,7 +754,7 @@ function onFieldChange(ticket, field, value){
   updateData.updated_at = new Date().toISOString();
   supabase.update('demandas', updateData, 'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){ console.log('Saved:', ticket, field, value); })
-    .catch(function(err){ console.error('Save failed:', err); alert('Erro ao salvar: '+err.message); });
+    .catch(function(err){ console.error('Save failed:', err); customAlert({title:'Erro ao salvar',message:err.message,confirmColor:'red'}); });
 }
 
 // ==================== LOAD DATA FROM SUPABASE ====================
@@ -1543,13 +1663,15 @@ function removePrioridade(idx){
   var prios=getPrioridades();
   var p=prios[idx];
   if(!p) return;
-  if(!confirm('Excluir a prioridade "'+p.label+'"?')) return;
+  customConfirm({title:'Excluir prioridade?',message:'A prioridade "'+p.label+'" sera removida.',confirmText:'Excluir',confirmColor:'red',icon:'trash'}).then(function(confirmed){
+  if(!confirmed) return;
   prios.splice(idx,1);
   prios.forEach(function(pr,i){pr.value=String(i+1);});
   salvarPrioridades(prios);
   PRIORIDADES=getPrioridadesSelect();
   editingPrioIdx=-1;
   renderPriorityCard();
+  });
 }
 
 // ==================== SETORES MANAGEMENT ====================
@@ -1649,7 +1771,8 @@ async function saveSetorRename(nomeAntigo){
 }
 
 async function deleteSetor(nome){
-  if(!confirm('Excluir o setor "'+nome+'"?\n\nTodas as demandas com esse setor voltarao para "(Sem setor)".')) return;
+  var confirmed = await customConfirm({title:'Excluir setor "'+nome+'"?',message:'Todas as demandas com esse setor voltarao para "(Sem setor)".',confirmText:'Excluir',confirmColor:'red',icon:'trash'});
+  if(!confirmed) return;
   // Remover da lista local
   var setores=getSetores();
   var idx=setores.indexOf(nome);
@@ -1678,7 +1801,7 @@ function saveTitleEdit(ticket){
   if(!novoTitulo) return;
   supabase.update('demandas',{titulo:novoTitulo,updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){carregarDados();})
-    .catch(function(err){alert('Erro ao salvar titulo: '+err.message);});
+    .catch(function(err){customAlert({title:'Erro',message:err.message,confirmColor:'red'});});
 }
 
 function saveObservacao(ticket){
@@ -1690,47 +1813,50 @@ function saveObservacao(ticket){
       var btn=textarea.nextElementSibling;
       if(btn){btn.textContent='Salvo!';setTimeout(function(){btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar';},1500);}
     })
-    .catch(function(err){alert('Erro ao salvar: '+err.message);});
+    .catch(function(err){customAlert({title:'Erro ao salvar',message:err.message,confirmColor:'red'});});
 }
 
 function uploadAnexo(ticket,input){
   var file=input.files[0];
   if(!file) return;
-  if(file.size>500*1024){alert('Imagem muito grande. Maximo 500KB.');return;}
-  if(!file.type.startsWith('image/')){alert('Selecione uma imagem.');return;}
+  if(file.size>500*1024){customAlert({title:'Imagem muito grande',message:'Maximo permitido: 500KB.',confirmColor:'amber'});return;}
+  if(!file.type.startsWith('image/')){customAlert({title:'Formato invalido',message:'Selecione um arquivo de imagem.',confirmColor:'amber'});return;}
   var reader=new FileReader();
   reader.onload=function(e){
     var base64=e.target.result;
     supabase.update('demandas',{anexo_url:base64,updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
       .then(function(){carregarDados();})
-      .catch(function(err){alert('Erro ao anexar: '+err.message);});
+      .catch(function(err){customAlert({title:'Erro ao anexar',message:err.message,confirmColor:'red'});});
   };
   reader.readAsDataURL(file);
 }
 
-function removeAnexo(ticket){
-  if(!confirm('Remover anexo?')) return;
+async function removeAnexo(ticket){
+  var confirmed = await customConfirm({title:'Remover anexo?',message:'A imagem sera removida permanentemente.',confirmText:'Remover',confirmColor:'red',icon:'trash'});
+  if(!confirmed) return;
   supabase.update('demandas',{anexo_url:'',updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){carregarDados();})
-    .catch(function(err){alert('Erro ao remover: '+err.message);});
+    .catch(function(err){customAlert({title:'Erro',message:err.message,confirmColor:'red'});});
 }
 
-function finalizarTicket(ticket){
-  if(!confirm('Finalizar este ticket? Ele sera movido para a aba Entregues.')) return;
+async function finalizarTicket(ticket){
+  var confirmed = await customConfirm({title:'Finalizar este ticket?',message:'Sera movido para a aba Entregues com a data de hoje.',confirmText:'Finalizar',confirmColor:'green',icon:'check'});
+  if(!confirmed) return;
   var hoje=new Date();
   var dd=('0'+hoje.getDate()).slice(-2);
   var mm=('0'+(hoje.getMonth()+1)).slice(-2);
   var dataHoje=dd+'/'+mm+'/'+hoje.getFullYear();
   supabase.update('demandas',{tipo:'entregue',data_entrega:dataHoje,updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){carregarDados();})
-    .catch(function(err){alert('Erro ao finalizar: '+err.message);});
+    .catch(function(err){customAlert({title:'Erro ao finalizar',message:err.message,confirmColor:'red'});});
 }
 
-function reabrirTicket(ticket){
-  if(!confirm('Reabrir este ticket? Ele voltara para a aba Em Aberto.')) return;
+async function reabrirTicket(ticket){
+  var confirmed = await customConfirm({title:'Reabrir este ticket?',message:'Voltara para a aba Em Aberto.',confirmText:'Reabrir',confirmColor:'amber',icon:'reopen'});
+  if(!confirmed) return;
   supabase.update('demandas',{tipo:'aberto',data_entrega:'',updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){carregarDados();})
-    .catch(function(err){alert('Erro ao reabrir: '+err.message);});
+    .catch(function(err){customAlert({title:'Erro ao reabrir',message:err.message,confirmColor:'red'});});
 }
 
 // ==================== INIT ====================
