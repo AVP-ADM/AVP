@@ -1600,8 +1600,13 @@ function applyFilters(){
     var visible=showSetor&&showPrio&&showStatus&&showSearch;
     tr.style.display=visible?'':'none';
     var detail=tr.nextElementSibling;
-    if(detail&&detail.classList.contains('expanded-detail')&&!visible){
-      detail.style.display='none';
+    if(detail&&detail.classList.contains('expanded-detail')){
+      if(!visible){
+        detail.style.display='none';
+        detail.classList.remove('visible');
+      } else {
+        detail.style.display='';
+      }
     }
     if(visible)shown++;
   });
@@ -1613,9 +1618,14 @@ function applyFilters(){
     var visible=!q||text.indexOf(q)!==-1;
     tr.style.display=visible?'':'none';
     var detail=tr.nextElementSibling;
-    if(detail&&detail.classList.contains('expanded-detail')&&!visible){
-      detail.style.display='none';
-      detail.classList.remove('visible');
+    if(detail&&detail.classList.contains('expanded-detail')){
+      if(!visible){
+        detail.style.display='none';
+        detail.classList.remove('visible');
+      } else {
+        // Remove inline display:none so .visible class can work again
+        detail.style.display='';
+      }
     }
   });
 
