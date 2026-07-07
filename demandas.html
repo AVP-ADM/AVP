@@ -1453,6 +1453,12 @@ function addSetorFromModal(){
   adicionarSetor(nome);
   input.value='';
   renderSetoresList();
+  // Re-render table to show new setor in dropdowns
+  if(dashboardData){
+    var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+    emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
+    renderTableAberto(emAberto);
+  }
 }
 
 var editingSetorName = null;
