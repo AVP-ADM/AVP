@@ -576,7 +576,7 @@ function getSetores(){
 function salvarSetores(arr){
   localStorage.setItem(SETORES_KEY,JSON.stringify(arr));
   // Persist to Supabase
-  supabase.insert('demandas_config',[{chave:'setores',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true})
+  supabase.insert('demandas_config',[{chave:'setores',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true,onConflict:'chave'})
     .catch(function(e){console.warn('Salvar setores no Supabase falhou:',e);});
 }
 function adicionarSetor(nome){
@@ -603,7 +603,7 @@ function getPrioridades(){
 function salvarPrioridades(arr){
   localStorage.setItem(PRIORIDADES_KEY,JSON.stringify(arr));
   // Persist to Supabase
-  supabase.insert('demandas_config',[{chave:'prioridades',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true})
+  supabase.insert('demandas_config',[{chave:'prioridades',valor:JSON.stringify(arr),updated_at:new Date().toISOString()}],{upsert:true,onConflict:'chave'})
     .catch(function(e){console.warn('Salvar prioridades no Supabase falhou:',e);});
 }
 
@@ -1430,7 +1430,7 @@ btnProcessar.addEventListener('click', async function(){
     // Upsert in chunks of 50
     var CHUNK = 50;
     for(var i=0; i<rows.length; i+=CHUNK){
-      await supabase.insert('demandas', rows.slice(i, i+CHUNK), { upsert: true });
+      await supabase.insert('demandas', rows.slice(i, i+CHUNK), { upsert: true, onConflict: 'ticket' });
     }
 
     // Also update any that changed from aberto to entregue
@@ -1452,7 +1452,7 @@ btnProcessar.addEventListener('click', async function(){
       }),
       updated_at: new Date().toISOString()
     };
-    await supabase.insert('demandas_config', [changelogEntry], { upsert: true });
+    await supabase.insert('demandas_config', [changelogEntry], { upsert: true, onConflict: 'chave' });
 
     // Show results summary
     var resumo = rows.length + ' demandas processadas';

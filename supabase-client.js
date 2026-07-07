@@ -136,7 +136,9 @@ const supabase = {
   async insert(table, data, options = {}) {
     const headers = { ...supabase._headers(), 'Prefer': options.upsert ? 'resolution=merge-duplicates' : 'return=minimal' };
     if (options.returnData) headers['Prefer'] = 'return=representation';
-    let resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    if (options.upsert && options.onConflict) url += `?on_conflict=${options.onConflict}`;
+    let resp = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(data)
@@ -146,7 +148,7 @@ const supabase = {
       const refreshed = await supabase.refreshSession();
       if (refreshed) {
         const retryHeaders = { ...supabase._headers(), 'Prefer': headers['Prefer'] };
-        resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+        resp = await fetch(url, {
           method: 'POST',
           headers: retryHeaders,
           body: JSON.stringify(data)
@@ -416,7 +418,7 @@ const supabase = {
   // Upsert a single key in fipe_cache table (uses service_role for write access)
   async upsertFipeCacheKey(chave, valor) {
     const headers = { ...supabase._serviceHeaders(), 'Prefer': 'resolution=merge-duplicates' };
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache`, {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/fipe_cache?on_conflict=chave`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ chave, valor, updated_at: new Date().toISOString() })
