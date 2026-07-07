@@ -11156,11 +11156,34 @@ else{startApp();}
 
 function startApp(){
   initTheme();
-  // Check if session exists
-  if(checkSession()){
-    initApp();
+  // Check if session exists and validate it
+  validateAndStart();
+}
+
+async function validateAndStart(){
+  try{
+    var session=JSON.parse(localStorage.getItem('avp-supabase-session')||'null');
+    if(session&&session.access_token&&session.user){
+      // Session exists — try to validate/refresh it
+      var refreshed = await supabase.refreshSession();
+      if(refreshed){
+        // Session is valid
+        if(checkSession()){
+          initApp();
+        }
+      } else {
+        // Session expired — clear and force re-login
+        localStorage.removeItem('avp-supabase-session');
+        localStorage.removeItem('avp-session-token');
+        // Login screen is already visible by default
+      }
+    }
+    // If no session, login screen is shown (default state)
+  }catch(e){
+    // On any error, just show login screen
+    localStorage.removeItem('avp-supabase-session');
+    localStorage.removeItem('avp-session-token');
   }
-  // Otherwise login screen is shown, initApp will be called after login
 }
 
 
