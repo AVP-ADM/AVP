@@ -817,11 +817,33 @@ function renderTableAberto(data){
 function renderTableEntregues(data){
   var tb=document.getElementById('tblEntregues');
   if(!data.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">Nenhuma demanda entregue</td></tr>';return;}
+  // Sort
+  var col=sortStateEntregues.col;
+  var dir=sortStateEntregues.dir;
+  data.sort(function(a,b){
+    var va,vb;
+    if(col==='dias'){va=Number(a.dias)||0;vb=Number(b.dias)||0;}
+    else if(col==='ticket'){va=a.ticket;vb=b.ticket;}
+    else if(col==='titulo'){va=(a.titulo||'').toLowerCase();vb=(b.titulo||'').toLowerCase();}
+    else if(col==='data_criacao'){va=parseDateToNum(a.data_criacao);vb=parseDateToNum(b.data_criacao);}
+    else if(col==='data_entrega'){va=parseDateToNum(a.data_entrega);vb=parseDateToNum(b.data_entrega);}
+    else{va=0;vb=0;}
+    if(va<vb)return dir==='asc'?-1:1;
+    if(va>vb)return dir==='asc'?1:-1;
+    return 0;
+  });
   var h='';
   data.forEach(function(d){
     h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td><td>'+escapeHtml(d.data_criacao||'')+'</td><td>'+escapeHtml(d.data_entrega||'')+'</td><td>'+(d.dias||0)+' dias</td></tr>';
   });
   tb.innerHTML=h;
+  // Sort indicators
+  document.querySelectorAll('#tab-entregues th').forEach(function(th){
+    th.classList.remove('sorted-asc','sorted-desc');
+    th.onclick=function(){sortTableEntregues(th.getAttribute('data-col'));};
+    if(!th.querySelector('.sort-arrow')){th.innerHTML+='<span class="sort-arrow">\u25B2</span>';}
+    if(th.getAttribute('data-col')===sortStateEntregues.col){th.classList.add('sorted-'+sortStateEntregues.dir);}
+  });
 }
 
 function renderTableTodas(entregues,emAberto){
@@ -829,13 +851,34 @@ function renderTableTodas(entregues,emAberto){
   var todas=[];
   emAberto.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:d.status_atual,dias:d.dias,tipo:'aberto'});});
   entregues.forEach(function(d){todas.push({ticket:d.ticket,titulo:d.titulo,data_criacao:d.data_criacao,status:'Entregue ('+d.data_entrega+')',dias:d.dias,tipo:'entregue'});});
-  todas.sort(function(a,b){return(Number(b.dias)||0)-(Number(a.dias)||0);});
+  // Sort
+  var col=sortStateTodas.col;
+  var dir=sortStateTodas.dir;
+  todas.sort(function(a,b){
+    var va,vb;
+    if(col==='dias'){va=Number(a.dias)||0;vb=Number(b.dias)||0;}
+    else if(col==='ticket'){va=a.ticket;vb=b.ticket;}
+    else if(col==='titulo'){va=(a.titulo||'').toLowerCase();vb=(b.titulo||'').toLowerCase();}
+    else if(col==='data_criacao'){va=parseDateToNum(a.data_criacao);vb=parseDateToNum(b.data_criacao);}
+    else if(col==='status'){va=(a.status||'').toLowerCase();vb=(b.status||'').toLowerCase();}
+    else{va=0;vb=0;}
+    if(va<vb)return dir==='asc'?-1:1;
+    if(va>vb)return dir==='asc'?1:-1;
+    return 0;
+  });
   var h='';
   todas.forEach(function(d){
     var statusHtml=d.tipo==='entregue'?'<span class="aging-badge aging-green">Entregue</span>':d.status;
     h+='<tr><td><strong>'+d.ticket+'</strong></td><td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td><td>'+escapeHtml(d.data_criacao||'')+'</td><td>'+statusHtml+'</td><td>'+agingBadge(d.dias)+'</td></tr>';
   });
   tb.innerHTML=h;
+  // Sort indicators
+  document.querySelectorAll('#tab-todas th').forEach(function(th){
+    th.classList.remove('sorted-asc','sorted-desc');
+    th.onclick=function(){sortTableTodas(th.getAttribute('data-col'));};
+    if(!th.querySelector('.sort-arrow')){th.innerHTML+='<span class="sort-arrow">\u25B2</span>';}
+    if(th.getAttribute('data-col')===sortStateTodas.col){th.classList.add('sorted-'+sortStateTodas.dir);}
+  });
 }
 
 
@@ -1089,27 +1132,51 @@ function toggleExpandRow(ticket){
 
 // ==================== COLUMN SORTING ====================
 var sortState={col:'dias',dir:'desc'};
+var sortStateEntregues={col:'data_entrega',dir:'desc'};
+var sortStateTodas={col:'dias',dir:'desc'};
 
 function sortTable(col){
   if(sortState.col===col){
     sortState.dir=sortState.dir==='desc'?'asc':'desc';
   } else {
     sortState.col=col;
-    sortState.dir=col==='dias'?'desc':'asc';
+    sortState.dir=(col==='dias'||col==='data_criacao')?'desc':'asc';
   }
-  // Re-render with sort
   if(dashboardData){
     var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
     emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
     renderTableAberto(emAberto);
   }
-  // Update header indicators
-  document.querySelectorAll('#tab-aberto th').forEach(function(th){
-    th.classList.remove('sorted-asc','sorted-desc');
-    if(th.getAttribute('data-col')===col){
-      th.classList.add('sorted-'+sortState.dir);
-    }
-  });
+}
+
+function sortTableEntregues(col){
+  if(sortStateEntregues.col===col){
+    sortStateEntregues.dir=sortStateEntregues.dir==='desc'?'asc':'desc';
+  } else {
+    sortStateEntregues.col=col;
+    sortStateEntregues.dir=(col==='dias'||col==='data_criacao'||col==='data_entrega')?'desc':'asc';
+  }
+  if(dashboardData){
+    var entregues=dashboardData.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+    entregues.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.data_entrega=normalizarData(d.data_entrega);});
+    renderTableEntregues(entregues);
+  }
+}
+
+function sortTableTodas(col){
+  if(sortStateTodas.col===col){
+    sortStateTodas.dir=sortStateTodas.dir==='desc'?'asc':'desc';
+  } else {
+    sortStateTodas.col=col;
+    sortStateTodas.dir=(col==='dias'||col==='data_criacao')?'desc':'asc';
+  }
+  if(dashboardData){
+    var entregues=dashboardData.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+    var emAberto=dashboardData.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
+    entregues.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.data_entrega=normalizarData(d.data_entrega);});
+    emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
+    renderTableTodas(entregues,emAberto);
+  }
 }
 
 // ==================== SETORES MANAGEMENT ====================
