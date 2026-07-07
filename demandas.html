@@ -414,7 +414,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 }
 
 /* Changelog */
-.changelog-entry{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px;background:var(--surface-1)}
+.changelog-entry{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px;background:var(--surface)}
 .changelog-date{font-size:.8rem;font-weight:600;color:var(--text1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .changelog-date svg{color:var(--text3)}
 .changelog-group{margin-bottom:8px}
@@ -788,6 +788,18 @@ function openUploadModal(){
 }
 function closeUploadModal(){
   document.getElementById('uploadModal').classList.remove('open');
+  // Reset state
+  pdfFile = null;
+  btnProcessar.disabled = true;
+  uploadZone.classList.remove('has-file');
+  uploadZone.querySelector('p').innerHTML = '<strong>Arraste o PDF aqui</strong> ou clique para selecionar';
+  uploadZone.querySelector('.formats').textContent = 'Relatorio South Tecnologia (.pdf)';
+  var statusBar = document.getElementById('statusBar');
+  statusBar.className = 'status-bar';
+  document.getElementById('statusText').textContent = '';
+  var prevResumo = document.getElementById('changelogResumoInline');
+  if(prevResumo) prevResumo.remove();
+  fileInput.value = '';
 }
 // Close modal on overlay click
 document.getElementById('uploadModal').addEventListener('click',function(e){
@@ -855,7 +867,7 @@ async function carregarDados(){
     var semPrevisao = 0;
     aberto.forEach(function(d){
       var s = (d.status_atual||'').toLowerCase();
-      if(s.indexOf('an')!==-1 || s.indexOf('desenvolvimento')!==-1) semPrevisao++;
+      if(s.indexOf('lise')!==-1 || s.indexOf('desenvolvimento')!==-1 || s.indexOf('an\u00e1lise')!==-1) semPrevisao++;
     });
 
     dashboardData = {
@@ -1263,8 +1275,8 @@ function renderTableTodas(entregues,emAberto){
       h+='</div></div>';
       // Observation
       h+='<div class="detail-section"><span class="detail-label">Observacao:</span>';
-      h+='<textarea class="detail-textarea" id="obs-'+d.ticket+'" placeholder="Adicionar observacao...">'+(d.observacao?escapeHtml(d.observacao):'')+'</textarea>';
-      h+='<button class="detail-save-btn" onclick="saveObservacao(\''+d.ticket+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>';
+      h+='<textarea class="detail-textarea" id="obs-t-'+d.ticket+'" placeholder="Adicionar observacao...">'+(d.observacao?escapeHtml(d.observacao):'')+'</textarea>';
+      h+='<button class="detail-save-btn" onclick="saveObservacao(\''+d.ticket+'\',\'t-\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>';
       h+='</div>';
       // Attachments
       var anexosT = parseAnexos(d.anexos);
@@ -1362,6 +1374,8 @@ function handleFile(file){
 btnProcessar.addEventListener('click', async function(){
   if(!pdfFile) return;
   btnProcessar.disabled = true;
+  var btnOriginalHTML = btnProcessar.innerHTML;
+  btnProcessar.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></span>Processando...';
   showStatus('Extraindo dados do PDF...','info');
   try{
     var ab = await pdfFile.arrayBuffer();
@@ -1469,6 +1483,7 @@ btnProcessar.addEventListener('click', async function(){
   }catch(err){
     showStatus('Erro: '+err.message,'error');
   }
+  btnProcessar.innerHTML = btnOriginalHTML;
   btnProcessar.disabled = false;
 });
 
@@ -1506,7 +1521,7 @@ function extrairDemandas(texto){
     var deM=resto.match(/Data de entrega(?:\s+estimada)?\s*:\s*(.+?)(?=\s*Data de cria)/i);
     if(deM){var v=deM[1].trim();var dE=v.match(/^(\d{1,2}\/\d{1,2}\/\d{4})/);if(dE){dataEntrega=dE[1];statusAtual=dE[1];}else{statusAtual=v;}}
     if(!statusAtual)statusAtual=dataEntrega||'Em analise';
-    demandas.push({ticket:ticket,titulo:titulo||'Sem titulo',data_criacao:dataCriacao,data_entrega:dataEntrega||dataCriacao,status_atual:statusAtual});
+    demandas.push({ticket:ticket,titulo:titulo||'Sem titulo',data_criacao:dataCriacao,data_entrega:dataEntrega,status_atual:statusAtual});
   }
   return demandas;
 }
@@ -1562,7 +1577,7 @@ function applyFilters(){
       if(currentFilterStatus==='criticas'){
         showStatus=dias>90;
       } else if(currentFilterStatus==='sem_previsao'){
-        showStatus=rowText.indexOf('an')!==-1&&(rowText.indexOf('lise')!==-1||rowText.indexOf('desenvolvimento')!==-1);
+        showStatus=rowText.indexOf('lise')!==-1||rowText.indexOf('desenvolvimento')!==-1;
       } else if(currentFilterStatus==='com_data'){
         showStatus=!/an[aá]lise|desenvolvimento/i.test(rowText)||/\d{1,2}\/\d{1,2}\/\d{4}/.test(tr.children[3]?tr.children[3].textContent:'');
       }
@@ -1583,9 +1598,15 @@ function applyFilters(){
 
   // Also apply search to other tabs
   var q=document.getElementById('searchInput').value.toLowerCase();
-  document.querySelectorAll('#tblEntregues tr, #tblTodas tr').forEach(function(tr){
+  document.querySelectorAll('#tblEntregues tr.expand-row, #tblTodas tr.expand-row').forEach(function(tr){
     var text=tr.textContent.toLowerCase();
-    tr.style.display=!q||text.indexOf(q)!==-1?'':'none';
+    var visible=!q||text.indexOf(q)!==-1;
+    tr.style.display=visible?'':'none';
+    var detail=tr.nextElementSibling;
+    if(detail&&detail.classList.contains('expanded-detail')&&!visible){
+      detail.style.display='none';
+      detail.classList.remove('visible');
+    }
   });
 
   // Counter
@@ -1968,7 +1989,7 @@ async function deleteSetor(nome){
 
 // ==================== TICKET ACTIONS ====================
 function startEditTitle(ticket, currentTitle){
-  var container=document.getElementById('titleText-'+ticket);
+  var container=document.getElementById('titleText-'+ticket) || document.getElementById('titleText-t-'+ticket);
   if(!container) return;
   var parent=container.parentElement;
   parent.innerHTML='<input type="text" class="prio-inline-input" id="titleInput-'+ticket+'" value="'+escapeHtml(currentTitle)+'" style="flex:1"><button class="detail-save-btn" onclick="saveTitleEdit(\''+ticket+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button><button class="detail-action-btn" onclick="carregarDados()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
@@ -1985,8 +2006,9 @@ function saveTitleEdit(ticket){
     .catch(function(err){customAlert({title:'Erro',message:err.message,confirmColor:'red'});});
 }
 
-function saveObservacao(ticket){
-  var textarea=document.getElementById('obs-'+ticket);
+function saveObservacao(ticket, prefix){
+  var id = 'obs-' + (prefix || '') + ticket;
+  var textarea=document.getElementById(id);
   if(!textarea) return;
   var obs=textarea.value.trim().substring(0,1000);
   supabase.update('demandas',{observacao:obs,updated_at:new Date().toISOString()},'ticket=eq.'+encodeURIComponent(ticket))
@@ -2144,11 +2166,17 @@ function openChangelogModal(){
 function closeChangelogModal(){
   document.getElementById('changelogModal').classList.remove('open');
 }
+document.getElementById('changelogModal').addEventListener('click',function(e){
+  if(e.target===this) closeChangelogModal();
+});
 
 function showChangelogResumo(changelog){
   var container = document.getElementById('statusBar');
   if(!container) return;
-  var h = '<div style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface-1);max-height:250px;overflow-y:auto">';
+  // Remove previous resumo if exists
+  var prev = document.getElementById('changelogResumoInline');
+  if(prev) prev.remove();
+  var h = '<div id="changelogResumoInline" style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface);max-height:250px;overflow-y:auto">';
   if(changelog.novos.length > 0){
     h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + changelog.novos.length + ')</div>';
     changelog.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
