@@ -277,6 +277,17 @@ th.sorted-asc .sort-arrow,th.sorted-desc .sort-arrow{opacity:1;color:var(--accen
 th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 
 
+/* Priority item actions (admin) */
+.priority-item-actions{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.priority-item-actions button{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;color:var(--text3);transition:all .15s;display:inline-flex;align-items:center}
+.priority-item-actions button:hover{background:var(--surface-2);color:var(--text1)}
+.priority-item-actions button.delete:hover{background:var(--red-bg);color:var(--red)}
+.priority-item-actions button svg{width:13px;height:13px}
+.priority-add-row{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.priority-add-row input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1)}
+.priority-add-row input:focus{outline:none;border-color:var(--accent)}
+[data-theme="dark"] .priority-add-row input{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+
 /* Setores management modal */
 .setor-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
 .setor-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);transition:all .15s}
@@ -355,20 +366,10 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
     <div class="priority-card" id="priorityCard">
       <div class="priority-card-header" onclick="togglePriorityCriteria()">
         <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Criterios de Prioridade</div>
-        <div class="priority-collapsed-preview" id="priorityPreview">
-          <span><i class="pdot p1"></i> Critico</span>
-          <span><i class="pdot p2"></i> Alto</span>
-          <span><i class="pdot p3"></i> Medio</span>
-          <span><i class="pdot p4"></i> Baixo</span>
-        </div>
+        <div class="priority-collapsed-preview" id="priorityPreview"></div>
         <button class="priority-toggle-btn collapsed" id="priorityToggleBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       </div>
-      <div class="priority-body hidden" id="priorityBody">
-        <div class="priority-item"><div class="priority-dot p1"></div><div class="priority-item-text"><strong>1 - Critico</strong><br>Impacta diretamente a operacao da empresa, impede o funcionamento do sistema ou afeta varios usuarios/processos ao mesmo tempo.</div></div>
-        <div class="priority-item"><div class="priority-dot p2"></div><div class="priority-item-text"><strong>2 - Alto</strong><br>Afeta parcialmente a operacao, mas possui alternativa temporaria ou atinge numero menor de usuarios.</div></div>
-        <div class="priority-item"><div class="priority-dot p3"></div><div class="priority-item-text"><strong>3 - Medio</strong><br>Causa desconforto ou dificuldade operacional, mas nao impede a continuidade das atividades.</div></div>
-        <div class="priority-item"><div class="priority-dot p4"></div><div class="priority-item-text"><strong>4 - Baixo</strong><br>Solicitacao sem impacto operacional direto, melhoria, duvida geral ou configuracao simples.</div></div>
-      </div>
+      <div class="priority-body hidden" id="priorityBody"></div>
     </div>
 
 
@@ -454,13 +455,29 @@ function adicionarSetor(nome){
   }
 }
 
-var PRIORIDADES = [
-  {value:'',label:'(Sem prioridade)'},
-  {value:'1',label:'1 - Critico'},
-  {value:'2',label:'2 - Alto'},
-  {value:'3',label:'3 - Medio'},
-  {value:'4',label:'4 - Baixo'}
+var PRIORIDADES_KEY = 'avp-demandas-prioridades';
+var PRIORIDADES_DEFAULT = [
+  {value:'1',label:'1 - Critico',desc:'Impacta diretamente a operacao da empresa, impede o funcionamento do sistema ou afeta varios usuarios/processos ao mesmo tempo.',color:'p1'},
+  {value:'2',label:'2 - Alto',desc:'Afeta parcialmente a operacao, mas possui alternativa temporaria ou atinge numero menor de usuarios.',color:'p2'},
+  {value:'3',label:'3 - Medio',desc:'Causa desconforto ou dificuldade operacional, mas nao impede a continuidade das atividades.',color:'p3'},
+  {value:'4',label:'4 - Baixo',desc:'Solicitacao sem impacto operacional direto, melhoria, duvida geral ou configuracao simples.',color:'p4'}
 ];
+
+function getPrioridades(){
+  try{var s=localStorage.getItem(PRIORIDADES_KEY);return s?JSON.parse(s):PRIORIDADES_DEFAULT.slice();}catch(e){return PRIORIDADES_DEFAULT.slice();}
+}
+function salvarPrioridades(arr){
+  localStorage.setItem(PRIORIDADES_KEY,JSON.stringify(arr));
+}
+
+// Build PRIORIDADES array for selects (with empty option)
+function getPrioridadesSelect(){
+  var prios=getPrioridades();
+  var result=[{value:'',label:'(Sem prioridade)'}];
+  prios.forEach(function(p){result.push({value:p.value,label:p.label});});
+  return result;
+}
+var PRIORIDADES = getPrioridadesSelect();
 
 // ==================== SECURITY: HTML ESCAPE ====================
 function escapeHtml(str){
@@ -619,6 +636,7 @@ function renderDashboard(data){
   document.getElementById('headerMeta').innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Atualizado: '+hh+':'+mm;
   renderKPIs(data.metricas);
   renderInsights(data.metricas);
+  renderPriorityCard();
   var entregues=data.entregues.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
   var emAberto=data.em_aberto.filter(function(d){return d.ticket&&!/^ticket$/i.test(d.ticket);});
   entregues.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.data_entrega=normalizarData(d.data_entrega);});
@@ -738,8 +756,9 @@ function buildPrioridadeSelect(ticket, currentValue){
     return '<span class="cell-select-wrap"><span class="cell-select-dot '+dotCls+'" style="height:14px;width:4px"></span><span style="font-size:.72rem;font-weight:600" class="'+cls+'">'+label+'</span></span>';
   }
   var dotCls = cls || 'none';
+  var prios = getPrioridadesSelect();
   var h='<div class="cell-select-wrap"><div class="cell-select-dot '+dotCls+'"></div><select class="cell-select '+cls+'" data-ticket="'+ticket+'" data-field="prioridade" onchange="onPrioridadeChange(this,\''+ticket+'\')">';
-  PRIORIDADES.forEach(function(p){
+  prios.forEach(function(p){
     h+='<option value="'+p.value+'"'+(p.value===val?' selected':'')+'>'+p.label+'</option>';
   });
   h+='</select></div>';
@@ -1115,8 +1134,9 @@ function renderFilterChips(){
 }
 
 function findPrioLabel(val){
-  for(var i=0;i<PRIORIDADES.length;i++){
-    if(PRIORIDADES[i].value===val)return PRIORIDADES[i].label;
+  var prios=getPrioridadesSelect();
+  for(var i=0;i<prios.length;i++){
+    if(prios[i].value===val)return prios[i].label;
   }
   return val;
 }
@@ -1177,6 +1197,87 @@ function sortTableTodas(col){
     emAberto.forEach(function(d){d.data_criacao=normalizarData(d.data_criacao);d.status_atual=normalizarStatus(d.status_atual);});
     renderTableTodas(entregues,emAberto);
   }
+}
+
+// ==================== PRIORITY CRITERIA MANAGEMENT ====================
+var PRIO_COLORS = ['p1','p2','p3','p4','p1','p2','p3','p4']; // cycle colors if >4
+
+function renderPriorityCard(){
+  var prios=getPrioridades();
+  // Preview (collapsed)
+  var preview=document.getElementById('priorityPreview');
+  var ph='';
+  prios.forEach(function(p){
+    ph+='<span><i class="pdot '+(p.color||'p1')+'"></i> '+escapeHtml(p.label.replace(/^\d+\s*-\s*/,''))+'</span>';
+  });
+  preview.innerHTML=ph;
+  
+  // Body (expanded)
+  var body=document.getElementById('priorityBody');
+  var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">';
+  prios.forEach(function(p,idx){
+    h+='<div class="priority-item" style="align-items:center">';
+    h+='<div class="priority-dot '+(p.color||PRIO_COLORS[idx]||'p1')+'"></div>';
+    h+='<div class="priority-item-text" style="flex:1"><strong>'+escapeHtml(p.label)+'</strong><br>'+escapeHtml(p.desc)+'</div>';
+    if(isAdmin){
+      h+='<div class="priority-item-actions">';
+      h+='<button onclick="event.stopPropagation();editPrioridade('+idx+')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+      h+='<button class="delete" onclick="event.stopPropagation();removePrioridade('+idx+')" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  if(isAdmin){
+    h+='<div class="priority-add-row">';
+    h+='<input type="text" id="novoPrioNome" placeholder="Nome (ex: 5 - Urgente)">';
+    h+='<input type="text" id="novoPrioDesc" placeholder="Descricao do criterio..." style="flex:2">';
+    h+='<button class="btn btn-primary" onclick="event.stopPropagation();addPrioridade()" style="padding:7px 12px;font-size:.75rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar</button>';
+    h+='</div>';
+  }
+  body.innerHTML=h;
+}
+
+function addPrioridade(){
+  var nome=document.getElementById('novoPrioNome').value.trim();
+  var desc=document.getElementById('novoPrioDesc').value.trim();
+  if(!nome){alert('Informe o nome da prioridade.');return;}
+  var prios=getPrioridades();
+  var nextVal=String(prios.length+1);
+  var colorIdx=prios.length%PRIO_COLORS.length;
+  prios.push({value:nextVal,label:nome,desc:desc||'',color:PRIO_COLORS[colorIdx]});
+  salvarPrioridades(prios);
+  PRIORIDADES=getPrioridadesSelect();
+  renderPriorityCard();
+  if(dashboardData) carregarDados();
+}
+
+function editPrioridade(idx){
+  var prios=getPrioridades();
+  var p=prios[idx];
+  if(!p) return;
+  var novoNome=prompt('Nome da prioridade:',p.label);
+  if(!novoNome||!novoNome.trim()) return;
+  var novaDesc=prompt('Descricao:',p.desc);
+  if(novaDesc===null) return;
+  prios[idx].label=novoNome.trim();
+  prios[idx].desc=novaDesc.trim();
+  salvarPrioridades(prios);
+  PRIORIDADES=getPrioridadesSelect();
+  renderPriorityCard();
+}
+
+function removePrioridade(idx){
+  var prios=getPrioridades();
+  var p=prios[idx];
+  if(!p) return;
+  if(!confirm('Excluir a prioridade "'+p.label+'"?\n\nDemandas com essa prioridade nao serao alteradas, mas ela nao aparecera mais como opcao.')) return;
+  prios.splice(idx,1);
+  // Re-number values
+  prios.forEach(function(pr,i){pr.value=String(i+1);pr.color=PRIO_COLORS[i%PRIO_COLORS.length];});
+  salvarPrioridades(prios);
+  PRIORIDADES=getPrioridadesSelect();
+  renderPriorityCard();
 }
 
 // ==================== SETORES MANAGEMENT ====================
