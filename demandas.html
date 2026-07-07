@@ -1274,7 +1274,7 @@ function renderPriorityCard(){
   
   // Body (expanded)
   var body=document.getElementById('priorityBody');
-  var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="prioGrid">';
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px" id="prioGrid">';
   prios.forEach(function(p,idx){
     if(editingPrioIdx===idx && isAdmin){
       // EDIT MODE - inline inputs
@@ -1321,13 +1321,10 @@ function renderPriorityCard(){
       h+='<div class="prio-edit-actions"><button class="btn btn-primary" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();saveNewPrio()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button><button class="btn" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();cancelPrioEdit()">Cancelar</button></div>';
       h+='</div></div>';
     } else {
-      // No add card inside grid - will add link below
+      h+='<div class="priority-item priority-item-add" onclick="event.stopPropagation();startNewPrio()" style="display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border-style:dashed;opacity:.7;transition:all .2s"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span style="font-size:.72rem;color:var(--text3)">Adicionar</span></div>';
     }
   }
   h+='</div>';
-  if(isAdmin && editingPrioIdx!=='new'){
-    h+='<button class="prio-add-link" onclick="event.stopPropagation();startNewPrio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar criterio</button>';
-  }
   body.innerHTML=h;
 }
 
