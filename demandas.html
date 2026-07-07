@@ -306,9 +306,9 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
 .prio-color-opt.p5{background:var(--blue)}
 .prio-color-opt.p6{background:var(--purple)}
 .prio-edit-actions{display:flex;gap:6px;margin-top:4px}
-.priority-item-add{display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border-style:dashed;min-height:60px;transition:all .2s}
-.priority-item-add:hover{border-color:var(--accent);background:var(--accent-light)}
-.priority-item-add svg{color:var(--text3)}
+.prio-add-link{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:6px 12px;font-size:.75rem;font-weight:500;font-family:var(--font);color:var(--text3);background:none;border:none;cursor:pointer;border-radius:var(--radius);transition:all .15s}
+.prio-add-link:hover{color:var(--accent);background:var(--accent-light)}
+.prio-add-link svg{flex-shrink:0}
 .setor-item-editing{gap:8px}
 .setor-item-editing .prio-inline-input{font-size:.82rem}
 
@@ -1321,13 +1321,13 @@ function renderPriorityCard(){
       h+='<div class="prio-edit-actions"><button class="btn btn-primary" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();saveNewPrio()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button><button class="btn" style="padding:5px 12px;font-size:.72rem" onclick="event.stopPropagation();cancelPrioEdit()">Cancelar</button></div>';
       h+='</div></div>';
     } else {
-      h+='<div class="priority-item priority-item-add" onclick="event.stopPropagation();startNewPrio()">';
-      h+='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-      h+='<span style="font-size:.78rem;color:var(--text3)">Adicionar criterio</span>';
-      h+='</div>';
+      // No add card inside grid - will add link below
     }
   }
   h+='</div>';
+  if(isAdmin && editingPrioIdx!=='new'){
+    h+='<button class="prio-add-link" onclick="event.stopPropagation();startNewPrio()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar criterio</button>';
+  }
   body.innerHTML=h;
 }
 
