@@ -594,9 +594,49 @@ tr:hover .row-actions{opacity:1}
   .search-box{width:95vw}
   .header-actions .btn-import,.header-actions .btn-sync,.header-actions .btn-export-xlsx{display:none}
   .header-search{display:none!important}
-  .dashboard-top{grid-template-columns:repeat(2,1fr)}
+  .dashboard-top{grid-template-columns:1fr}
   .settings-content-grid{grid-template-columns:1fr!important}
   .settings-sidebar{display:none}
+
+  /* Top duplicates/divergences grid → vertical */
+  #panel-overview > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+
+  /* ========= RESPONSIVE TABLES → CARDS ========= */
+  /* Overview table: hide thead, make each row a card */
+  #panel-overview .table-wrap{border:none;overflow:visible}
+  #panel-overview table{border:none}
+  #panel-overview thead{display:none}
+  #panel-overview tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+  #panel-overview tbody tr td{border:none;padding:0;display:inline-flex;align-items:center}
+  #panel-overview tbody tr td:first-child{width:100%;margin-bottom:4px;font-size:.84rem}
+  #panel-overview tbody tr td:last-child{margin-left:auto}
+
+  /* Drawer table: vertical cards */
+  .drawer .table-wrap{border:none;overflow:visible}
+  .drawer table thead{display:none}
+  .drawer-table thead{display:none}
+  .drawer-table{border:none}
+  .drawer-table tr{display:block;padding:10px 0;border-bottom:1px solid var(--border)}
+  .drawer-table td{display:block;padding:2px 0;border:none}
+
+  /* Duplicates table */
+  #subpanel-duplicates .table-wrap{border:none;overflow:visible}
+  #subpanel-duplicates table thead{display:none}
+  #subpanel-duplicates table tbody tr{display:block;padding:12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+  #subpanel-duplicates table tbody td{display:block;padding:3px 0;border:none}
+
+  /* General: prevent any horizontal scroll on table wraps */
+  .table-wrap{overflow-x:hidden!important;overflow-y:visible;border:none}
+
+  /* Tabela Master: stack vertically */
+  .tm-table-card .table-wrap table thead{display:none}
+  .tm-table-card .table-wrap table tbody tr{display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 12px;border-bottom:1px solid var(--border)}
+  .tm-table-card .table-wrap table tbody td{border:none;padding:2px 0;font-size:.78rem}
+  .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600}
+
+  /* Coberturas hero grid */
+  .cob-hero-grid{grid-template-columns:1fr!important}
+  .cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.65rem;padding:6px 4px;min-width:50px}
 }
 @media(max-width:480px){
   /* Header */
