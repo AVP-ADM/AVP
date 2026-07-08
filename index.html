@@ -790,8 +790,9 @@ tr:hover .row-actions{opacity:1}
   /* Show bottom nav */
   #mobileBottomNav{display:flex!important}
 
-  /* Adjust main content for bottom nav */
+  /* Adjust main content for bottom nav + possible subtabs */
   .app-main{padding:12px 10px 72px!important}
+  .mobile-subtabs+.app-container .app-main,.app-main.has-subtabs{padding-top:48px!important}
 
   /* Pagination */
   .pagination{flex-wrap:wrap}
@@ -813,6 +814,7 @@ tr:hover .row-actions{opacity:1}
   .mobile-bottom-nav{display:none!important}
   .mobile-more-overlay{display:none!important}
   .mobile-more-sheet{display:none!important}
+  .mobile-subtabs{display:none!important}
 }
 
 /* ========= MOBILE BOTTOM NAV ========= */
@@ -835,6 +837,14 @@ tr:hover .row-actions{opacity:1}
 .mobile-more-item{display:flex;align-items:center;gap:12px;width:100%;padding:14px 12px;border:none;background:none;cursor:pointer;color:var(--text1);font-family:var(--font);font-size:.84rem;font-weight:500;border-radius:var(--radius);transition:background .15s;-webkit-tap-highlight-color:transparent}
 .mobile-more-item:hover,.mobile-more-item:active{background:var(--surface-2)}
 .mobile-more-item svg{color:var(--text2);flex-shrink:0}
+
+/* Mobile Sub-tabs bar */
+.mobile-subtabs{position:fixed;top:44px;left:0;right:0;background:var(--surface);border-bottom:1px solid var(--border);display:none;align-items:center;padding:0 10px;gap:2px;z-index:99;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.mobile-subtabs::-webkit-scrollbar{display:none}
+[data-theme="dark"] .mobile-subtabs{box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.mobile-subtab{padding:10px 14px;font-size:.78rem;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;font-family:var(--font);white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;-webkit-tap-highlight-color:transparent;min-height:36px}
+.mobile-subtab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.mobile-subtab:active{opacity:.7}
 /* ========= TABELA MASTER (PLANOS) STYLES ========= */
 .tm-layout{display:grid;grid-template-columns:230px 1fr;gap:0;min-height:600px;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface)}
 .tm-sidebar{background:var(--surface-2);border-right:1px solid var(--border);padding:12px 0;overflow-y:auto;max-height:72vh}
@@ -2255,23 +2265,28 @@ tr:hover .row-actions{opacity:1}
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     <span>Visao Geral</span>
   </button>
-  <button class="bnav-item" data-bnav="categories" onclick="mobileNavTo('analise')">
+  <button class="bnav-item" data-bnav="consultas" onclick="mobileNavTo('planos')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11" cy="15" r="3"/><line x1="13.1" y1="17.1" x2="15" y2="19"/></svg>
+    <span>Consultas</span>
+  </button>
+  <button class="bnav-item" data-bnav="analise" onclick="mobileNavTo('duplicates')">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     <span>Analise</span>
   </button>
-  <button class="bnav-item" data-bnav="search" onclick="openGlobalSearch()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <span>Busca</span>
-  </button>
-  <button class="bnav-item" data-bnav="demandas" onclick="window.location.href='demandas.html'">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    <span>Demandas</span>
+  <button class="bnav-item" data-bnav="gestao" onclick="mobileNavTo('management')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span>Gestao</span>
   </button>
   <button class="bnav-item" data-bnav="more" onclick="toggleMobileMore()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
     <span>Mais</span>
   </button>
 </nav>
+
+<!-- ========= MOBILE SUB-TABS BAR ========= -->
+<div class="mobile-subtabs" id="mobileSubtabs" style="display:none">
+  <!-- Populated by JS based on active tab -->
+</div>
 
 <!-- ========= MOBILE MORE SHEET ========= -->
 <div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="closeMobileMore()"></div>
@@ -2281,14 +2296,6 @@ tr:hover .row-actions{opacity:1}
   <button class="mobile-more-item" onclick="mobileNavTo('comissoes');closeMobileMore()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
     <span>Comissoes</span>
-  </button>
-  <button class="mobile-more-item" onclick="mobileNavTo('planos');closeMobileMore()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-    <span>Tabela de Planos</span>
-  </button>
-  <button class="mobile-more-item" onclick="mobileNavTo('coberturas');closeMobileMore()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    <span>Coberturas</span>
   </button>
   <button class="mobile-more-item" onclick="mobileNavTo('migracoes');closeMobileMore()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5-5 5"/><path d="M21 8H9"/><path d="M8 21l-5-5 5-5"/><path d="M3 16h12"/></svg>
@@ -2302,9 +2309,9 @@ tr:hover .row-actions{opacity:1}
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     <span>Regimento</span>
   </button>
-  <button class="mobile-more-item" onclick="mobileNavTo('placafipe');closeMobileMore()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-    <span>Consulta de Placa</span>
+  <button class="mobile-more-item" onclick="window.location.href='demandas.html';closeMobileMore()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Demandas</span>
   </button>
 </div>
 
@@ -10522,23 +10529,69 @@ function closeMobileSidebar(){
 }
 
 // ========= MOBILE BOTTOM NAV =========
+var MOBILE_SUBTABS = {
+  consultas: [
+    {label:'Planos', tab:'planos'},
+    {label:'Coberturas', tab:'coberturas'},
+    {label:'Consulta Placa', tab:'placafipe'}
+  ],
+  analise: [
+    {label:'Conflitos', tab:'duplicates'},
+    {label:'Divergencias', tab:'divergences'}
+  ],
+  gestao: [
+    {label:'Manutencao', tab:'management'},
+    {label:'Historico', tab:'history'}
+  ]
+};
+
 function mobileNavTo(tab){
-  // Navigate to tab using existing goTab
   goTab(tab);
+  updateMobileNav(tab);
+}
+
+function updateMobileNav(tab){
+  // Determine which bottom nav item is active
+  var bnavMap = {
+    overview:'overview',
+    planos:'consultas', coberturas:'consultas', placafipe:'consultas',
+    duplicates:'analise', divergences:'analise',
+    management:'gestao', history:'gestao'
+  };
+  var bnavKey = bnavMap[tab] || 'overview';
+
   // Update bottom nav active state
-  var items = document.querySelectorAll('.bnav-item');
-  items.forEach(function(item){ item.classList.remove('active'); });
-  // Map tabs to bnav items
-  var bnavMap = {overview:'overview', analise:'categories', consultas:'categories', gestao:'categories', comissoes:'more', migracoes:'more', exports:'more', regimento:'more', planos:'more', coberturas:'more', placafipe:'more', settings:'overview'};
-  var bnavKey = bnavMap[tab] || 'more';
-  // Special: categories group
-  if(tab === 'overview'){
-    bnavKey = 'overview';
-  } else if(tab === 'analise' || tab === 'consultas' || tab === 'gestao'){
-    bnavKey = 'categories';
-  }
+  document.querySelectorAll('.bnav-item').forEach(function(item){ item.classList.remove('active'); });
   var activeBtn = document.querySelector('.bnav-item[data-bnav="'+bnavKey+'"]');
   if(activeBtn) activeBtn.classList.add('active');
+
+  // Update sub-tabs
+  var subtabsBar = document.getElementById('mobileSubtabs');
+  var subtabs = MOBILE_SUBTABS[bnavKey];
+  if(subtabs && subtabs.length > 0){
+    var h = '';
+    subtabs.forEach(function(st){
+      var isActive = (st.tab === tab) ? ' active' : '';
+      h += '<button class="mobile-subtab'+isActive+'" onclick="mobileSubTabTo(\''+st.tab+'\')">'+st.label+'</button>';
+    });
+    subtabsBar.innerHTML = h;
+    subtabsBar.style.display = 'flex';
+  } else {
+    subtabsBar.style.display = 'none';
+    subtabsBar.innerHTML = '';
+  }
+}
+
+function mobileSubTabTo(tab){
+  goTab(tab);
+  // Update only sub-tab active state (not bottom nav)
+  document.querySelectorAll('.mobile-subtab').forEach(function(st){ st.classList.remove('active'); });
+  // Find the button that matches
+  document.querySelectorAll('.mobile-subtab').forEach(function(st){
+    if(st.getAttribute('onclick') && st.getAttribute('onclick').indexOf("'"+tab+"'") !== -1){
+      st.classList.add('active');
+    }
+  });
 }
 
 function toggleMobileMore(){
