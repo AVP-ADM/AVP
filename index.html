@@ -790,8 +790,9 @@ tr:hover .row-actions{opacity:1}
   /* Show bottom nav */
   #mobileBottomNav{display:flex!important}
 
-  /* Adjust main content for bottom nav + possible subtabs */
+  /* Adjust main content for bottom nav */
   .app-main{padding:12px 10px 72px!important;margin-top:0!important}
+  .app-main.subtabs-active{padding-top:48px!important}
 
   /* Pagination */
   .pagination{flex-wrap:wrap}
@@ -10576,11 +10577,11 @@ function updateMobileNav(tab){
     });
     subtabsBar.innerHTML = h;
     subtabsBar.style.display = 'flex';
-    if(appMain) appMain.style.paddingTop = '48px';
+    if(appMain) appMain.classList.add('subtabs-active');
   } else {
     subtabsBar.style.display = 'none';
     subtabsBar.innerHTML = '';
-    if(appMain) appMain.style.paddingTop = '';
+    if(appMain) appMain.classList.remove('subtabs-active');
   }
 }
 
