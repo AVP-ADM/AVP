@@ -664,6 +664,13 @@ tr:hover .row-actions{opacity:1}
   .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600;margin-bottom:4px}
   .tm-table-card .table-wrap table tbody td[data-label]:not(:first-child):not([data-label=""])::before{content:attr(data-label) ": ";font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 
+  /* Cota: stack segments vertically, better spacing */
+  .tm-cota-body{flex-direction:column}
+  .tm-cota-segment{border-right:none;border-bottom:1px solid var(--border);padding:12px 14px;min-width:0}
+  .tm-cota-segment:last-child{border-bottom:none}
+  .tm-cota-row{flex-wrap:nowrap;gap:8px}
+  .tm-cota-val{white-space:nowrap;flex-shrink:0}
+
   /* Coberturas hero grid */
   .cob-hero-grid{grid-template-columns:1fr!important}
   .cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.65rem;padding:6px 4px;min-width:50px}
@@ -911,7 +918,7 @@ tr:hover .row-actions{opacity:1}
 .tm-cota-segment{flex:1;min-width:150px;padding:14px 18px;border-right:1px solid var(--border)}
 .tm-cota-segment:last-child{border-right:none}
 .tm-cota-seg-label{font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-.tm-cota-row{font-size:.76rem;color:var(--text2);margin-bottom:4px;display:flex;align-items:baseline;gap:6px}
+.tm-cota-row{font-size:.76rem;color:var(--text2);margin-bottom:4px;display:flex;align-items:baseline;justify-content:space-between;gap:6px}
 .tm-cota-val{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
 /* ========= OBSERVAÇÕES DO PLANO ========= */
 .tm-obs-card{background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);overflow:hidden;margin-top:20px}
