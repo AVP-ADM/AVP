@@ -791,8 +791,7 @@ tr:hover .row-actions{opacity:1}
   #mobileBottomNav{display:flex!important}
 
   /* Adjust main content for bottom nav + possible subtabs */
-  .app-main{padding:12px 10px 72px!important}
-  .mobile-subtabs+.app-container .app-main,.app-main.has-subtabs{padding-top:48px!important}
+  .app-main{padding:12px 10px 72px!important;margin-top:0!important}
 
   /* Pagination */
   .pagination{flex-wrap:wrap}
@@ -10567,6 +10566,7 @@ function updateMobileNav(tab){
 
   // Update sub-tabs
   var subtabsBar = document.getElementById('mobileSubtabs');
+  var appMain = document.getElementById('appMain');
   var subtabs = MOBILE_SUBTABS[bnavKey];
   if(subtabs && subtabs.length > 0){
     var h = '';
@@ -10576,9 +10576,11 @@ function updateMobileNav(tab){
     });
     subtabsBar.innerHTML = h;
     subtabsBar.style.display = 'flex';
+    if(appMain) appMain.style.paddingTop = '48px';
   } else {
     subtabsBar.style.display = 'none';
     subtabsBar.innerHTML = '';
+    if(appMain) appMain.style.paddingTop = '';
   }
 }
 
