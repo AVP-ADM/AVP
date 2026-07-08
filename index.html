@@ -646,13 +646,26 @@ tr:hover .row-actions{opacity:1}
   .drawer-table td{display:flex;align-items:center;gap:6px;padding:4px 0;border:none}
   .drawer-table td[data-label]:not([data-label=""])::before{content:attr(data-label);font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;min-width:70px;flex-shrink:0}
 
-  /* Duplicates table */
+  /* Duplicates table — optimized card layout */
   #subpanel-duplicates .table-wrap{border:none;overflow:visible}
   #subpanel-duplicates table thead{display:none}
-  #subpanel-duplicates table tbody tr{display:block;padding:12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
-  #subpanel-duplicates table tbody td{display:flex;align-items:center;gap:6px;padding:4px 0;border:none}
-  #subpanel-duplicates table tbody td[data-label]:not([data-label=""])::before{content:attr(data-label);font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;min-width:70px;flex-shrink:0}
+  #subpanel-duplicates table tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto auto;gap:2px 10px;padding:14px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+  #subpanel-duplicates table tbody td{border:none;padding:0}
   #subpanel-duplicates table tbody td[data-label=""]{ display:none}
+  /* # badge - top-left */
+  #subpanel-duplicates table tbody td[data-label="#"]{grid-column:1;grid-row:1;font-size:.65rem;color:var(--text3);display:flex;align-items:center}
+  #subpanel-duplicates table tbody td[data-label="#"]::before{content:"#";font-size:.6rem;color:var(--text3);margin-right:2px}
+  /* Marca - row 1 col 2 */
+  #subpanel-duplicates table tbody td[data-label="Marca"]{grid-column:2;grid-row:1;font-size:.82rem}
+  /* Qtd badge - top-right */
+  #subpanel-duplicates table tbody td[data-label="Qtd."]{grid-column:3;grid-row:1;display:flex;align-items:center}
+  #subpanel-duplicates table tbody td[data-label="Qtd."]::before{display:none}
+  /* Modelo - row 2 full */
+  #subpanel-duplicates table tbody td[data-label="Modelo"]{grid-column:1/-1;grid-row:2;font-size:.78rem;color:var(--text2);padding:2px 0 6px}
+  /* Categorias - row 3 full, wrap tags */
+  #subpanel-duplicates table tbody td[data-label="Categorias"]{grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:4px;padding-top:6px;border-top:1px solid var(--border-light,var(--border))}
+  /* Remove label ::before for this optimized layout */
+  #subpanel-duplicates table tbody td::before{display:none!important}
 
   /* General: prevent any horizontal scroll on table wraps */
   .table-wrap{overflow-x:hidden!important;overflow-y:visible;border:none}
