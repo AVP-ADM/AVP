@@ -626,38 +626,43 @@ tr:hover .row-actions{opacity:1}
   /* Settings items */
   .settings-item{white-space:normal!important}
 
-  /* ========= RESPONSIVE TABLES → CARDS ========= */
+  /* ========= RESPONSIVE TABLES → CARDS with data-label ========= */
   /* Overview table: hide thead, make each row a card */
   #panel-overview .table-wrap{border:none;overflow:visible}
   #panel-overview table{border:none}
   #panel-overview thead{display:none}
   #panel-overview tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
-  #panel-overview tbody tr td{border:none;padding:0;display:inline-flex;align-items:center}
+  #panel-overview tbody tr td{border:none;padding:0;display:inline-flex;align-items:center;gap:4px}
   #panel-overview tbody tr td:first-child{width:100%;margin-bottom:4px;font-size:.84rem}
   #panel-overview tbody tr td:last-child{margin-left:auto}
+  #panel-overview tbody tr td[data-label]:not(:first-child):not([data-label=""])::before{content:attr(data-label) ": ";font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 
-  /* Drawer table: vertical cards */
+  /* Drawer table: vertical cards with labels */
   .drawer .table-wrap{border:none;overflow:visible}
   .drawer table thead{display:none}
   .drawer-table thead{display:none}
   .drawer-table{border:none}
-  .drawer-table tr{display:block;padding:10px 0;border-bottom:1px solid var(--border)}
-  .drawer-table td{display:block;padding:2px 0;border:none}
+  .drawer-table tr{display:block;padding:12px 10px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+  .drawer-table td{display:flex;align-items:center;gap:6px;padding:4px 0;border:none}
+  .drawer-table td[data-label]:not([data-label=""])::before{content:attr(data-label);font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;min-width:70px;flex-shrink:0}
 
   /* Duplicates table */
   #subpanel-duplicates .table-wrap{border:none;overflow:visible}
   #subpanel-duplicates table thead{display:none}
   #subpanel-duplicates table tbody tr{display:block;padding:12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
-  #subpanel-duplicates table tbody td{display:block;padding:3px 0;border:none}
+  #subpanel-duplicates table tbody td{display:flex;align-items:center;gap:6px;padding:4px 0;border:none}
+  #subpanel-duplicates table tbody td[data-label]:not([data-label=""])::before{content:attr(data-label);font-size:.65rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;min-width:70px;flex-shrink:0}
+  #subpanel-duplicates table tbody td[data-label=""]{ display:none}
 
   /* General: prevent any horizontal scroll on table wraps */
   .table-wrap{overflow-x:hidden!important;overflow-y:visible;border:none}
 
-  /* Tabela Master: stack vertically */
+  /* Tabela Master: stack vertically with labels */
   .tm-table-card .table-wrap table thead{display:none}
-  .tm-table-card .table-wrap table tbody tr{display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 12px;border-bottom:1px solid var(--border)}
-  .tm-table-card .table-wrap table tbody td{border:none;padding:2px 0;font-size:.78rem}
-  .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600}
+  .tm-table-card .table-wrap table tbody tr{display:flex;flex-wrap:wrap;gap:4px 12px;padding:12px;margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+  .tm-table-card .table-wrap table tbody td{border:none;padding:2px 0;font-size:.78rem;display:inline-flex;align-items:center;gap:4px}
+  .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600;margin-bottom:4px}
+  .tm-table-card .table-wrap table tbody td[data-label]:not(:first-child):not([data-label=""])::before{content:attr(data-label) ": ";font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 
   /* Coberturas hero grid */
   .cob-hero-grid{grid-template-columns:1fr!important}
@@ -3541,21 +3546,21 @@ function renderOverviewTable(){
     }
     if(isPendingCreation){
       return `<tr style="opacity:.6">
-        <td><strong style="color:var(--green)">${escapeHtml(cat)}</strong> <span style="font-size:.6rem;color:var(--green);opacity:.8">Pendente</span></td>
-        <td>0</td>
-        <td>0</td>
-        <td>—</td>
-        <td>—</td>
-        <td><span onclick="event.stopPropagation();cancelPendingCategory('${cat.replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></td>
+        <td data-label="Categoria"><strong style="color:var(--green)">${escapeHtml(cat)}</strong> <span style="font-size:.6rem;color:var(--green);opacity:.8">Pendente</span></td>
+        <td data-label="Modelos">0</td>
+        <td data-label="Marcas">0</td>
+        <td data-label="Diverg.">—</td>
+        <td data-label="Status">—</td>
+        <td data-label=""><span onclick="event.stopPropagation();cancelPendingCategory('${cat.replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;transition:transform .15s" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Cancelar">&#10005;</span></td>
       </tr>`;
     }
     return `<tr class="clickable-row" onclick="showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')"${catPending?' style="opacity:.6"':''}>
-      <td><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${escapeHtml(cat)}</strong> <span class="cat-ano-badge" title="Ano minimo de aceitacao">${getAnoMinimoCat(cat)}+</span>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
-      <td><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
-      <td><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
-      <td>${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
-      <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getCategoryStatus(cat).color}" title="${getCategoryStatus(cat).tooltip}"></span></td>
-      <td style="white-space:nowrap">
+      <td data-label="Categoria"><strong${catPending?` style="color:${getPendingColor(catPendingType)}"`:''}>${escapeHtml(cat)}</strong> <span class="cat-ano-badge" title="Ano minimo de aceitacao">${getAnoMinimoCat(cat)}+</span>${catPending?' <span style="font-size:.6rem;color:'+getPendingColor(catPendingType)+';opacity:.8">'+(catPendingType||'Pendente')+'</span> <span onclick="event.stopPropagation();cancelPendingCatOp(\''+cat.replace(/'/g,"\\'")+'\');showToast(\'Pendencia cancelada\',\'success\')" style="cursor:pointer;font-size:9px;font-weight:700;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--red);color:#fff;display:inline-block;vertical-align:middle;margin-left:4px;transition:transform .15s" onmouseover="this.style.transform=\'scale(1.2)\'" onmouseout="this.style.transform=\'scale(1)\'" title="Cancelar">&#10005;</span>':''}</td>
+      <td data-label="Modelos"><span class="badge badge-blue clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','modelos')">${getEffectiveCatTotal(cat)}</span></td>
+      <td data-label="Marcas"><span class="badge badge-green clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','marcas')">${brands.length}</span></td>
+      <td data-label="Diverg.">${divs>0?`<span class="badge badge-amber clickable-num" onclick="event.stopPropagation();showCatDetail('${cat.replace(/'/g,"\\'")}','divergencias')" title="${catDivCritical>0?catDivCritical+' criticas':''}${catDivCritical>0&&catDivReview>0?' · ':''}${catDivReview>0?catDivReview+' revisao':''}">${divs}</span>`:'—'}</td>
+      <td data-label="Status"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${getCategoryStatus(cat).color}" title="${getCategoryStatus(cat).tooltip}"></span></td>
+      <td data-label="" style="white-space:nowrap">
         <div class="row-actions">
           <button class="row-actions-btn" onclick="event.stopPropagation();toggleRowMenu(this)">⋮</button>
           <div class="row-menu">
@@ -3865,7 +3870,7 @@ function showCatDetail(cat, type){
     html+='<tbody>';
     const slice=data.slice(0,PAGE_SIZE);
     for(const row of slice){
-      html+='<tr><td>'+formatDrawerCell('cat-diverg',row[0],0)+'</td><td>'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td></tr>';
+      html+='<tr><td data-label="Tipo">'+formatDrawerCell('cat-diverg',row[0],0)+'</td><td data-label="Marca">'+row[1]+'</td><td data-label="Modelo">'+row[2]+'</td><td data-label="Situação">'+row[3]+'</td></tr>';
     }
     html+='</tbody></table>';
     if(data.length>PAGE_SIZE){
@@ -3893,7 +3898,7 @@ function buildDrawerTable(headers, data, id){
   html+='<tbody>';
   const slice=data.slice(0,PAGE_SIZE);
   for(const row of slice){
-    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+    html+='<tr>'+row.map((cell,ci)=>'<td data-label="'+(headers[ci]||'')+'">'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
   }
   html+='</tbody></table>';
   if(data.length>PAGE_SIZE){
@@ -3914,7 +3919,7 @@ function loadMoreDrawer(id){
   const tbody=document.getElementById(tableId).querySelector('tbody');
   let html='';
   for(const row of slice){
-    html+='<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>';
+    html+='<tr>'+row.map((cell,ci)=>'<td data-label="'+(state.headers[ci]||'')+'">'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>';
   }
   tbody.insertAdjacentHTML('beforeend',html);
   const shown=Math.min(state.page*state.pageSize,state.filtered.length);
@@ -3944,7 +3949,7 @@ function buildDrawerTableClickable(headers, data, id, onClickFn){
   const slice=data.slice(0,PAGE_SIZE);
   for(let r=0;r<slice.length;r++){
     const row=slice[r];
-    html+='<tr style="cursor:pointer" onclick="drawerRowClick(\''+id+'\','+r+')">'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+    html+='<tr style="cursor:pointer" onclick="drawerRowClick(\''+id+'\','+r+')">'+row.map((cell,ci)=>'<td data-label="'+(headers[ci]||'')+'">'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
   }
   html+='</tbody></table>';
   if(data.length>PAGE_SIZE){
@@ -3981,7 +3986,7 @@ function buildDrawerTableWithTypeFilter(headers, data, id){
   html+='<tbody>';
   const slice=data.slice(0,PAGE_SIZE);
   for(const row of slice){
-    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+    html+='<tr>'+row.map((cell,ci)=>'<td data-label="'+(headers[ci]||'')+'">'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
   }
   html+='</tbody></table>';
   if(data.length>PAGE_SIZE){
@@ -4014,7 +4019,7 @@ function filterDrawerCategorias(){
   state.page=1;
   const tbody=document.getElementById(tableId).querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
-  tbody.innerHTML=slice.map(row=>'<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td data-label="'+(state.headers[ci]||'')+'">'+(cell!=null?cell:'')+'</td>').join('')+'</tr>').join('');
   document.getElementById('count_'+tableId).textContent=state.filtered.length+' registros';
   const btn=document.getElementById('loadMore_'+id);
   if(btn){
@@ -4043,7 +4048,7 @@ function buildDrawerTableModelos(headers, data, id){
   html+='<tbody>';
   const slice=data.slice(0,PAGE_SIZE);
   for(const row of slice){
-    html+='<tr>'+row.map(cell=>'<td>'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
+    html+='<tr>'+row.map((cell,ci)=>'<td data-label="'+(headers[ci]||'')+'">'+(cell!=null?cell:'')+'</td>').join('')+'</tr>';
   }
   html+='</tbody></table>';
   if(data.length>PAGE_SIZE){
@@ -4115,7 +4120,7 @@ function filterCatDivergDrawer(){
   const tbody=document.querySelector('#drawerTableData_cat-diverg tbody');
   if(tbody){
     const slice=filtered.slice(0,store.pageSize);
-    tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell('cat-diverg',cell,ci)+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Nenhum resultado</td></tr>';
+    tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td data-label="'+(store.headers[ci]||'')+'">'+formatDrawerCell('cat-diverg',cell,ci)+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">Nenhum resultado</td></tr>';
   }
   const countEl=document.getElementById('count_drawerTableData_cat-diverg');
   if(countEl) countEl.textContent=filtered.length+' registros';
@@ -4156,7 +4161,7 @@ function filterDrawerTableLazy(id){
   // Re-render first page
   const tbody=document.getElementById(tableId).querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
-  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td data-label="'+(state.headers[ci]||'')+'">'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
   document.getElementById('count_'+tableId).textContent=state.filtered.length+' registros';
   const btn=document.getElementById('loadMore_'+id);
   if(btn){
@@ -4214,7 +4219,7 @@ function sortDrawerTableLazy(id,colIdx){
   // Re-render tbody
   const tbody=table.querySelector('tbody');
   const slice=state.filtered.slice(0,state.pageSize);
-  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td>'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
+  tbody.innerHTML=slice.map(row=>'<tr>'+row.map((cell,ci)=>'<td data-label="'+(state.headers[ci]||'')+'">'+formatDrawerCell(id,cell,ci)+'</td>').join('')+'</tr>').join('');
   const btn=document.getElementById('loadMore_'+id);
   if(btn){
     if(state.filtered.length>state.pageSize){
@@ -5571,12 +5576,12 @@ function renderDupTable(){
       return `<span class="tag tag-blue" title="Última categoria - não pode remover">${c}</span>`;
     }).join(' ');
     return `<tr>
-      <td><input type="checkbox" class="dup-check" data-marca="${escapeHtml(d.marca)}" data-modelo="${escapeHtml(d.modelo)}" onchange="updateDupSelection()"></td>
-      <td style="color:var(--text2)">${start+i+1}</td>
-      <td><strong>${escapeHtml(d.marca)}</strong></td>
-      <td>${escapeHtml(d.modelo)}</td>
-      <td>${catBadges}</td>
-      <td><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
+      <td data-label=""><input type="checkbox" class="dup-check" data-marca="${escapeHtml(d.marca)}" data-modelo="${escapeHtml(d.modelo)}" onchange="updateDupSelection()"></td>
+      <td data-label="#" style="color:var(--text2)">${start+i+1}</td>
+      <td data-label="Marca"><strong>${escapeHtml(d.marca)}</strong></td>
+      <td data-label="Modelo">${escapeHtml(d.modelo)}</td>
+      <td data-label="Categorias">${catBadges}</td>
+      <td data-label="Qtd."><span class="badge ${d.count>=4?'badge-red':d.count>=3?'badge-amber':'badge-amber'}">${d.count}</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="6"><div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><h4>Nenhum duplicado encontrado</h4><p>Todos os modelos estão em categorias únicas ou o filtro não retornou resultados.</p></div></td></tr>';
 
@@ -11907,14 +11912,15 @@ function tmUpdateTable(){
       if(_tmEditMode) html+='<td style="padding:2px"><button onclick="tmDeleteRow('+ri+')" style="width:20px;height:20px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;opacity:.4;transition:all .15s" onmouseover="this.style.opacity=1;this.style.borderColor=\'var(--red)\';this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=.4;this.style.borderColor=\'var(--border)\';this.style.color=\'var(--text3)\'"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>';
       for(var ci=0;ci<sh.dados[ri].length;ci++){
         var cell=sh.dados[ri][ci];
-        if(ci===0){html+='<td style="font-size:.78rem'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+cell+'</td>';}
+        var colLabel=sh.colunas[ci]||'';
+        if(ci===0){html+='<td data-label="'+colLabel+'" style="font-size:.78rem'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+cell+'</td>';}
         else{
           var isFixed=sh.colsFixas&&sh.colsFixas.indexOf(ci)!==-1;
           var isAdj=sh.colsDesconto&&sh.colsDesconto.indexOf(ci)!==-1;
           var displayVal=isAdj&&hasPct?tmRound90(cell*(1+pct/100)):cell;
           var tdClass=isFixed?'tm-fixed':(isAdj&&hasPct?(isDisc?'tm-adj-disc':'tm-adj-incr'):'');
           var orig=isAdj&&hasPct?'<span class="tm-orig">orig: '+tmFmtBRL(cell)+'</span>':'';
-          html+='<td class="'+tdClass+'" style="text-align:right'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+tmFmtBRL(displayVal)+orig+'</td>';
+          html+='<td data-label="'+colLabel+'" class="'+tdClass+'" style="text-align:right'+ (_tmEditMode?';cursor:pointer':'') +'" data-ri="'+ri+'" data-ci="'+ci+'">'+tmFmtBRL(displayVal)+orig+'</td>';
         }
       }
       html+='</tr>';
