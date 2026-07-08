@@ -667,8 +667,8 @@ tr:hover .row-actions{opacity:1}
   /* Remove label ::before for this optimized layout */
   #subpanel-duplicates table tbody td::before{display:none!important}
 
-  /* Sync indicator: move to top on mobile */
-  #syncIndicator{bottom:auto!important;top:52px!important;left:12px!important;right:12px!important;max-width:none!important;border-radius:0 0 8px 8px!important;padding:8px 14px!important;font-size:.72rem!important}
+  /* Sync indicator: compact top-center toast on mobile */
+  #syncIndicator{bottom:auto!important;top:52px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;max-width:260px!important;border-radius:20px!important;padding:6px 14px!important;font-size:.7rem!important;box-shadow:0 2px 8px rgba(0,0,0,.2)!important}
 
   /* Tags removable: show ✕ always on mobile (no hover on touch) */
   .tag-blue.removable{padding-right:18px}
