@@ -664,6 +664,11 @@ tr:hover .row-actions{opacity:1}
   .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600;margin-bottom:4px}
   .tm-table-card .table-wrap table tbody td[data-label]:not(:first-child):not([data-label=""])::before{content:attr(data-label) ": ";font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 
+  /* Consulta Placa: hide right cover bar on mobile */
+  .placafipe-wrap::after{display:none!important}
+  .placafipe-wrap{height:calc(100vh - 160px)}
+  .placafipe-iframe-crop iframe{width:100%}
+
   /* Cota: stack segments vertically, better spacing */
   .tm-cota-body{flex-direction:column}
   .tm-cota-segment{border-right:none;border-bottom:1px solid var(--border);padding:12px 14px;min-width:0}
