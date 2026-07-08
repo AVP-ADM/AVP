@@ -601,6 +601,26 @@ tr:hover .row-actions{opacity:1}
   /* Top duplicates/divergences grid → vertical */
   #panel-overview > div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 
+  /* Fix ranking items overflow */
+  .rank-title{white-space:normal!important;word-break:break-word}
+  .rank-sub{white-space:normal!important;word-break:break-word}
+  .rank-item{flex-wrap:wrap}
+
+  /* Fix card-title overflow (Divergências with toggle) */
+  .card-title{flex-wrap:wrap!important;gap:8px!important;font-size:.85rem!important}
+  .card-title a{font-size:.7rem!important}
+
+  /* Force all text to wrap, no horizontal overflow */
+  *{max-width:100vw}
+  .app-main-inner{overflow-x:hidden!important;max-width:100%!important}
+  .card{overflow:hidden;max-width:100%}
+
+  /* Divergence toggle area */
+  .div-toggle-wrap{flex-wrap:wrap;gap:4px}
+
+  /* Settings items */
+  .settings-item{white-space:normal!important}
+
   /* ========= RESPONSIVE TABLES → CARDS ========= */
   /* Overview table: hide thead, make each row a card */
   #panel-overview .table-wrap{border:none;overflow:visible}
