@@ -573,14 +573,16 @@ tr:hover .row-actions{opacity:1}
 @media(max-width:600px){.dashboard-top{grid-template-columns:1fr}}
 
 /* ========= RESPONSIVE ========= */
-@media(max-width:768px){
+/* ========= RESPONSIVE — TOUCH DEVICES ONLY (mobile/tablet) ========= */
+@media(max-width:768px) and (pointer:coarse){
   html{overflow:auto!important;height:auto!important}
   body{overflow:auto!important;height:auto!important}
   .app-container{height:auto!important;overflow:visible!important}
-  .app-layout{height:auto!important;overflow:visible!important;width:100%}
-  .app-sidebar{width:64px;min-width:64px;flex-shrink:0;overflow:hidden}
-  .app-sidebar .si-text,.app-sidebar .sidebar-sub,.app-sidebar .sidebar-group-label{display:none!important}
-  .app-main{overflow:visible!important;height:auto!important;flex:1;min-width:0;max-width:calc(100% - 64px)}
+  .app-layout{display:block!important;height:auto!important;overflow:visible!important}
+  .app-sidebar{display:none!important}
+  .mobile-menu-btn{display:none!important}
+  #mobileBottomNav{display:flex!important}
+  .app-main{padding:16px 12px 72px!important;overflow:visible!important;height:auto!important;max-width:100vw}
   .app-main-inner{max-width:100%!important;overflow-x:hidden}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .drawer{width:100vw;max-width:100vw}
@@ -593,6 +595,8 @@ tr:hover .row-actions{opacity:1}
   .tm-layout{grid-template-columns:1fr;min-height:auto}
   .tm-sidebar{max-height:200px;border-right:none;border-bottom:1px solid var(--border)}
   .search-box{width:95vw}
+  .header-actions .btn-import,.header-actions .btn-sync,.header-actions .btn-export-xlsx{display:none}
+  .header-search{display:none!important}
   .dashboard-top{grid-template-columns:1fr}
   .settings-content-grid{grid-template-columns:1fr!important}
   .settings-sidebar{display:none}
@@ -610,7 +614,6 @@ tr:hover .row-actions{opacity:1}
   .card-title a{font-size:.7rem!important}
 
   /* Force all text to wrap, no horizontal overflow */
-  .app-main-inner{overflow-x:hidden!important;max-width:100%!important}
   .card{overflow:hidden;max-width:100%}
 
   /* History filters: side by side */
@@ -650,23 +653,21 @@ tr:hover .row-actions{opacity:1}
   #subpanel-duplicates table tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto auto;gap:2px 10px;padding:14px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
   #subpanel-duplicates table tbody td{border:none;padding:0}
   #subpanel-duplicates table tbody td[data-label=""]{ display:none}
-  /* # badge - top-left */
   #subpanel-duplicates table tbody td[data-label="#"]{grid-column:1;grid-row:1;font-size:.65rem;color:var(--text3);display:flex;align-items:center}
   #subpanel-duplicates table tbody td[data-label="#"]::before{content:"#";font-size:.6rem;color:var(--text3);margin-right:2px}
-  /* Marca - row 1 col 2 */
   #subpanel-duplicates table tbody td[data-label="Marca"]{grid-column:2;grid-row:1;font-size:.82rem}
-  /* Qtd badge - top-right */
   #subpanel-duplicates table tbody td[data-label="Qtd."]{grid-column:3;grid-row:1;display:flex;align-items:center}
   #subpanel-duplicates table tbody td[data-label="Qtd."]::before{display:none}
-  /* Modelo - row 2 full */
   #subpanel-duplicates table tbody td[data-label="Modelo"]{grid-column:1/-1;grid-row:2;font-size:.78rem;color:var(--text2);padding:2px 0 6px}
-  /* Categorias - row 3 full, wrap tags */
   #subpanel-duplicates table tbody td[data-label="Categorias"]{grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:4px;padding-top:6px;border-top:1px solid var(--border-light,var(--border))}
-  /* Remove label ::before for this optimized layout */
   #subpanel-duplicates table tbody td::before{display:none!important}
 
-  /* Sync indicator: compact top-center toast on small screens */
+  /* Sync indicator: compact top-center toast */
   #syncIndicator{bottom:auto!important;top:52px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;max-width:260px!important;border-radius:20px!important;padding:6px 14px!important;font-size:.7rem!important;box-shadow:0 2px 8px rgba(0,0,0,.2)!important}
+
+  /* Tags: show ✕ always (no hover on touch) */
+  .tag-blue.removable{padding-right:18px}
+  .tag-blue .tag-remove{display:inline-block!important;width:12px;height:12px;line-height:12px;font-size:7px;right:4px;opacity:.5}
 
   /* General: prevent any horizontal scroll on table wraps */
   .table-wrap{overflow-x:hidden!important;overflow-y:visible;border:none}
@@ -678,7 +679,7 @@ tr:hover .row-actions{opacity:1}
   .tm-table-card .table-wrap table tbody td:first-child{width:100%;font-weight:600;margin-bottom:4px}
   .tm-table-card .table-wrap table tbody td[data-label]:not(:first-child):not([data-label=""])::before{content:attr(data-label) ": ";font-size:.6rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 
-  /* Consulta Placa: hide right cover bar on mobile */
+  /* Consulta Placa: hide right cover bar */
   .placafipe-wrap::after{display:none!important}
   .placafipe-wrap{height:calc(100vh - 160px)}
   .placafipe-iframe-crop iframe{width:100%}
@@ -695,23 +696,7 @@ tr:hover .row-actions{opacity:1}
   .cob-opcionais-table thead th:not(:first-child),.cob-opcionais-table tbody td:not(:first-child){font-size:.65rem;padding:6px 4px;min-width:50px}
 }
 
-/* ========= TOUCH DEVICE ONLY (real mobile/tablet) ========= */
-@media(max-width:768px) and (pointer:coarse){
-  /* Structural: hide sidebar, show bottom nav */
-  .app-layout{display:block!important}
-  .app-sidebar{display:none!important}
-  .mobile-menu-btn{display:none!important}
-  #mobileBottomNav{display:flex!important}
-  .app-main{padding:16px 12px 72px!important;max-width:100vw!important}
-  .header-actions .btn-import,.header-actions .btn-sync,.header-actions .btn-export-xlsx{display:none}
-  .header-search{display:none!important}
-
-  /* Tags: show ✕ always (no hover on touch) */
-  .tag-blue.removable{padding-right:18px}
-  .tag-blue .tag-remove{display:inline-block!important;width:12px;height:12px;line-height:12px;font-size:7px;right:4px;opacity:.5}
-}
-
-@media(max-width:480px){
+@media(max-width:480px) and (pointer:coarse){
   /* Header */
   .app-header{padding:8px 12px;height:44px}
   .app-logo{font-size:.95rem;gap:6px}
@@ -844,15 +829,6 @@ tr:hover .row-actions{opacity:1}
   /* Coberturas */
   .cob-hero-grid{grid-template-columns:1fr!important}
   .cob-accordion-header{padding:12px 14px}
-}
-/* Touch-only structural rules (second block) */
-@media(max-width:768px) and (pointer:coarse){
-  .app-layout{display:block!important}
-  .app-sidebar{display:none!important}
-  .mobile-menu-btn{display:none!important}
-  #mobileBottomNav{display:flex!important}
-  .app-main{padding:12px 10px 72px!important;margin-top:0!important;max-width:100vw!important}
-  .app-main.subtabs-active{padding-top:48px!important}
 }
 @media(min-width:769px){
   .mobile-menu-btn{display:none!important}
@@ -1242,7 +1218,7 @@ tr:hover .row-actions{opacity:1}
 .login-pass-wrap input{padding-right:42px}
 .login-pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.4;transition:opacity .2s;display:flex;color:rgba(255,255,255,.7)}
 .login-pass-toggle:hover{opacity:.8}
-@media(max-width:480px){.login-card{padding:28px 24px;width:100%;max-width:340px;border-radius:12px}.login-logo img{height:90px;width:90px}}
+@media(max-width:480px) and (pointer:coarse){.login-card{padding:28px 24px;width:100%;max-width:340px;border-radius:12px}.login-logo img{height:90px;width:90px}}
 </style>
 <div id="loginScreen" class="login-screen">
   <div class="login-card">
