@@ -976,6 +976,19 @@ function onFieldChange(ticket, field, value){
   var updateData = {};
   updateData[field] = value;
   updateData.updated_at = new Date().toISOString();
+  // Update in-memory data so re-renders (sort, filter) show the new value
+  if(dashboardData){
+    var allLists = [dashboardData.em_aberto, dashboardData.entregues];
+    for(var li=0; li<allLists.length; li++){
+      if(!allLists[li]) continue;
+      for(var di=0; di<allLists[li].length; di++){
+        if(allLists[li][di].ticket === ticket){
+          allLists[li][di][field] = value;
+          break;
+        }
+      }
+    }
+  }
   supabase.update('demandas', updateData, 'ticket=eq.'+encodeURIComponent(ticket))
     .then(function(){ console.log('Saved:', ticket, field, value); })
     .catch(function(err){ console.error('Save failed:', err); customAlert({title:'Erro ao salvar',message:err.message,confirmColor:'red'}); });
