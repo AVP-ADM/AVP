@@ -1192,12 +1192,17 @@ function openPrevEntregaEdit(el, ticket, currentValue){
   h += '<input type="date" class="prev-date-input" value="'+dateVal+'" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.75rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
   h += '<input type="text" class="prev-text-input" value="'+(isDate?'':escapeHtml(currentValue))+'" placeholder="Ou texto livre..." style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
   h += '<div style="display:flex;gap:4px">';
-  h += '<button onclick="savePrevEntrega(this,\''+ticket+'\')" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:500">Salvar</button>';
-  h += '<button class="prev-cancel-btn" data-ticket="'+ticket+'" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer">Cancelar</button>';
+  h += '<button class="prev-save-btn" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:500">Salvar</button>';
+  h += '<button class="prev-cancel-btn" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer">Cancelar</button>';
   h += '</div></div>';
   el.innerHTML = h;
   el.onclick = null;
   el.dataset.originalValue = currentValue;
+  var saveBtn = el.querySelector('.prev-save-btn');
+  saveBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    savePrevEntrega(el, ticket);
+  });
   var cancelBtn = el.querySelector('.prev-cancel-btn');
   cancelBtn.addEventListener('click', function(e){
     e.stopPropagation();
@@ -1210,8 +1215,7 @@ function openPrevEntregaEdit(el, ticket, currentValue){
   dateInput.focus();
 }
 
-function savePrevEntrega(btn, ticket){
-  var cell = btn.closest('.prev-entrega-cell');
+function savePrevEntrega(cell, ticket){
   var dateInput = cell.querySelector('.prev-date-input');
   var textInput = cell.querySelector('.prev-text-input');
   var newVal = '';
