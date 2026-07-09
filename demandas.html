@@ -1174,68 +1174,88 @@ function buildPrevEntregaCell(ticket, currentValue){
     return '<span style="font-size:.72rem;color:var(--text2)">'+escapeHtml(val||'—')+'</span>';
   }
   var displayText = val || 'Sem previsao';
-  var h = '<div class="prev-entrega-cell" style="display:flex;align-items:center;gap:4px;cursor:pointer" onclick="openPrevEntregaEdit(this,\''+ticket+'\',\''+escapeHtml(val).replace(/'/g,"\\'")+'\')">';
-  h += '<span style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+'">'+escapeHtml(displayText)+'</span>';
-  h += '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-  h += '</div>';
+  var truncated = displayText.length > 20 ? displayText.substring(0,18)+'...' : displayText;
+  var h = '<span class="prev-entrega-cell" data-ticket="'+ticket+'" data-value="'+escapeHtml(val)+'" ';
+  h += 'style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+';cursor:pointer;padding:3px 6px;border-radius:4px;transition:background .15s;display:inline-block;max-width:100%" ';
+  h += 'onmouseenter="this.style.background=\'var(--surface-2)\'" onmouseleave="this.style.background=\'transparent\'" ';
+  h += 'onclick="event.stopPropagation();openPrevEntregaEdit(this,\''+ticket+'\')">';
+  h += escapeHtml(truncated);
+  h += '</span>';
   return h;
 }
 
-function openPrevEntregaEdit(el, ticket, currentValue){
+function openPrevEntregaEdit(el, ticket){
+  var currentValue = el.dataset.value || '';
   var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(currentValue);
   var dateVal = '';
   if(isDate){
     var parts = currentValue.split('/');
     dateVal = parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0');
   }
-  var h = '<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0">';
-  h += '<input type="date" class="prev-date-input" value="'+dateVal+'" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.75rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
-  h += '<input type="text" class="prev-text-input" value="'+(isDate?'':escapeHtml(currentValue))+'" placeholder="Ou texto livre..." style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
-  h += '<div style="display:flex;gap:4px">';
-  h += '<button class="prev-save-btn" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:500">Salvar</button>';
-  h += '<button class="prev-cancel-btn" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer">Cancelar</button>';
-  h += '</div></div>';
-  el.innerHTML = h;
-  el.onclick = null;
-  el.dataset.originalValue = currentValue;
-  var saveBtn = el.querySelector('.prev-save-btn');
-  saveBtn.addEventListener('click', function(e){
-    e.stopPropagation();
-    savePrevEntrega(el, ticket);
-  });
-  var cancelBtn = el.querySelector('.prev-cancel-btn');
-  cancelBtn.addEventListener('click', function(e){
-    e.stopPropagation();
-    cancelPrevEntrega(el, ticket, currentValue);
-  });
-  var dateInput = el.querySelector('.prev-date-input');
-  var textInput = el.querySelector('.prev-text-input');
-  dateInput.addEventListener('input',function(){ if(this.value) textInput.value=''; });
-  textInput.addEventListener('input',function(){ if(this.value) dateInput.value=''; });
-  dateInput.focus();
-}
+  // Create input
+  var input = document.createElement('input');
+  input.type = 'date';
+  input.value = dateVal;
+  input.style.cssText = 'padding:4px 6px;border:1px solid var(--accent);border-radius:4px;font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:130px;outline:none;box-shadow:0 0 0 2px rgba(27,122,61,.15)';
+  // Replace span content with input
+  var parent = el.parentNode;
+  parent.replaceChild(input, el);
+  input.focus();
 
-function savePrevEntrega(cell, ticket){
-  var dateInput = cell.querySelector('.prev-date-input');
-  var textInput = cell.querySelector('.prev-text-input');
-  var newVal = '';
-  if(dateInput.value){
-    var parts = dateInput.value.split('-');
-    newVal = parts[2]+'/'+parts[1]+'/'+parts[0];
-  } else {
-    newVal = textInput.value.trim();
+  var saved = false;
+  function save(){
+    if(saved) return;
+    saved = true;
+    var newVal = '';
+    if(input.value){
+      var p = input.value.split('-');
+      newVal = p[2]+'/'+p[1]+'/'+p[0];
+    } else {
+      newVal = currentValue;
+    }
+    if(newVal !== currentValue && newVal){
+      onFieldChange(ticket, 'status_atual', newVal);
+    } else {
+      newVal = currentValue;
+    }
+    // Rebuild the span
+    var span = document.createElement('span');
+    span.className = 'prev-entrega-cell';
+    span.dataset.ticket = ticket;
+    span.dataset.value = newVal;
+    var isNewDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(newVal);
+    var display = newVal || 'Sem previsao';
+    var trunc = display.length > 20 ? display.substring(0,18)+'...' : display;
+    span.style.cssText = 'font-size:.72rem;color:'+(isNewDate?'var(--text1)':'var(--text3)')+';cursor:pointer;padding:3px 6px;border-radius:4px;transition:background .15s;display:inline-block;max-width:100%';
+    span.textContent = trunc;
+    span.onmouseenter = function(){this.style.background='var(--surface-2)';};
+    span.onmouseleave = function(){this.style.background='transparent';};
+    span.onclick = function(e){e.stopPropagation();openPrevEntregaEdit(this,ticket);};
+    parent.replaceChild(span, input);
   }
-  if(!newVal) newVal = 'Em analise';
-  onFieldChange(ticket, 'status_atual', newVal);
-  cell.innerHTML = '<span style="font-size:.72rem;color:'+(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(newVal)?'var(--text1)':'var(--text3)')+'">'+escapeHtml(newVal)+'</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-  cell.onclick = function(){ openPrevEntregaEdit(cell, ticket, newVal); };
-}
-
-function cancelPrevEntrega(cell, ticket, originalValue){
-  var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(originalValue);
-  var displayText = originalValue || 'Sem previsao';
-  cell.innerHTML = '<span style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+'">'+escapeHtml(displayText)+'</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-  cell.onclick = function(){ openPrevEntregaEdit(cell, ticket, originalValue); };
+  function cancel(){
+    if(saved) return;
+    saved = true;
+    var span = document.createElement('span');
+    span.className = 'prev-entrega-cell';
+    span.dataset.ticket = ticket;
+    span.dataset.value = currentValue;
+    var isOldDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(currentValue);
+    var display = currentValue || 'Sem previsao';
+    var trunc = display.length > 20 ? display.substring(0,18)+'...' : display;
+    span.style.cssText = 'font-size:.72rem;color:'+(isOldDate?'var(--text1)':'var(--text3)')+';cursor:pointer;padding:3px 6px;border-radius:4px;transition:background .15s;display:inline-block;max-width:100%';
+    span.textContent = trunc;
+    span.onmouseenter = function(){this.style.background='var(--surface-2)';};
+    span.onmouseleave = function(){this.style.background='transparent';};
+    span.onclick = function(e){e.stopPropagation();openPrevEntregaEdit(this,ticket);};
+    parent.replaceChild(span, input);
+  }
+  input.addEventListener('change', function(){ save(); });
+  input.addEventListener('blur', function(){ setTimeout(save, 100); });
+  input.addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ e.preventDefault(); save(); }
+    if(e.key==='Escape'){ e.preventDefault(); cancel(); }
+  });
 }
 
 function buildSetorSelect(ticket, currentValue){
