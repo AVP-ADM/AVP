@@ -1795,12 +1795,12 @@ tr:hover .row-actions{opacity:1}
         <div class="export-row" onclick="exportFullBaseXLSX()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Base Completa</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Todos os modelos por categoria com historico</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportFullBaseXLSX()">Exportar</button>
         </div>
         <div class="export-row" onclick="exportHistoryXLSX()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Historico Completo</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Todas as alteracoes registradas no sistema</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportHistoryXLSX()">Exportar</button>
         </div>
       </div>
     </div>
@@ -1821,12 +1821,12 @@ tr:hover .row-actions{opacity:1}
         <div class="export-row" onclick="comExportXLSX()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Comissoes do Periodo</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Faturamento, comissoes e ranking por colaborador</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();comExportXLSX()">Exportar</button>
         </div>
         <div class="export-row" onclick="exportCoberturaFipe()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Cobertura FIPE</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Modelos nao cadastrados vs base oficial</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportCoberturaFipe()">Exportar</button>
         </div>
       </div>
     </div>
@@ -1847,17 +1847,17 @@ tr:hover .row-actions{opacity:1}
         <div class="export-row" onclick="exportDivergencesXLSX()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Divergencias</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Comparacao entre categorias similares</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportDivergencesXLSX()">Exportar</button>
         </div>
         <div class="export-row" onclick="exportConflitos()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Conflitos</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Modelos em categorias incompativeis</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportConflitos()">Exportar</button>
         </div>
         <div class="export-row" onclick="exportHealthReport()">
           <div style="color:var(--text3);flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
           <div style="flex:1"><div style="font-size:.82rem;font-weight:500;color:var(--text1)">Relatorio de Saude</div><div style="font-size:.7rem;color:var(--text3);margin-top:1px">Integridade, duplicidades e cobertura</div></div>
-          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation()">Exportar</button>
+          <button class="btn btn-sm btn-blue export-btn" onclick="event.stopPropagation();exportHealthReport()">Exportar</button>
         </div>
       </div>
     </div>
