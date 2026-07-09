@@ -575,6 +575,7 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
     <div class="settings-wrap">
       <button class="settings-btn" onclick="toggleSettingsMenu()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       <div class="settings-dropdown" id="settingsDropdown">
+        <div class="settings-item" onclick="openNovaTicketModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Nova Demanda</span></div>
         <div class="settings-item" onclick="openUploadModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Atualizar via PDF</span></div>
         <div class="settings-item" id="settingsSetores" onclick="openSetoresModal()" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg><span>Gerenciar Setores</span></div>
         <div class="settings-item" id="settingsHistorico" onclick="openChangelogModal()" style="display:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg><span>Historico de atualizacoes</span></div>
@@ -642,6 +643,40 @@ th.sorted-desc .sort-arrow{transform:rotate(180deg)}
       <button class="btn btn-primary" id="btnProcessar" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Processar e Atualizar</button>
     </div>
     <div class="status-bar" id="statusBar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="statusText"></span></div>
+  </div>
+</div>
+
+
+<!-- Nova Demanda Modal -->
+<div class="modal-overlay" id="novaTicketModal">
+  <div class="modal-content" style="max-width:480px">
+    <div class="modal-header">
+      <div class="card-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova Demanda</div>
+      <button class="modal-close" onclick="closeNovaTicketModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+      <div>
+        <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Numero do Ticket *</label>
+        <input type="text" id="ntTicket" placeholder="Ex: 12345" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:var(--font);background:var(--surface);color:var(--text1)" oninput="validarNovoTicket()">
+        <div id="ntTicketStatus" style="font-size:.7rem;margin-top:4px;min-height:16px"></div>
+      </div>
+      <div>
+        <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Titulo *</label>
+        <input type="text" id="ntTitulo" placeholder="Descricao da demanda" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
+      </div>
+      <div>
+        <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Data de Criacao</label>
+        <input type="date" id="ntDataCriacao" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
+      </div>
+      <div>
+        <label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Status</label>
+        <input type="text" id="ntStatus" placeholder="Em analise" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.85rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border)">
+        <button class="btn" onclick="closeNovaTicketModal()" style="padding:8px 16px;font-size:.8rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--font)">Cancelar</button>
+        <button class="btn btn-primary" id="ntBtnCriar" onclick="criarTicketManual()" disabled style="padding:8px 16px;font-size:.8rem">Criar Demanda</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -926,6 +961,8 @@ function closeUploadModal(){
   document.getElementById('statusText').textContent = '';
   var prevResumo = document.getElementById('changelogResumoInline');
   if(prevResumo) prevResumo.remove();
+  var prevResumo2 = document.getElementById('changelogResumo');
+  if(prevResumo2) prevResumo2.remove();
   fileInput.value = '';
 }
 // Close modal on overlay click
@@ -1570,18 +1607,18 @@ btnProcessar.addEventListener('click', async function(){
       rows.push({ ticket: d.ticket, titulo: (d.titulo||'').substring(0,500), data_criacao: d.data_criacao, data_entrega: '', status_atual: (d.status_atual||'').substring(0,200), tipo: 'aberto', updated_at: new Date().toISOString() });
     });
 
-    // Compare and classify changes
-    var changelog = { novos: [], entregues: [], atualizados: [], sem_alteracao: 0 };
+    // Compare and classify changes — separate conflicts for user review
+    var changelog = { novos: [], entregues: [], atualizados: [], conflitos: [], sem_alteracao: 0 };
+    var rowsToUpsert = [];
     rows.forEach(function(row){
       var existing = existingMap[row.ticket];
       if(!existing){
-        // New ticket
         changelog.novos.push({ ticket: row.ticket, titulo: row.titulo, tipo: row.tipo });
+        rowsToUpsert.push(row);
       } else if(existing.tipo === 'aberto' && row.tipo === 'entregue'){
-        // Changed to entregue
         changelog.entregues.push({ ticket: row.ticket, titulo: row.titulo, data_entrega: row.data_entrega });
+        rowsToUpsert.push(row);
       } else {
-        // Check for field changes
         var changes = [];
         if(existing.titulo && row.titulo && existing.titulo !== row.titulo){
           changes.push({ campo: 'Titulo', de: existing.titulo, para: row.titulo });
@@ -1589,14 +1626,11 @@ btnProcessar.addEventListener('click', async function(){
         if((existing.status_atual||'') !== (row.status_atual||'')){
           changes.push({ campo: 'Status', de: existing.status_atual||'(vazio)', para: row.status_atual||'(vazio)' });
         }
-        if(row.tipo === 'aberto' && (existing.data_entrega||'') !== (row.data_entrega||'')){
-          // Only track data_entrega change for aberto tickets (for entregue it's expected)
-        }
         if(existing.tipo === 'entregue' && row.tipo === 'entregue' && (existing.data_entrega||'') !== (row.data_entrega||'')){
           changes.push({ campo: 'Data entrega', de: existing.data_entrega||'(vazio)', para: row.data_entrega||'(vazio)' });
         }
         if(changes.length > 0){
-          changelog.atualizados.push({ ticket: row.ticket, titulo: row.titulo, changes: changes });
+          changelog.conflitos.push({ ticket: row.ticket, titulo: row.titulo, changes: changes, rowData: row });
         } else {
           changelog.sem_alteracao++;
         }
@@ -1605,10 +1639,10 @@ btnProcessar.addEventListener('click', async function(){
 
     showStatus('Salvando no banco de dados...','info');
 
-    // Upsert in chunks of 50
+    // Only upsert non-conflict rows
     var CHUNK = 50;
-    for(var i=0; i<rows.length; i+=CHUNK){
-      await supabase.insert('demandas', rows.slice(i, i+CHUNK), { upsert: true, onConflict: 'ticket' });
+    for(var i=0; i<rowsToUpsert.length; i+=CHUNK){
+      await supabase.insert('demandas', rowsToUpsert.slice(i, i+CHUNK), { upsert: true, onConflict: 'ticket' });
     }
 
     // Also update any that changed from aberto to entregue
@@ -1625,7 +1659,7 @@ btnProcessar.addEventListener('click', async function(){
         total_processados: rows.length,
         novos: changelog.novos,
         entregues: changelog.entregues,
-        atualizados: changelog.atualizados,
+        conflitos: changelog.conflitos.length,
         sem_alteracao: changelog.sem_alteracao
       }),
       updated_at: new Date().toISOString()
@@ -1636,13 +1670,13 @@ btnProcessar.addEventListener('click', async function(){
     var resumo = rows.length + ' demandas processadas';
     if(changelog.novos.length) resumo += ' | ' + changelog.novos.length + ' novas';
     if(changelog.entregues.length) resumo += ' | ' + changelog.entregues.length + ' entregues';
-    if(changelog.atualizados.length) resumo += ' | ' + changelog.atualizados.length + ' atualizadas';
-    showStatus(resumo, 'success');
+    if(changelog.conflitos.length) resumo += ' | ' + changelog.conflitos.length + ' conflitos';
+    showStatus(resumo, changelog.conflitos.length ? 'warning' : 'success');
 
-    // Show changelog in upload modal
+    // Show changelog + conflicts in upload modal
     showChangelogResumo(changelog);
 
-    setTimeout(function(){ carregarDados(); }, 1500);
+    if(!changelog.conflitos.length){ setTimeout(function(){ carregarDados(); }, 1500); }
   }catch(err){
     showStatus('Erro: '+err.message,'error');
   }
@@ -2344,37 +2378,96 @@ document.getElementById('changelogModal').addEventListener('click',function(e){
 });
 
 function showChangelogResumo(changelog){
-  var container = document.getElementById('statusBar');
-  if(!container) return;
-  // Remove previous resumo if exists
-  var prev = document.getElementById('changelogResumoInline');
-  if(prev) prev.remove();
-  var h = '<div id="changelogResumoInline" style="margin-top:12px;border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface);max-height:250px;overflow-y:auto">';
-  if(changelog.novos.length > 0){
-    h += '<div class="changelog-group"><div class="changelog-group-title novos"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novos (' + changelog.novos.length + ')</div>';
-    changelog.novos.forEach(function(n){ h += '<div class="changelog-item"><strong>' + n.ticket + '</strong> — ' + escapeHtml(n.titulo) + '</div>'; });
-    h += '</div>';
-  }
-  if(changelog.entregues.length > 0){
-    h += '<div class="changelog-group"><div class="changelog-group-title entregues"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Entregues (' + changelog.entregues.length + ')</div>';
-    changelog.entregues.forEach(function(e){ h += '<div class="changelog-item"><strong>' + e.ticket + '</strong> — ' + escapeHtml(e.titulo) + (e.data_entrega ? ' <span class="change-detail">(entrega: ' + e.data_entrega + ')</span>' : '') + '</div>'; });
-    h += '</div>';
-  }
-  if(changelog.atualizados.length > 0){
-    h += '<div class="changelog-group"><div class="changelog-group-title atualizados"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Atualizados (' + changelog.atualizados.length + ')</div>';
-    changelog.atualizados.forEach(function(u){
-      var detalhes = u.changes.map(function(c){ return c.campo + ': <span class="old-val">' + escapeHtml(c.de) + '</span> → <span class="new-val">' + escapeHtml(c.para) + '</span>'; }).join(', ');
-      h += '<div class="changelog-item"><strong>' + u.ticket + '</strong> — <span class="change-detail">' + detalhes + '</span></div>';
+  var container=document.querySelector('#uploadModal .modal-content');
+  var existing=document.getElementById('changelogResumo');
+  if(existing) existing.remove();
+  var div=document.createElement('div');
+  div.id='changelogResumo';
+  div.style.cssText='padding:16px 20px;border-top:1px solid var(--border);max-height:400px;overflow-y:auto';
+  var h='<div style="font-size:.82rem;font-weight:600;color:var(--text1);margin-bottom:12px">Resumo da Atualizacao</div>';
+  
+  // Conflicts section (most important - show first)
+  if(changelog.conflitos && changelog.conflitos.length > 0){
+    h+='<div style="background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:12px;margin-bottom:12px">';
+    h+='<div style="font-size:.78rem;font-weight:600;color:var(--amber);margin-bottom:8px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+changelog.conflitos.length+' conflito(s) - dados diferentes no PDF</div>';
+    changelog.conflitos.forEach(function(c,idx){
+      h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px">';
+      h+='<div style="font-size:.78rem;font-weight:600;margin-bottom:6px">Ticket #'+c.ticket+'</div>';
+      c.changes.forEach(function(ch){
+        h+='<div style="font-size:.72rem;color:var(--text2);margin-bottom:3px"><strong>'+ch.campo+':</strong></div>';
+        h+='<div style="font-size:.7rem;padding-left:8px;margin-bottom:2px;color:var(--text3)">Atual: <span style="color:var(--text1)">'+escapeHtml(ch.de)+'</span></div>';
+        h+='<div style="font-size:.7rem;padding-left:8px;margin-bottom:4px;color:var(--text3)">PDF: <span style="color:var(--amber)">'+escapeHtml(ch.para)+'</span></div>';
+      });
+      h+='<div style="display:flex;gap:6px;margin-top:8px">';
+      h+='<button class="btn" onclick="resolverConflito('+idx+',false)" style="flex:1;padding:5px 8px;font-size:.7rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--font)">Manter meu</button>';
+      h+='<button class="btn btn-primary" onclick="resolverConflito('+idx+',true)" style="flex:1;padding:5px 8px;font-size:.7rem">Usar do PDF</button>';
+      h+='</div></div>';
     });
-    h += '</div>';
+    h+='<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--amber-light)">';
+    h+='<button class="btn" onclick="resolverTodosConflitos(false)" style="flex:1;padding:6px;font-size:.72rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--font)">Manter Todos</button>';
+    h+='<button class="btn btn-primary" onclick="resolverTodosConflitos(true)" style="flex:1;padding:6px;font-size:.72rem">Usar Todos do PDF</button>';
+    h+='</div></div>';
   }
-  if(changelog.novos.length === 0 && changelog.entregues.length === 0 && changelog.atualizados.length === 0){
-    h += '<div style="text-align:center;padding:8px;color:var(--text3);font-size:.75rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Nenhuma alteracao detectada. Todos os ' + changelog.sem_alteracao + ' tickets estao atualizados.</div>';
-  } else if(changelog.sem_alteracao > 0){
-    h += '<div class="changelog-summary">Sem alteracao: ' + changelog.sem_alteracao + ' tickets</div>';
+  
+  if(changelog.novos && changelog.novos.length > 0){
+    h+='<div style="margin-bottom:8px"><span style="font-size:.72rem;font-weight:600;color:var(--green)">+ '+changelog.novos.length+' novos tickets criados</span></div>';
   }
-  h += '</div>';
-  container.insertAdjacentHTML('afterend', h);
+  if(changelog.entregues && changelog.entregues.length > 0){
+    h+='<div style="margin-bottom:8px"><span style="font-size:.72rem;font-weight:600;color:var(--blue)">'+changelog.entregues.length+' tickets entregues</span></div>';
+  }
+  if(changelog.sem_alteracao > 0){
+    h+='<div style="margin-bottom:8px"><span style="font-size:.72rem;color:var(--text3)">'+changelog.sem_alteracao+' sem alteracao</span></div>';
+  }
+  div.innerHTML=h;
+  container.appendChild(div);
+  
+  // Store conflicts globally for resolution
+  window._pdfConflicts = changelog.conflitos || [];
+}
+
+function resolverConflito(idx, usePDF){
+  var conflicts = window._pdfConflicts;
+  if(!conflicts || !conflicts[idx]) return;
+  var c = conflicts[idx];
+  if(usePDF){
+    supabase.insert('demandas', [c.rowData], { upsert: true, onConflict: 'ticket' }).then(function(){
+      showStatus('Ticket #'+c.ticket+' atualizado com dados do PDF','success');
+    }).catch(function(err){ showStatus('Erro: '+err.message,'error'); });
+  }
+  // Remove from UI
+  var el = document.getElementById('changelogResumo');
+  if(el){
+    var items = el.querySelectorAll('[style*="background:var(--surface)"]');
+    if(items[idx]) items[idx].style.opacity='.3';
+    if(items[idx]) items[idx].style.pointerEvents='none';
+    if(items[idx]) items[idx].insertAdjacentHTML('beforeend','<div style="text-align:center;font-size:.68rem;color:var(--green);margin-top:4px">'+(usePDF?'Atualizado com PDF':'Mantido atual')+'</div>');
+  }
+  conflicts[idx]=null;
+  // Check if all resolved
+  var remaining=conflicts.filter(function(x){return x!==null;});
+  if(remaining.length===0){ setTimeout(function(){carregarDados();},1000); }
+}
+function resolverTodosConflitos(usePDF){
+  var conflicts = window._pdfConflicts;
+  if(!conflicts) return;
+  var promises=[];
+  for(var i=0;i<conflicts.length;i++){
+    if(!conflicts[i]) continue;
+    if(usePDF){
+      promises.push(supabase.insert('demandas',[conflicts[i].rowData],{upsert:true,onConflict:'ticket'}));
+    }
+    conflicts[i]=null;
+  }
+  if(usePDF&&promises.length>0){
+    Promise.all(promises).then(function(){
+      showStatus('Todos os conflitos atualizados com dados do PDF','success');
+      carregarDados();
+    }).catch(function(err){showStatus('Erro: '+err.message,'error');});
+  }else{
+    showStatus('Todos os conflitos mantidos como estavam','success');
+    carregarDados();
+  }
+  closeUploadModal();
 }
 
 async function loadChangelogHistory(){
@@ -2494,6 +2587,84 @@ async function init(){
     setTimeout(function(){ showSessionToast('Sessao expirada. Para editar, faca login novamente.'); }, 500);
   }
 }
+// ==================== NOVA DEMANDA (MANUAL) ====================
+function openNovaTicketModal(){
+  toggleSettingsMenu();
+  document.getElementById('novaTicketModal').classList.add('open');
+  document.getElementById('ntTicket').value='';
+  document.getElementById('ntTitulo').value='';
+  document.getElementById('ntDataCriacao').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ntStatus').value='';
+  document.getElementById('ntTicketStatus').innerHTML='';
+  document.getElementById('ntBtnCriar').disabled=true;
+}
+function closeNovaTicketModal(){
+  document.getElementById('novaTicketModal').classList.remove('open');
+}
+document.getElementById('novaTicketModal').addEventListener('click',function(e){
+  if(e.target===this)closeNovaTicketModal();
+});
+var _ntDebounce=null;
+function validarNovoTicket(){
+  var input=document.getElementById('ntTicket');
+  var statusEl=document.getElementById('ntTicketStatus');
+  var btn=document.getElementById('ntBtnCriar');
+  var val=input.value.trim();
+  if(!val||!/^\d{3,6}$/.test(val)){
+    statusEl.innerHTML=val?'<span style="color:var(--red)">Numero invalido (3 a 6 digitos)</span>':'';
+    btn.disabled=true;
+    return;
+  }
+  statusEl.innerHTML='<span style="color:var(--text3)">Verificando...</span>';
+  btn.disabled=true;
+  clearTimeout(_ntDebounce);
+  _ntDebounce=setTimeout(function(){
+    supabase.select('demandas',{filter:'ticket=eq.'+val}).then(function(res){
+      if(res&&res.length>0){
+        statusEl.innerHTML='<span style="color:var(--red)">Ticket #'+val+' ja existe ('+res[0].tipo+')</span>';
+        btn.disabled=true;
+      }else{
+        statusEl.innerHTML='<span style="color:var(--green)">Ticket disponivel</span>';
+        btn.disabled=!document.getElementById('ntTitulo').value.trim();
+      }
+    }).catch(function(){
+      statusEl.innerHTML='<span style="color:var(--amber)">Erro ao verificar</span>';
+      btn.disabled=false;
+    });
+  },400);
+}
+function criarTicketManual(){
+  var ticket=document.getElementById('ntTicket').value.trim();
+  var titulo=document.getElementById('ntTitulo').value.trim();
+  var dataCriacao=document.getElementById('ntDataCriacao').value;
+  var status=document.getElementById('ntStatus').value.trim()||'Em analise';
+  if(!ticket||!titulo) return;
+  var btn=document.getElementById('ntBtnCriar');
+  btn.disabled=true;
+  btn.textContent='Criando...';
+  var row={ticket:ticket,titulo:titulo,data_criacao:dataCriacao?dataCriacao.split('-').reverse().join('/'):'',status_atual:status,tipo:'aberto',updated_at:new Date().toISOString()};
+  supabase.insert('demandas',[row],{upsert:true,onConflict:'ticket'}).then(function(){
+    closeNovaTicketModal();
+    showStatus('Ticket #'+ticket+' criado com sucesso!','success');
+    carregarDados();
+  }).catch(function(err){
+    showStatus('Erro ao criar: '+err.message,'error');
+    btn.disabled=false;
+    btn.textContent='Criar Demanda';
+  });
+}
+document.getElementById('ntTitulo').addEventListener('input',function(){
+  var ticket=document.getElementById('ntTicket').value.trim();
+  var titulo=this.value.trim();
+  var statusEl=document.getElementById('ntTicketStatus');
+  var btn=document.getElementById('ntBtnCriar');
+  if(titulo&&ticket&&/^\d{3,6}$/.test(ticket)&&statusEl.innerHTML.indexOf('disponivel')!==-1){
+    btn.disabled=false;
+  }else{
+    btn.disabled=true;
+  }
+});
+
 init();
 </script>
 </body>
