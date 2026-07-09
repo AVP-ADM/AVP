@@ -1167,6 +1167,68 @@ function getPriorityClass(val){
   return '';
 }
 
+function buildPrevEntregaCell(ticket, currentValue){
+  var val = currentValue || '';
+  var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val);
+  if(!isAdmin){
+    return '<span style="font-size:.72rem;color:var(--text2)">'+escapeHtml(val||'—')+'</span>';
+  }
+  var displayText = val || 'Sem previsao';
+  var h = '<div class="prev-entrega-cell" style="display:flex;align-items:center;gap:4px;cursor:pointer" onclick="openPrevEntregaEdit(this,\''+ticket+'\',\''+escapeHtml(val).replace(/'/g,"\\'")+'\')">';
+  h += '<span style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+'">'+escapeHtml(displayText)+'</span>';
+  h += '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  h += '</div>';
+  return h;
+}
+
+function openPrevEntregaEdit(el, ticket, currentValue){
+  var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(currentValue);
+  var dateVal = '';
+  if(isDate){
+    var parts = currentValue.split('/');
+    dateVal = parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0');
+  }
+  var h = '<div style="display:flex;flex-direction:column;gap:6px;padding:4px 0">';
+  h += '<input type="date" class="prev-date-input" value="'+dateVal+'" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.75rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
+  h += '<input type="text" class="prev-text-input" value="'+(isDate?'':escapeHtml(currentValue))+'" placeholder="Ou texto livre..." style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">';
+  h += '<div style="display:flex;gap:4px">';
+  h += '<button onclick="savePrevEntrega(this,\''+ticket+'\')" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:500">Salvar</button>';
+  h += '<button onclick="cancelPrevEntrega(this,\''+ticket+'\',\''+escapeHtml(currentValue).replace(/'/g,"\\'")+'\')" style="padding:3px 8px;font-size:.68rem;font-family:var(--font);background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer">Cancelar</button>';
+  h += '</div></div>';
+  el.innerHTML = h;
+  el.onclick = null;
+  var dateInput = el.querySelector('.prev-date-input');
+  var textInput = el.querySelector('.prev-text-input');
+  dateInput.addEventListener('input',function(){ if(this.value) textInput.value=''; });
+  textInput.addEventListener('input',function(){ if(this.value) dateInput.value=''; });
+  dateInput.focus();
+}
+
+function savePrevEntrega(btn, ticket){
+  var cell = btn.closest('.prev-entrega-cell');
+  var dateInput = cell.querySelector('.prev-date-input');
+  var textInput = cell.querySelector('.prev-text-input');
+  var newVal = '';
+  if(dateInput.value){
+    var parts = dateInput.value.split('-');
+    newVal = parts[2]+'/'+parts[1]+'/'+parts[0];
+  } else {
+    newVal = textInput.value.trim();
+  }
+  if(!newVal) newVal = 'Em analise';
+  onFieldChange(ticket, 'status_atual', newVal);
+  cell.innerHTML = '<span style="font-size:.72rem;color:'+(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(newVal)?'var(--text1)':'var(--text3)')+'">'+escapeHtml(newVal)+'</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  cell.onclick = function(){ openPrevEntregaEdit(cell, ticket, newVal); };
+}
+
+function cancelPrevEntrega(btn, ticket, originalValue){
+  var cell = btn.closest('.prev-entrega-cell');
+  var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(originalValue);
+  var displayText = originalValue || 'Sem previsao';
+  cell.innerHTML = '<span style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+'">'+escapeHtml(displayText)+'</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  cell.onclick = function(){ openPrevEntregaEdit(cell, ticket, originalValue); };
+}
+
 function buildSetorSelect(ticket, currentValue){
   var val = currentValue || '(Sem setor)';
   // Read-only mode: show as text
@@ -1257,7 +1319,7 @@ function renderTableAberto(data){
     h+='<td><strong>'+d.ticket+'</strong></td>';
     h+='<td><span class="cell-title" title="'+escapeHtml(d.titulo)+'">'+escapeHtml(d.titulo)+'</span></td>';
     h+='<td>'+escapeHtml(d.data_criacao||'')+'</td>';
-    h+='<td>'+escapeHtml(d.status_atual||'')+'</td>';
+    h+='<td onclick="event.stopPropagation()">'+buildPrevEntregaCell(d.ticket,d.status_atual||'')+'</td>';
     h+='<td>'+agingBadge(d.dias)+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildSetorSelect(d.ticket,d.setor||'')+'</td>';
     h+='<td onclick="event.stopPropagation()">'+buildPrioridadeSelect(d.ticket,d.prioridade||'')+'</td>';
