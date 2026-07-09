@@ -1186,7 +1186,7 @@ function buildPrevEntregaCell(ticket, currentValue){
   if(!isAdmin){
     return '<span style="font-size:.72rem;color:var(--text2)">'+escapeHtml(val||'—')+'</span>';
   }
-  var displayText = val || 'Sem previsao';
+  var displayText = val || 'Em analise/desenvolvimento';
   var truncated = displayText.length > 20 ? displayText.substring(0,18)+'...' : displayText;
   var h = '<span class="prev-entrega-cell" data-ticket="'+ticket+'" data-value="'+escapeHtml(val)+'" ';
   h += 'style="font-size:.72rem;color:'+(isDate?'var(--text1)':'var(--text3)')+';cursor:pointer;padding:3px 6px;border-radius:4px;transition:background .15s;display:inline-block;max-width:100%" ';
@@ -1249,7 +1249,7 @@ function openPrevEntregaEdit(el, ticket){
   function save(){
     if(saved) return;
     saved = true;
-    var newVal = input.value.trim() || 'Sem previsao';
+    var newVal = input.value.trim() || 'Em analise/desenvolvimento';
     if(newVal !== currentValue){
       onFieldChange(ticket, 'status_atual', newVal);
     } else {
@@ -1271,7 +1271,7 @@ function openPrevEntregaEdit(el, ticket){
 
 function rebuildSpan(parent, oldEl, ticket, value){
   var isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value);
-  var display = value || 'Sem previsao';
+  var display = value || 'Em analise/desenvolvimento';
   var trunc = display.length > 20 ? display.substring(0,18)+'...' : display;
   var span = document.createElement('span');
   span.className = 'prev-entrega-cell';
