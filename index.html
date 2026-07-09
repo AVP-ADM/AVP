@@ -11428,6 +11428,11 @@ function resetActivityTimer(){
   _lastActivity = Date.now();
 }
 
+// Reset inactivity on any user interaction
+['click','scroll','keydown','mousemove','touchstart'].forEach(function(evt){
+  document.addEventListener(evt, resetActivityTimer, {passive:true,capture:true});
+});
+
 function startSessionCheck(){
   // Bug 8 fix: limpar AMBOS os intervals antes de criar novos (evita leak)
   if(_sessionCheckInterval){ clearInterval(_sessionCheckInterval); _sessionCheckInterval=null; }
