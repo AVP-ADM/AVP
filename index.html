@@ -1295,6 +1295,9 @@ tr:hover .row-actions{opacity:1}
             <button class="sidebar-sub-item" data-subtab="placafipe" onclick="goTab('placafipe')">
               <span class="si-text">Consulta de Placa</span>
             </button>
+            <button class="sidebar-sub-item" data-subtab="regimento" onclick="goTab('regimento')">
+              <span class="si-text">Regimento</span>
+            </button>
           </div>
         </div>
         <button class="sidebar-item" data-tab="comissoes" data-tooltip="Comissões" onclick="goTab('comissoes')">
@@ -1344,10 +1347,6 @@ tr:hover .row-actions{opacity:1}
         <button class="sidebar-item" data-tab="exports" data-tooltip="Exportações" onclick="goTab('exports')">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
           <span class="si-text">Exportações</span>
-        </button>
-        <button class="sidebar-item" data-tab="regimento" data-tooltip="Regimento" onclick="goTab('regimento')">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="14" y2="11"/></svg></span>
-          <span class="si-text">Regimento</span>
         </button>
         <a href="demandas.html" class="sidebar-item" id="sidebarDemandas" data-tooltip="Demandas" style="display:none;text-decoration:none">
           <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
@@ -1545,7 +1544,12 @@ tr:hover .row-actions{opacity:1}
           <iframe id="placafipe_iframe" src="" allowfullscreen></iframe>
         </div>
       </div>
+  <!-- ========= TAB: REGIMENTO INTERNO (sub-tab de Consultas) ========= -->
+  <div class="sub-tab-panel" id="subpanel-regimento">
+    <div class="card" style="padding:24px 28px;max-width:800px;margin:0 auto">
+      <div id="regimento_container"></div>
     </div>
+  </div>
 
   </div>
 
@@ -1987,13 +1991,6 @@ tr:hover .row-actions{opacity:1}
     </div>
   </div>
 
-  <!-- ========= TAB: REGIMENTO INTERNO ========= -->
-  <div class="tab-panel" id="panel-regimento">
-    <div class="card" style="padding:24px 28px;max-width:800px;margin:0 auto">
-      <div id="regimento_container"></div>
-    </div>
-  </div>
-
   <!-- ========= TAB: CONFIGURAÇÕES ========= -->
   <div class="tab-panel" id="panel-settings">
     <div style="display:flex;gap:0;min-height:calc(100vh - 120px)">
@@ -2326,10 +2323,6 @@ tr:hover .row-actions{opacity:1}
   <button class="mobile-more-item" onclick="mobileNavTo('exports');closeMobileMore()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     <span>Exportacoes</span>
-  </button>
-  <button class="mobile-more-item" onclick="mobileNavTo('regimento');closeMobileMore()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    <span>Regimento</span>
   </button>
   <button class="mobile-more-item" onclick="window.location.href='demandas.html';closeMobileMore()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -3139,7 +3132,8 @@ function goTab(tab){
     history: { parent: 'gestao', sub: 'history' },
     planos: { parent: 'consultas', sub: 'planos' },
     coberturas: { parent: 'consultas', sub: 'coberturas' },
-    placafipe: { parent: 'consultas', sub: 'placafipe' }
+    placafipe: { parent: 'consultas', sub: 'placafipe' },
+    regimento: { parent: 'consultas', sub: 'regimento' }
   };
 
   let mainTab = tab;
@@ -10555,7 +10549,8 @@ var MOBILE_SUBTABS = {
   consultas: [
     {label:'Planos', tab:'planos'},
     {label:'Coberturas', tab:'coberturas'},
-    {label:'Consulta Placa', tab:'placafipe'}
+    {label:'Consulta Placa', tab:'placafipe'},
+    {label:'Regimento', tab:'regimento'}
   ],
   analise: [
     {label:'Conflitos', tab:'duplicates'},
@@ -10576,7 +10571,7 @@ function updateMobileNav(tab){
   // Determine which bottom nav item is active
   var bnavMap = {
     overview:'overview',
-    planos:'consultas', coberturas:'consultas', placafipe:'consultas',
+    planos:'consultas', coberturas:'consultas', placafipe:'consultas', regimento:'consultas',
     duplicates:'analise', divergences:'analise',
     management:'gestao', history:'gestao'
   };
