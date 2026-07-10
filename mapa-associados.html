@@ -389,9 +389,25 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
   <!-- TABELA TAB -->
   <div class="tab-panel" id="panelTabela">
     <div class="table-container">
-      <div class="table-toolbar">
-        <input type="text" class="filter-search" id="tableSearch" placeholder="Buscar na tabela...">
-        <span id="tableCount" style="font-size:12px;color:var(--text-muted);"></span>
+      <div class="table-toolbar" style="flex-wrap:wrap;gap:6px;">
+        <input type="text" class="filter-search" id="tableSearch" placeholder="Buscar associado, consultor, placa, rastreador..." style="flex:1;min-width:220px;">
+        <select class="filter-search" id="tableFilterState" style="width:auto;min-width:80px;"><option value="">UF</option></select>
+        <select class="filter-search" id="tableFilterConsultor" style="width:auto;min-width:120px;"><option value="">Consultor</option></select>
+        <select class="filter-search" id="tableFilterCategoria" style="width:auto;min-width:110px;"><option value="">Categoria</option></select>
+        <select class="filter-search" id="tableFilterTracker" style="width:auto;min-width:110px;"><option value="">Rastreador</option><option value="com">Com rastreador</option><option value="sem">Sem rastreador</option></select>
+        <select class="filter-search" id="tableFilterFipe" style="width:auto;min-width:130px;">
+          <option value="">Faixa FIPE</option>
+          <option value="0-50000">Ate R$ 50.000</option>
+          <option value="50000-100000">R$ 50k a R$ 100k</option>
+          <option value="100000-150000">R$ 100k a R$ 150k</option>
+          <option value="150000-200000">R$ 150k a R$ 200k</option>
+          <option value="200000-300000">R$ 200k a R$ 300k</option>
+          <option value="300000-500000">R$ 300k a R$ 500k</option>
+          <option value="500000-Infinity">Acima de R$ 500k</option>
+          <option value="none">Sem FIPE</option>
+        </select>
+        <button class="btn btn-sm" id="tableFilterClear" title="Limpar filtros"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar</button>
+        <span id="tableCount" style="font-size:12px;color:var(--text-muted);white-space:nowrap;"></span>
         <div style="margin-left:auto;display:flex;gap:6px;">
           <button class="btn btn-sm" id="btnExportExcel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Excel</button>
           <button class="btn btn-sm" id="btnExportCSV"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> CSV</button>
@@ -989,7 +1005,7 @@ const TABLE_COLUMNS=[{key:'nome',label:'Associado'},{key:'placa',label:'Placa'},
 function updateTable() {
   let data=[...AppState.filteredData];
   const search=AppState.table.search.toLowerCase();
-  if(search) data=data.filter(r=>(r.nome&&r.nome.toLowerCase().includes(search))||(r.placa&&r.placa.toLowerCase().includes(search))||(r.cidade&&r.cidade.toLowerCase().includes(search))||(r.consultor&&r.consultor.toLowerCase().includes(search))||(r.modelo&&r.modelo.toLowerCase().includes(search))||(r.marca&&r.marca.toLowerCase().includes(search)));
+  if(search) data=data.filter(r=>(r.nome&&r.nome.toLowerCase().includes(search))||(r.placa&&r.placa.toLowerCase().includes(search))||(r.cidade&&r.cidade.toLowerCase().includes(search))||(r.estado&&r.estado.toLowerCase().includes(search))||(r.consultor&&r.consultor.toLowerCase().includes(search))||(r.modelo&&r.modelo.toLowerCase().includes(search))||(r.marca&&r.marca.toLowerCase().includes(search))||(r.rastreador&&r.rastreador.toLowerCase().includes(search)));
   if(AppState.table.sort){const key=AppState.table.sort,dir=AppState.table.sortDir==='asc'?1:-1;data.sort((a,b)=>{let va=a[key],vb=b[key];if(va===null||va===undefined)va='';if(vb===null||vb===undefined)vb='';if(typeof va==='number'&&typeof vb==='number')return(va-vb)*dir;return String(va).localeCompare(String(vb),'pt-BR')*dir;});}
   const total=data.length,perPage=AppState.table.perPage,totalPages=Math.ceil(total/perPage),page=Math.min(AppState.table.page,totalPages||1),start=(page-1)*perPage,pageData=data.slice(start,start+perPage);
   const thead=document.getElementById('tableHead');
@@ -1039,6 +1055,15 @@ function populateFilters() {
   renderFilterList('categoriaList',Object.entries(catCount).sort((a,b)=>b[1]-a[1]),'categoria');
   const comR=data.filter(r=>r.temRastreador).length;
   document.getElementById('trackerCounts').textContent=`Com: ${comR} | Sem: ${data.length-comR}`;
+  // Populate table filter dropdowns
+  const tState=document.getElementById('tableFilterState');
+  tState.innerHTML='<option value="">UF</option>'+states.map(s=>`<option value="${s}">${s}</option>`).join('');
+  const tConsultor=document.getElementById('tableFilterConsultor');
+  const consultors=[...new Set(data.map(r=>r.consultor).filter(Boolean))].sort();
+  tConsultor.innerHTML='<option value="">Consultor</option>'+consultors.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const tCategoria=document.getElementById('tableFilterCategoria');
+  const categorias=[...new Set(data.map(r=>r.categoria).filter(Boolean))].sort();
+  tCategoria.innerHTML='<option value="">Categoria</option>'+categorias.map(c=>`<option value="${c}">${c}</option>`).join('');
 }
 function renderFilterList(containerId,items,type){document.getElementById(containerId).innerHTML=items.map(([name,count])=>`<label class="filter-item"><input type="checkbox" value="${name}" onchange="updateFilterSet('${type}')"><span>${name}</span><span class="count">${count}</span></label>`).join('');}
 
@@ -1140,6 +1165,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Table
   document.getElementById('tableSearch').addEventListener('input',debounce(e=>{AppState.table.search=e.target.value;AppState.table.page=1;updateTable();},300));
   document.getElementById('tableHead').addEventListener('click',e=>{const th=e.target.closest('th');if(!th)return;const col=th.dataset.col;if(AppState.table.sort===col)AppState.table.sortDir=AppState.table.sortDir==='asc'?'desc':'asc';else{AppState.table.sort=col;AppState.table.sortDir='asc';}updateTable();});
+  // Table inline filters - apply globally
+  document.getElementById('tableFilterState').addEventListener('change',e=>{AppState.filters.state=e.target.value;document.getElementById('filterState').value=e.target.value;applyFilters();});
+  document.getElementById('tableFilterConsultor').addEventListener('change',e=>{const v=e.target.value;if(v){AppState.filters.consultores=new Set([v]);document.querySelectorAll('#consultorList input').forEach(cb=>{cb.checked=cb.value===v;});}else{AppState.filters.consultores=new Set();document.querySelectorAll('#consultorList input').forEach(cb=>{cb.checked=false;});}applyFilters();});
+  document.getElementById('tableFilterCategoria').addEventListener('change',e=>{const v=e.target.value;if(v){AppState.filters.categorias=new Set([v]);}else{AppState.filters.categorias=new Set();}applyFilters();});
+  document.getElementById('tableFilterTracker').addEventListener('change',e=>{AppState.filters.tracker=e.target.value;document.getElementById('filterTracker').value=e.target.value;applyFilters();});
+  document.getElementById('tableFilterFipe').addEventListener('change',e=>{AppState.filters.fipeRange=e.target.value;document.getElementById('filterFipe').value=e.target.value;applyFilters();});
+  document.getElementById('tableFilterClear').addEventListener('click',()=>{document.getElementById('tableFilterState').value='';document.getElementById('tableFilterConsultor').value='';document.getElementById('tableFilterCategoria').value='';document.getElementById('tableFilterTracker').value='';document.getElementById('tableFilterFipe').value='';document.getElementById('tableSearch').value='';AppState.table.search='';clearAllFilters();});
   document.getElementById('citiesTopN').addEventListener('change',updateCharts);
   document.getElementById('btnExportExcel').addEventListener('click',exportFilteredExcel);
   document.getElementById('btnExportCSV').addEventListener('click',exportFilteredCSV);
