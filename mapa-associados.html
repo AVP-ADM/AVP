@@ -185,11 +185,13 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .tt-label { color: #64748b; }
 
 /* Prestadores panel */
-.prestadores-panel { position: absolute; bottom: 12px; left: 12px; z-index: 500; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; box-shadow: var(--shadow-lg); max-height: 200px; overflow-y: auto; width: 260px; font-size: 11px; display: none; }
+.prestadores-panel { position: absolute; bottom: 12px; left: 12px; z-index: 500; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow-lg); max-height: 320px; overflow-y: auto; width: 340px; font-size: 11px; display: none; }
 .prestadores-panel.open { display: block; }
 .prestadores-panel h4 { font-size: 12px; margin-bottom: 6px; }
-.prest-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
-.prest-row input[type="number"] { width: 50px; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; text-align: center; }
+.prest-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.prest-row:last-child { border-bottom: none; }
+.prest-row input[type="number"] { width: 48px; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; text-align: center; }
+.prest-count { background: var(--primary-light); color: var(--primary); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
 
 @media (max-width: 768px) {
   .analises-grid { grid-template-columns: 1fr; }
@@ -1069,9 +1071,18 @@ function renderFilterList(containerId,items,type){document.getElementById(contai
 
 function populatePrestadoresPanel() {
   const list=document.getElementById('prestadoresList');
-  list.innerHTML=PRESTADORES.map((p,i)=>`<div class="prest-row"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.nome} - ${p.cidade}/${p.uf}">${p.nome}</span><input type="number" value="${p.raio}" min="10" max="200" data-idx="${i}" onchange="updatePrestadorRaio(this)"> km</div>`).join('');
+  const data=AppState.filteredData.filter(r=>r.lat&&r.lng);
+  list.innerHTML=PRESTADORES.map((p,i)=>{
+    if(!p.lat||!p.lng) return '';
+    const count=data.filter(r=>haversineDistance(r.lat,r.lng,p.lat,p.lng)<=p.raio).length;
+    return `<div class="prest-row">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.nome} - ${p.cidade}/${p.uf}">${p.nome} <span style="color:var(--text-muted);font-size:10px;">(${p.cidade}/${p.uf})</span></span>
+      <span class="prest-count">${count}</span>
+      <input type="number" value="${p.raio}" min="10" max="300" data-idx="${i}" onchange="updatePrestadorRaio(this)"> km
+    </div>`;
+  }).join('');
 }
-function updatePrestadorRaio(el){const idx=parseInt(el.dataset.idx);PRESTADORES[idx].raio=parseInt(el.value)||50;updateMap();updateKPIs();}
+function updatePrestadorRaio(el){const idx=parseInt(el.dataset.idx);PRESTADORES[idx].raio=parseInt(el.value)||50;updateMap();updateKPIs();populatePrestadoresPanel();}
 
 // ============================================================
 // PERSISTENCE
@@ -1093,7 +1104,7 @@ function showDashboard() {
   setTimeout(()=>{initMap();updateAll();},100);
 }
 
-function updateAll(){updateKPIs();updateMap();updateTable();updateQuality();}
+function updateAll(){updateKPIs();updateMap();updateTable();updateQuality();populatePrestadoresPanel();}
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
