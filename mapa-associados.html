@@ -508,7 +508,7 @@ const AppState = {
   qualityIssues: [], columnMapping: {},
   fileName: '', importDate: null,
   mapMode: 'bubbles',
-  showPrestadores: false, showCobertura: false, showDesprotegidos: false,
+  showPrestadores: true, showCobertura: true, showDesprotegidos: false,
   filters: { region:'', state:'', city:'', consultores:new Set(), categorias:new Set(), fipeRange:'', fipeMin:null, fipeMax:null, tracker:'', marca:'', modelo:'', placa:'', associado:'' },
   table: { page:1, perPage:50, sort:null, sortDir:'asc', search:'' },
   charts: {}, stats: null
@@ -698,14 +698,16 @@ function processData() {
     const row=rows[i];
     const getVal=(field)=>{if(!(field in m))return '';const val=row[m[field]];return val!==null&&val!==undefined?String(val).trim():'';};
     const situacao=normalizeForCompare(getVal('situacao'));
-    if(situacao!=='ativo'&&situacao!=='ativa'){totalInactive++;continue;}
+    if(situacao!=='ativo'&&situacao!=='ativa'&&situacao!=='suspenso'&&situacao!=='suspensa'){totalInactive++;continue;}
     const record={_row:i,nome:normalizeText(getVal('nome')),cidade:'',estado:'',consultor:'',categoria:'',valorFipe:null,temRastreador:false,rastreador:getVal('rastreador'),placa:getVal('placa').toUpperCase().replace(/[^A-Z0-9]/g,''),modelo:normalizeText(getVal('modelo')),marca:normalizeText(getVal('marca')),codigo:getVal('codigo'),lat:null,lng:null,regiao:''};
     let cidade=normalizeText(getVal('cidade'));
-    let estado=normalizeText(getVal('estado')).toUpperCase().replace(/[^A-Z]/g,'');
+    let estado=normalizeText(getVal('estado'));
+    // Normalize state: remove accents first, then uppercase
+    estado=estado.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z]/g,'');
     if(estado.length>2){
       const stateMap={'ACRE':'AC','ALAGOAS':'AL','AMAPA':'AP','AMAZONAS':'AM','BAHIA':'BA','CEARA':'CE','DISTRITOFEDERAL':'DF','ESPIRITOSANTO':'ES','GOIAS':'GO','MARANHAO':'MA','MATOGROSSO':'MT','MATOGROSSODOSUL':'MS','MINASGERAIS':'MG','PARA':'PA','PARAIBA':'PB','PARANA':'PR','PERNAMBUCO':'PE','PIAUI':'PI','RIODEJANEIRO':'RJ','RIOGRANDEDONORTE':'RN','RIOGRANDEDOSUL':'RS','RONDONIA':'RO','RORAIMA':'RR','SANTACATARINA':'SC','SAOPAULO':'SP','SERGIPE':'SE','TOCANTINS':'TO'};
-      const n=normalizeForCompare(estado).replace(/\s/g,'');
-      for(const[name,uf] of Object.entries(stateMap)){if(normalizeForCompare(name).replace(/\s/g,'')===n){estado=uf;break;}}
+      const n=estado.replace(/\s/g,'');
+      for(const[name,uf] of Object.entries(stateMap)){if(name===n){estado=uf;break;}}
     }
     if(estado.length===2&&VALID_UFS.includes(estado)){record.estado=estado;}
     else if(estado){issues.push({type:'warning',msg:`Estado invalido: "${getVal('estado')}"`,row:i,field:'estado'});}
@@ -1095,6 +1097,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnFitMap').addEventListener('click',fitMapToData);
   document.getElementById('btnPrestadores').addEventListener('click',()=>{AppState.showPrestadores=!AppState.showPrestadores;document.getElementById('btnPrestadores').classList.toggle('btn-primary',AppState.showPrestadores);document.getElementById('prestadoresPanel').classList.toggle('open',AppState.showPrestadores);updatePrestadoresOnMap();});
   document.getElementById('btnCobertura').addEventListener('click',()=>{AppState.showCobertura=!AppState.showCobertura;document.getElementById('btnCobertura').classList.toggle('btn-primary',AppState.showCobertura);updatePrestadoresOnMap();updateKPIs();});
+
+  // Set prestadores buttons as active by default
+  document.getElementById('btnPrestadores').classList.add('btn-primary');
+  document.getElementById('btnCobertura').classList.add('btn-primary');
 
   // Filters
   document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;const states=[...new Set(AppState.activeData.map(r=>r.estado).filter(Boolean))].sort();const filtered=e.target.value?states.filter(s=>STATES_REGION[s]===e.target.value):states;document.getElementById('filterState').innerHTML='<option value="">Todos</option>'+filtered.map(s=>`<option value="${s}">${s}</option>`).join('');AppState.filters.state='';AppState.filters.city='';document.getElementById('filterCity').innerHTML='<option value="">Todas</option>';applyFilters();});
