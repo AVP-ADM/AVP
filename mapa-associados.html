@@ -113,7 +113,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .chart-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
 .chart-wrap { height: 200px; position: relative; }
 .insights-section { grid-column: 1 / -1; }
-.insight-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.insight-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.insight-item strong { color: var(--primary); }
 .insight-icon { color: var(--info); flex-shrink: 0; margin-top: 2px; }
 
 /* TABELA TAB */
@@ -936,7 +937,9 @@ function updateCharts() {
   AppState.charts.fipe=new Chart(document.getElementById('chartFipe'),{type:'bar',data:{labels:[...FIPE_RANGES.map(r=>r.label),'Sem FIPE'],datasets:[{label:'Veiculos',data:fipeRangeCount,backgroundColor:'#06b6d4',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
 
   const comR=data.filter(r=>r.temRastreador).length;const semR=data.length-comR;
-  AppState.charts.tracker=new Chart(document.getElementById('chartTracker'),{type:'bar',data:{labels:['Com Rastreador','Sem Rastreador'],datasets:[{label:'Veiculos',data:[comR,semR],backgroundColor:['#10b981','#ef4444'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
+  const pctCom=data.length>0?((comR/data.length)*100).toFixed(1):0;
+  const pctSem=data.length>0?((semR/data.length)*100).toFixed(1):0;
+  AppState.charts.tracker=new Chart(document.getElementById('chartTracker'),{type:'bar',data:{labels:[`Com Rastreador (${pctCom}%)`,`Sem Rastreador (${pctSem}%)`],datasets:[{label:'Veiculos',data:[comR,semR],backgroundColor:['#10b981','#ef4444'],borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.raw.toLocaleString('pt-BR')+' veiculos';}}}},scales:{x:{beginAtZero:true,grid:{display:false}},y:{grid:{display:false}}}}});
 }
 
 // ============================================================
@@ -944,17 +947,35 @@ function updateCharts() {
 // ============================================================
 function updateInsights() {
   const data=AppState.filteredData, insights=[];
-  if(data.length===0){document.getElementById('insightsList').innerHTML='<div style="padding:12px;color:var(--text-muted);font-size:13px;">Nenhum dado.</div>';return;}
+  if(data.length===0){document.getElementById('insightsList').innerHTML='<div style="padding:12px;color:var(--text-muted);font-size:13px;">Nenhum dado para gerar insights.</div>';return;}
+  // Top city
   const cityCount={};data.forEach(r=>{if(r.cidade&&r.estado){const k=r.cidade+'/'+r.estado;cityCount[k]=(cityCount[k]||0)+1;}});
   const topCity=Object.entries(cityCount).sort((a,b)=>b[1]-a[1])[0];
-  if(topCity) insights.push(`Maior concentracao: <strong>${topCity[0]}</strong> com ${topCity[1]} registros.`);
+  if(topCity) insights.push(`Maior concentracao: <strong>${topCity[0]}</strong> com ${topCity[1]} associados.`);
+  // Top region
   const regionCount={};data.forEach(r=>{if(r.regiao)regionCount[r.regiao]=(regionCount[r.regiao]||0)+1;});
   const topRegion=Object.entries(regionCount).sort((a,b)=>b[1]-a[1])[0];
   if(topRegion) insights.push(`Regiao <strong>${topRegion[0]}</strong> representa ${((topRegion[1]/data.length)*100).toFixed(1)}% da base.`);
+  // Tracker
   const semR=data.filter(r=>!r.temRastreador).length;
-  if(data.length>0) insights.push(`${((semR/data.length)*100).toFixed(1)}% <strong>sem rastreador</strong> (${semR} veiculos).`);
+  const comR=data.length-semR;
+  if(data.length>0) insights.push(`<strong>${comR}</strong> veiculos com rastreador (${((comR/data.length)*100).toFixed(1)}%) e <strong>${semR}</strong> sem (${((semR/data.length)*100).toFixed(1)}%).`);
+  // Unprotected
   const unp=getUnprotectedCount();
-  if(unp>0) insights.push(`<strong>${unp} associados desprotegidos</strong> - fora do raio de qualquer prestador.`);
+  if(unp>0) insights.push(`<strong>${unp} associados desprotegidos</strong> (${((unp/data.length)*100).toFixed(1)}%) - fora do raio de qualquer prestador.`);
+  // Top consultor
+  const consultorCount={};data.forEach(r=>{if(r.consultor)consultorCount[r.consultor]=(consultorCount[r.consultor]||0)+1;});
+  const topConsultor=Object.entries(consultorCount).sort((a,b)=>b[1]-a[1])[0];
+  if(topConsultor){const cData=data.filter(r=>r.consultor===topConsultor[0]);const cCities=new Set(cData.filter(r=>r.cidade).map(r=>r.cidade));insights.push(`Consultor <strong>${topConsultor[0]}</strong> possui ${topConsultor[1]} associados em ${cCities.size} cidades.`);}
+  // FIPE
+  const fipeVals=data.filter(r=>r.valorFipe!==null);
+  const semFipe=data.length-fipeVals.length;
+  if(semFipe>0) insights.push(`<strong>${semFipe} registros</strong> sem valor FIPE informado.`);
+  // Top category
+  const catCount={};data.forEach(r=>{if(r.categoria)catCount[r.categoria]=(catCount[r.categoria]||0)+1;});
+  const topCat=Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+  if(topCat) insights.push(`Categoria predominante: <strong>${topCat[0]}</strong> (${topCat[1]} veiculos, ${((topCat[1]/data.length)*100).toFixed(1)}%).`);
+
   const svg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
   document.getElementById('insightsList').innerHTML=insights.map(i=>`<div class="insight-item"><span class="insight-icon">${svg}</span><span>${i}</span></div>`).join('');
 }
@@ -1057,7 +1078,7 @@ function switchTab(tab) {
   // Show map panel when mapa tab (it uses display:flex from showDashboard)
   if(tab==='mapa'&&AppState.activeData.length>0){document.getElementById('panelMapa').style.display='flex';setTimeout(()=>{if(map)map.invalidateSize();},100);}
   else if(tab!=='mapa'){document.getElementById('panelMapa').style.display='none';}
-  if(tab==='analises') setTimeout(updateCharts,50);
+  if(tab==='analises') setTimeout(()=>{updateCharts();updateInsights();},50);
   if(tab==='tabela') updateTable();
   if(tab==='qualidade') updateQuality();
 }
