@@ -1378,6 +1378,19 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnExportCSV').addEventListener('click',exportFilteredCSV);
   document.getElementById('btnExportQuality').addEventListener('click',exportQualityExcel);
 
+  // Close filter lists when clicking outside
+  document.addEventListener('click',function(e){
+    const lists=['stateList','cityList','consultorList','categoriaList'];
+    const inputs=['filterState','filterCity','consultorSearch','categoriaSearch'];
+    lists.forEach((listId,i)=>{
+      const list=document.getElementById(listId);
+      const input=document.getElementById(inputs[i]);
+      if(list&&input&&!list.contains(e.target)&&e.target!==input){
+        list.classList.remove('visible');
+      }
+    });
+  });
+
   // Load saved data
   if(loadFromStorage()){showDashboard();switchTab('mapa');}
 });
