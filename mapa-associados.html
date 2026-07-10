@@ -105,7 +105,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .filter-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; cursor: pointer; }
 .filter-item .count { margin-left: auto; color: var(--text-muted); font-size: 11px; }
 .filter-actions { display: flex; gap: 4px; margin-top: 4px; }
-.filter-toggle-btn { position: absolute; top: 60px; left: 12px; z-index: 500; }
+.filter-toggle-btn { position: absolute; top: 12px; left: 12px; z-index: 500; }
 
 /* ANALISES TAB */
 .analises-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; overflow-y: auto; flex: 1; }
@@ -185,8 +185,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .tt-label { color: #64748b; }
 
 /* Prestadores panel */
-.prestadores-panel { position: absolute; bottom: 12px; left: 12px; z-index: 500; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow-lg); max-height: 320px; overflow-y: auto; width: 340px; font-size: 11px; display: none; }
-.prestadores-panel.open { display: block; }
+.prestadores-panel { position: absolute; bottom: 12px; left: 12px; z-index: 500; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow-lg); max-height: 320px; overflow-y: auto; width: 340px; font-size: 11px; display: block; }
+.prestadores-panel.hidden { display: none; }
 .prestadores-panel h4 { font-size: 12px; margin-bottom: 6px; }
 .prest-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid var(--border); }
 .prest-row:last-child { border-bottom: none; }
@@ -801,7 +801,8 @@ let map, heatLayer, bubbleLayer, clusterLayer, prestadoresLayer, coberturaLayer,
 
 function initMap() {
   if(map) return;
-  map=L.map('map',{zoomControl:true}).setView([-14.235,-51.925],4);
+  map=L.map('map',{zoomControl:false}).setView([-14.235,-51.925],4);
+  L.control.zoom({position:'topright'}).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap',maxZoom:18}).addTo(map);
   setTimeout(()=>map.invalidateSize(),100);
 }
@@ -1143,8 +1144,17 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnClear').addEventListener('click',()=>{if(confirm('Limpar todos os dados?'))clearStorage();});
 
   // Filter drawer
-  document.getElementById('btnFilterToggle').addEventListener('click',()=>document.getElementById('filterDrawer').classList.toggle('open'));
-  document.getElementById('btnCloseDrawer').addEventListener('click',()=>document.getElementById('filterDrawer').classList.remove('open'));
+  document.getElementById('btnFilterToggle').addEventListener('click',()=>{
+    const drawer=document.getElementById('filterDrawer');
+    const panel=document.getElementById('prestadoresPanel');
+    drawer.classList.toggle('open');
+    if(drawer.classList.contains('open')&&AppState.showPrestadores) panel.classList.add('hidden');
+    else if(AppState.showPrestadores) panel.classList.remove('hidden');
+  });
+  document.getElementById('btnCloseDrawer').addEventListener('click',()=>{
+    document.getElementById('filterDrawer').classList.remove('open');
+    if(AppState.showPrestadores) document.getElementById('prestadoresPanel').classList.remove('hidden');
+  });
   document.getElementById('btnClearFilters').addEventListener('click',clearAllFilters);
 
   // Map mode
@@ -1152,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnBubbles').addEventListener('click',()=>setMapMode('bubbles'));
   document.getElementById('btnClusters').addEventListener('click',()=>setMapMode('clusters'));
   document.getElementById('btnFitMap').addEventListener('click',fitMapToData);
-  document.getElementById('btnPrestadores').addEventListener('click',()=>{AppState.showPrestadores=!AppState.showPrestadores;document.getElementById('btnPrestadores').classList.toggle('btn-primary',AppState.showPrestadores);document.getElementById('prestadoresPanel').classList.toggle('open',AppState.showPrestadores);updatePrestadoresOnMap();});
+  document.getElementById('btnPrestadores').addEventListener('click',()=>{AppState.showPrestadores=!AppState.showPrestadores;document.getElementById('btnPrestadores').classList.toggle('btn-primary',AppState.showPrestadores);document.getElementById('prestadoresPanel').classList.toggle('hidden',!AppState.showPrestadores);updatePrestadoresOnMap();});
   document.getElementById('btnCobertura').addEventListener('click',()=>{AppState.showCobertura=!AppState.showCobertura;document.getElementById('btnCobertura').classList.toggle('btn-primary',AppState.showCobertura);updatePrestadoresOnMap();updateKPIs();});
 
   // Set prestadores buttons as active by default
