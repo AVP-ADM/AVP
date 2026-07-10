@@ -1105,6 +1105,28 @@ function populateFilters() {
 }
 function renderFilterList(containerId,items,type){document.getElementById(containerId).innerHTML=items.map(([name,count])=>`<label class="filter-item"><input type="checkbox" value="${name}" onchange="updateFilterSet('${type}')"><span>${name}</span><span class="count">${count}</span></label>`).join('');}
 
+function updateTrackerCounts(){
+  // Calculate tracker counts from filtered data WITHOUT the tracker filter itself
+  const f=AppState.filters;
+  let data=AppState.activeData;
+  if(f.region) data=data.filter(r=>r.regiao===f.region);
+  if(f.state) data=data.filter(r=>r.estado===f.state);
+  if(f.city) data=data.filter(r=>normalizeForCompare(r.cidade)===normalizeForCompare(f.city));
+  if(f.consultores.size>0) data=data.filter(r=>f.consultores.has(r.consultor));
+  if(f.categorias.size>0) data=data.filter(r=>f.categorias.has(r.categoria));
+  if(f.situacao) data=data.filter(r=>r.situacao===f.situacao);
+  if(f.fipeRange){if(f.fipeRange==='none')data=data.filter(r=>r.valorFipe===null);else{const[min,max]=f.fipeRange.split('-').map(Number);data=data.filter(r=>r.valorFipe!==null&&r.valorFipe>=min&&r.valorFipe<=max);}}
+  if(f.fipeMin!==null&&f.fipeMin!=='') data=data.filter(r=>r.valorFipe!==null&&r.valorFipe>=Number(f.fipeMin));
+  if(f.fipeMax!==null&&f.fipeMax!=='') data=data.filter(r=>r.valorFipe!==null&&r.valorFipe<=Number(f.fipeMax));
+  if(f.marca){const t=normalizeForCompare(f.marca);data=data.filter(r=>normalizeForCompare(r.marca).includes(t));}
+  if(f.modelo){const t=normalizeForCompare(f.modelo);data=data.filter(r=>normalizeForCompare(r.modelo).includes(t));}
+  if(f.placa){const t=f.placa.toUpperCase().replace(/[^A-Z0-9]/g,'');data=data.filter(r=>r.placa.includes(t));}
+  if(f.associado){const t=normalizeForCompare(f.associado);data=data.filter(r=>normalizeForCompare(r.nome).includes(t));}
+  const comR=data.filter(r=>r.temRastreador).length;
+  const semR=data.length-comR;
+  document.getElementById('trackerCounts').textContent=`Com: ${comR} | Sem: ${semR}`;
+}
+
 function populatePrestadoresPanel() {
   const list=document.getElementById('prestadoresList');
   const data=AppState.filteredData.filter(r=>r.lat&&r.lng);
@@ -1140,7 +1162,7 @@ function showDashboard() {
   setTimeout(()=>{initMap();updateAll();},100);
 }
 
-function updateAll(){updateKPIs();updateMap();updateTable();updateQuality();populatePrestadoresPanel();}
+function updateAll(){updateKPIs();updateMap();updateTable();updateQuality();populatePrestadoresPanel();updateTrackerCounts();}
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
