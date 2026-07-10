@@ -12008,12 +12008,26 @@ function tmBuildCota(){
       }
       html+='<button onclick="tmCotaAddFaixa(\''+seg+'\')" style="width:100%;margin-top:6px;padding:4px;background:none;border:1px dashed var(--border);border-radius:4px;color:var(--text3);font-size:.65rem;cursor:pointer;font-family:inherit">+ Nova faixa</button>';
     }else{
-      html+='<div class="tm-cota-row">Cota min: <span class="tm-cota-val">'+tmFmtBRL(info.cotaMin||0)+'</span></div>';
-      if(info.fipeCota){
+      html+='<div class="tm-cota-row" style="margin-bottom:6px">Cota minima: <span class="tm-cota-val">'+tmFmtBRL(info.cotaMin||0)+'</span></div>';
+      if(info.fipeCota && info.fipeCota.length > 0){
+        html+='<div style="font-size:.62rem;color:var(--text3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px">Percentual sobre a FIPE:</div>';
+        // First row: R$ 0 – first threshold = minimum
+        var firstFipe = info.fipeCota[0].fipe || 0;
+        if(firstFipe > 0){
+          html+='<div class="tm-cota-row"><span style="border-left:2px solid var(--border);padding-left:8px">R$ 0 – '+tmFmtBRL(firstFipe - 0.01)+'</span><span class="tm-cota-val" style="color:var(--text3);font-weight:500">Minimo ('+tmFmtBRL(info.cotaMin||0)+')</span></div>';
+        }
         for(var fi=0;fi<info.fipeCota.length;fi++){
           var fc=info.fipeCota[fi];
-          var label=fc.fipe?'FIPE acima de '+tmFmtBRL(fc.fipe):'Geral';
-          html+='<div class="tm-cota-row">'+label+': <span class="tm-cota-val">'+fc.pct+'%</span></div>';
+          var nextFipe = (fi < info.fipeCota.length - 1) ? info.fipeCota[fi+1].fipe : null;
+          var rangeLabel = '';
+          if(fc.fipe && nextFipe){
+            rangeLabel = tmFmtBRL(fc.fipe) + ' – ' + tmFmtBRL(nextFipe - 0.01);
+          } else if(fc.fipe){
+            rangeLabel = tmFmtBRL(fc.fipe) + '+';
+          } else {
+            rangeLabel = 'Qualquer valor';
+          }
+          html+='<div class="tm-cota-row"><span style="border-left:2px solid var(--accent);padding-left:8px">'+rangeLabel+'</span><span class="tm-cota-val">'+fc.pct+'%</span></div>';
         }
       }
     }
