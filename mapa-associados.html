@@ -528,7 +528,7 @@ const AppState = {
   fileName: '', importDate: null,
   mapMode: 'bubbles',
   showPrestadores: true, showCobertura: true, showDesprotegidos: false,
-  filters: { region:'', state:'', city:'', consultores:new Set(), categorias:new Set(), fipeRange:'', fipeMin:null, fipeMax:null, tracker:'', marca:'', modelo:'', placa:'', associado:'' },
+  filters: { region:'', state:'', city:'', consultores:new Set(), categorias:new Set(), fipeRange:'', fipeMin:null, fipeMax:null, tracker:'', situacao:'', marca:'', modelo:'', placa:'', associado:'' },
   table: { page:1, perPage:50, sort:null, sortDir:'asc', search:'' },
   charts: {}, stats: null
 };
@@ -717,8 +717,12 @@ function processData() {
     const row=rows[i];
     const getVal=(field)=>{if(!(field in m))return '';const val=row[m[field]];return val!==null&&val!==undefined?String(val).trim():'';};
     const situacao=normalizeForCompare(getVal('situacao'));
-    if(situacao!=='ativo'&&situacao!=='ativa'&&situacao!=='suspenso'&&situacao!=='suspensa'){totalInactive++;continue;}
-    const record={_row:i,nome:normalizeText(getVal('nome')),cidade:'',estado:'',consultor:'',categoria:'',valorFipe:null,temRastreador:false,rastreador:getVal('rastreador'),placa:getVal('placa').toUpperCase().replace(/[^A-Z0-9]/g,''),modelo:normalizeText(getVal('modelo')),marca:normalizeText(getVal('marca')),codigo:getVal('codigo'),lat:null,lng:null,regiao:''};
+    const isCancelado=(situacao==='cancelado'||situacao==='cancelada');
+    const isAtivo=(situacao==='ativo'||situacao==='ativa'||situacao==='suspenso'||situacao==='suspensa');
+    // Skip cancelados SEM rastreador
+    if(!isAtivo&&!isCancelado){totalInactive++;continue;}
+    if(isCancelado&&!hasTracker(getVal('rastreador'))){totalInactive++;continue;}
+    const record={_row:i,nome:normalizeText(getVal('nome')),cidade:'',estado:'',consultor:'',categoria:'',valorFipe:null,temRastreador:false,rastreador:getVal('rastreador'),placa:getVal('placa').toUpperCase().replace(/[^A-Z0-9]/g,''),modelo:normalizeText(getVal('modelo')),marca:normalizeText(getVal('marca')),codigo:getVal('codigo'),lat:null,lng:null,regiao:'',situacao:isCancelado?'Cancelado':'Ativo'};
     let cidade=normalizeText(getVal('cidade'));
     let estado=normalizeText(getVal('estado'));
     // Normalize state: remove accents first, then uppercase
@@ -771,6 +775,7 @@ function applyFilters() {
   if(f.city) data=data.filter(r=>normalizeForCompare(r.cidade)===normalizeForCompare(f.city));
   if(f.consultores.size>0) data=data.filter(r=>f.consultores.has(r.consultor));
   if(f.categorias.size>0) data=data.filter(r=>f.categorias.has(r.categoria));
+  if(f.situacao) data=data.filter(r=>r.situacao===f.situacao);
   if(f.tracker==='com') data=data.filter(r=>r.temRastreador);
   else if(f.tracker==='sem') data=data.filter(r=>!r.temRastreador);
   if(f.fipeRange){if(f.fipeRange==='none')data=data.filter(r=>r.valorFipe===null);else{const[min,max]=f.fipeRange.split('-').map(Number);data=data.filter(r=>r.valorFipe!==null&&r.valorFipe>=min&&r.valorFipe<=max);}}
@@ -783,7 +788,7 @@ function applyFilters() {
   AppState.filteredData=data; AppState.table.page=1; updateAll();
 }
 function clearAllFilters(){
-  AppState.filters={region:'',state:'',city:'',consultores:new Set(),categorias:new Set(),fipeRange:'',fipeMin:null,fipeMax:null,tracker:'',marca:'',modelo:'',placa:'',associado:''};
+  AppState.filters={region:'',state:'',city:'',consultores:new Set(),categorias:new Set(),fipeRange:'',fipeMin:null,fipeMax:null,tracker:'',situacao:'',marca:'',modelo:'',placa:'',associado:''};
   ['filterRegion','filterState','filterCity','filterFipe','filterTracker'].forEach(id=>{document.getElementById(id).value='';});
   ['fipeMin','fipeMax','filterMarca','filterModelo','filterPlaca','filterAssociado'].forEach(id=>{document.getElementById(id).value='';});
   document.querySelectorAll('#consultorList input,#categoriaList input').forEach(cb=>cb.checked=false);
@@ -905,15 +910,25 @@ function updateKPIs() {
   // For tracker dropdown counts, use data WITHOUT tracker filter applied
   const allComR=AppState.activeData.filter(r=>r.temRastreador).length;
   const allSemR=AppState.activeData.length-allComR;
+  const allAtivos=AppState.activeData.filter(r=>r.situacao==='Ativo').length;
+  const allCancelados=AppState.activeData.filter(r=>r.situacao==='Cancelado').length;
   const unprotected=getUnprotectedCount();
   const pctUnprot=total>0?((unprotected/total)*100).toFixed(1):'0';
   const trackerVal=AppState.filters.tracker;
+  const situacaoVal=AppState.filters.situacao;
 
   const strip=document.getElementById('kpiStrip');
   strip.innerHTML=`
     <div class="kpi-pill"><span class="kpi-pill-value">${formatNumber(total)}</span><span class="kpi-pill-label">associados</span></div>
     <div class="kpi-pill"><span class="kpi-pill-value">${cities.size}</span><span class="kpi-pill-label">cidades</span></div>
     <div class="kpi-pill"><span class="kpi-pill-value">${states.size}</span><span class="kpi-pill-label">estados</span></div>
+    <div class="kpi-pill" style="padding:2px 4px;">
+      <select id="kpiSituacaoFilter" style="border:none;background:transparent;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;outline:none;">
+        <option value="" style="background:#1e293b;color:#f1f5f9;" ${situacaoVal===''?'selected':''}>Situacao: Todos (${allAtivos} ativos / ${allCancelados} cancelados)</option>
+        <option value="Ativo" style="background:#1e293b;color:#f1f5f9;" ${situacaoVal==='Ativo'?'selected':''}>Ativos e Suspensos (${allAtivos})</option>
+        <option value="Cancelado" style="background:#1e293b;color:#f1f5f9;" ${situacaoVal==='Cancelado'?'selected':''}>Cancelados c/ rastreador (${allCancelados})</option>
+      </select>
+    </div>
     <div class="kpi-pill" style="padding:2px 4px;">
       <select id="kpiTrackerFilter" style="border:none;background:transparent;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;outline:none;">
         <option value="" style="background:#1e293b;color:#f1f5f9;" ${trackerVal===''?'selected':''}>Rastreador: Todos (${allComR} com / ${allSemR} sem)</option>
@@ -928,6 +943,11 @@ function updateKPIs() {
     AppState.filters.tracker=e.target.value;
     document.getElementById('filterTracker').value=e.target.value;
     if(document.getElementById('tableFilterTracker')) document.getElementById('tableFilterTracker').value=e.target.value;
+    applyFilters();
+  });
+  // Bind situacao filter
+  document.getElementById('kpiSituacaoFilter').addEventListener('change',function(e){
+    AppState.filters.situacao=e.target.value;
     applyFilters();
   });
 }
