@@ -278,11 +278,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
               <option value="Sul">Sul</option>
             </select>
             <div class="filter-section-title" style="margin-top:8px">Estado</div>
-            <input type="text" class="filter-search" id="filterState" list="stateDatalist" placeholder="Digitar estado...">
-            <datalist id="stateDatalist"></datalist>
+            <input type="text" class="filter-search" id="filterState" placeholder="Digitar estado..." autocomplete="off">
+            <div class="filter-list" id="stateList"></div>
             <div class="filter-section-title" style="margin-top:8px">Cidade</div>
-            <input type="text" class="filter-search" id="filterCity" list="cityDatalist" placeholder="Digitar cidade...">
-            <datalist id="cityDatalist"></datalist>
+            <input type="text" class="filter-search" id="filterCity" placeholder="Digitar cidade..." autocomplete="off">
+            <div class="filter-list" id="cityList"></div>
           </div>
           <div class="filter-section">
             <div class="filter-section-title">Consultor</div>
@@ -1103,12 +1103,14 @@ function exportQualityExcel(){const data=AppState.qualityIssues.map(i=>({Tipo:i.
 // ============================================================
 function populateFilters() {
   const data=AppState.activeData;
-  // States datalist
-  const states=[...new Set(data.map(r=>r.estado).filter(Boolean))].sort();
-  document.getElementById('stateDatalist').innerHTML=states.map(s=>`<option value="${s}">`).join('');
-  // Cities datalist
-  const cities=[...new Set(data.map(r=>r.cidade).filter(Boolean))].sort();
-  document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');
+  // States list
+  const stateCount={};data.forEach(r=>{if(r.estado)stateCount[r.estado]=(stateCount[r.estado]||0)+1;});
+  const statesSorted=Object.entries(stateCount).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('stateList').innerHTML=statesSorted.map(([name,count])=>`<div class="filter-item" data-value="${name}" onclick="selectStateItem(this)"><span>${name}</span><span class="count">${count}</span></div>`).join('');
+  // Cities list
+  const cityCount={};data.forEach(r=>{if(r.cidade)cityCount[r.cidade]=(cityCount[r.cidade]||0)+1;});
+  const citiesSorted=Object.entries(cityCount).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('cityList').innerHTML=citiesSorted.map(([name,count])=>`<div class="filter-item" data-value="${name}" onclick="selectCityItem(this)"><span>${name}</span><span class="count">${count}</span></div>`).join('');
   // Consultors
   const consultorCount={};data.forEach(r=>{if(r.consultor)consultorCount[r.consultor]=(consultorCount[r.consultor]||0)+1;});
   renderFilterList('consultorList',Object.entries(consultorCount).sort((a,b)=>b[1]-a[1]),'consultor');
@@ -1118,6 +1120,7 @@ function populateFilters() {
   const comR=data.filter(r=>r.temRastreador).length;
   document.getElementById('trackerCounts').textContent=`Com: ${comR} | Sem: ${data.length-comR}`;
   // Populate table filter dropdowns
+  const states=[...new Set(data.map(r=>r.estado).filter(Boolean))].sort();
   const tState=document.getElementById('tableFilterState');
   tState.innerHTML='<option value="">UF</option>'+states.map(s=>`<option value="${s}">${s}</option>`).join('');
   const tConsultor=document.getElementById('tableFilterConsultor');
@@ -1126,6 +1129,26 @@ function populateFilters() {
   const tCategoria=document.getElementById('tableFilterCategoria');
   const categorias=[...new Set(data.map(r=>r.categoria).filter(Boolean))].sort();
   tCategoria.innerHTML='<option value="">Categoria</option>'+categorias.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+function selectStateItem(el){
+  const val=el.dataset.value;
+  document.getElementById('filterState').value=val;
+  AppState.filters.state=val;
+  // Update city list for this state
+  const cityCount={};AppState.activeData.filter(r=>r.estado===val).forEach(r=>{if(r.cidade)cityCount[r.cidade]=(cityCount[r.cidade]||0)+1;});
+  const citiesSorted=Object.entries(cityCount).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('cityList').innerHTML=citiesSorted.map(([name,count])=>`<div class="filter-item" data-value="${name}" onclick="selectCityItem(this)"><span>${name}</span><span class="count">${count}</span></div>`).join('');
+  document.getElementById('filterCity').value='';
+  AppState.filters.city='';
+  applyFilters();
+}
+
+function selectCityItem(el){
+  const val=el.dataset.value;
+  document.getElementById('filterCity').value=val;
+  AppState.filters.city=val;
+  applyFilters();
 }
 function renderFilterList(containerId,items,type){document.getElementById(containerId).innerHTML=items.map(([name,count])=>`<label class="filter-item"><input type="checkbox" value="${name}" onchange="updateFilterSet('${type}')"><span>${name}</span><span class="count">${count}</span></label>`).join('');}
 
@@ -1251,9 +1274,24 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnCobertura').classList.add('btn-primary');
 
   // Filters
-  document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;const states=[...new Set(AppState.activeData.map(r=>r.estado).filter(Boolean))].sort();const filtered=e.target.value?states.filter(s=>STATES_REGION[s]===e.target.value):states;document.getElementById('stateDatalist').innerHTML=filtered.map(s=>`<option value="${s}">`).join('');AppState.filters.state='';AppState.filters.city='';document.getElementById('filterState').value='';document.getElementById('filterCity').value='';applyFilters();});
-  document.getElementById('filterState').addEventListener('input',debounce(e=>{const v=e.target.value.toUpperCase();if(VALID_UFS.includes(v)){AppState.filters.state=v;const cities=[...new Set(AppState.activeData.filter(r=>r.estado===v).map(r=>r.cidade).filter(Boolean))].sort();document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');}else if(v===''){AppState.filters.state='';const cities=[...new Set(AppState.activeData.map(r=>r.cidade).filter(Boolean))].sort();document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');}else{return;}AppState.filters.city='';document.getElementById('filterCity').value='';applyFilters();},300));
-  document.getElementById('filterCity').addEventListener('input',debounce(e=>{AppState.filters.city=e.target.value;applyFilters();},300));
+  document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;AppState.filters.state='';AppState.filters.city='';document.getElementById('filterState').value='';document.getElementById('filterCity').value='';populateFilters();applyFilters();});
+  document.getElementById('filterState').addEventListener('input',debounce(e=>{
+    const s=normalizeForCompare(e.target.value);
+    document.querySelectorAll('#stateList .filter-item').forEach(item=>{
+      item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
+    });
+    // If exact match, apply filter
+    const exactMatch=VALID_UFS.find(uf=>uf===e.target.value.toUpperCase());
+    if(exactMatch){AppState.filters.state=exactMatch;applyFilters();}
+    else if(e.target.value===''){AppState.filters.state='';applyFilters();}
+  },200));
+  document.getElementById('filterCity').addEventListener('input',debounce(e=>{
+    const s=normalizeForCompare(e.target.value);
+    document.querySelectorAll('#cityList .filter-item').forEach(item=>{
+      item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
+    });
+    if(e.target.value===''){AppState.filters.city='';applyFilters();}
+  },200));
   document.getElementById('filterFipe').addEventListener('change',e=>{AppState.filters.fipeRange=e.target.value;applyFilters();});
   document.getElementById('filterTracker').addEventListener('change',e=>{AppState.filters.tracker=e.target.value;applyFilters();});
   const debouncedFipe=debounce(()=>{AppState.filters.fipeMin=document.getElementById('fipeMin').value||null;AppState.filters.fipeMax=document.getElementById('fipeMax').value||null;applyFilters();},500);
