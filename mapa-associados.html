@@ -900,10 +900,11 @@ function updateKPIs() {
   const total=data.length;
   const cities=new Set(data.filter(r=>r.cidade).map(r=>r.cidade+'|'+r.estado));
   const states=new Set(data.filter(r=>r.estado).map(r=>r.estado));
-  const fipeVals=data.filter(r=>r.valorFipe!==null).map(r=>r.valorFipe);
-  const fipeTotal=fipeVals.reduce((a,b)=>a+b,0);
   const comR=data.filter(r=>r.temRastreador).length;
   const semR=total-comR;
+  // For tracker dropdown counts, use data WITHOUT tracker filter applied
+  const allComR=AppState.activeData.filter(r=>r.temRastreador).length;
+  const allSemR=AppState.activeData.length-allComR;
   const unprotected=getUnprotectedCount();
   const pctUnprot=total>0?((unprotected/total)*100).toFixed(1):'0';
   const trackerVal=AppState.filters.tracker;
@@ -915,9 +916,9 @@ function updateKPIs() {
     <div class="kpi-pill"><span class="kpi-pill-value">${states.size}</span><span class="kpi-pill-label">estados</span></div>
     <div class="kpi-pill" style="padding:2px 4px;">
       <select id="kpiTrackerFilter" style="border:none;background:transparent;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;outline:none;">
-        <option value="" style="background:#1e293b;color:#f1f5f9;" ${trackerVal===''?'selected':''}>Rastreador: Todos (${comR} com / ${semR} sem)</option>
-        <option value="com" style="background:#1e293b;color:#f1f5f9;" ${trackerVal==='com'?'selected':''}>Com rastreador (${comR})</option>
-        <option value="sem" style="background:#1e293b;color:#f1f5f9;" ${trackerVal==='sem'?'selected':''}>Sem rastreador (${semR})</option>
+        <option value="" style="background:#1e293b;color:#f1f5f9;" ${trackerVal===''?'selected':''}>Rastreador: Todos (${allComR} com / ${allSemR} sem)</option>
+        <option value="com" style="background:#1e293b;color:#f1f5f9;" ${trackerVal==='com'?'selected':''}>Com rastreador (${allComR})</option>
+        <option value="sem" style="background:#1e293b;color:#f1f5f9;" ${trackerVal==='sem'?'selected':''}>Sem rastreador (${allSemR})</option>
       </select>
     </div>
     <div class="kpi-pill danger" title="Associados fora do raio de qualquer prestador" style="cursor:pointer;" onclick="toggleDesprotegidos()"><span class="kpi-pill-value">${unprotected}</span><span class="kpi-pill-label">desprotegidos (${pctUnprot}%)</span></div>
