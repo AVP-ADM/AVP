@@ -276,9 +276,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
               <option value="Sul">Sul</option>
             </select>
             <div class="filter-section-title" style="margin-top:8px">Estado</div>
-            <select id="filterState" class="filter-search"><option value="">Todos os estados</option></select>
+            <input type="text" class="filter-search" id="filterState" list="stateDatalist" placeholder="Digitar estado...">
+            <datalist id="stateDatalist"></datalist>
             <div class="filter-section-title" style="margin-top:8px">Cidade</div>
-            <select id="filterCity" class="filter-search"><option value="">Todas as cidades</option></select>
+            <input type="text" class="filter-search" id="filterCity" list="cityDatalist" placeholder="Digitar cidade...">
+            <datalist id="cityDatalist"></datalist>
           </div>
           <div class="filter-section">
             <div class="filter-section-title">Consultor</div>
@@ -1099,11 +1101,16 @@ function exportQualityExcel(){const data=AppState.qualityIssues.map(i=>({Tipo:i.
 // ============================================================
 function populateFilters() {
   const data=AppState.activeData;
-  const stateSelect=document.getElementById('filterState');
+  // States datalist
   const states=[...new Set(data.map(r=>r.estado).filter(Boolean))].sort();
-  stateSelect.innerHTML='<option value="">Todos os estados</option>'+states.map(s=>`<option value="${s}">${s}</option>`).join('');
+  document.getElementById('stateDatalist').innerHTML=states.map(s=>`<option value="${s}">`).join('');
+  // Cities datalist
+  const cities=[...new Set(data.map(r=>r.cidade).filter(Boolean))].sort();
+  document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');
+  // Consultors
   const consultorCount={};data.forEach(r=>{if(r.consultor)consultorCount[r.consultor]=(consultorCount[r.consultor]||0)+1;});
   renderFilterList('consultorList',Object.entries(consultorCount).sort((a,b)=>b[1]-a[1]),'consultor');
+  // Categories
   const catCount={};data.forEach(r=>{if(r.categoria)catCount[r.categoria]=(catCount[r.categoria]||0)+1;});
   renderFilterList('categoriaList',Object.entries(catCount).sort((a,b)=>b[1]-a[1]),'categoria');
   const comR=data.filter(r=>r.temRastreador).length;
@@ -1242,9 +1249,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btnCobertura').classList.add('btn-primary');
 
   // Filters
-  document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;const states=[...new Set(AppState.activeData.map(r=>r.estado).filter(Boolean))].sort();const filtered=e.target.value?states.filter(s=>STATES_REGION[s]===e.target.value):states;document.getElementById('filterState').innerHTML='<option value="">Todos</option>'+filtered.map(s=>`<option value="${s}">${s}</option>`).join('');AppState.filters.state='';AppState.filters.city='';document.getElementById('filterCity').innerHTML='<option value="">Todas</option>';applyFilters();});
-  document.getElementById('filterState').addEventListener('change',e=>{AppState.filters.state=e.target.value;const citySelect=document.getElementById('filterCity');if(e.target.value){const cities=[...new Set(AppState.activeData.filter(r=>r.estado===e.target.value).map(r=>r.cidade).filter(Boolean))].sort();citySelect.innerHTML='<option value="">Todas</option>'+cities.map(c=>`<option value="${c}">${c}</option>`).join('');}else{citySelect.innerHTML='<option value="">Todas</option>';}AppState.filters.city='';applyFilters();});
-  document.getElementById('filterCity').addEventListener('change',e=>{AppState.filters.city=e.target.value;applyFilters();});
+  document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;const states=[...new Set(AppState.activeData.map(r=>r.estado).filter(Boolean))].sort();const filtered=e.target.value?states.filter(s=>STATES_REGION[s]===e.target.value):states;document.getElementById('stateDatalist').innerHTML=filtered.map(s=>`<option value="${s}">`).join('');AppState.filters.state='';AppState.filters.city='';document.getElementById('filterState').value='';document.getElementById('filterCity').value='';applyFilters();});
+  document.getElementById('filterState').addEventListener('input',debounce(e=>{const v=e.target.value.toUpperCase();if(VALID_UFS.includes(v)){AppState.filters.state=v;const cities=[...new Set(AppState.activeData.filter(r=>r.estado===v).map(r=>r.cidade).filter(Boolean))].sort();document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');}else if(v===''){AppState.filters.state='';const cities=[...new Set(AppState.activeData.map(r=>r.cidade).filter(Boolean))].sort();document.getElementById('cityDatalist').innerHTML=cities.map(c=>`<option value="${c}">`).join('');}else{return;}AppState.filters.city='';document.getElementById('filterCity').value='';applyFilters();},300));
+  document.getElementById('filterCity').addEventListener('input',debounce(e=>{AppState.filters.city=e.target.value;applyFilters();},300));
   document.getElementById('filterFipe').addEventListener('change',e=>{AppState.filters.fipeRange=e.target.value;applyFilters();});
   document.getElementById('filterTracker').addEventListener('change',e=>{AppState.filters.tracker=e.target.value;applyFilters();});
   const debouncedFipe=debounce(()=>{AppState.filters.fipeMin=document.getElementById('fipeMin').value||null;AppState.filters.fipeMax=document.getElementById('fipeMax').value||null;applyFilters();},500);
