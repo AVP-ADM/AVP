@@ -901,15 +901,30 @@ function fitMapToData(){const data=AppState.filteredData.filter(r=>r.lat&&r.lng)
 // KPIs (floating strip on map)
 // ============================================================
 function updateKPIs() {
+  const f=AppState.filters;
   const data=AppState.filteredData;
   const total=data.length;
   const cities=new Set(data.filter(r=>r.cidade).map(r=>r.cidade+'|'+r.estado));
   const states=new Set(data.filter(r=>r.estado).map(r=>r.estado));
   const comR=data.filter(r=>r.temRastreador).length;
   const semR=total-comR;
-  // For tracker dropdown counts, use data WITHOUT tracker filter applied
-  const allComR=AppState.activeData.filter(r=>r.temRastreador).length;
-  const allSemR=AppState.activeData.length-allComR;
+  // For tracker/situacao dropdown counts, use data with all filters EXCEPT tracker
+  let dataForTrackerCount=AppState.activeData;
+  if(f.region) dataForTrackerCount=dataForTrackerCount.filter(r=>r.regiao===f.region);
+  if(f.state) dataForTrackerCount=dataForTrackerCount.filter(r=>r.estado===f.state);
+  if(f.city) dataForTrackerCount=dataForTrackerCount.filter(r=>normalizeForCompare(r.cidade)===normalizeForCompare(f.city));
+  if(f.consultores.size>0) dataForTrackerCount=dataForTrackerCount.filter(r=>f.consultores.has(r.consultor));
+  if(f.categorias.size>0) dataForTrackerCount=dataForTrackerCount.filter(r=>f.categorias.has(r.categoria));
+  if(f.situacao) dataForTrackerCount=dataForTrackerCount.filter(r=>r.situacao===f.situacao);
+  if(f.fipeRange){if(f.fipeRange==='none')dataForTrackerCount=dataForTrackerCount.filter(r=>r.valorFipe===null);else{const[min,max]=f.fipeRange.split('-').map(Number);dataForTrackerCount=dataForTrackerCount.filter(r=>r.valorFipe!==null&&r.valorFipe>=min&&r.valorFipe<=max);}}
+  if(f.fipeMin!==null&&f.fipeMin!=='') dataForTrackerCount=dataForTrackerCount.filter(r=>r.valorFipe!==null&&r.valorFipe>=Number(f.fipeMin));
+  if(f.fipeMax!==null&&f.fipeMax!=='') dataForTrackerCount=dataForTrackerCount.filter(r=>r.valorFipe!==null&&r.valorFipe<=Number(f.fipeMax));
+  if(f.marca){const t=normalizeForCompare(f.marca);dataForTrackerCount=dataForTrackerCount.filter(r=>normalizeForCompare(r.marca).includes(t));}
+  if(f.modelo){const t=normalizeForCompare(f.modelo);dataForTrackerCount=dataForTrackerCount.filter(r=>normalizeForCompare(r.modelo).includes(t));}
+  if(f.placa){const t=f.placa.toUpperCase().replace(/[^A-Z0-9]/g,'');dataForTrackerCount=dataForTrackerCount.filter(r=>r.placa.includes(t));}
+  if(f.associado){const t=normalizeForCompare(f.associado);dataForTrackerCount=dataForTrackerCount.filter(r=>normalizeForCompare(r.nome).includes(t));}
+  const allComR=dataForTrackerCount.filter(r=>r.temRastreador).length;
+  const allSemR=dataForTrackerCount.length-allComR;
   const allAtivos=AppState.activeData.filter(r=>r.situacao==='Ativo').length;
   const allCancelados=AppState.activeData.filter(r=>r.situacao==='Cancelado').length;
   const unprotected=getUnprotectedCount();
