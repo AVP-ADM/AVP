@@ -4618,6 +4618,7 @@ function fipeFilterBrands(){
   // Event delegation for clicks
   dd.onmousedown=function(e){
     e.preventDefault();
+    e.stopPropagation();
     var el=e.target;
     while(el&&el!==dd){
       if(el.dataset&&el.dataset.value){
@@ -4684,6 +4685,7 @@ function fipeFilterModels(){
   // Event delegation for clicks
   dd.onmousedown=function(e){
     e.preventDefault();
+    e.stopPropagation();
     var el=e.target;
     while(el&&el!==dd){
       if(el.dataset&&el.dataset.value){
@@ -6988,6 +6990,7 @@ function mgmtSysFilterBrands(inputId, ddId, msgId){
   dd.innerHTML=html;
   dd.onmousedown=function(e){
     e.preventDefault();
+    e.stopPropagation();
     var el=e.target;
     while(el&&el!==dd){
       if(el.dataset&&el.dataset.value){
@@ -7073,6 +7076,7 @@ function mgmtSysRenderModels(inputId, ddId, msgId){
   };
   dd.onmousedown=function(e){
     e.preventDefault();
+    e.stopPropagation();
     var el=e.target;
     while(el&&el!==dd){
       if(el.dataset&&el.dataset.value){
