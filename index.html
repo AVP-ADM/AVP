@@ -5092,6 +5092,7 @@ function openAddBrandToCat(categoria){
       }
       dd.onmousedown=function(e){
         e.preventDefault();
+        e.stopPropagation();
         var el=e.target;
         while(el&&el!==dd){
           if(el.dataset&&el.dataset.value){
@@ -8378,7 +8379,7 @@ function libFilterBrands(){
     moreHtml='<div class="ac-option" data-action="show-all-brands" style="text-align:center;color:var(--blue);font-weight:600;font-size:.75rem;border-top:1px solid var(--border-light)">Mostrar todas (+' +(totalAvailable-50)+ ')</div>';
   }
   dd.innerHTML=countHtml+itemsHtml+moreHtml;
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all-brands'){libShowAllBrands(filtered);return;}el=el.parentElement;}};
+  dd.onmousedown=function(e){e.preventDefault();e.stopPropagation();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all-brands'){libShowAllBrands(filtered);return;}el=el.parentElement;}};
   if(msg){if(query&&brands.find(function(b){return b.toLowerCase()===query;})){msg.textContent='Marca valida';msg.className='ac-msg valid';}else if(query){msg.textContent='';msg.className='ac-msg';}else{msg.textContent='';msg.className='ac-msg';}}
 }
 
@@ -8388,7 +8389,7 @@ function libShowAllBrands(filtered){
   var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+filtered.length+' marca'+(filtered.length!==1?'s':'')+' disponive'+(filtered.length!==1?'is':'l')+'</div>';
   var itemsHtml=filtered.map(function(b){return '<div class="ac-option" data-value="'+b.replace(/"/g,'&quot;')+'">'+b+'</div>';}).join('');
   dd.innerHTML=countHtml+itemsHtml;
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}el=el.parentElement;}};
+  dd.onmousedown=function(e){e.preventDefault();e.stopPropagation();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectBrand(el.dataset.value);return;}el=el.parentElement;}};
 }
 
 function libSelectBrand(brand){
@@ -8436,7 +8437,7 @@ function libFilterModels(){
     moreHtml='<div class="ac-option" data-action="show-all" style="text-align:center;color:var(--blue);font-weight:600;font-size:.75rem;border-top:1px solid var(--border-light)">Mostrar todos (+' +(totalAvailable-50)+ ')</div>';
   }
   dd.innerHTML=countHtml+itemsHtml+moreHtml;
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all'){libShowAllModels(filtered);return;}el=el.parentElement;}};
+  dd.onmousedown=function(e){e.preventDefault();e.stopPropagation();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}if(el.dataset&&el.dataset.action==='show-all'){libShowAllModels(filtered);return;}el=el.parentElement;}};
   if(msg){if(query&&available.find(function(m){return m.toLowerCase()===query;})){msg.textContent='Modelo valido';msg.className='ac-msg valid';}else{msg.textContent='';msg.className='ac-msg';}}
 }
 
@@ -8446,7 +8447,7 @@ function libShowAllModels(filtered){
   var countHtml='<div style="padding:6px 12px;font-size:.68rem;color:var(--text3);border-bottom:1px solid var(--border-light)">'+filtered.length+' modelo'+(filtered.length!==1?'s':'')+' disponive'+(filtered.length!==1?'is':'l')+'</div>';
   var itemsHtml=filtered.map(function(m){return '<div class="ac-option" data-value="'+m.replace(/"/g,'&quot;')+'">'+m+'</div>';}).join('');
   dd.innerHTML=countHtml+itemsHtml;
-  dd.onmousedown=function(e){e.preventDefault();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}el=el.parentElement;}};
+  dd.onmousedown=function(e){e.preventDefault();e.stopPropagation();var el=e.target;while(el&&el!==dd){if(el.dataset&&el.dataset.value){libSelectModel(el.dataset.value);return;}el=el.parentElement;}};
 }
 
 function libSelectModel(model){
