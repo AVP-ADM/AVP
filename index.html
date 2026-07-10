@@ -12014,7 +12014,7 @@ function tmBuildCota(){
         // First row: R$ 0 – first threshold = minimum
         var firstFipe = info.fipeCota[0].fipe || 0;
         if(firstFipe > 0){
-          html+='<div class="tm-cota-row"><span style="border-left:2px solid var(--border);padding-left:8px">R$ 0 – '+tmFmtBRL(firstFipe - 0.01)+'</span><span class="tm-cota-val" style="color:var(--text3);font-weight:500">Minimo ('+tmFmtBRL(info.cotaMin||0)+')</span></div>';
+          html+='<div class="tm-cota-row"><span>R$ 0 – '+tmFmtBRL(firstFipe - 0.01)+'</span><span class="tm-cota-val" style="color:var(--text3);font-weight:500">Minimo ('+tmFmtBRL(info.cotaMin||0)+')</span></div>';
         }
         for(var fi=0;fi<info.fipeCota.length;fi++){
           var fc=info.fipeCota[fi];
@@ -12027,7 +12027,7 @@ function tmBuildCota(){
           } else {
             rangeLabel = 'Qualquer valor';
           }
-          html+='<div class="tm-cota-row"><span style="border-left:2px solid var(--accent);padding-left:8px">'+rangeLabel+'</span><span class="tm-cota-val">'+fc.pct+'%</span></div>';
+          html+='<div class="tm-cota-row"><span>'+rangeLabel+'</span><span class="tm-cota-val">'+fc.pct+'%</span></div>';
         }
       }
     }
