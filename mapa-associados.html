@@ -101,7 +101,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .filter-section { margin-bottom: 12px; }
 .filter-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
 .filter-search { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: var(--bg); color: var(--text); }
-.filter-list { max-height: 180px; overflow-y: auto; margin-top: 4px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.filter-list { max-height: 180px; overflow-y: auto; margin-top: 4px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); display: none; }
+.filter-list.visible { display: block; }
 .filter-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
 .filter-item:last-child { border-bottom: none; }
 .filter-item:hover { background: var(--primary-light); }
@@ -798,8 +799,19 @@ function clearAllFilters(){
   document.querySelectorAll('#consultorList input,#categoriaList input').forEach(cb=>cb.checked=false);
   applyFilters();
 }
-function selectAllFilter(type){document.getElementById(type==='consultor'?'consultorList':'categoriaList').querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=true;});updateFilterSet(type);}
-function clearFilter(type){document.getElementById(type==='consultor'?'consultorList':'categoriaList').querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});updateFilterSet(type);}
+function selectAllFilter(type){
+  const list=document.getElementById(type==='consultor'?'consultorList':'categoriaList');
+  list.classList.add('visible');
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{if(cb.closest('.filter-item').style.display!=='none')cb.checked=true;});
+  updateFilterSet(type);
+}
+function clearFilter(type){
+  const list=document.getElementById(type==='consultor'?'consultorList':'categoriaList');
+  list.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});
+  list.classList.remove('visible');
+  document.getElementById(type==='consultor'?'consultorSearch':'categoriaSearch').value='';
+  updateFilterSet(type);
+}
 function updateFilterSet(type){const list=document.getElementById(type==='consultor'?'consultorList':'categoriaList');const set=new Set();list.querySelectorAll('input[type="checkbox"]:checked').forEach(cb=>set.add(cb.value));if(type==='consultor')AppState.filters.consultores=set;else AppState.filters.categorias=set;applyFilters();}
 </script>
 <script>
@@ -1134,6 +1146,7 @@ function populateFilters() {
 function selectStateItem(el){
   const val=el.dataset.value;
   document.getElementById('filterState').value=val;
+  document.getElementById('stateList').classList.remove('visible');
   AppState.filters.state=val;
   // Update city list for this state
   const cityCount={};AppState.activeData.filter(r=>r.estado===val).forEach(r=>{if(r.cidade)cityCount[r.cidade]=(cityCount[r.cidade]||0)+1;});
@@ -1147,6 +1160,7 @@ function selectStateItem(el){
 function selectCityItem(el){
   const val=el.dataset.value;
   document.getElementById('filterCity').value=val;
+  document.getElementById('cityList').classList.remove('visible');
   AppState.filters.city=val;
   applyFilters();
 }
@@ -1277,21 +1291,28 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('filterRegion').addEventListener('change',e=>{AppState.filters.region=e.target.value;AppState.filters.state='';AppState.filters.city='';document.getElementById('filterState').value='';document.getElementById('filterCity').value='';populateFilters();applyFilters();});
   document.getElementById('filterState').addEventListener('input',debounce(e=>{
     const s=normalizeForCompare(e.target.value);
+    const list=document.getElementById('stateList');
+    list.classList.add('visible');
     document.querySelectorAll('#stateList .filter-item').forEach(item=>{
       item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
     });
-    // If exact match, apply filter
-    const exactMatch=VALID_UFS.find(uf=>uf===e.target.value.toUpperCase());
-    if(exactMatch){AppState.filters.state=exactMatch;applyFilters();}
-    else if(e.target.value===''){AppState.filters.state='';applyFilters();}
-  },200));
+    if(e.target.value===''){AppState.filters.state='';applyFilters();}
+  },150));
+  document.getElementById('filterState').addEventListener('focus',()=>document.getElementById('stateList').classList.add('visible'));
+
   document.getElementById('filterCity').addEventListener('input',debounce(e=>{
     const s=normalizeForCompare(e.target.value);
+    const list=document.getElementById('cityList');
+    list.classList.add('visible');
     document.querySelectorAll('#cityList .filter-item').forEach(item=>{
       item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
     });
     if(e.target.value===''){AppState.filters.city='';applyFilters();}
-  },200));
+  },150));
+  document.getElementById('filterCity').addEventListener('focus',()=>document.getElementById('cityList').classList.add('visible'));
+
+  document.getElementById('consultorSearch').addEventListener('focus',()=>document.getElementById('consultorList').classList.add('visible'));
+  document.getElementById('categoriaSearch').addEventListener('focus',()=>document.getElementById('categoriaList').classList.add('visible'));
   document.getElementById('filterFipe').addEventListener('change',e=>{AppState.filters.fipeRange=e.target.value;applyFilters();});
   document.getElementById('filterTracker').addEventListener('change',e=>{AppState.filters.tracker=e.target.value;applyFilters();});
   const debouncedFipe=debounce(()=>{AppState.filters.fipeMin=document.getElementById('fipeMin').value||null;AppState.filters.fipeMax=document.getElementById('fipeMax').value||null;applyFilters();},500);
@@ -1301,26 +1322,30 @@ document.addEventListener('DOMContentLoaded', function() {
   ['filterMarca','filterModelo','filterPlaca','filterAssociado'].forEach(id=>document.getElementById(id).addEventListener('input',debouncedAdv));
   document.getElementById('consultorSearch').addEventListener('input',debounce(()=>{
     const s=normalizeForCompare(document.getElementById('consultorSearch').value);
-    let visible=0;
+    const list=document.getElementById('consultorList');
+    list.classList.add('visible');
     document.querySelectorAll('#consultorList .filter-item').forEach(item=>{
       const match=normalizeForCompare(item.querySelector('span').textContent).includes(s);
       item.style.display=match?'':'none';
-      if(match) visible++;
     });
   },150));
   document.getElementById('consultorSearch').addEventListener('keydown',e=>{
     if(e.key==='Enter'){
       const s=normalizeForCompare(document.getElementById('consultorSearch').value);
       if(!s) return;
-      // Select all visible items
       document.querySelectorAll('#consultorList .filter-item').forEach(item=>{
         if(item.style.display!=='none') item.querySelector('input').checked=true;
       });
       updateFilterSet('consultor');
+      document.getElementById('consultorList').classList.remove('visible');
     }
   });
+  document.getElementById('consultorSearch').addEventListener('focus',()=>document.getElementById('consultorList').classList.add('visible'));
+
   document.getElementById('categoriaSearch').addEventListener('input',debounce(()=>{
     const s=normalizeForCompare(document.getElementById('categoriaSearch').value);
+    const list=document.getElementById('categoriaList');
+    list.classList.add('visible');
     document.querySelectorAll('#categoriaList .filter-item').forEach(item=>{
       item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
     });
@@ -1333,8 +1358,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if(item.style.display!=='none') item.querySelector('input').checked=true;
       });
       updateFilterSet('categoria');
+      document.getElementById('categoriaList').classList.remove('visible');
     }
   });
+  document.getElementById('categoriaSearch').addEventListener('focus',()=>document.getElementById('categoriaList').classList.add('visible'));
 
   // Table
   document.getElementById('tableSearch').addEventListener('input',debounce(e=>{AppState.table.search=e.target.value;AppState.table.page=1;updateTable();},300));
