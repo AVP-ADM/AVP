@@ -2371,7 +2371,7 @@ tr:hover .row-actions{opacity:1}
 </div>
 
 <!-- ========= MODAL ========= -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+<div class="modal-overlay" id="modalOverlay" onmousedown="if(event.target===this)this._clickedOverlay=true;else this._clickedOverlay=false" onclick="if(this._clickedOverlay&&event.target===this)closeModal()">
   <div class="modal" id="modalBox" onclick="event.stopPropagation()">
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-body" id="modalBody"></div>
