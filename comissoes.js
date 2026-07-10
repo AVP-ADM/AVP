@@ -954,10 +954,14 @@ async function renderSedes() {
 
 
 function openCreateSede() {
-  showModal('Nova Sede', '<div style="display:flex;flex-direction:column;gap:12px">' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="sede_nome" placeholder="Nome da sede"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cidade</label><input id="sede_cidade" placeholder="Cidade"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Estado</label><input id="sede_estado" placeholder="Ex: SP, RJ, MG" maxlength="2"></div>' +
+  var ufs = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+  var ufOptions = '<option value="">UF</option>' + ufs.map(function(u){return '<option value="'+u+'">'+u+'</option>';}).join('');
+  showModal('Nova Sede', '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Nome *</label><input id="sede_nome" placeholder="Nome da sede" style="width:100%"></div>' +
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:10px">' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Cidade</label><input id="sede_cidade" placeholder="Cidade" style="width:100%"></div>' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Estado</label><select id="sede_estado" style="width:100%;min-width:70px">'+ufOptions+'</select></div>' +
+    '</div>' +
     '</div>', async function () {
     const nome = document.getElementById('sede_nome').value.trim();
     if (!nome) { showToast('Informe o nome da sede', 'error'); return; }
@@ -966,7 +970,7 @@ function openCreateSede() {
       await supabase.insert('sedes', {
         nome,
         cidade: document.getElementById('sede_cidade').value.trim() || null,
-        estado: document.getElementById('sede_estado').value.trim().toUpperCase() || null
+        estado: document.getElementById('sede_estado').value || null
       });
       showToast('Sede criada com sucesso', 'success');
       renderSedes();
@@ -978,14 +982,16 @@ function openCreateSede() {
 function openEditSede(id) {
   const s = _comSedes.find(x => x.id === id);
   if (!s) return;
-  // Bug 9 fix: usar escapeHtml completo em vez de só escapar aspas duplas
+  var ufs = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+  var ufOptions = '<option value="">UF</option>' + ufs.map(function(u){return '<option value="'+u+'"'+(u===(s.estado||'').toUpperCase()?' selected':'')+'>'+u+'</option>';}).join('');
   const safeNome = escapeHtml(s.nome || '');
   const safeCidade = escapeHtml(s.cidade || '');
-  const safeEstado = escapeHtml(s.estado || '');
-  showModal('Editar Sede', '<div style="display:flex;flex-direction:column;gap:12px">' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Nome</label><input id="sede_nome" value="' + safeNome + '"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Cidade</label><input id="sede_cidade" value="' + safeCidade + '"></div>' +
-    '<div><label style="font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Estado</label><input id="sede_estado" value="' + safeEstado + '" maxlength="2"></div>' +
+  showModal('Editar Sede', '<div style="display:flex;flex-direction:column;gap:14px">' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Nome *</label><input id="sede_nome" value="' + safeNome + '" style="width:100%"></div>' +
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:10px">' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Cidade</label><input id="sede_cidade" value="' + safeCidade + '" style="width:100%"></div>' +
+    '<div><label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:5px">Estado</label><select id="sede_estado" style="width:100%;min-width:70px">'+ufOptions+'</select></div>' +
+    '</div>' +
     '</div>', async function () {
     const nome = document.getElementById('sede_nome').value.trim();
     if (!nome) { showToast('Informe o nome', 'error'); return; }
@@ -994,7 +1000,7 @@ function openEditSede(id) {
       await supabase.update('sedes', {
         nome,
         cidade: document.getElementById('sede_cidade').value.trim() || null,
-        estado: document.getElementById('sede_estado').value.trim().toUpperCase() || null
+        estado: document.getElementById('sede_estado').value || null
       }, 'id=eq.' + id);
       showToast('Sede atualizada', 'success');
       renderSedes();
