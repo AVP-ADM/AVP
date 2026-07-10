@@ -101,8 +101,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .filter-section { margin-bottom: 12px; }
 .filter-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
 .filter-search { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: var(--bg); color: var(--text); }
-.filter-list { max-height: 120px; overflow-y: auto; margin-top: 4px; }
-.filter-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; cursor: pointer; }
+.filter-list { max-height: 180px; overflow-y: auto; margin-top: 4px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.filter-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.filter-item:last-child { border-bottom: none; }
+.filter-item:hover { background: var(--primary-light); }
 .filter-item .count { margin-left: auto; color: var(--text-muted); font-size: 11px; }
 .filter-actions { display: flex; gap: 4px; margin-top: 4px; }
 .filter-toggle-btn { position: absolute; top: 12px; left: 12px; z-index: 500; }
@@ -1259,8 +1261,42 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('fipeMax').addEventListener('input',debouncedFipe);
   const debouncedAdv=debounce(()=>{AppState.filters.marca=document.getElementById('filterMarca').value;AppState.filters.modelo=document.getElementById('filterModelo').value;AppState.filters.placa=document.getElementById('filterPlaca').value;AppState.filters.associado=document.getElementById('filterAssociado').value;applyFilters();},400);
   ['filterMarca','filterModelo','filterPlaca','filterAssociado'].forEach(id=>document.getElementById(id).addEventListener('input',debouncedAdv));
-  document.getElementById('consultorSearch').addEventListener('input',debounce(()=>{const s=normalizeForCompare(document.getElementById('consultorSearch').value);document.querySelectorAll('#consultorList .filter-item').forEach(item=>{item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';});},200));
-  document.getElementById('categoriaSearch').addEventListener('input',debounce(()=>{const s=normalizeForCompare(document.getElementById('categoriaSearch').value);document.querySelectorAll('#categoriaList .filter-item').forEach(item=>{item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';});},200));
+  document.getElementById('consultorSearch').addEventListener('input',debounce(()=>{
+    const s=normalizeForCompare(document.getElementById('consultorSearch').value);
+    let visible=0;
+    document.querySelectorAll('#consultorList .filter-item').forEach(item=>{
+      const match=normalizeForCompare(item.querySelector('span').textContent).includes(s);
+      item.style.display=match?'':'none';
+      if(match) visible++;
+    });
+  },150));
+  document.getElementById('consultorSearch').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const s=normalizeForCompare(document.getElementById('consultorSearch').value);
+      if(!s) return;
+      // Select all visible items
+      document.querySelectorAll('#consultorList .filter-item').forEach(item=>{
+        if(item.style.display!=='none') item.querySelector('input').checked=true;
+      });
+      updateFilterSet('consultor');
+    }
+  });
+  document.getElementById('categoriaSearch').addEventListener('input',debounce(()=>{
+    const s=normalizeForCompare(document.getElementById('categoriaSearch').value);
+    document.querySelectorAll('#categoriaList .filter-item').forEach(item=>{
+      item.style.display=normalizeForCompare(item.querySelector('span').textContent).includes(s)?'':'none';
+    });
+  },150));
+  document.getElementById('categoriaSearch').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const s=normalizeForCompare(document.getElementById('categoriaSearch').value);
+      if(!s) return;
+      document.querySelectorAll('#categoriaList .filter-item').forEach(item=>{
+        if(item.style.display!=='none') item.querySelector('input').checked=true;
+      });
+      updateFilterSet('categoria');
+    }
+  });
 
   // Table
   document.getElementById('tableSearch').addEventListener('input',debounce(e=>{AppState.table.search=e.target.value;AppState.table.page=1;updateTable();},300));
