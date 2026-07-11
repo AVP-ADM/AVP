@@ -230,7 +230,7 @@ function regimentoToggleItem(id) {
 
 // ========= TAB LEITURA (PDF VIEWER) =========
 function regimentoRenderLeitura() {
-  const pdfUrl = REGIMENTO_PDF_URL + '#page=' + _regimentoPdfPage;
+  const pdfUrl = REGIMENTO_PDF_URL + '#page=' + _regimentoPdfPage + '&navpanes=0';
   return `<div style="border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);height:calc(100vh - 280px)"><iframe id="regimento_pdf_viewer" src="${pdfUrl}" style="width:100%;height:100%;border:none" title="Regimento Interno"></iframe></div>`;
 }
 
