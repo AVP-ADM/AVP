@@ -1298,8 +1298,9 @@ tr:hover .row-actions{opacity:1}
             <button class="sidebar-sub-item" data-subtab="regimento" onclick="goTab('regimento')">
               <span class="si-text">Regimento</span>
             </button>
-            <button class="sidebar-sub-item" data-subtab="consultafipe" onclick="goTab('consultafipe')">
+            <button class="sidebar-sub-item" onclick="window.open('https://veiculos.fipe.org.br/','_blank')">
               <span class="si-text">Consulta na FIPE</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4;margin-left:auto"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </button>
           </div>
         </div>
@@ -1553,22 +1554,6 @@ tr:hover .row-actions{opacity:1}
   <div class="sub-tab-panel" id="subpanel-regimento">
     <div class="card" style="padding:24px 28px;max-width:800px;margin:0 auto">
       <div id="regimento_container"></div>
-    </div>
-  </div>
-
-  <!-- ========= SUB-TAB: CONSULTA NA FIPE ========= -->
-  <div class="sub-tab-panel" id="subpanel-consultafipe">
-    <div class="placafipe-wrap" id="fipeWrap" style="height:calc(100vh - 120px)">
-      <div class="placafipe-toolbar">
-        <span class="placafipe-toolbar-title">Consulta na FIPE</span>
-        <div class="placafipe-toolbar-actions">
-          <button onclick="fipeReload()" title="Atualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-          <a href="https://veiculos.fipe.org.br/" target="_blank" title="Abrir em nova aba"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        </div>
-      </div>
-      <div class="placafipe-iframe-crop" style="padding-top:38px">
-        <iframe id="fipe_iframe" src="https://veiculos.fipe.org.br/" style="width:100%;height:100%;border:none" allowfullscreen></iframe>
-      </div>
     </div>
   </div>
 
@@ -3154,8 +3139,7 @@ function goTab(tab){
     planos: { parent: 'consultas', sub: 'planos' },
     coberturas: { parent: 'consultas', sub: 'coberturas' },
     placafipe: { parent: 'consultas', sub: 'placafipe' },
-    regimento: { parent: 'consultas', sub: 'regimento' },
-    consultafipe: { parent: 'consultas', sub: 'consultafipe' }
+    regimento: { parent: 'consultas', sub: 'regimento' }
   };
 
   let mainTab = tab;
@@ -10577,8 +10561,7 @@ var MOBILE_SUBTABS = {
     {label:'Planos', tab:'planos'},
     {label:'Coberturas', tab:'coberturas'},
     {label:'Consulta Placa', tab:'placafipe'},
-    {label:'Regimento', tab:'regimento'},
-    {label:'Consulta FIPE', tab:'consultafipe'}
+    {label:'Regimento', tab:'regimento'}
   ],
   analise: [
     {label:'Conflitos', tab:'duplicates'},
@@ -10599,7 +10582,7 @@ function updateMobileNav(tab){
   // Determine which bottom nav item is active
   var bnavMap = {
     overview:'overview',
-    planos:'consultas', coberturas:'consultas', placafipe:'consultas', regimento:'consultas', consultafipe:'consultas',
+    planos:'consultas', coberturas:'consultas', placafipe:'consultas', regimento:'consultas',
     duplicates:'analise', divergences:'analise',
     management:'gestao', history:'gestao'
   };
@@ -13476,11 +13459,6 @@ function placaFipeReload(){
   if(loading) loading.style.display = 'flex';
   if(wrap) wrap.classList.remove('loaded');
   iframe.src = 'https://placafipe.com.br/';
-}
-
-function fipeReload(){
-  var iframe = document.getElementById('fipe_iframe');
-  if(iframe) iframe.src = 'https://veiculos.fipe.org.br/';
 }
 
 function placaFipeFullscreen(){
