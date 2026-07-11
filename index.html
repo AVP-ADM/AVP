@@ -2167,6 +2167,10 @@ tr:hover .row-actions{opacity:1}
                   <div><div style="font-weight:500;font-size:.82rem">Encerrar outras sessões</div><div style="font-size:.72rem;color:var(--text3)">Desconectar outros dispositivos</div></div>
                   <button class="btn btn-sm btn-red" onclick="killOtherSessionsAction()" style="padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Encerrar</button>
                 </div>
+                <div class="admin-only-setting" style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--red-bg);border-radius:var(--radius);border:1px solid var(--red-light)">
+                  <div><div style="font-weight:500;font-size:.82rem">Forçar logout de todos</div><div style="font-size:.72rem;color:var(--text3)">Desconecta todos os usuarios e força re-login</div></div>
+                  <button class="btn btn-sm btn-red" onclick="forceLogoutAllAction()" style="padding:4px 10px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Desconectar Todos</button>
+                </div>
               </div>
             </div>
 
@@ -9777,6 +9781,31 @@ async function killOtherSessionsAction(){
       showToast('Erro: '+e.message,'error');
     }
   },'red');
+}
+
+async function forceLogoutAllAction(){
+  showModal('Forçar logout de todos','Deseja desconectar <strong>TODOS os usuarios do sistema</strong>?<br><br><span style="font-size:.78rem;color:var(--text2)">Todos serão forçados a fazer login novamente. Apenas sua sessão atual permanecerá ativa.<br><br>Isso é util após atualizações importantes do sistema.</span>',async function(){
+    try{
+      const user=supabase.getUser();
+      if(!user){showToast('Usuário não encontrado','error');closeModal();return;}
+      // Delete ALL sessions except current
+      const allSessions=await supabase.select('user_sessions',{});
+      var count=0;
+      for(var i=0;i<allSessions.length;i++){
+        var s=allSessions[i];
+        if(s.session_token===_sessionToken) continue;
+        await supabase.delete('user_sessions','id=eq.'+s.id);
+        count++;
+      }
+      closeModal();
+      showToast(count+' usuario(s) desconectado(s)! Todos precisarão logar novamente.','success');
+      supabase.insertSystemLog('warning','Logout global forçado',count+' usuario(s) desconectado(s) pelo admin');
+      renderSettingsSystem();
+    }catch(e){
+      closeModal();
+      showToast('Erro: '+e.message,'error');
+    }
+  },'red','Desconectar Todos');
 }
 
 function clearLocalCacheAction(){
