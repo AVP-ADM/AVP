@@ -11118,6 +11118,9 @@ async function initDataConnection(){
     enableExportButtons();
     showSyncStatus('success','Conectado ao Supabase');
 
+    // Start auto-sync polling (check for changes every 60s)
+    startDataVersionPolling();
+
   } catch(err){
     console.error('Erro ao carregar do Supabase:',err);
     // Check if we have cached data - if so, it's not a total failure
@@ -11477,6 +11480,87 @@ function startSessionCheck(){
       },3000);
     }
   }, 30000);
+}
+
+// ========= AUTO-SYNC: DATA VERSION POLLING =========
+var _dataVersion = null; // timestamp of last known change
+var _dataVersionInterval = null;
+var DATA_VERSION_CHECK_INTERVAL = 60000; // 60 seconds
+
+function startDataVersionPolling(){
+  if(_dataVersionInterval) clearInterval(_dataVersionInterval);
+  _dataVersionInterval = setInterval(checkDataVersion, DATA_VERSION_CHECK_INTERVAL);
+  // Also check FIPE new table on start
+  if(typeof checkFipeNewTable === 'function') setTimeout(checkFipeNewTable, 5000);
+}
+
+async function checkDataVersion(){
+  try{
+    var result = await supabase.select('historico', { order: 'created_at.desc', limit: 1, select: 'created_at' });
+    if(!result || !result.length) return;
+    var latestVersion = result[0].created_at;
+    if(_dataVersion === null){
+      // First check - just store current version
+      _dataVersion = latestVersion;
+      return;
+    }
+    if(latestVersion !== _dataVersion){
+      // Data changed! Reload silently
+      _dataVersion = latestVersion;
+      console.log('Data version changed, reloading...');
+      showSyncStatus('loading','Atualizando dados...');
+      await reloadDataSilent();
+      showSyncStatus('success','Dados atualizados');
+    }
+  }catch(e){
+    // Silent fail - don't interrupt user
+    console.warn('Data version check error:', e);
+  }
+}
+
+async function reloadDataSilent(){
+  try{
+    var result = await supabase.loadAllData();
+    var categorias = result.categorias;
+    var modelos = result.modelos;
+    // Rebuild RAW
+    for(var key of Object.keys(RAW)) delete RAW[key];
+    var catIdMap = {};
+    for(var i=0; i<categorias.length; i++){
+      var cat = categorias[i];
+      catIdMap[cat.nome] = cat.id;
+      RAW[cat.nome] = {total:0, brands:{}};
+      FIPE_CATEGORY_TYPE_MAP[cat.nome] = cat.tipo_fipe || 'cars';
+      CAT_ANO_MINIMO[cat.nome] = cat.ano_minimo || 2006;
+    }
+    window._catIdMap = catIdMap;
+    for(var j=0; j<modelos.length; j++){
+      var m = modelos[j];
+      var catName = m.categorias && m.categorias.nome;
+      if(!catName || !RAW[catName]) continue;
+      if(!RAW[catName].brands[m.marca]) RAW[catName].brands[m.marca] = [];
+      RAW[catName].brands[m.marca].push(m.modelo);
+      RAW[catName].total++;
+      if(m.ano_aceitacao){
+        var akey = catName+'|||'+m.marca+'|||'+m.modelo;
+        ANOS_ACEITACAO[akey] = m.ano_aceitacao;
+      }
+    }
+    // Recompute
+    recomputeAll();
+    markAllDirty();
+    refreshActiveTab();
+    renderKPIs();
+    updateSidebarBadges();
+  }catch(e){
+    console.warn('Silent reload error:', e);
+  }
+}
+
+// Bump data version after any commit (called from commitDirectAction and commitStaging)
+async function bumpDataVersion(){
+  // No explicit action needed - the historico insert already updates the latest created_at
+  // which is what checkDataVersion polls. This function exists for clarity.
 }
 
 function initApp(){
