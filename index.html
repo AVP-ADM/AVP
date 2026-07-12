@@ -2850,9 +2850,10 @@ function renderFipeDiagnostics(){
   const el=document.getElementById('fipeDiagnostics')||document.getElementById('settingsFipeDiagnostics');
   if(!el) return;
   loadFipeRequestsFromStorage();
+  const savedRefCode=localStorage.getItem('avp-fipe-last-ref-code')||'';
   if(!FIPE_BASE.lastUpdate){
     el.innerHTML=`<div style="color:var(--text3);font-size:.82rem;padding:12px">Base oficial não carregada. Clique em "Atualizar Base Oficial" para carregar.</div>
-    <div style="margin-top:8px;font-size:.78rem;color:var(--text2)">Requisições este mês: <strong>${FIPE_REQUESTS.count}</strong> / 1.000</div>`;
+    <div style="margin-top:8px;font-size:.78rem;color:var(--text2)">Requisições este mês (global): <strong>${FIPE_REQUESTS.count}</strong> / 1.000</div>`;
     updateFipeUpdateButton();
     return;
   }
@@ -2861,22 +2862,44 @@ function renderFipeDiagnostics(){
   const nextUpdate=new Date(lastDate.getTime()+(30*24*60*60*1000));
   const pct=Math.min(100,Math.round(FIPE_REQUESTS.count/1000*100));
   const barColor=pct>80?'var(--red)':pct>50?'var(--amber)':'var(--green)';
+  const refLabel=savedRefCode?'Codigo '+savedRefCode:'—';
   el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem">
     <div><span style="color:var(--text2)">Status:</span> <strong style="color:${daysAgo>30?'var(--amber)':'var(--green)'}">${daysAgo>30?'Desatualizada':'Atualizada'}</strong></div>
+    <div><span style="color:var(--text2)">Versao da tabela:</span> <strong>${refLabel}</strong> <span id="fipeRefMonthLabel" style="color:var(--text3);font-size:.72rem"></span></div>
     <div><span style="color:var(--text2)">Última atualização:</span> <strong>${lastDate.toLocaleString('pt-BR')}</strong></div>
-    <div><span style="color:var(--text2)">Próxima recomendada:</span> <strong>${nextUpdate.toLocaleDateString('pt-BR')}</strong></div>
     <div><span style="color:var(--text2)">Há:</span> <strong>${daysAgo} dia(s)</strong></div>
-    <div><span style="color:var(--text2)">Marcas:</span> <strong>${FIPE_BASE.totalBrands}</strong></div>
-    <div><span style="color:var(--text2)">Modelos:</span> <strong>${FIPE_BASE.totalModels.toLocaleString()}</strong></div>
+    <div><span style="color:var(--text2)">Próxima recomendada:</span> <strong>${nextUpdate.toLocaleDateString('pt-BR')}</strong></div>
+    <div><span style="color:var(--text2)">Marcas:</span> <strong>${FIPE_BASE.totalBrands}</strong> &nbsp; <span style="color:var(--text2)">Modelos:</span> <strong>${FIPE_BASE.totalModels.toLocaleString()}</strong></div>
   </div>
   <div style="margin-top:12px;font-size:.78rem">
-    <span style="color:var(--text2)">Requisições este mês:</span> <strong>${FIPE_REQUESTS.count}</strong> / 1.000
+    <span style="color:var(--text2)">Requisições este mês (todos os usuarios):</span> <strong>${FIPE_REQUESTS.count}</strong> / 1.000
     <div style="margin-top:4px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
       <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .3s"></div>
     </div>
     <span style="font-size:.68rem;color:var(--text3)">${pct}% do limite mensal utilizado</span>
   </div>`;
+  // Try to load the reference month name from API (async, non-blocking)
+  if(savedRefCode){
+    fipeFetchRefMonth(savedRefCode);
+  }
   updateFipeUpdateButton();
+}
+
+async function fipeFetchRefMonth(code){
+  try{
+    const resp=await fipeFetch('/references');
+    if(!resp.ok) return;
+    const refs=await resp.json();
+    if(!refs||!refs.length) return;
+    var found=refs.find(function(r){return String(r.code)===String(code);});
+    var label=document.getElementById('fipeRefMonthLabel');
+    if(label&&found){
+      label.textContent='('+found.month+')';
+    } else if(label&&refs[0]){
+      // Show latest available for comparison
+      label.textContent='(salva: cod.'+code+' / mais recente: '+refs[0].month+')';
+    }
+  }catch(e){/* silent */}
 }
 
 function isFipeBaseValid(){
