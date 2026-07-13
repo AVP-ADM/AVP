@@ -11832,7 +11832,7 @@ var _tmLastAction='';
 function tmScheduleSave(action){
   if(action)_tmLastAction=action;else if(!_tmLastAction)_tmLastAction='Alteração na Tabela de Planos';
   if(_tmSaveTimeout) clearTimeout(_tmSaveTimeout);
-  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmMarkDirty();if(_tmLastAction){tmLogHistory(_tmLastAction);_tmLastAction='';}},800);
+  _tmSaveTimeout=setTimeout(function(){tmSaveToStorage();tmSaveToSupabase();tmMarkDirty();if(_tmLastAction){tmLogHistory(_tmLastAction);_tmLastAction='';}},800);
 }
 function tmLogHistory(detalhes){
   try{
