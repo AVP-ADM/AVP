@@ -11844,7 +11844,7 @@ function tmLogHistory(detalhes){
 async function tmSaveToSupabase(){
   try{
     var payload={id:'tabela_master_v1',sheets:JSON.stringify(_tmSheets),groups:JSON.stringify(_tmGroups),updated_by:currentUser||'admin',updated_at:new Date().toISOString()};
-    await supabase.insert('tabela_planos',[payload],{upsert:true});
+    await supabase.insert('tabela_planos',[payload],{upsert:true,onConflict:'id'});
   }catch(e){console.warn('tmSaveToSupabase error:',e);}
 }
 async function tmLoadFromSupabase(){
