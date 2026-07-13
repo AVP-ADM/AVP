@@ -12730,6 +12730,11 @@ function cobMergeDefaults() {
               changed = true;
             }
           });
+          // Remove opcionais that no longer exist in defaults
+          var defIds = def.opcionais[grupoId].map(function(o){return o.id;});
+          var before = _cobData.opcionais[grupoId].length;
+          _cobData.opcionais[grupoId] = _cobData.opcionais[grupoId].filter(function(o){return defIds.indexOf(o.id) !== -1;});
+          if(_cobData.opcionais[grupoId].length !== before) changed = true;
         }
       });
     }
