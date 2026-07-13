@@ -12783,8 +12783,15 @@ async function cobLoadFromSupabase() {
       const remote = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
       if (remote.planos && remote.coberturas && remote.destaques && remote.grupos) {
         _cobData = remote;
+        var beforeJson = JSON.stringify(_cobData);
         cobMergeDefaults();
+        var afterJson = JSON.stringify(_cobData);
         localStorage.setItem(COB_STORAGE_KEY, JSON.stringify(_cobData));
+        // If merge changed data, persist back to Supabase
+        if (beforeJson !== afterJson) {
+          console.log('[Coberturas] Defaults changed, saving to Supabase...');
+          await cobSaveToSupabase();
+        }
         cobRenderAccordions();
       }
     } else {
