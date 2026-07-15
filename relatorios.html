@@ -474,6 +474,7 @@ function showGestor(nome){
   saveHidden();
   updateKPIs();
   updateHiddenBar();
+  renderHiddenPanel();
   filtrarTabela();
 }
 function saveHidden(){
@@ -512,12 +513,21 @@ function toggleHiddenPanel(){
   var panel=document.getElementById('hiddenPanel');
   panel.classList.toggle('open');
   if(panel.classList.contains('open')){
-    var h='';
-    hiddenGestores.forEach(function(nome){
-      h+='<div class="hidden-item"><span>'+nome+'</span><button class="btn btn-outline" style="padding:3px 8px;font-size:.7rem" onclick="showGestor(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reativar</button></div>';
-    });
-    panel.innerHTML=h;
+    renderHiddenPanel();
   }
+}
+function renderHiddenPanel(){
+  var panel=document.getElementById('hiddenPanel');
+  if(!panel.classList.contains('open'))return;
+  if(hiddenGestores.length===0){
+    panel.classList.remove('open');
+    return;
+  }
+  var h='';
+  hiddenGestores.forEach(function(nome){
+    h+='<div class="hidden-item"><span>'+nome+'</span><button class="btn btn-outline" style="padding:3px 8px;font-size:.7rem" onclick="showGestor(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reativar</button></div>';
+  });
+  panel.innerHTML=h;
 }
 
 /* ====== INIT ====== */
