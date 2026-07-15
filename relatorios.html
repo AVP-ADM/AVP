@@ -485,10 +485,10 @@ function saveHidden(){
 async function syncHiddenToSupabase(){
   try{
     // Delete all then re-insert
-    await sbFetch('gestores_ocultos',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    await sbFetch('gestores_ocultos?gestor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
     if(hiddenGestores.length>0){
       var body=JSON.stringify(hiddenGestores.map(function(n){return{gestor_nome:n}}));
-      await sbFetch('gestores_ocultos',{method:'POST',body:body});
+      await sbFetch('gestores_ocultos',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
     }
   }catch(e){console.warn('Sync hidden failed',e)}
 }
