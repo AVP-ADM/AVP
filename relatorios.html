@@ -343,7 +343,7 @@ async function saveCache(hash,dados){
 }
 
 /* ====== MAIN: BUSCAR DADOS (via Edge Function em lotes) ====== */
-var BATCH_URL=SUPABASE_URL+'/functions/v1/aeasy-proxy-batch';
+var BATCH_URL=SUPABASE_URL+'/functions/v1/aeasy-proxy';
 var forceRefresh=false;
 function forcarAtualizacao(){forceRefresh=true;buscarDados()}
 
