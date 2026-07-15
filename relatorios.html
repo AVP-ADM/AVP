@@ -12,32 +12,32 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:13px;height:100%}
 :root{
-  --bg:#F8FAFC;--surface:#FFFFFF;--surface-2:#F1F5F9;--border:#E2E8F0;--border-strong:#CBD5E1;
-  --text1:#0F172A;--text2:#475569;--text3:#94A3B8;
-  --primary:#1A2B6B;--primary-light:#E8EDF8;
-  --accent:#1B7A3D;--accent-hover:#146B32;--accent-light:#ECFDF5;
-  --blue:#2563EB;--blue-light:#DBEAFE;--blue-bg:#EFF6FF;
-  --green:#0D9F4F;--green-light:#D1FAE5;--green-bg:#ECFDF5;
-  --amber:#D97706;--amber-light:#FEF3C7;--amber-bg:#FFFBEB;
-  --red:#DC2626;--red-light:#FEE2E2;--red-bg:#FEF2F2;
-  --purple:#7C3AED;--purple-light:#EDE9FE;
-  --radius:8px;--radius-lg:12px;
-  --shadow:0 2px 8px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.04);
-  --shadow-md:0 4px 12px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.06);
-  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+--bg:#F8FAFC;--surface:#FFFFFF;--surface-2:#F1F5F9;--border:#E2E8F0;--border-strong:#CBD5E1;
+--text1:#0F172A;--text2:#475569;--text3:#94A3B8;
+--primary:#1A2B6B;--primary-light:#E8EDF8;
+--accent:#1B7A3D;--accent-hover:#146B32;--accent-light:#ECFDF5;
+--blue:#2563EB;--blue-light:#DBEAFE;--blue-bg:#EFF6FF;
+--green:#0D9F4F;--green-light:#D1FAE5;--green-bg:#ECFDF5;
+--amber:#D97706;--amber-light:#FEF3C7;--amber-bg:#FFFBEB;
+--red:#DC2626;--red-light:#FEE2E2;--red-bg:#FEF2F2;
+--purple:#7C3AED;--purple-light:#EDE9FE;
+--radius:8px;--radius-lg:12px;
+--shadow:0 2px 8px rgba(0,0,0,.03),0 8px 24px rgba(0,0,0,.04);
+--shadow-md:0 4px 12px rgba(0,0,0,.05),0 8px 32px rgba(0,0,0,.06);
+--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 [data-theme="dark"]{
-  --bg:#0B1121;--surface:#131B2E;--surface-2:#1A2540;--border:#1E293B;--border-strong:#334155;
-  --text1:#F1F5F9;--text2:#94A3B8;--text3:#4B5563;
-  --primary:#4B7BF5;--primary-light:#1E2D4A;
-  --accent:#34D058;--accent-hover:#2EA84B;--accent-light:#052E16;
-  --blue:#60A5FA;--blue-light:#1E3A5F;--blue-bg:#172554;
-  --green:#2DD06B;--green-light:#064E3B;--green-bg:#022C22;
-  --amber:#FBBF24;--amber-light:#78350F;--amber-bg:#451A03;
-  --red:#F87171;--red-light:#7F1D1D;--red-bg:#450A0A;
-  --purple:#A78BFA;--purple-light:#2E1065;
-  --shadow:0 2px 8px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.3);
-  --shadow-md:0 4px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.4);
+--bg:#0B1121;--surface:#131B2E;--surface-2:#1A2540;--border:#1E293B;--border-strong:#334155;
+--text1:#F1F5F9;--text2:#94A3B8;--text3:#4B5563;
+--primary:#4B7BF5;--primary-light:#1E2D4A;
+--accent:#34D058;--accent-hover:#2EA84B;--accent-light:#052E16;
+--blue:#60A5FA;--blue-light:#1E3A5F;--blue-bg:#172554;
+--green:#2DD06B;--green-light:#064E3B;--green-bg:#022C22;
+--amber:#FBBF24;--amber-light:#78350F;--amber-bg:#451A03;
+--red:#F87171;--red-light:#7F1D1D;--red-bg:#450A0A;
+--purple:#A78BFA;--purple-light:#2E1065;
+--shadow:0 2px 8px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.3);
+--shadow-md:0 4px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.4);
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100%;line-height:1.5}
 .page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
@@ -62,10 +62,44 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:
 .kpi-value{font-size:1.8rem;font-weight:800;line-height:1.1}
 .kpi-card.blue .kpi-value{color:var(--blue)}.kpi-card.green .kpi-value{color:var(--green)}.kpi-card.amber .kpi-value{color:var(--amber)}.kpi-card.purple .kpi-value{color:var(--purple)}.kpi-card.red .kpi-value{color:var(--red)}
 .kpi-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-top:6px}
-.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-.filter-row input,.filter-row select{padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
-.filter-row input:focus,.filter-row select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
-[data-theme="dark"] .filter-row input,[data-theme="dark"] .filter-row select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+/* Filter Panel */
+.filter-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
+.filter-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;transition:background .15s}
+.filter-header:hover{background:var(--surface-2)}
+.filter-header h3{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.filter-chevron{transition:transform .2s;color:var(--text3)}
+.filter-panel.open .filter-chevron{transform:rotate(180deg)}
+.filter-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.filter-panel.open .filter-body{display:block}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.filter-group label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-bottom:4px}
+.filter-group input,.filter-group select{width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
+[data-theme="dark"] .filter-group input,[data-theme="dark"] .filter-group select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:var(--font)}
+.btn:active{transform:scale(.97)}
+.btn-green{background:var(--accent);color:#fff}.btn-green:hover{background:var(--accent-hover)}
+.btn-outline{background:var(--surface);color:var(--text2);border:1px solid var(--border-strong)}.btn-outline:hover{background:var(--surface-2)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* Progress */
+.progress-bar{display:none;margin-top:12px}
+.progress-bar.visible{display:block}
+.progress-track{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.progress-text{font-size:.7rem;color:var(--text3);margin-top:4px}
+/* Search filter */
+.search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.search-row input,.search-row select{padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
+.search-row input:focus,.search-row select:focus{outline:none;border-color:var(--accent)}
+[data-theme="dark"] .search-row input,[data-theme="dark"] .search-row select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+/* Hidden managers */
+.hidden-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.78rem;color:var(--text3)}
+.hidden-bar button{font-size:.75rem}
+.hidden-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.hidden-panel.open{display:block}
+.hidden-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem}
+.hidden-item:last-child{border-bottom:none}
+/* Table */
 .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface)}
 table{width:100%;border-collapse:collapse;font-size:.78rem}
 thead{background:var(--surface-2)}
@@ -82,95 +116,477 @@ tr:last-child td{border-bottom:none}
 .col-num{text-align:center;font-weight:600}
 .col-money{text-align:right;font-size:.74rem;white-space:nowrap}
 .bold{font-weight:700}
+.col-actions{width:40px;text-align:center}
+.btn-hide{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:4px;transition:all .15s}
+.btn-hide:hover{color:var(--red);background:var(--red-bg)}
 .th-group{text-align:center;font-size:.65rem;padding:6px 8px;border-bottom:1px solid var(--border)}
 .th-group.green-g{background:var(--green-bg);color:var(--green)}
 .th-group.purple-g{background:var(--purple-light);color:var(--purple)}
 .th-group.blue-g{background:var(--blue-bg);color:var(--blue)}
 .period-info{font-size:.75rem;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .period-info svg{width:14px;height:14px;opacity:.6}
+.cache-info{font-size:.7rem;color:var(--text3);font-style:italic;margin-bottom:12px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:.88rem}
 @media(max-width:768px) and (pointer:coarse){
-  .container{padding:16px}
-  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .kpi-value{font-size:1.4rem}
-  .page-header{padding:12px 16px}
-  .report-tab{padding:8px 12px;font-size:.78rem}
-  .filter-row{flex-direction:column;align-items:stretch}
-  .filter-row input,.filter-row select{width:100%}
-  table{font-size:.72rem}
-  td,th{padding:7px 8px}
-  .col-gestor{min-width:150px}
+.container{padding:16px}
+.kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+.kpi-value{font-size:1.4rem}
+.page-header{padding:12px 16px}
+.report-tab{padding:8px 12px;font-size:.78rem}
+.filter-grid{grid-template-columns:1fr}
+.search-row{flex-direction:column;align-items:stretch}
+.search-row input,.search-row select{width:100%}
+table{font-size:.72rem}
+td,th{padding:7px 8px}
+.col-gestor{min-width:150px}
 }
 </style>
 </head>
 <body>
 <header class="page-header">
-  <div class="logo">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    AutoVale <span>Relatorios</span>
-  </div>
-  <div class="header-right">
-    <a href="index.html" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Dashboard</a>
-    <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
-  </div>
+<div class="logo">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+AutoVale <span>Relatorios</span>
+</div>
+<div class="header-right">
+<a href="index.html" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Dashboard</a>
+<button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+</div>
 </header>
 <div class="container">
-  <nav class="report-tabs">
-    <button class="report-tab active" data-panel="top-adesoes">Top Adesoes</button>
-    <button class="report-tab" data-panel="r2" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
-    <button class="report-tab" data-panel="r3" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
-  </nav>
-  <section class="report-panel active" id="panel-top-adesoes">
-    <div class="period-info">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <span>Periodo: <strong>01/07/2026 - 15/07/2026</strong> | Tipo Data: <strong>Data Ativacao</strong> | Filtro: <strong>Equipe sem lideres</strong></span>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi-card blue"><div class="kpi-value">62</div><div class="kpi-label">Gestores</div></div>
-      <div class="kpi-card green"><div class="kpi-value">1.288</div><div class="kpi-label">Total Ativadas</div></div>
-      <div class="kpi-card purple"><div class="kpi-value">R$ 189.108</div><div class="kpi-label">Valor Total</div></div>
-      <div class="kpi-card amber"><div class="kpi-value">264</div><div class="kpi-label">Individual Gestores</div></div>
-      <div class="kpi-card red"><div class="kpi-value">1.024</div><div class="kpi-label">Producao Equipes</div></div>
-    </div>
-    <div class="filter-row">
-      <input type="text" id="filterGestor" placeholder="Filtrar por gestor..." oninput="filterTable()">
-      <select id="filterSede" onchange="filterTable()"><option value="">Todas as Sedes</option></select>
-    </div>
-    <div class="table-wrap">
-      <table id="tblAdesoes">
-        <thead>
-          <tr>
-            <th colspan="3" class="th-group">&nbsp;</th>
-            <th colspan="2" class="th-group green-g" style="border-left:1px solid var(--border)">Gestor (Individual)</th>
-            <th colspan="2" class="th-group purple-g" style="border-left:1px solid var(--border)">Equipe (sem gestor)</th>
-            <th colspan="2" class="th-group blue-g" style="border-left:1px solid var(--border)">Total Geral</th>
-            <th colspan="2" class="th-group">&nbsp;</th>
-          </tr>
-          <tr>
-            <th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="sede">Sede</th>
-            <th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th>
-            <th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th>
-            <th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th>
-            <th data-sort="membros" style="border-left:1px solid var(--border)">Membros</th><th data-sort="ativos">Ativos</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyAdesoes"></tbody>
-      </table>
-    </div>
-  </section>
+<nav class="report-tabs">
+<button class="report-tab active" data-panel="top-adesoes">Top Adesoes</button>
+<button class="report-tab" data-panel="r2" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
+<button class="report-tab" data-panel="r3" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
+</nav>
+<section class="report-panel active" id="panel-top-adesoes">
+
+<!-- Filter Panel -->
+<div class="filter-panel open" id="filterPanel">
+<div class="filter-header" onclick="document.getElementById('filterPanel').classList.toggle('open')">
+<h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros de Pesquisa</h3>
+<svg class="filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+</div>
+<div class="filter-body">
+<div class="filter-grid">
+<div class="filter-group"><label>Tipo Data</label><select id="fTipoData"><option value="3">Data Ativacao</option><option value="2">Data da Cotacao</option><option value="4">Data da Venda Efetivada</option><option value="5">Primeiro Boleto Pago</option></select></div>
+<div class="filter-group"><label>Data Inicial</label><input type="date" id="fDataIni" value="2026-07-01"></div>
+<div class="filter-group"><label>Data Final</label><input type="date" id="fDataFim" value="2026-07-15"></div>
+<div class="filter-group"><label>Ordenacao Adesao</label><select id="fOrdenar"><option value="6">Ativadas</option><option value="2">Cadastros</option><option value="1">Cotacao</option><option value="7">Primeiro Boleto Pago</option></select></div>
+<div class="filter-group"><label>Retornar Lider</label><select id="fLider"><option value="NAO">Equipe sem lideres</option><option value="SIM">Equipe completa</option><option value="ATE_NIVEL_1">Equipe ate lider 1o nivel</option></select></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<button class="btn btn-green" id="btnBuscar" onclick="buscarDados()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar Dados</button>
+<button class="btn btn-outline" onclick="forcarAtualizacao()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Forcar Atualizacao</button>
+</div>
+<div class="progress-bar" id="progressBar">
+<div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<div class="progress-text" id="progressText">Aguardando...</div>
+</div>
+</div>
+</div>
+
+<!-- Cache info -->
+<div class="cache-info" id="cacheInfo"></div>
+
+<!-- KPIs -->
+<div class="kpi-grid" id="kpiGrid">
+<div class="kpi-card blue"><div class="kpi-value" id="kpiGestores">-</div><div class="kpi-label">Gestores</div></div>
+<div class="kpi-card green"><div class="kpi-value" id="kpiTotal">-</div><div class="kpi-label">Total Ativadas</div></div>
+<div class="kpi-card purple"><div class="kpi-value" id="kpiValor">-</div><div class="kpi-label">Valor Total</div></div>
+<div class="kpi-card amber"><div class="kpi-value" id="kpiInd">-</div><div class="kpi-label">Individual Gestores</div></div>
+<div class="kpi-card red"><div class="kpi-value" id="kpiEquipe">-</div><div class="kpi-label">Producao Equipes</div></div>
+</div>
+
+<!-- Hidden gestores bar -->
+<div class="hidden-bar" id="hiddenBar" style="display:none">
+<span id="hiddenCount">0 gestores ocultos</span>
+<button class="btn btn-outline" style="padding:4px 10px;font-size:.72rem" onclick="toggleHiddenPanel()">Gerenciar</button>
+</div>
+<div class="hidden-panel" id="hiddenPanel"></div>
+
+<!-- Search -->
+<div class="search-row">
+<input type="text" id="filterGestor" placeholder="Filtrar por gestor..." oninput="filtrarTabela()">
+<select id="filterSede" onchange="filtrarTabela()"><option value="">Todas as Sedes</option></select>
+</div>
+
+<!-- Table -->
+<div class="table-wrap" id="tableWrap">
+<div class="empty-state" id="emptyState">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+<p>Configure os filtros acima e clique <strong>Buscar Dados</strong></p>
+</div>
+<table id="tblAdesoes" style="display:none">
+<thead>
+<tr>
+<th colspan="3" class="th-group">&nbsp;</th>
+<th colspan="2" class="th-group green-g" style="border-left:1px solid var(--border)">Gestor (Individual)</th>
+<th colspan="2" class="th-group purple-g" style="border-left:1px solid var(--border)">Equipe (sem gestor)</th>
+<th colspan="2" class="th-group blue-g" style="border-left:1px solid var(--border)">Total Geral</th>
+<th colspan="3" class="th-group">&nbsp;</th>
+</tr>
+<tr>
+<th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="sede">Sede</th>
+<th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th>
+<th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th>
+<th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th>
+<th data-sort="membros" style="border-left:1px solid var(--border)">Membros</th><th data-sort="ativos">Ativos</th>
+<th class="col-actions"></th>
+</tr>
+</thead>
+<tbody id="tbodyAdesoes"></tbody>
+</table>
+</div>
+</section>
 </div>
 <script>
-var DATA=[{"gestor": "Diego Costa de Santana", "sede": "15 - Feira de Santana - Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 101, "equipe_total_valor": 12767.86, "equipe_sem_gestor_qtd": 101, "equipe_sem_gestor_valor": 12767.86, "membros_total": 109, "membros_ativos": 30}, {"gestor": "FAGNER RAMON ALVES LEITE", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 250.02, "equipe_total_qtd": 73, "equipe_total_valor": 8194.88, "equipe_sem_gestor_qtd": 71, "equipe_sem_gestor_valor": 7944.86, "membros_total": 31, "membros_ativos": 11}, {"gestor": "Josadak Everton do Nascimento", "sede": "12 - Serra Talhada - Pe", "gestor_ativadas_qtd": 3, "gestor_ativadas_valor": 555.98, "equipe_total_qtd": 49, "equipe_total_valor": 7944.24, "equipe_sem_gestor_qtd": 46, "equipe_sem_gestor_valor": 7388.26, "membros_total": 45, "membros_ativos": 11}, {"gestor": "Marcos Rodrigo dos Santos Pinheiro", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 22, "gestor_ativadas_valor": 3459.82, "equipe_total_qtd": 45, "equipe_total_valor": 7004.26, "equipe_sem_gestor_qtd": 23, "equipe_sem_gestor_valor": 3544.44, "membros_total": 8, "membros_ativos": 3}, {"gestor": "Geová Ferreira Quentino Júnior", "sede": "09 - Arapiraca – Al", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 44, "equipe_total_valor": 5874.16, "equipe_sem_gestor_qtd": 44, "equipe_sem_gestor_valor": 5874.16, "membros_total": 37, "membros_ativos": 13}, {"gestor": "Adriano Amorim Ferreira", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 1099.92, "equipe_total_qtd": 41, "equipe_total_valor": 8646.07, "equipe_sem_gestor_qtd": 39, "equipe_sem_gestor_valor": 7546.15, "membros_total": 58, "membros_ativos": 18}, {"gestor": "JADIEL DA SILVA PEREIRA MENDES", "sede": "11 - Carpina - Pe", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 376.61, "equipe_total_qtd": 41, "equipe_total_valor": 6470.25, "equipe_sem_gestor_qtd": 39, "equipe_sem_gestor_valor": 6093.64, "membros_total": 69, "membros_ativos": 19}, {"gestor": "Pablo Alves da Silva", "sede": "12 - Serra Talhada - Pe", "gestor_ativadas_qtd": 4, "gestor_ativadas_valor": 756.95, "equipe_total_qtd": 41, "equipe_total_valor": 6181.1, "equipe_sem_gestor_qtd": 37, "equipe_sem_gestor_valor": 5424.15, "membros_total": 73, "membros_ativos": 11}, {"gestor": "JONATHAS OLIVEIRA SANTOS", "sede": "05 - Itabuna – Ba", "gestor_ativadas_qtd": 9, "gestor_ativadas_valor": 1825.1, "equipe_total_qtd": 38, "equipe_total_valor": 6620.62, "equipe_sem_gestor_qtd": 29, "equipe_sem_gestor_valor": 4795.52, "membros_total": 57, "membros_ativos": 10}, {"gestor": "Alisson Pereira Da Silva", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 37, "equipe_total_valor": 4336.66, "equipe_sem_gestor_qtd": 37, "equipe_sem_gestor_valor": 4336.66, "membros_total": 35, "membros_ativos": 11}, {"gestor": "Felipe Gabriel Silva Conceiçao", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 6, "gestor_ativadas_valor": 995.73, "equipe_total_qtd": 36, "equipe_total_valor": 5409.13, "equipe_sem_gestor_qtd": 30, "equipe_sem_gestor_valor": 4413.4, "membros_total": 24, "membros_ativos": 11}, {"gestor": "José Walberto De Lira Bandeira", "sede": "11 - Carpina - Pe", "gestor_ativadas_qtd": 12, "gestor_ativadas_valor": 1937.61, "equipe_total_qtd": 36, "equipe_total_valor": 4071.79, "equipe_sem_gestor_qtd": 24, "equipe_sem_gestor_valor": 2134.18, "membros_total": 18, "membros_ativos": 9}, {"gestor": "ANDRE SOARES DA SILVA", "sede": "06 - J. Norte – Ce", "gestor_ativadas_qtd": 1, "gestor_ativadas_valor": 59.31, "equipe_total_qtd": 33, "equipe_total_valor": 2813.32, "equipe_sem_gestor_qtd": 32, "equipe_sem_gestor_valor": 2754.01, "membros_total": 44, "membros_ativos": 8}, {"gestor": "Carlos Eduardo Silva", "sede": null, "gestor_ativadas_qtd": 18, "gestor_ativadas_valor": 2265.71, "equipe_total_qtd": 33, "equipe_total_valor": 4612.93, "equipe_sem_gestor_qtd": 15, "equipe_sem_gestor_valor": 2347.22, "membros_total": 8, "membros_ativos": 4}, {"gestor": "Carlos William Guedes da Silva", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 8, "gestor_ativadas_valor": 1412.95, "equipe_total_qtd": 31, "equipe_total_valor": 4600.42, "equipe_sem_gestor_qtd": 23, "equipe_sem_gestor_valor": 3187.47, "membros_total": 6, "membros_ativos": 5}, {"gestor": "José Everton Souza Santana", "sede": "09 - Arapiraca – Al", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 30, "equipe_total_valor": 2609.27, "equipe_sem_gestor_qtd": 30, "equipe_sem_gestor_valor": 2609.27, "membros_total": 24, "membros_ativos": 8}, {"gestor": "Widjame Ribeiro Callou", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 13, "gestor_ativadas_valor": 2381.69, "equipe_total_qtd": 30, "equipe_total_valor": 5085.43, "equipe_sem_gestor_qtd": 17, "equipe_sem_gestor_valor": 2703.74, "membros_total": 9, "membros_ativos": 5}, {"gestor": "ADHRIAN DE ANDRADE ALBUQUERQUE", "sede": "05 - Itabuna – Ba", "gestor_ativadas_qtd": 1, "gestor_ativadas_valor": 325.46, "equipe_total_qtd": 29, "equipe_total_valor": 4259.39, "equipe_sem_gestor_qtd": 28, "equipe_sem_gestor_valor": 3933.93, "membros_total": 61, "membros_ativos": 9}, {"gestor": "Manoelly Vitória Gonçalves da Silva", "sede": "06 - J. Norte – Ce", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 417.77, "equipe_total_qtd": 29, "equipe_total_valor": 3999.04, "equipe_sem_gestor_qtd": 27, "equipe_sem_gestor_valor": 3581.27, "membros_total": 30, "membros_ativos": 9}, {"gestor": "CASSIO GREGE CERQUEIRA PORTELA", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 209.52, "equipe_total_qtd": 27, "equipe_total_valor": 2962.13, "equipe_sem_gestor_qtd": 25, "equipe_sem_gestor_valor": 2752.61, "membros_total": 44, "membros_ativos": 13}, {"gestor": "Germano de Souza Martins", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 130.32, "equipe_total_qtd": 26, "equipe_total_valor": 2964.96, "equipe_sem_gestor_qtd": 24, "equipe_sem_gestor_valor": 2834.64, "membros_total": 47, "membros_ativos": 9}, {"gestor": "Administrador", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 25, "equipe_total_valor": 3499.27, "equipe_sem_gestor_qtd": 25, "equipe_sem_gestor_valor": 3499.27, "membros_total": 33, "membros_ativos": 9}, {"gestor": "Edvaldo Jose Lins Barbosa", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 14, "gestor_ativadas_valor": 2137.09, "equipe_total_qtd": 22, "equipe_total_valor": 3046.94, "equipe_sem_gestor_qtd": 8, "equipe_sem_gestor_valor": 909.85, "membros_total": 10, "membros_ativos": 4}, {"gestor": "Lucas Ribeiro dos Santos", "sede": null, "gestor_ativadas_qtd": 1, "gestor_ativadas_valor": 89.11, "equipe_total_qtd": 22, "equipe_total_valor": 2753.25, "equipe_sem_gestor_qtd": 21, "equipe_sem_gestor_valor": 2664.14, "membros_total": 27, "membros_ativos": 9}, {"gestor": "Luciano Maciel De Almeida", "sede": "11 - Carpina - Pe", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 21, "equipe_total_valor": 3331.98, "equipe_sem_gestor_qtd": 21, "equipe_sem_gestor_valor": 3331.98, "membros_total": 16, "membros_ativos": 5}, {"gestor": "Cicero Vitor Pereira da Silva", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 18, "gestor_ativadas_valor": 3605.27, "equipe_total_qtd": 20, "equipe_total_valor": 3886.29, "equipe_sem_gestor_qtd": 2, "equipe_sem_gestor_valor": 281.02, "membros_total": 11, "membros_ativos": 2}, {"gestor": "DIEGO KAIQUE DE SOUZA SILVA", "sede": "06 - J. Norte – Ce", "gestor_ativadas_qtd": 5, "gestor_ativadas_valor": 477.63, "equipe_total_qtd": 20, "equipe_total_valor": 2223.07, "equipe_sem_gestor_qtd": 15, "equipe_sem_gestor_valor": 1745.44, "membros_total": 7, "membros_ativos": 2}, {"gestor": "Davi Kevin Rodrigues Capistana", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 1, "gestor_ativadas_valor": 331.42, "equipe_total_qtd": 19, "equipe_total_valor": 3061.85, "equipe_sem_gestor_qtd": 18, "equipe_sem_gestor_valor": 2730.43, "membros_total": 57, "membros_ativos": 7}, {"gestor": "Arthur Waliston Dos Santos", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 5, "gestor_ativadas_valor": 920.58, "equipe_total_qtd": 18, "equipe_total_valor": 2466.86, "equipe_sem_gestor_qtd": 13, "equipe_sem_gestor_valor": 1546.28, "membros_total": 20, "membros_ativos": 6}, {"gestor": "CICERO ANTONIO ALVES RESENDE", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 14, "gestor_ativadas_valor": 3329.11, "equipe_total_qtd": 18, "equipe_total_valor": 3844.31, "equipe_sem_gestor_qtd": 4, "equipe_sem_gestor_valor": 515.2, "membros_total": 10, "membros_ativos": 3}, {"gestor": "RANNYKELITON DE JESUS SILVA", "sede": null, "gestor_ativadas_qtd": 18, "gestor_ativadas_valor": 3033.62, "equipe_total_qtd": 18, "equipe_total_valor": 3033.62, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 1, "membros_ativos": 1}, {"gestor": "Arthur Gonçalves Lima", "sede": "06 - J. Norte – Ce", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 17, "equipe_total_valor": 1985.12, "equipe_sem_gestor_qtd": 17, "equipe_sem_gestor_valor": 1985.12, "membros_total": 35, "membros_ativos": 6}, {"gestor": "IRANILDO OLIVEIRA DA SILVA", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 17, "equipe_total_valor": 2003.54, "equipe_sem_gestor_qtd": 17, "equipe_sem_gestor_valor": 2003.54, "membros_total": 6, "membros_ativos": 5}, {"gestor": "Jose Marcelo Furtado Lima", "sede": "03 - Juazeiro – Ba", "gestor_ativadas_qtd": 7, "gestor_ativadas_valor": 1300.98, "equipe_total_qtd": 17, "equipe_total_valor": 2638.62, "equipe_sem_gestor_qtd": 10, "equipe_sem_gestor_valor": 1337.64, "membros_total": 22, "membros_ativos": 6}, {"gestor": "Andrey Victor Ribeiro Reis", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 8, "gestor_ativadas_valor": 2743.33, "equipe_total_qtd": 16, "equipe_total_valor": 5085.83, "equipe_sem_gestor_qtd": 8, "equipe_sem_gestor_valor": 2342.5, "membros_total": 25, "membros_ativos": 4}, {"gestor": "LUCAS SOUZA FREIRE", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 6, "gestor_ativadas_valor": 1322.98, "equipe_total_qtd": 16, "equipe_total_valor": 3249.28, "equipe_sem_gestor_qtd": 10, "equipe_sem_gestor_valor": 1926.3, "membros_total": 10, "membros_ativos": 5}, {"gestor": "Sherly Dantas Lopes", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 10, "gestor_ativadas_valor": 1985.97, "equipe_total_qtd": 15, "equipe_total_valor": 2368.18, "equipe_sem_gestor_qtd": 5, "equipe_sem_gestor_valor": 382.21, "membros_total": 12, "membros_ativos": 4}, {"gestor": "Osnir da Silva Lima", "sede": "09 - Arapiraca – Al", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 14, "equipe_total_valor": 1679.99, "equipe_sem_gestor_qtd": 14, "equipe_sem_gestor_valor": 1679.99, "membros_total": 34, "membros_ativos": 6}, {"gestor": "Base Interna AutoVale", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 13, "equipe_total_valor": 2405.9, "equipe_sem_gestor_qtd": 13, "equipe_sem_gestor_valor": 2405.9, "membros_total": 21, "membros_ativos": 4}, {"gestor": "Eraldo de Almeida Santos", "sede": "09 - Arapiraca – Al", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 10, "equipe_total_valor": 1336.14, "equipe_sem_gestor_qtd": 10, "equipe_sem_gestor_valor": 1336.14, "membros_total": 10, "membros_ativos": 1}, {"gestor": "Venancio Pinheiro Da Silva", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 4, "gestor_ativadas_valor": 1241.06, "equipe_total_qtd": 10, "equipe_total_valor": 2431.76, "equipe_sem_gestor_qtd": 6, "equipe_sem_gestor_valor": 1190.7, "membros_total": 13, "membros_ativos": 4}, {"gestor": "JOSE GUSTAVO GOMES", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 3, "gestor_ativadas_valor": 569.74, "equipe_total_qtd": 9, "equipe_total_valor": 2751.03, "equipe_sem_gestor_qtd": 6, "equipe_sem_gestor_valor": 2181.29, "membros_total": 22, "membros_ativos": 6}, {"gestor": "MATEUS RIBEIRO DE ANDRADE", "sede": "03 - Juazeiro – Ba", "gestor_ativadas_qtd": 5, "gestor_ativadas_valor": 710.67, "equipe_total_qtd": 9, "equipe_total_valor": 1149.81, "equipe_sem_gestor_qtd": 4, "equipe_sem_gestor_valor": 439.14, "membros_total": 3, "membros_ativos": 2}, {"gestor": "Mickael Silva Ferreira", "sede": "03 - Juazeiro – Ba", "gestor_ativadas_qtd": 6, "gestor_ativadas_valor": 871.43, "equipe_total_qtd": 9, "equipe_total_valor": 1370.04, "equipe_sem_gestor_qtd": 3, "equipe_sem_gestor_valor": 498.61, "membros_total": 15, "membros_ativos": 3}, {"gestor": "Moisés Carlos da Silva Filho", "sede": "05 - Itabuna – Ba", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 241.38, "equipe_total_qtd": 9, "equipe_total_valor": 949.34, "equipe_sem_gestor_qtd": 7, "equipe_sem_gestor_valor": 707.96, "membros_total": 10, "membros_ativos": 4}, {"gestor": "Raniego da Silva Ramos", "sede": "03 - Juazeiro – Ba", "gestor_ativadas_qtd": 6, "gestor_ativadas_valor": 730.54, "equipe_total_qtd": 9, "equipe_total_valor": 1334.62, "equipe_sem_gestor_qtd": 3, "equipe_sem_gestor_valor": 604.08, "membros_total": 2, "membros_ativos": 2}, {"gestor": "JOSE DIONES FERREIRA LIMA", "sede": "06 - J. Norte – Ce", "gestor_ativadas_qtd": 2, "gestor_ativadas_valor": 188.82, "equipe_total_qtd": 8, "equipe_total_valor": 645.67, "equipe_sem_gestor_qtd": 6, "equipe_sem_gestor_valor": 456.85, "membros_total": 9, "membros_ativos": 2}, {"gestor": "Itala Naiane Araquam Dias", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 4, "gestor_ativadas_valor": 1206.6, "equipe_total_qtd": 7, "equipe_total_valor": 1769.9, "equipe_sem_gestor_qtd": 3, "equipe_sem_gestor_valor": 563.3, "membros_total": 4, "membros_ativos": 2}, {"gestor": "NELSIANO MARTINS DE SANTANA", "sede": "05 - Itabuna – Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 7, "equipe_total_valor": 1085.67, "equipe_sem_gestor_qtd": 7, "equipe_sem_gestor_valor": 1085.67, "membros_total": 43, "membros_ativos": 5}, {"gestor": "Genison da Silva Cezario", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 5, "gestor_ativadas_valor": 847.61, "equipe_total_qtd": 5, "equipe_total_valor": 847.61, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 2, "membros_ativos": 1}, {"gestor": "JOCIMAR DE ALMEIDA SOUZA", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 4, "gestor_ativadas_valor": 399.89, "equipe_total_qtd": 4, "equipe_total_valor": 399.89, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 8, "membros_ativos": 1}, {"gestor": "Adilson Gomes Cardoso", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 3, "equipe_total_valor": 488.29, "equipe_sem_gestor_qtd": 3, "equipe_sem_gestor_valor": 488.29, "membros_total": 10, "membros_ativos": 1}, {"gestor": "JUDSON SANTANA PRADO", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 3, "gestor_ativadas_valor": 1202.98, "equipe_total_qtd": 3, "equipe_total_valor": 1202.98, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 2, "membros_ativos": 1}, {"gestor": "Laudisvan Flávio Morais Goes", "sede": "09 - Arapiraca – Al", "gestor_ativadas_qtd": 1, "gestor_ativadas_valor": 335.18, "equipe_total_qtd": 3, "equipe_total_valor": 474.5, "equipe_sem_gestor_qtd": 2, "equipe_sem_gestor_valor": 139.32, "membros_total": 30, "membros_ativos": 3}, {"gestor": "Luis Henrique De Andrade Sousa", "sede": "05 - Itabuna – Ba", "gestor_ativadas_qtd": 3, "gestor_ativadas_valor": 507.96, "equipe_total_qtd": 3, "equipe_total_valor": 507.96, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 2, "membros_ativos": 1}, {"gestor": "Marcos Ribeiro de Morais", "sede": "02 - Petrolina - Pe", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 2, "equipe_total_valor": 371.58, "equipe_sem_gestor_qtd": 2, "equipe_sem_gestor_valor": 371.58, "membros_total": 9, "membros_ativos": 1}, {"gestor": "Cosme Fleming Souza Silva", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 1, "membros_ativos": 0}, {"gestor": "Eric Alencar Vasconcelos", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 6, "membros_ativos": 0}, {"gestor": "Jefferson Soares", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 5, "membros_ativos": 0}, {"gestor": "Mardson Sampaio de Melo Leal", "sede": "15 - Feira de Santana - Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 1, "membros_ativos": 0}, {"gestor": "REINALDO ROMEU SALGADO", "sede": "04 - Sr. Bomfim – Ba", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 1, "membros_ativos": 0}, {"gestor": "RENATO FILGUEIRA ZLOCCOWICK", "sede": "01 - AutoVale Clube de Benefícios", "gestor_ativadas_qtd": 0, "gestor_ativadas_valor": 0.0, "equipe_total_qtd": 0, "equipe_total_valor": 0.0, "equipe_sem_gestor_qtd": 0, "equipe_sem_gestor_valor": 0.0, "membros_total": 1, "membros_ativos": 0}];
+/* ====== CONFIG ====== */
+var SUPABASE_URL='https://xoshndinqznjhcvxttwy.supabase.co';
+var SUPABASE_KEY='sb_publishable_-lC-azE6POYOVBBbQQv4Zw_Yr_FD4Nm';
+var AEASY_URL='https://aeasy.autovaleprevencoes.org';
+var AEASY_LOGIN='57975250899';
+var AEASY_PASS='Avp9768#';
+
+/* ====== STATE ====== */
+var DATA=[];
+var hiddenGestores=JSON.parse(localStorage.getItem('avp-hidden-gestores')||'[]');
+var currentSort={key:'total_qtd',dir:'desc'};
+var aeasySession=null;
+
+/* ====== THEME ====== */
 function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('avp-theme',t)}
 (function(){var s=localStorage.getItem('avp-theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+
+/* ====== TABS ====== */
 document.querySelectorAll('.report-tab').forEach(function(tab){tab.addEventListener('click',function(){if(this.disabled)return;document.querySelectorAll('.report-tab').forEach(function(t){t.classList.remove('active')});document.querySelectorAll('.report-panel').forEach(function(p){p.classList.remove('active')});this.classList.add('active');var p=document.getElementById('panel-'+this.getAttribute('data-panel'));if(p)p.classList.add('active')});});
+
+/* ====== SUPABASE HELPERS ====== */
+function sbFetch(path,opts){
+  opts=opts||{};
+  var headers={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+  if(opts.headers)Object.assign(headers,opts.headers);
+  return fetch(SUPABASE_URL+'/rest/v1/'+path,{method:opts.method||'GET',headers:headers,body:opts.body||null});
+}
+
+function getFilterHash(){
+  return[document.getElementById('fTipoData').value,document.getElementById('fDataIni').value,document.getElementById('fDataFim').value,document.getElementById('fOrdenar').value,document.getElementById('fLider').value].join('|');
+}
+
+/* ====== CACHE: CHECK SUPABASE ====== */
+async function checkCache(hash){
+  try{
+    var r=await sbFetch('relatorios_cache?filtro_hash=eq.'+encodeURIComponent(hash)+'&select=*');
+    var d=await r.json();
+    if(d&&d.length>0)return d[0];
+  }catch(e){console.warn('Cache check failed',e)}
+  return null;
+}
+
+/* ====== CACHE: SAVE TO SUPABASE ====== */
+async function saveCache(hash,dados){
+  var body=JSON.stringify({
+    filtro_hash:hash,
+    tipo_data:document.getElementById('fTipoData').selectedOptions[0].text,
+    data_inicial:document.getElementById('fDataIni').value,
+    data_final:document.getElementById('fDataFim').value,
+    ordenacao:document.getElementById('fOrdenar').selectedOptions[0].text,
+    retornar_lider:document.getElementById('fLider').selectedOptions[0].text,
+    dados:dados,
+    updated_at:new Date().toISOString()
+  });
+  try{
+    await sbFetch('relatorios_cache',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
+  }catch(e){console.warn('Cache save failed',e)}
+  localStorage.setItem('avp-cache-'+hash,JSON.stringify({dados:dados,ts:Date.now()}));
+}
+
+/* ====== AEASY LOGIN ====== */
+async function aeasyLogin(){
+  var r=await fetch(AEASY_URL+'/conta/login',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({UsuariosLogin:AEASY_LOGIN,UsuariosSenha:AEASY_PASS}),credentials:'include'});
+  var text=await r.text();
+  var cookies=document.cookie;
+  var phps=r.headers.get('set-cookie');
+  return r.ok;
+}
+
+/* ====== AEASY: GET GESTORES ====== */
+async function getGestores(){
+  var url=AEASY_URL+'/consultores/listagem?draw=1&columns%5B0%5D%5Bdata%5D=IndividuosNome&columns%5B0%5D%5Bname%5D=IndividuosNome&columns%5B0%5D%5Bsearchable%5D=false&columns%5B0%5D%5Borderable%5D=true&order%5B0%5D%5Bcolumn%5D=0&order%5B0%5D%5Bdir%5D=asc&start=0&length=7000&formPesquisa%5BsubmitFilter%5D=true&formPesquisa%5BSituacao%5D%5B%5D=2';
+  var r=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'include'});
+  var d=await r.json();
+  var gestores=[];var seen={};
+  (d.data||[]).forEach(function(rec){
+    if(rec.ConsultoresLider==='1'&&!seen[rec.ConsultoresId]){
+      seen[rec.ConsultoresId]=true;
+      gestores.push({id:rec.ConsultoresId,nome:rec.IndividuosNome,sede:rec.GruposEmpresasNome||null});
+    }
+  });
+  return gestores;
+}
+
+/* ====== AEASY: GET TOP ADESOES ====== */
+async function getTopAdesoes(gestorId,gestorNome){
+  var tipoData=document.getElementById('fTipoData').value;
+  var dataIni=document.getElementById('fDataIni').value;
+  var dataFim=document.getElementById('fDataFim').value;
+  var ordenar=document.getElementById('fOrdenar').value;
+  var lider=document.getElementById('fLider').value;
+  var url=AEASY_URL+'/TopVendas?TipoData='+tipoData+'&DataInicial='+dataIni+'&DataFinal='+dataFim+'&Ordenar='+ordenar+'&CampoOrder=Quantidade&EquipeId='+gestorId+'&RetornarLiderComEquipe='+lider;
+  var r=await fetch(url,{credentials:'include'});
+  var html=await r.text();
+  var parser=new DOMParser();
+  var doc=parser.parseFromString(html,'text/html');
+  var rows=doc.querySelectorAll('tbody tr');
+  var tq=0,tv=0,gq=0,gv=0,ma=0;
+  rows.forEach(function(row){
+    var cells=row.querySelectorAll('td');
+    if(cells.length>=15){
+      var nome=cells[1].textContent.trim();
+      var aq=parseInt(cells[13].textContent.trim())||0;
+      var av=parseFloat(cells[14].textContent.replace('R$','').replace(/\./g,'').replace(',','.').trim())||0;
+      tq+=aq;tv+=av;
+      if(aq>0)ma++;
+      if(nome.toUpperCase()===gestorNome.toUpperCase()){gq=aq;gv=av}
+    }
+  });
+  return{gestor_ativadas_qtd:gq,gestor_ativadas_valor:Math.round(gv*100)/100,equipe_total_qtd:tq,equipe_total_valor:Math.round(tv*100)/100,equipe_sem_gestor_qtd:tq-gq,equipe_sem_gestor_valor:Math.round((tv-gv)*100)/100,membros_total:rows.length,membros_ativos:ma};
+}
+
+/* ====== MAIN: BUSCAR DADOS ====== */
+var forceRefresh=false;
+function forcarAtualizacao(){forceRefresh=true;buscarDados()}
+
+async function buscarDados(){
+  var btn=document.getElementById('btnBuscar');
+  btn.disabled=true;
+  var hash=getFilterHash();
+
+  // Check cache first (unless forced)
+  if(!forceRefresh){
+    var cached=await checkCache(hash);
+    if(cached){
+      DATA=cached.dados;
+      showData('Cache Supabase - salvo em '+new Date(cached.updated_at).toLocaleString('pt-BR'));
+      btn.disabled=false;
+      return;
+    }
+    var local=localStorage.getItem('avp-cache-'+hash);
+    if(local){
+      var parsed=JSON.parse(local);
+      DATA=parsed.dados;
+      showData('Cache local - salvo em '+new Date(parsed.ts).toLocaleString('pt-BR'));
+      btn.disabled=false;
+      return;
+    }
+  }
+  forceRefresh=false;
+
+  // Show progress
+  var pb=document.getElementById('progressBar');
+  var pf=document.getElementById('progressFill');
+  var pt=document.getElementById('progressText');
+  pb.classList.add('visible');
+  pf.style.width='0%';
+  pt.textContent='Fazendo login no AEasy...';
+
+  try{
+    // Login
+    await aeasyLogin();
+    pt.textContent='Buscando gestores...';
+    pf.style.width='5%';
+
+    // Get gestores
+    var gestores=await getGestores();
+    pt.textContent='Encontrados '+gestores.length+' gestores. Buscando dados...';
+    pf.style.width='10%';
+
+    // Get top adesoes for each
+    var results=[];
+    for(var i=0;i<gestores.length;i++){
+      var g=gestores[i];
+      var dados=await getTopAdesoes(g.id,g.nome);
+      dados.gestor=g.nome;
+      dados.sede=g.sede;
+      results.push(dados);
+      var pct=10+Math.round((i+1)/gestores.length*85);
+      pf.style.width=pct+'%';
+      pt.textContent='Processando '+(i+1)+'/'+gestores.length+' - '+g.nome.substring(0,25)+'...';
+    }
+
+    results.sort(function(a,b){return b.equipe_total_qtd-a.equipe_total_qtd});
+    DATA=results;
+
+    // Save cache
+    pt.textContent='Salvando no cache...';
+    pf.style.width='98%';
+    await saveCache(hash,results);
+
+    pf.style.width='100%';
+    pt.textContent='Concluido!';
+    setTimeout(function(){pb.classList.remove('visible')},2000);
+
+    showData('Dados atualizados agora - '+new Date().toLocaleString('pt-BR'));
+
+  }catch(e){
+    pt.textContent='Erro: '+e.message;
+    pf.style.width='0%';
+    console.error(e);
+  }
+  btn.disabled=false;
+}
+
+/* ====== SHOW DATA ====== */
+function showData(cacheMsg){
+  document.getElementById('cacheInfo').textContent=cacheMsg||'';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('tblAdesoes').style.display='';
+  populateSedes();
+  updateKPIs();
+  updateHiddenBar();
+  filtrarTabela();
+}
+
+/* ====== KPIs ====== */
+function updateKPIs(){
+  var visible=getVisibleData();
+  var ta=0,tv=0,ti=0,te=0;
+  visible.forEach(function(g){ta+=g.equipe_total_qtd;tv+=g.equipe_total_valor;ti+=g.gestor_ativadas_qtd;te+=g.equipe_sem_gestor_qtd});
+  document.getElementById('kpiGestores').textContent=visible.length;
+  document.getElementById('kpiTotal').textContent=fk(ta);
+  document.getElementById('kpiValor').textContent='R$ '+fk(Math.round(tv));
+  document.getElementById('kpiInd').textContent=fk(ti);
+  document.getElementById('kpiEquipe').textContent=fk(te);
+}
+
+/* ====== FORMAT ====== */
+function fk(v){return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
 function fmtBRL(v){if(!v)return'R$ 0,00';return'R$ '+v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
-var currentSort={key:'total_qtd',dir:'desc'};
-function renderTable(ds){var tb=document.getElementById('tbodyAdesoes');var h='';for(var i=0;i<ds.length;i++){var g=ds[i];var sede=(g.sede&&g.sede!=='None'&&g.sede!==null)?g.sede:'-';h+='<tr><td class="col-pos">'+(i+1)+'</td><td class="col-gestor">'+g.gestor+'</td><td class="col-sede">'+sede+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.membros_total+'</td><td class="col-num">'+g.membros_ativos+'</td></tr>'}tb.innerHTML=h}
-function filterTable(){var s=document.getElementById('filterGestor').value.toLowerCase();var sede=document.getElementById('filterSede').value;var f=DATA.filter(function(g){return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!sede||g.sede===sede)});sortData(f);renderTable(f)}
-function sortData(arr){var k=currentSort.key,d=currentSort.dir==='asc'?1:-1;arr.sort(function(a,b){var va,vb;switch(k){case'gestor':va=a.gestor.toLowerCase();vb=b.gestor.toLowerCase();break;case'sede':va=(a.sede||'').toLowerCase();vb=(b.sede||'').toLowerCase();break;case'ind_qtd':va=a.gestor_ativadas_qtd;vb=b.gestor_ativadas_qtd;break;case'ind_val':va=a.gestor_ativadas_valor;vb=b.gestor_ativadas_valor;break;case'eq_qtd':va=a.equipe_sem_gestor_qtd;vb=b.equipe_sem_gestor_qtd;break;case'eq_val':va=a.equipe_sem_gestor_valor;vb=b.equipe_sem_gestor_valor;break;case'total_qtd':va=a.equipe_total_qtd;vb=b.equipe_total_qtd;break;case'total_val':va=a.equipe_total_valor;vb=b.equipe_total_valor;break;case'membros':va=a.membros_total;vb=b.membros_total;break;case'ativos':va=a.membros_ativos;vb=b.membros_ativos;break;default:return 0}if(va<vb)return-1*d;if(va>vb)return 1*d;return 0})}
-document.querySelectorAll('#tblAdesoes thead tr:last-child th').forEach(function(th){th.addEventListener('click',function(){var k=this.getAttribute('data-sort');if(!k)return;if(currentSort.key===k){currentSort.dir=currentSort.dir==='asc'?'desc':'asc'}else{currentSort.key=k;currentSort.dir='desc'}document.querySelectorAll('#tblAdesoes thead tr:last-child th').forEach(function(t){t.classList.remove('sorted-asc','sorted-desc')});this.classList.add(currentSort.dir==='asc'?'sorted-asc':'sorted-desc');filterTable()});});
-(function(){var sedes={};DATA.forEach(function(g){if(g.sede&&g.sede!=='None'&&g.sede!==null)sedes[g.sede]=true});var sel=document.getElementById('filterSede');Object.keys(sedes).sort().forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});})();
-sortData(DATA);renderTable(DATA);
+
+/* ====== VISIBLE DATA (excluding hidden) ====== */
+function getVisibleData(){
+  return DATA.filter(function(g){return hiddenGestores.indexOf(g.gestor)===-1});
+}
+
+/* ====== RENDER TABLE ====== */
+function renderTable(ds){
+  var tb=document.getElementById('tbodyAdesoes');
+  var h='';
+  for(var i=0;i<ds.length;i++){
+    var g=ds[i];
+    var sede=(g.sede&&g.sede!=='None'&&g.sede!==null)?g.sede:'-';
+    h+='<tr><td class="col-pos">'+(i+1)+'</td><td class="col-gestor">'+g.gestor+'</td><td class="col-sede">'+sede+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.membros_total+'</td><td class="col-num">'+g.membros_ativos+'</td><td class="col-actions"><button class="btn-hide" onclick="hideGestor(\''+g.gestor.replace(/'/g,"\\'")+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
+  }
+  tb.innerHTML=h;
+}
+
+/* ====== FILTER TABLE ====== */
+function filtrarTabela(){
+  var s=document.getElementById('filterGestor').value.toLowerCase();
+  var sede=document.getElementById('filterSede').value;
+  var visible=getVisibleData();
+  var filtered=visible.filter(function(g){
+    return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!sede||g.sede===sede);
+  });
+  sortData(filtered);
+  renderTable(filtered);
+}
+
+/* ====== SORT ====== */
+function sortData(arr){
+  var k=currentSort.key,d=currentSort.dir==='asc'?1:-1;
+  arr.sort(function(a,b){var va,vb;switch(k){case'gestor':va=a.gestor.toLowerCase();vb=b.gestor.toLowerCase();break;case'sede':va=(a.sede||'').toLowerCase();vb=(b.sede||'').toLowerCase();break;case'ind_qtd':va=a.gestor_ativadas_qtd;vb=b.gestor_ativadas_qtd;break;case'ind_val':va=a.gestor_ativadas_valor;vb=b.gestor_ativadas_valor;break;case'eq_qtd':va=a.equipe_sem_gestor_qtd;vb=b.equipe_sem_gestor_qtd;break;case'eq_val':va=a.equipe_sem_gestor_valor;vb=b.equipe_sem_gestor_valor;break;case'total_qtd':va=a.equipe_total_qtd;vb=b.equipe_total_qtd;break;case'total_val':va=a.equipe_total_valor;vb=b.equipe_total_valor;break;case'membros':va=a.membros_total;vb=b.membros_total;break;case'ativos':va=a.membros_ativos;vb=b.membros_ativos;break;default:return 0}if(va<vb)return-1*d;if(va>vb)return 1*d;return 0});
+}
+
+document.querySelectorAll('#tblAdesoes thead tr:last-child th[data-sort]').forEach(function(th){th.addEventListener('click',function(){var k=this.getAttribute('data-sort');if(!k)return;if(currentSort.key===k){currentSort.dir=currentSort.dir==='asc'?'desc':'asc'}else{currentSort.key=k;currentSort.dir='desc'}document.querySelectorAll('#tblAdesoes thead tr:last-child th').forEach(function(t){t.classList.remove('sorted-asc','sorted-desc')});this.classList.add(currentSort.dir==='asc'?'sorted-asc':'sorted-desc');filtrarTabela()});});
+
+/* ====== POPULATE SEDES ====== */
+function populateSedes(){
+  var sel=document.getElementById('filterSede');
+  var current=sel.value;
+  sel.innerHTML='<option value="">Todas as Sedes</option>';
+  var sedes={};
+  DATA.forEach(function(g){if(g.sede&&g.sede!=='None'&&g.sede!==null)sedes[g.sede]=true});
+  Object.keys(sedes).sort().forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+  sel.value=current;
+}
+
+/* ====== HIDE/SHOW GESTORES ====== */
+function hideGestor(nome){
+  if(hiddenGestores.indexOf(nome)===-1){
+    hiddenGestores.push(nome);
+    saveHidden();
+    updateKPIs();
+    updateHiddenBar();
+    filtrarTabela();
+  }
+}
+function showGestor(nome){
+  hiddenGestores=hiddenGestores.filter(function(n){return n!==nome});
+  saveHidden();
+  updateKPIs();
+  updateHiddenBar();
+  filtrarTabela();
+}
+function saveHidden(){
+  localStorage.setItem('avp-hidden-gestores',JSON.stringify(hiddenGestores));
+  // Also sync to Supabase
+  syncHiddenToSupabase();
+}
+async function syncHiddenToSupabase(){
+  try{
+    // Delete all then re-insert
+    await sbFetch('gestores_ocultos',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    if(hiddenGestores.length>0){
+      var body=JSON.stringify(hiddenGestores.map(function(n){return{gestor_nome:n}}));
+      await sbFetch('gestores_ocultos',{method:'POST',body:body});
+    }
+  }catch(e){console.warn('Sync hidden failed',e)}
+}
+async function loadHiddenFromSupabase(){
+  try{
+    var r=await sbFetch('gestores_ocultos?select=gestor_nome');
+    var d=await r.json();
+    if(d&&d.length>0){
+      hiddenGestores=d.map(function(x){return x.gestor_nome});
+      localStorage.setItem('avp-hidden-gestores',JSON.stringify(hiddenGestores));
+    }
+  }catch(e){}
+}
+function updateHiddenBar(){
+  var bar=document.getElementById('hiddenBar');
+  if(hiddenGestores.length>0){
+    bar.style.display='flex';
+    document.getElementById('hiddenCount').textContent=hiddenGestores.length+' gestor'+(hiddenGestores.length>1?'es':'')+' oculto'+(hiddenGestores.length>1?'s':'');
+  }else{bar.style.display='none'}
+}
+function toggleHiddenPanel(){
+  var panel=document.getElementById('hiddenPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')){
+    var h='';
+    hiddenGestores.forEach(function(nome){
+      h+='<div class="hidden-item"><span>'+nome+'</span><button class="btn btn-outline" style="padding:3px 8px;font-size:.7rem" onclick="showGestor(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reativar</button></div>';
+    });
+    panel.innerHTML=h;
+  }
+}
+
+/* ====== INIT ====== */
+(async function(){
+  await loadHiddenFromSupabase();
+  updateHiddenBar();
+  // Try to load last used cache
+  var hash=getFilterHash();
+  var local=localStorage.getItem('avp-cache-'+hash);
+  if(local){
+    var parsed=JSON.parse(local);
+    DATA=parsed.dados;
+    showData('Cache local - salvo em '+new Date(parsed.ts).toLocaleString('pt-BR'));
+  }
+})();
 </script>
 </body>
 </html>
