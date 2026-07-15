@@ -129,6 +129,38 @@ tr:last-child td{border-bottom:none}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
 .empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
 .empty-state p{font-size:.88rem}
+/* Expandable rows */
+.row-gestor{cursor:pointer;transition:background .15s}
+.row-gestor:hover{background:var(--blue-bg)}
+.row-gestor .col-gestor{position:relative;padding-left:24px}
+.row-gestor .expand-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;transition:transform .2s;color:var(--text3)}
+.row-gestor.expanded .expand-icon{transform:translateY(-50%) rotate(90deg);color:var(--accent)}
+.row-equipe{display:none}
+.row-equipe.visible{display:table-row}
+.row-equipe td{padding:0;border-bottom:1px solid var(--border)}
+.equipe-container{padding:12px 16px 16px;margin-left:20px;border-left:3px solid var(--accent);background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0}
+[data-theme="dark"] .equipe-container{background:var(--surface)}
+.equipe-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.equipe-header h4{font-size:.8rem;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px}
+.equipe-header .equipe-stats{font-size:.7rem;color:var(--text3)}
+.equipe-table{width:100%;border-collapse:collapse;font-size:.74rem;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.equipe-table thead{background:var(--surface)}
+.equipe-table th{padding:7px 10px;font-size:.65rem;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;cursor:default}
+.equipe-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.equipe-table tr:last-child td{border-bottom:none}
+.equipe-table tr:hover{background:var(--blue-bg)}
+.equipe-table .col-pos{width:30px;font-size:.7rem}
+.equipe-table .col-nome{font-weight:500;color:var(--text1);min-width:160px}
+.equipe-table .col-num{text-align:center;font-weight:600}
+.equipe-table .col-money{text-align:right;white-space:nowrap}
+.equipe-table .row-highlight{background:var(--accent-light)}
+.equipe-table .row-highlight td{color:var(--accent);font-weight:600}
+@media(max-width:768px) and (pointer:coarse){
+.equipe-container{margin-left:8px;padding:10px 12px}
+.equipe-table{font-size:.68rem}
+.equipe-table td,.equipe-table th{padding:5px 6px}
+.equipe-table .col-nome{min-width:120px}
+}
 @media(max-width:768px) and (pointer:coarse){
 .container{padding:16px}
 .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
@@ -423,9 +455,46 @@ function renderTable(ds){
   for(var i=0;i<ds.length;i++){
     var g=ds[i];
     var sede=(g.sede&&g.sede!=='None'&&g.sede!==null)?g.sede:'-';
-    h+='<tr><td class="col-pos">'+(i+1)+'</td><td class="col-gestor">'+g.gestor+'</td><td class="col-sede">'+sede+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.membros_total+'</td><td class="col-num">'+g.membros_ativos+'</td><td class="col-actions"><button class="btn-hide" onclick="hideGestor(\''+g.gestor.replace(/'/g,"\\'")+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
+    var safeGestor=g.gestor.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    h+='<tr class="row-gestor" onclick="toggleEquipe(this,\''+safeGestor+'\')" title="Clique para ver a equipe"><td class="col-pos">'+(i+1)+'</td><td class="col-gestor"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+g.gestor+'</td><td class="col-sede">'+sede+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.membros_total+'</td><td class="col-num">'+g.membros_ativos+'</td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideGestor(\''+safeGestor+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
+    h+='<tr class="row-equipe" id="equipe-'+i+'"><td colspan="12"></td></tr>';
   }
   tb.innerHTML=h;
+}
+
+/* ====== TOGGLE EQUIPE ====== */
+function toggleEquipe(row,gestorNome){
+  var nextRow=row.nextElementSibling;
+  if(!nextRow||!nextRow.classList.contains('row-equipe'))return;
+  var isOpen=row.classList.contains('expanded');
+  if(isOpen){
+    row.classList.remove('expanded');
+    nextRow.classList.remove('visible');
+    return;
+  }
+  row.classList.add('expanded');
+  nextRow.classList.add('visible');
+  // Find gestor data
+  var gestor=null;
+  for(var i=0;i<DATA.length;i++){
+    if(DATA[i].gestor===gestorNome){gestor=DATA[i];break}
+  }
+  if(!gestor||!gestor.membros){
+    nextRow.querySelector('td').innerHTML='<div class="equipe-container"><p style="color:var(--text3);font-size:.78rem">Dados dos membros nao disponiveis. Clique "Forcar Atualizacao" para obter dados detalhados.</p></div>';
+    return;
+  }
+  // Render equipe
+  var membros=gestor.membros;
+  var ehtml='<div class="equipe-container">';
+  ehtml+='<div class="equipe-header"><h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Equipe de '+gestor.gestor+'</h4><span class="equipe-stats">'+membros.length+' membros | '+gestor.membros_ativos+' com ativadas</span></div>';
+  ehtml+='<div style="overflow-x:auto"><table class="equipe-table"><thead><tr><th>#</th><th>Consultor</th><th>Ativadas</th><th>Valor</th></tr></thead><tbody>';
+  for(var j=0;j<membros.length;j++){
+    var m=membros[j];
+    var isGestor=m.nome.toUpperCase()===gestorNome.toUpperCase();
+    ehtml+='<tr class="'+(isGestor?'row-highlight':'')+'"><td class="col-pos">'+(j+1)+'</td><td class="col-nome">'+m.nome+(isGestor?' (gestor)':'')+'</td><td class="col-num">'+m.ativadas_qtd+'</td><td class="col-money">'+fmtBRL(m.ativadas_valor)+'</td></tr>';
+  }
+  ehtml+='</tbody></table></div></div>';
+  nextRow.querySelector('td').innerHTML=ehtml;
 }
 
 /* ====== FILTER TABLE ====== */
