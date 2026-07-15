@@ -186,7 +186,6 @@ td,th{padding:7px 8px}
 AutoVale <span>Relatorios</span>
 </div>
 <div class="header-right">
-<a href="index.html" class="back-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Dashboard</a>
 <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
 </div>
 </header>
@@ -253,7 +252,7 @@ AutoVale <span>Relatorios</span>
 <!-- Search -->
 <div class="search-row">
 <input type="text" id="filterGestor" placeholder="Filtrar por gestor..." oninput="filtrarTabela()">
-<select id="filterSede" onchange="filtrarTabela()"><option value="">Todas as Sedes</option></select>
+<select id="filterSede" onchange="filtrarTabela()"><option value="">Todas as Cidades</option></select>
 </div>
 
 <!-- Table -->
@@ -269,14 +268,13 @@ AutoVale <span>Relatorios</span>
 <th colspan="2" class="th-group green-g" style="border-left:1px solid var(--border)">Gestor (Individual)</th>
 <th colspan="2" class="th-group purple-g" style="border-left:1px solid var(--border)">Equipe (sem gestor)</th>
 <th colspan="2" class="th-group blue-g" style="border-left:1px solid var(--border)">Total Geral</th>
-<th colspan="3" class="th-group">&nbsp;</th>
+<th class="th-group">&nbsp;</th>
 </tr>
 <tr>
-<th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="sede">Sede</th>
+<th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="cidade">Cidade</th>
 <th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th>
 <th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th>
 <th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th>
-<th data-sort="membros" style="border-left:1px solid var(--border)">Membros</th><th data-sort="ativos">Ativos</th>
 <th class="col-actions"></th>
 </tr>
 </thead>
@@ -503,10 +501,10 @@ function renderTable(ds){
   var h='';
   for(var i=0;i<ds.length;i++){
     var g=ds[i];
-    var sede=(g.sede&&g.sede!=='None'&&g.sede!==null)?g.sede:'-';
+    var cidade=(g.cidade&&g.cidade!=='None'&&g.cidade!==null)?g.cidade:'-';
     var safeGestor=g.gestor.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    h+='<tr class="row-gestor" onclick="toggleEquipe(this,\''+safeGestor+'\')" title="Clique para ver a equipe"><td class="col-pos">'+(i+1)+'</td><td class="col-gestor"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+g.gestor+'</td><td class="col-sede">'+sede+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.membros_total+'</td><td class="col-num">'+g.membros_ativos+'</td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideGestor(\''+safeGestor+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
-    h+='<tr class="row-equipe" id="equipe-'+i+'"><td colspan="12"></td></tr>';
+    h+='<tr class="row-gestor" onclick="toggleEquipe(this,\''+safeGestor+'\')" title="Clique para ver a equipe"><td class="col-pos">'+(i+1)+'</td><td class="col-gestor"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+g.gestor+'</td><td class="col-sede">'+cidade+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.gestor_ativadas_qtd+'</td><td class="col-money">'+fmtBRL(g.gestor_ativadas_valor)+'</td><td class="col-num" style="border-left:1px solid var(--border)">'+g.equipe_sem_gestor_qtd+'</td><td class="col-money">'+fmtBRL(g.equipe_sem_gestor_valor)+'</td><td class="col-num bold" style="border-left:1px solid var(--border)">'+g.equipe_total_qtd+'</td><td class="col-money bold">'+fmtBRL(g.equipe_total_valor)+'</td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideGestor(\''+safeGestor+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
+    h+='<tr class="row-equipe" id="equipe-'+i+'"><td colspan="10"></td></tr>';
   }
   tb.innerHTML=h;
 }
@@ -532,10 +530,10 @@ function toggleEquipe(row,gestorNome){
     nextRow.querySelector('td').innerHTML='<div class="equipe-container"><p style="color:var(--text3);font-size:.78rem">Dados dos membros nao disponiveis. Clique "Forcar Atualizacao" para obter dados detalhados.</p></div>';
     return;
   }
-  // Render equipe
-  var membros=gestor.membros;
+  // Render equipe - only members with sales > 0
+  var membros=gestor.membros.filter(function(m){return m.ativadas_qtd>0});
   var ehtml='<div class="equipe-container">';
-  ehtml+='<div class="equipe-header"><h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Equipe de '+gestor.gestor+'</h4><span class="equipe-stats">'+membros.length+' membros | '+gestor.membros_ativos+' com ativadas</span></div>';
+  ehtml+='<div class="equipe-header"><h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Equipe de '+gestor.gestor+'</h4><span class="equipe-stats">'+membros.length+' consultores com vendas</span></div>';
   ehtml+='<div style="overflow-x:auto"><table class="equipe-table"><thead><tr><th>#</th><th>Consultor</th><th>Ativadas</th><th>Valor</th></tr></thead><tbody>';
   for(var j=0;j<membros.length;j++){
     var m=membros[j];
@@ -549,10 +547,10 @@ function toggleEquipe(row,gestorNome){
 /* ====== FILTER TABLE ====== */
 function filtrarTabela(){
   var s=document.getElementById('filterGestor').value.toLowerCase();
-  var sede=document.getElementById('filterSede').value;
+  var cidade=document.getElementById('filterSede').value;
   var visible=getVisibleData();
   var filtered=visible.filter(function(g){
-    return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!sede||g.sede===sede);
+    return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!cidade||g.cidade===cidade);
   });
   sortData(filtered);
   renderTable(filtered);
@@ -561,19 +559,19 @@ function filtrarTabela(){
 /* ====== SORT ====== */
 function sortData(arr){
   var k=currentSort.key,d=currentSort.dir==='asc'?1:-1;
-  arr.sort(function(a,b){var va,vb;switch(k){case'gestor':va=a.gestor.toLowerCase();vb=b.gestor.toLowerCase();break;case'sede':va=(a.sede||'').toLowerCase();vb=(b.sede||'').toLowerCase();break;case'ind_qtd':va=a.gestor_ativadas_qtd;vb=b.gestor_ativadas_qtd;break;case'ind_val':va=a.gestor_ativadas_valor;vb=b.gestor_ativadas_valor;break;case'eq_qtd':va=a.equipe_sem_gestor_qtd;vb=b.equipe_sem_gestor_qtd;break;case'eq_val':va=a.equipe_sem_gestor_valor;vb=b.equipe_sem_gestor_valor;break;case'total_qtd':va=a.equipe_total_qtd;vb=b.equipe_total_qtd;break;case'total_val':va=a.equipe_total_valor;vb=b.equipe_total_valor;break;case'membros':va=a.membros_total;vb=b.membros_total;break;case'ativos':va=a.membros_ativos;vb=b.membros_ativos;break;default:return 0}if(va<vb)return-1*d;if(va>vb)return 1*d;return 0});
+  arr.sort(function(a,b){var va,vb;switch(k){case'gestor':va=a.gestor.toLowerCase();vb=b.gestor.toLowerCase();break;case'cidade':va=(a.cidade||'').toLowerCase();vb=(b.cidade||'').toLowerCase();break;case'ind_qtd':va=a.gestor_ativadas_qtd;vb=b.gestor_ativadas_qtd;break;case'ind_val':va=a.gestor_ativadas_valor;vb=b.gestor_ativadas_valor;break;case'eq_qtd':va=a.equipe_sem_gestor_qtd;vb=b.equipe_sem_gestor_qtd;break;case'eq_val':va=a.equipe_sem_gestor_valor;vb=b.equipe_sem_gestor_valor;break;case'total_qtd':va=a.equipe_total_qtd;vb=b.equipe_total_qtd;break;case'total_val':va=a.equipe_total_valor;vb=b.equipe_total_valor;break;default:return 0}if(va<vb)return-1*d;if(va>vb)return 1*d;return 0});
 }
 
 document.querySelectorAll('#tblAdesoes thead tr:last-child th[data-sort]').forEach(function(th){th.addEventListener('click',function(){var k=this.getAttribute('data-sort');if(!k)return;if(currentSort.key===k){currentSort.dir=currentSort.dir==='asc'?'desc':'asc'}else{currentSort.key=k;currentSort.dir='desc'}document.querySelectorAll('#tblAdesoes thead tr:last-child th').forEach(function(t){t.classList.remove('sorted-asc','sorted-desc')});this.classList.add(currentSort.dir==='asc'?'sorted-asc':'sorted-desc');filtrarTabela()});});
 
-/* ====== POPULATE SEDES ====== */
+/* ====== POPULATE CIDADES ====== */
 function populateSedes(){
   var sel=document.getElementById('filterSede');
   var current=sel.value;
-  sel.innerHTML='<option value="">Todas as Sedes</option>';
-  var sedes={};
-  DATA.forEach(function(g){if(g.sede&&g.sede!=='None'&&g.sede!==null)sedes[g.sede]=true});
-  Object.keys(sedes).sort().forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+  sel.innerHTML='<option value="">Todas as Cidades</option>';
+  var cidades={};
+  DATA.forEach(function(g){if(g.cidade&&g.cidade!=='None'&&g.cidade!==null)cidades[g.cidade]=true});
+  Object.keys(cidades).sort().forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
   sel.value=current;
 }
 
