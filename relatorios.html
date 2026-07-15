@@ -246,15 +246,12 @@ AutoVale <span>Relatorios</span>
 /* ====== CONFIG ====== */
 var SUPABASE_URL='https://xoshndinqznjhcvxttwy.supabase.co';
 var SUPABASE_KEY='sb_publishable_-lC-azE6POYOVBBbQQv4Zw_Yr_FD4Nm';
-var AEASY_URL='https://aeasy.autovaleprevencoes.org';
-var AEASY_LOGIN='57975250899';
-var AEASY_PASS='Avp9768#';
+var EDGE_FUNCTION_URL=SUPABASE_URL+'/functions/v1/aeasy-proxy';
 
 /* ====== STATE ====== */
 var DATA=[];
 var hiddenGestores=JSON.parse(localStorage.getItem('avp-hidden-gestores')||'[]');
 var currentSort={key:'total_qtd',dir:'desc'};
-var aeasySession=null;
 
 /* ====== THEME ====== */
 function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('avp-theme',t)}
@@ -303,59 +300,7 @@ async function saveCache(hash,dados){
   localStorage.setItem('avp-cache-'+hash,JSON.stringify({dados:dados,ts:Date.now()}));
 }
 
-/* ====== AEASY LOGIN ====== */
-async function aeasyLogin(){
-  var r=await fetch(AEASY_URL+'/conta/login',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({UsuariosLogin:AEASY_LOGIN,UsuariosSenha:AEASY_PASS}),credentials:'include'});
-  var text=await r.text();
-  var cookies=document.cookie;
-  var phps=r.headers.get('set-cookie');
-  return r.ok;
-}
-
-/* ====== AEASY: GET GESTORES ====== */
-async function getGestores(){
-  var url=AEASY_URL+'/consultores/listagem?draw=1&columns%5B0%5D%5Bdata%5D=IndividuosNome&columns%5B0%5D%5Bname%5D=IndividuosNome&columns%5B0%5D%5Bsearchable%5D=false&columns%5B0%5D%5Borderable%5D=true&order%5B0%5D%5Bcolumn%5D=0&order%5B0%5D%5Bdir%5D=asc&start=0&length=7000&formPesquisa%5BsubmitFilter%5D=true&formPesquisa%5BSituacao%5D%5B%5D=2';
-  var r=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},credentials:'include'});
-  var d=await r.json();
-  var gestores=[];var seen={};
-  (d.data||[]).forEach(function(rec){
-    if(rec.ConsultoresLider==='1'&&!seen[rec.ConsultoresId]){
-      seen[rec.ConsultoresId]=true;
-      gestores.push({id:rec.ConsultoresId,nome:rec.IndividuosNome,sede:rec.GruposEmpresasNome||null});
-    }
-  });
-  return gestores;
-}
-
-/* ====== AEASY: GET TOP ADESOES ====== */
-async function getTopAdesoes(gestorId,gestorNome){
-  var tipoData=document.getElementById('fTipoData').value;
-  var dataIni=document.getElementById('fDataIni').value;
-  var dataFim=document.getElementById('fDataFim').value;
-  var ordenar=document.getElementById('fOrdenar').value;
-  var lider=document.getElementById('fLider').value;
-  var url=AEASY_URL+'/TopVendas?TipoData='+tipoData+'&DataInicial='+dataIni+'&DataFinal='+dataFim+'&Ordenar='+ordenar+'&CampoOrder=Quantidade&EquipeId='+gestorId+'&RetornarLiderComEquipe='+lider;
-  var r=await fetch(url,{credentials:'include'});
-  var html=await r.text();
-  var parser=new DOMParser();
-  var doc=parser.parseFromString(html,'text/html');
-  var rows=doc.querySelectorAll('tbody tr');
-  var tq=0,tv=0,gq=0,gv=0,ma=0;
-  rows.forEach(function(row){
-    var cells=row.querySelectorAll('td');
-    if(cells.length>=15){
-      var nome=cells[1].textContent.trim();
-      var aq=parseInt(cells[13].textContent.trim())||0;
-      var av=parseFloat(cells[14].textContent.replace('R$','').replace(/\./g,'').replace(',','.').trim())||0;
-      tq+=aq;tv+=av;
-      if(aq>0)ma++;
-      if(nome.toUpperCase()===gestorNome.toUpperCase()){gq=aq;gv=av}
-    }
-  });
-  return{gestor_ativadas_qtd:gq,gestor_ativadas_valor:Math.round(gv*100)/100,equipe_total_qtd:tq,equipe_total_valor:Math.round(tv*100)/100,equipe_sem_gestor_qtd:tq-gq,equipe_sem_gestor_valor:Math.round((tv-gv)*100)/100,membros_total:rows.length,membros_ativos:ma};
-}
-
-/* ====== MAIN: BUSCAR DADOS ====== */
+/* ====== MAIN: BUSCAR DADOS (via Edge Function) ====== */
 var forceRefresh=false;
 function forcarAtualizacao(){forceRefresh=true;buscarDados()}
 
@@ -390,43 +335,44 @@ async function buscarDados(){
   var pt=document.getElementById('progressText');
   pb.classList.add('visible');
   pf.style.width='0%';
-  pt.textContent='Fazendo login no AEasy...';
+  pt.textContent='Enviando requisicao para o servidor...';
 
   try{
-    // Login
-    await aeasyLogin();
-    pt.textContent='Buscando gestores...';
-    pf.style.width='5%';
-
-    // Get gestores
-    var gestores=await getGestores();
-    pt.textContent='Encontrados '+gestores.length+' gestores. Buscando dados...';
     pf.style.width='10%';
+    pt.textContent='Processando no servidor (pode levar ate 60s)...';
 
-    // Get top adesoes for each
-    var results=[];
-    for(var i=0;i<gestores.length;i++){
-      var g=gestores[i];
-      var dados=await getTopAdesoes(g.id,g.nome);
-      dados.gestor=g.nome;
-      dados.sede=g.sede;
-      results.push(dados);
-      var pct=10+Math.round((i+1)/gestores.length*85);
-      pf.style.width=pct+'%';
-      pt.textContent='Processando '+(i+1)+'/'+gestores.length+' - '+g.nome.substring(0,25)+'...';
+    // Chama Edge Function
+    var resp=await fetch(EDGE_FUNCTION_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY},
+      body:JSON.stringify({
+        tipo_data:document.getElementById('fTipoData').value,
+        data_inicial:document.getElementById('fDataIni').value,
+        data_final:document.getElementById('fDataFim').value,
+        ordenar:document.getElementById('fOrdenar').value,
+        retornar_lider:document.getElementById('fLider').value
+      })
+    });
+
+    pf.style.width='80%';
+    pt.textContent='Recebendo dados...';
+
+    var result=await resp.json();
+
+    if(!result.success){
+      throw new Error(result.error||'Erro desconhecido');
     }
 
-    results.sort(function(a,b){return b.equipe_total_qtd-a.equipe_total_qtd});
-    DATA=results;
+    DATA=result.data;
 
     // Save cache
+    pf.style.width='95%';
     pt.textContent='Salvando no cache...';
-    pf.style.width='98%';
-    await saveCache(hash,results);
+    await saveCache(hash,DATA);
 
     pf.style.width='100%';
-    pt.textContent='Concluido!';
-    setTimeout(function(){pb.classList.remove('visible')},2000);
+    pt.textContent='Concluido! '+result.total_gestores+' gestores processados.';
+    setTimeout(function(){pb.classList.remove('visible')},3000);
 
     showData('Dados atualizados agora - '+new Date().toLocaleString('pt-BR'));
 
