@@ -1216,24 +1216,59 @@ async function loadEquipeMembros(nome){
   if(!container)return;
   container.innerHTML='<div class="detail-loading">Buscando equipe...</div>';
 
-  // Find gestor ID from the data
+  // Find gestor data from loaded ACOMP_DATA
   var data=ACOMP_DATA[ACOMP_MES]||[];
   var gestorData=data.find(function(r){return r.gestor_nome===nome&&r.tipo==='semanal'});
   if(!gestorData)gestorData=data.find(function(r){return r.gestor_nome===nome});
   var dataFim=gestorData?gestorData.data_fim:null;
   var dataIni='2026-'+(ACOMP_MES<10?'0':'')+ACOMP_MES+'-01';
   if(!dataFim)dataFim=dataIni;
+  var semNum=gestorData?gestorData.semana:0;
 
-  // Check cache
-  var cacheKey='equipe_'+nome+'_'+dataIni+'_'+dataFim;
+  // Check memory cache
+  var cacheKey='equipe_'+nome+'_'+ACOMP_ANO+'_'+ACOMP_MES+'_'+semNum;
   if(detailCache[cacheKey]){
     renderEquipeMembros(container,detailCache[cacheKey],nome);
     return;
   }
 
+  // Check Supabase cache
+  try{
+    var sbResp=await sbFetch('relatorios_membros?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&semana=eq.'+semNum+'&gestor_nome=eq.'+encodeURIComponent(nome)+'&ativadas_qtd=gt.0&select=membro_nome,ativadas_qtd,ativadas_valor&order=ativadas_qtd.desc');
+    var sbData=await sbResp.json();
+    if(sbData&&sbData.length>0){
+      var membros=sbData.map(function(r){return{nome:r.membro_nome,ativadas_qtd:r.ativadas_qtd,ativadas_valor:r.ativadas_valor}});
+      detailCache[cacheKey]=membros;
+      renderEquipeMembros(container,membros,nome);
+      return;
+    }
+  }catch(e){console.warn('Supabase membros check failed',e)}
+
+  // Not in cache - fetch from Edge Function
   try{
     var loginResult=await edgeCall({action:'login'});
     if(!loginResult.success){container.innerHTML='<div class="detail-loading">Erro no login</div>';return}
+
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:loginResult.session_cookie});
+    var gestorInfo=gestoresResult.gestores.find(function(g){return g.nome===nome});
+    if(!gestorInfo){container.innerHTML='<div class="detail-loading">Gestor nao encontrado</div>';return}
+
+    var batchResult=await edgeCall({action:'batch',session_cookie:loginResult.session_cookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:[gestorInfo]});
+    if(batchResult.success&&batchResult.data.length>0){
+      var membros=batchResult.data[0].membros||[];
+      detailCache[cacheKey]=membros;
+
+      // Save to Supabase for future use
+      var registros=membros.filter(function(m){return m.ativadas_qtd>0}).map(function(m){
+        return{ano:ACOMP_ANO,mes:ACOMP_MES,semana:semNum,data_inicio:dataIni,data_fim:dataFim,gestor_nome:nome,membro_nome:m.nome,ativadas_qtd:m.ativadas_qtd,ativadas_valor:m.ativadas_valor};
+      });
+      if(registros.length>0){
+        sbFetch('relatorios_membros',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'resolution=merge-duplicates'}}).catch(function(){});
+      }
+
+      renderEquipeMembros(container,membros,nome);
+    }else{container.innerHTML='<div class="detail-loading">Sem dados</div>'}
+  }catch(e){container.innerHTML='<div class="detail-loading">Erro: '+e.message+'</div>'}
 
     var gestoresResult=await edgeCall({action:'gestores',session_cookie:loginResult.session_cookie});
     var gestorInfo=gestoresResult.gestores.find(function(g){return g.nome===nome});
