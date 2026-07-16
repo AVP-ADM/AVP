@@ -1208,7 +1208,7 @@ function buildDetailContent(nome,cidade,semanas){
   html+='<div style="margin-top:12px">';
   html+='<div style="font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px">Equipe detalhada:</div>';
   html+='<div class="sem-selector" id="semSelector">';
-  html+='<button class="sem-btn active" onclick="loadEquipeSemana(\''+nome.replace(/'/g,"\\'")+'\',\'total\')">Total</button>';
+  html+='<button class="sem-btn" onclick="loadEquipeSemana(\''+nome.replace(/'/g,"\\'")+'\',\'total\')">Total</button>';
   semanasArr.forEach(function(s){
     if(s.tipo==='semanal'){
       var label='Sem '+s.semana;
