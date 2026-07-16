@@ -1010,7 +1010,6 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
   if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
   document.getElementById('tblAcompHeader').innerHTML=headerHtml;
   document.getElementById('tblAcompHeaderGroup').innerHTML='<th colspan="3" class="th-group">&nbsp;</th><th class="th-group green-g" colspan="'+(semanasOrdenadas.length+(fechamento?1:0))+'">Semanas (acumulado)</th>';
-  document.getElementById('thSemCols').setAttribute('colspan',semanasOrdenadas.length+(fechamento?1:0));
 
   // Build body - group by gestor using last semana or fechamento
   var fonte=fechamento||semanasOrdenadas[semanasOrdenadas.length-1];
