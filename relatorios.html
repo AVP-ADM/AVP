@@ -1001,7 +1001,7 @@ function renderAcompanhamento(data){
     var diff=total-prevTotal;
     var diffLabel=idx===0?'(1a semana)':((diff>=0?'+':'')+fk(diff)+' vs anterior');
     var diffClass=idx===0?'':(diff>=0?'up':'down');
-    cardsHtml+='<div class="semana-card"><div class="sc-label">Sem '+sem.semana+'</div><div class="sc-value">'+fk(total)+'</div><div class="sc-sub">ate '+sem.data_fim.substring(5).replace('-','/')+'</div><div class="sc-diff '+diffClass+'">'+diffLabel+'</div></div>';
+    cardsHtml+='<div class="semana-card"><div class="sc-label">Sem '+sem.semana+'</div><div class="sc-value">'+fk(total)+'</div><div class="sc-sub">01 - '+sem.data_fim.substring(8)+'/'+sem.data_fim.substring(5,7)+'</div><div class="sc-diff '+diffClass+'">'+diffLabel+'</div></div>';
     prevTotal=total;
   });
   if(fechamento){
