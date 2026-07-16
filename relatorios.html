@@ -39,7 +39,8 @@ html{font-size:13px;height:100%;overflow:hidden}
 --shadow:0 2px 8px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.3);
 --shadow-md:0 4px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.4);
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%;line-height:1.5;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%;line-height:1.5;overflow:hidden;-webkit-user-select:none;user-select:none}
+input,select,textarea{-webkit-user-select:text;user-select:text}
 
 
 /* ========= LAYOUT ========= */
@@ -258,6 +259,39 @@ tr:last-child td{border-bottom:none}
 .empty-state p{font-size:.88rem}
 
 
+/* ========= BOTTOM SHEET (mobile detail) ========= */
+.bottom-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.bottom-sheet-overlay.open{display:flex}
+.bottom-sheet{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.bottom-sheet-handle{width:40px;height:4px;background:var(--border-strong);border-radius:2px;margin:0 auto 16px}
+.bottom-sheet-title{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.bottom-sheet-subtitle{font-size:.72rem;color:var(--text3);margin-bottom:16px}
+.detail-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.detail-card{background:var(--surface-2);border-radius:var(--radius);padding:12px;text-align:center}
+.detail-card .dc-value{font-size:1.2rem;font-weight:800;color:var(--text1)}
+.detail-card .dc-label{font-size:.62rem;font-weight:600;text-transform:uppercase;color:var(--text3);margin-top:2px}
+.detail-card .dc-money{font-size:.7rem;color:var(--text2);margin-top:2px}
+.detail-card.green .dc-value{color:var(--green)}
+.detail-card.purple .dc-value{color:var(--purple)}
+.detail-card.blue .dc-value{color:var(--blue)}
+.sem-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.sem-btn{padding:5px 12px;border-radius:var(--radius);font-size:.72rem;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.sem-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.detail-loading{text-align:center;padding:20px;color:var(--text3);font-size:.78rem}
+
+/* ========= INLINE EXPAND (desktop detail) ========= */
+.row-acomp{cursor:pointer;transition:background .15s}
+.row-acomp:hover{background:var(--blue-bg)}
+.row-acomp td:first-child{position:relative;padding-left:24px}
+.row-acomp .expand-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;transition:transform .2s;color:var(--text3)}
+.row-acomp.expanded .expand-icon{transform:translateY(-50%) rotate(90deg);color:var(--accent)}
+.row-acomp-detail{display:none}
+.row-acomp-detail.visible{display:table-row}
+.row-acomp-detail td{padding:0}
+.detail-inline{padding:16px 20px;margin-left:20px;border-left:3px solid var(--accent);background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0}
+[data-theme="dark"] .detail-inline{background:var(--surface)}
+
 /* ========= RESPONSIVE ========= */
 @media(max-width:768px) and (pointer:coarse){
   .app-sidebar{display:none}
@@ -463,6 +497,14 @@ tr:last-child td{border-bottom:none}
     </button>
   </div>
 </nav>
+
+<!-- Bottom Sheet (mobile detail) -->
+<div class="bottom-sheet-overlay" id="bsOverlay" onclick="closeBottomSheet()">
+<div class="bottom-sheet" onclick="event.stopPropagation()">
+<div class="bottom-sheet-handle"></div>
+<div id="bsContent"></div>
+</div>
+</div>
 
 <script>
 
@@ -989,13 +1031,11 @@ async function loadComparativoMensal(){
     var html='<div class="bar-chart">';
     for(var m=1;m<=12;m++){
       var val=meses[m]||0;
+      if(val===0)continue;
       var pct=Math.round((val/maxVal)*100);
       var label=MESES_NOMES[m].substring(0,3);
-      if(val>0){
-        html+='<div class="bar-col"><div class="bar-value">'+fk(val)+'</div><div class="bar-fill" style="height:'+pct+'%"></div><div class="bar-label">'+label+'</div></div>';
-      }else{
-        html+='<div class="bar-col"><div class="bar-value">-</div><div class="bar-fill" style="height:2%"></div><div class="bar-label">'+label+'</div></div>';
-      }
+      var isActive=m===ACOMP_MES?'background:linear-gradient(180deg,var(--accent),var(--green))':'';
+      html+='<div class="bar-col"><div class="bar-value">'+fk(val)+'</div><div class="bar-fill" style="height:'+pct+'%;'+isActive+'"></div><div class="bar-label">'+label+'</div></div>';
     }
     html+='</div>';
     document.getElementById('acompBarChart').innerHTML=html;
@@ -1023,31 +1063,201 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
   var searchVal=(document.getElementById('filterGestorAcomp')||{}).value||'';
   if(searchVal){searchVal=searchVal.toLowerCase();gestoresRank=gestoresRank.filter(function(g){return g.gestor_nome.toLowerCase().indexOf(searchVal)>=0});}
 
-  // Build lookup: semana -> gestor_nome -> value
-  var lookup={};
+  // Build lookup: semana -> gestor_nome -> full data
+  var lookupFull={};
   semanasOrdenadas.forEach(function(s){
-    lookup[s.semana]={};
-    s.gestores.forEach(function(g){lookup[s.semana][g.gestor_nome]=g.equipe_total_qtd});
+    lookupFull[s.semana]={};
+    s.gestores.forEach(function(g){lookupFull[s.semana][g.gestor_nome]=g});
   });
   var fechLookup={};
-  if(fechamento){fechamento.gestores.forEach(function(g){fechLookup[g.gestor_nome]=g.equipe_total_qtd})}
+  if(fechamento){fechamento.gestores.forEach(function(g){fechLookup[g.gestor_nome]=g})}
 
+  var colCount=3+semanasOrdenadas.length+(fechamento?1:0);
   var bodyHtml='';
   gestoresRank.forEach(function(g,idx){
     if(hiddenGestores.indexOf(g.gestor_nome)>=0)return;
     var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
-    bodyHtml+='<tr><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
+    var safeNome=g.gestor_nome.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    bodyHtml+='<tr class="row-acomp" onclick="openGestorDetail(\''+safeNome+'\',\''+cidade+'\')" title="Clique para ver detalhes"><td class="col-pos" style="padding-left:24px;position:relative"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
     semanasOrdenadas.forEach(function(s){
-      var val=lookup[s.semana][g.gestor_nome]||0;
+      var val=lookupFull[s.semana][g.gestor_nome]?lookupFull[s.semana][g.gestor_nome].equipe_total_qtd:0;
       bodyHtml+='<td class="col-num">'+val+'</td>';
     });
     if(fechamento){
-      var ft=fechLookup[g.gestor_nome]||0;
+      var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;
       bodyHtml+='<td class="col-num bold">'+ft+'</td>';
     }
     bodyHtml+='</tr>';
+    // Detail row (desktop only)
+    bodyHtml+='<tr class="row-acomp-detail" id="acomp-detail-'+idx+'"><td colspan="'+colCount+'"></td></tr>';
   });
   document.getElementById('tbodyAcomp').innerHTML=bodyHtml;
+}
+
+/* ====== GESTOR DETAIL (ACOMPANHAMENTO) ====== */
+var detailCache={};
+
+function openGestorDetail(nome,cidade){
+  var isMobile=window.matchMedia('(max-width:768px) and (pointer:coarse)').matches;
+  if(isMobile){
+    openBottomSheet(nome,cidade);
+  }else{
+    toggleInlineDetail(nome,cidade);
+  }
+}
+
+function toggleInlineDetail(nome,cidade){
+  // Find the row
+  var rows=document.querySelectorAll('.row-acomp');
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];
+    if(row.querySelector('.col-gestor')&&row.querySelector('.col-gestor').textContent===nome){
+      var detailRow=row.nextElementSibling;
+      if(row.classList.contains('expanded')){
+        row.classList.remove('expanded');
+        detailRow.classList.remove('visible');
+      }else{
+        row.classList.add('expanded');
+        detailRow.classList.add('visible');
+        renderGestorDetail(detailRow.querySelector('td'),nome,cidade);
+      }
+      break;
+    }
+  }
+}
+
+function openBottomSheet(nome,cidade){
+  document.getElementById('bsOverlay').classList.add('open');
+  document.getElementById('bsContent').innerHTML='<div class="detail-loading">Carregando...</div>';
+  renderGestorDetailBS(nome,cidade);
+}
+function closeBottomSheet(){document.getElementById('bsOverlay').classList.remove('open')}
+
+function renderGestorDetail(container,nome,cidade){
+  // Get data from Supabase (already loaded in ACOMP_DATA)
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var semanas={};
+  data.forEach(function(r){
+    if(r.gestor_nome!==nome)return;
+    var k=r.semana+'_'+r.tipo;
+    semanas[k]=r;
+  });
+
+  var html='<div class="detail-inline">';
+  html+=buildDetailContent(nome,cidade,semanas);
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function renderGestorDetailBS(nome,cidade){
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var semanas={};
+  data.forEach(function(r){
+    if(r.gestor_nome!==nome)return;
+    var k=r.semana+'_'+r.tipo;
+    semanas[k]=r;
+  });
+
+  var html='<div class="bottom-sheet-title">'+nome+'</div>';
+  html+='<div class="bottom-sheet-subtitle">'+cidade+'</div>';
+  html+=buildDetailContent(nome,cidade,semanas);
+  document.getElementById('bsContent').innerHTML=html;
+}
+
+function buildDetailContent(nome,cidade,semanas){
+  // Find best data (fechamento or last semana)
+  var best=semanas['0_fechamento'];
+  if(!best){
+    var maxSem=0;
+    Object.keys(semanas).forEach(function(k){
+      var r=semanas[k];
+      if(r.tipo==='semanal'&&r.semana>maxSem){maxSem=r.semana;best=r}
+    });
+  }
+
+  var html='';
+  // Cards: Individual / Equipe / Total
+  if(best){
+    html+='<div class="detail-cards">';
+    html+='<div class="detail-card green"><div class="dc-value">'+best.gestor_ativadas_qtd+'</div><div class="dc-label">Individual</div><div class="dc-money">'+fmtBRL(best.gestor_ativadas_valor)+'</div></div>';
+    html+='<div class="detail-card purple"><div class="dc-value">'+best.equipe_sem_gestor_qtd+'</div><div class="dc-label">Equipe</div><div class="dc-money">'+fmtBRL(best.equipe_sem_gestor_valor)+'</div></div>';
+    html+='<div class="detail-card blue"><div class="dc-value">'+best.equipe_total_qtd+'</div><div class="dc-label">Total</div><div class="dc-money">'+fmtBRL(best.equipe_total_valor)+'</div></div>';
+    html+='</div>';
+  }
+
+  // Tabela por semana
+  var semanasArr=[];
+  Object.keys(semanas).forEach(function(k){semanasArr.push(semanas[k])});
+  semanasArr.sort(function(a,b){
+    if(a.tipo==='fechamento')return 1;
+    if(b.tipo==='fechamento')return -1;
+    return a.semana-b.semana;
+  });
+
+  if(semanasArr.length>0){
+    html+='<div style="overflow-x:auto;margin-bottom:12px"><table class="equipe-table"><thead><tr><th></th><th>Individual</th><th>Equipe</th><th>Total</th><th>Valor</th></tr></thead><tbody>';
+    semanasArr.forEach(function(s){
+      var label=s.tipo==='fechamento'?'Fech.':'Sem '+s.semana;
+      var bold=s.tipo==='fechamento'?'font-weight:700':'';
+      html+='<tr style="'+bold+'"><td>'+label+'</td><td class="col-num">'+s.gestor_ativadas_qtd+'</td><td class="col-num">'+s.equipe_sem_gestor_qtd+'</td><td class="col-num">'+s.equipe_total_qtd+'</td><td class="col-money">'+fmtBRL(s.equipe_total_valor)+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // Botão para ver equipe
+  html+='<div style="margin-top:8px"><button class="btn btn-outline" style="font-size:.72rem;padding:6px 12px" onclick="loadEquipeMembros(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Ver equipe detalhada</button></div>';
+  html+='<div id="equipeMembrosContainer"></div>';
+
+  return html;
+}
+
+async function loadEquipeMembros(nome){
+  var container=document.getElementById('equipeMembrosContainer');
+  if(!container)return;
+  container.innerHTML='<div class="detail-loading">Buscando equipe...</div>';
+
+  // Find gestor ID from the data
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var gestorData=data.find(function(r){return r.gestor_nome===nome&&r.tipo==='semanal'});
+  if(!gestorData)gestorData=data.find(function(r){return r.gestor_nome===nome});
+  var dataFim=gestorData?gestorData.data_fim:null;
+  var dataIni='2026-'+(ACOMP_MES<10?'0':'')+ACOMP_MES+'-01';
+  if(!dataFim)dataFim=dataIni;
+
+  // Check cache
+  var cacheKey='equipe_'+nome+'_'+dataIni+'_'+dataFim;
+  if(detailCache[cacheKey]){
+    renderEquipeMembros(container,detailCache[cacheKey],nome);
+    return;
+  }
+
+  try{
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success){container.innerHTML='<div class="detail-loading">Erro no login</div>';return}
+
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:loginResult.session_cookie});
+    var gestorInfo=gestoresResult.gestores.find(function(g){return g.nome===nome});
+    if(!gestorInfo){container.innerHTML='<div class="detail-loading">Gestor nao encontrado</div>';return}
+
+    var batchResult=await edgeCall({action:'batch',session_cookie:loginResult.session_cookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:[gestorInfo]});
+    if(batchResult.success&&batchResult.data.length>0){
+      var membros=batchResult.data[0].membros||[];
+      detailCache[cacheKey]=membros;
+      renderEquipeMembros(container,membros,nome);
+    }else{container.innerHTML='<div class="detail-loading">Sem dados</div>'}
+  }catch(e){container.innerHTML='<div class="detail-loading">Erro: '+e.message+'</div>'}
+}
+
+function renderEquipeMembros(container,membros,gestorNome){
+  var filtered=membros.filter(function(m){return m.ativadas_qtd>0});
+  if(filtered.length===0){container.innerHTML='<p style="font-size:.75rem;color:var(--text3);margin-top:8px">Nenhum membro com vendas no periodo.</p>';return}
+  var html='<div style="margin-top:12px;overflow-x:auto"><table class="equipe-table"><thead><tr><th>#</th><th>Consultor</th><th>Ativadas</th><th>Valor</th></tr></thead><tbody>';
+  filtered.forEach(function(m,i){
+    var isGestor=m.nome.toUpperCase()===gestorNome.toUpperCase();
+    html+='<tr class="'+(isGestor?'row-highlight':'')+'"><td class="col-pos">'+(i+1)+'</td><td style="font-weight:500;color:var(--text1)">'+m.nome+(isGestor?' (gestor)':'')+'</td><td class="col-num">'+m.ativadas_qtd+'</td><td class="col-money">'+fmtBRL(m.ativadas_valor)+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  container.innerHTML=html;
 }
 
 /* ====== FECHAR SEMANA ====== */
