@@ -874,13 +874,20 @@ var ACOMP_MES = 7;
 var ACOMP_ANO = 2026;
 var ACOMP_DATA = {};
 var MESES_NOMES = ['','Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+// Limites: apenas meses com dados
+var ACOMP_MES_MIN = 1;
+var ACOMP_ANO_MIN = 2026;
+var ACOMP_MES_MAX = 7;
+var ACOMP_ANO_MAX = 2026;
 
 function acompMesAnterior(){
+  if(ACOMP_ANO===ACOMP_ANO_MIN && ACOMP_MES<=ACOMP_MES_MIN) return;
   ACOMP_MES--;
   if(ACOMP_MES<1){ACOMP_MES=12;ACOMP_ANO--}
   loadAcompanhamento();
 }
 function acompMesSeguinte(){
+  if(ACOMP_ANO===ACOMP_ANO_MAX && ACOMP_MES>=ACOMP_MES_MAX) return;
   ACOMP_MES++;
   if(ACOMP_MES>12){ACOMP_MES=1;ACOMP_ANO++}
   loadAcompanhamento();
@@ -888,6 +895,11 @@ function acompMesSeguinte(){
 
 async function loadAcompanhamento(){
   document.getElementById('acompMesLabel').textContent=MESES_NOMES[ACOMP_MES]+' '+ACOMP_ANO;
+  // Disable/enable nav buttons based on limits
+  var btnAnt=document.querySelector('[onclick="acompMesAnterior()"]');
+  var btnProx=document.querySelector('[onclick="acompMesSeguinte()"]');
+  if(btnAnt)btnAnt.style.opacity=(ACOMP_ANO===ACOMP_ANO_MIN&&ACOMP_MES<=ACOMP_MES_MIN)?'.3':'1';
+  if(btnProx)btnProx.style.opacity=(ACOMP_ANO===ACOMP_ANO_MAX&&ACOMP_MES>=ACOMP_MES_MAX)?'.3':'1';
   // Fetch data for this month
   try{
     var r=await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&order=semana.asc');
