@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:13px;height:100%}
+html{font-size:13px;height:100%;overflow:hidden}
 :root{
 --bg:#F8FAFC;--surface:#FFFFFF;--surface-2:#F1F5F9;--border:#E2E8F0;--border-strong:#CBD5E1;
 --text1:#0F172A;--text2:#475569;--text3:#94A3B8;
@@ -39,70 +39,123 @@ html{scroll-behavior:smooth;font-size:13px;height:100%}
 --shadow:0 2px 8px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.3);
 --shadow-md:0 4px 12px rgba(0,0,0,.3),0 8px 32px rgba(0,0,0,.4);
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100%;line-height:1.5}
-.page-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);position:sticky;top:0;z-index:100}
-.page-header .logo{font-size:1.15rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
-.page-header .logo span{color:var(--text3);font-weight:400;font-size:.78rem;margin-left:4px}
-.header-right{display:flex;align-items:center;gap:12px}
-.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text2);text-decoration:none;font-size:.82rem;font-weight:500;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);transition:all .2s}
-.back-link:hover{color:var(--text1);background:var(--surface-2);border-color:var(--border-strong)}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%;line-height:1.5;overflow:hidden}
+
+
+/* ========= LAYOUT ========= */
+.app-layout{display:flex;height:calc(100vh - 48px);overflow:hidden;margin-top:48px}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;position:fixed;top:0;left:0;right:0;z-index:100;box-shadow:var(--shadow);justify-content:space-between;height:48px}
+.app-logo{font-size:1.1rem;font-weight:700;color:var(--primary);letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+.app-logo span{color:var(--text3);font-weight:400;font-size:.78rem;margin-left:4px}
+.header-right{display:flex;align-items:center;gap:10px}
 .theme-toggle{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-size:1rem;color:var(--text1);transition:all .2s;display:flex;align-items:center}
 .theme-toggle:hover{background:var(--blue-bg);border-color:var(--blue)}
-.container{max-width:1400px;margin:0 auto;padding:28px 32px 80px}
-.report-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0}
-.report-tab{padding:10px 20px;font-size:.82rem;font-weight:600;color:var(--text3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:var(--font)}
-.report-tab:hover{color:var(--text1)}
-.report-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.report-panel{display:none}
-.report-panel.active{display:block}
+
+/* ========= SIDEBAR ========= */
+.app-sidebar{width:240px;min-width:240px;height:100%;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .2s cubic-bezier(.4,0,.2,1),min-width .2s cubic-bezier(.4,0,.2,1);overflow:hidden;position:relative;z-index:90}
+.app-sidebar.collapsed{width:64px;min-width:64px}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:2px;border-radius:var(--radius);cursor:pointer;transition:all .15s;position:relative;white-space:nowrap;color:var(--text2);font-size:.84rem;font-weight:500;text-decoration:none;border:none;background:none;width:100%;text-align:left}
+.sidebar-item:hover{background:var(--surface-2);color:var(--text1)}
+.sidebar-item.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.sidebar-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.sidebar-item .si-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sidebar-item .si-icon svg{width:18px;height:18px}
+.sidebar-item .si-text{opacity:1;transition:opacity .2s .05s;overflow:hidden}
+.app-sidebar.collapsed .si-text{opacity:0;transition:opacity .1s}
+.sidebar-item .si-expand{margin-left:auto;transition:transform .2s;flex-shrink:0}
+.sidebar-group{margin-bottom:2px}
+.sidebar-group .sidebar-sub{display:none;padding:2px 0 2px 20px}
+.sidebar-group.expanded .sidebar-sub{display:block}
+.sidebar-group.expanded .si-expand{transform:rotate(90deg)}
+.sidebar-sub-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:.8rem;color:var(--text3);transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.sidebar-sub-item:hover{background:var(--surface-2);color:var(--text1)}
+.sidebar-sub-item.active{color:var(--accent);font-weight:600}
+.app-sidebar.collapsed .sidebar-sub{display:none!important}
+.app-sidebar.collapsed .si-expand{display:none}
+.app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none}
+.sidebar-pin{padding:8px;border-top:1px solid var(--border);margin-top:auto}
+
+/* ========= MAIN ========= */
+.app-main{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 32px 60px;max-width:100%}
+.app-main-inner{max-width:1400px;margin:0 auto}
+.panel{display:none}
+.panel.active{display:block}
+
+
+/* ========= BOTTOM NAV (mobile) ========= */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px);box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;border-radius:var(--radius);cursor:pointer;transition:all .15s;border:none;background:none;color:var(--text3);font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.bottom-nav-item:active{transform:scale(.92)}
+.bottom-nav-item.active{color:var(--accent)}
+.bottom-nav-item svg{width:20px;height:20px}
+
+/* ========= KPIs ========= */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
 .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--border);transition:all .2s}
 .kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.kpi-card:active{transform:scale(.98)}
 .kpi-card.blue{border-left-color:var(--blue)}.kpi-card.green{border-left-color:var(--green)}.kpi-card.amber{border-left-color:var(--amber)}.kpi-card.purple{border-left-color:var(--purple)}.kpi-card.red{border-left-color:var(--red)}
 .kpi-value{font-size:1.8rem;font-weight:800;line-height:1.1}
 .kpi-card.blue .kpi-value{color:var(--blue)}.kpi-card.green .kpi-value{color:var(--green)}.kpi-card.amber .kpi-value{color:var(--amber)}.kpi-card.purple .kpi-value{color:var(--purple)}.kpi-card.red .kpi-value{color:var(--red)}
 .kpi-label{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-top:6px}
-/* Filter Panel */
-.filter-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
-.filter-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;transition:background .15s}
-.filter-header:hover{background:var(--surface-2)}
-.filter-header h3{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
-.filter-chevron{transition:transform .2s;color:var(--text3)}
-.filter-panel.open .filter-chevron{transform:rotate(180deg)}
-.filter-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
-.filter-panel.open .filter-body{display:block}
-.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
-.filter-group label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-bottom:4px}
-.filter-group input,.filter-group select{width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
-.filter-group input:focus,.filter-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
-[data-theme="dark"] .filter-group input,[data-theme="dark"] .filter-group select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.kpi-compare{font-size:.7rem;font-weight:600;margin-top:4px}
+.kpi-compare.up{color:var(--green)}
+.kpi-compare.down{color:var(--red)}
+
+/* ========= CARDS & COMPONENTS ========= */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-title{font-size:.85rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-size:.82rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:var(--font)}
 .btn:active{transform:scale(.97)}
 .btn-green{background:var(--accent);color:#fff}.btn-green:hover{background:var(--accent-hover)}
 .btn-outline{background:var(--surface);color:var(--text2);border:1px solid var(--border-strong)}.btn-outline:hover{background:var(--surface-2)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-/* Progress */
-.progress-bar{display:none;margin-top:12px}
-.progress-bar.visible{display:block}
-.progress-track{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:4px;transition:width .4s ease}
-.progress-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:12px;flex-wrap:wrap}
-.progress-gestor{font-size:.78rem;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
-.progress-stats{font-size:.7rem;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap}
-.progress-pct{font-size:.82rem;font-weight:700;color:var(--accent)}
-/* Search filter */
-.search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-.search-row input,.search-row select{padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
-.search-row input:focus,.search-row select:focus{outline:none;border-color:var(--accent)}
-[data-theme="dark"] .search-row input,[data-theme="dark"] .search-row select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
-/* Hidden managers */
-.hidden-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.78rem;color:var(--text3)}
-.hidden-bar button{font-size:.75rem}
-.hidden-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
-.hidden-panel.open{display:block}
-.hidden-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem}
-.hidden-item:last-child{border-bottom:none}
-/* Table */
+
+/* ========= SKELETON LOADING ========= */
+.skeleton{background:linear-gradient(90deg,var(--surface-2) 25%,var(--border) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-kpi{height:60px;border-radius:var(--radius-lg)}
+.skeleton-row{height:40px;margin-bottom:8px}
+
+/* ========= SEMAFORO ========= */
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0}
+.status-dot.green{background:var(--green)}
+.status-dot.amber{background:var(--amber)}
+.status-dot.red{background:var(--red)}
+
+/* ========= SPARKLINE ========= */
+.sparkline{display:inline-flex;align-items:flex-end;gap:1px;height:20px;vertical-align:middle}
+.sparkline-bar{width:4px;background:var(--blue);border-radius:1px;transition:height .3s}
+.sparkline-bar.current{background:var(--accent)}
+
+/* ========= NOTIFICATION BAR ========= */
+.notif-bar{background:var(--amber-bg);border:1px solid var(--amber-light);border-radius:var(--radius);padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--amber)}
+.notif-bar svg{width:16px;height:16px;flex-shrink:0}
+.notif-bar .btn{padding:5px 12px;font-size:.72rem}
+
+/* ========= SEMANA CARDS ========= */
+.semana-cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.semana-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;min-width:120px;flex:1;text-align:center;transition:all .2s}
+.semana-card:hover{box-shadow:var(--shadow-md)}
+.semana-card.active{border-color:var(--accent);border-width:2px}
+.semana-card .sc-label{font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.semana-card .sc-value{font-size:1.3rem;font-weight:800;color:var(--green)}
+.semana-card .sc-sub{font-size:.65rem;color:var(--text3);margin-top:2px}
+.semana-card .sc-diff{font-size:.7rem;font-weight:600;margin-top:4px}
+.semana-card .sc-diff.up{color:var(--green)}
+.semana-card .sc-diff.down{color:var(--red)}
+
+/* ========= BAR CHART ========= */
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
+.bar-fill{width:100%;max-width:40px;background:linear-gradient(180deg,var(--blue),var(--accent));border-radius:4px 4px 0 0;transition:height .4s;min-height:2px}
+.bar-label{font-size:.6rem;color:var(--text3);font-weight:600}
+.bar-value{font-size:.65rem;color:var(--text2);font-weight:700}
+
+
+/* ========= TABLE ========= */
 .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface)}
 table{width:100%;border-collapse:collapse;font-size:.78rem}
 thead{background:var(--surface-2)}
@@ -126,36 +179,9 @@ tr:last-child td{border-bottom:none}
 .th-group.green-g{background:var(--green-bg);color:var(--green)}
 .th-group.purple-g{background:var(--purple-light);color:var(--purple)}
 .th-group.blue-g{background:var(--blue-bg);color:var(--blue)}
-.period-info{font-size:.75rem;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.period-info svg{width:14px;height:14px;opacity:.6}
-.cache-info{font-size:.7rem;color:var(--text3);font-style:italic;margin-bottom:12px}
-.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
-.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
-.empty-state p{font-size:.88rem}
-/* Expandable rows */
-.row-gestor{cursor:pointer;transition:background .15s}
 
-/* Acompanhamento */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow)}
-.semana-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;min-width:120px;flex:1;text-align:center;transition:all .2s}
-.semana-card:hover{box-shadow:var(--shadow-md)}
-.semana-card.active{border-color:var(--accent);border-width:2px}
-.semana-card .sc-label{font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
-.semana-card .sc-value{font-size:1.3rem;font-weight:800;color:var(--green)}
-.semana-card .sc-sub{font-size:.65rem;color:var(--text3);margin-top:2px}
-.semana-card .sc-diff{font-size:.7rem;font-weight:600;margin-top:4px}
-.semana-card .sc-diff.up{color:var(--green)}
-.semana-card .sc-diff.down{color:var(--red)}
-.bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0}
-.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
-.bar-fill{width:100%;max-width:40px;background:linear-gradient(180deg,var(--blue),var(--accent));border-radius:4px 4px 0 0;transition:height .4s;min-height:2px}
-.bar-label{font-size:.6rem;color:var(--text3);font-weight:600}
-.bar-value{font-size:.65rem;color:var(--text2);font-weight:700}
-@media(max-width:768px) and (pointer:coarse){
-.semana-card{min-width:90px;padding:10px 12px}
-.semana-card .sc-value{font-size:1rem}
-.bar-chart{height:80px}
-}
+/* ========= EXPANDABLE ROWS ========= */
+.row-gestor{cursor:pointer;transition:background .15s}
 .row-gestor:hover{background:var(--blue-bg)}
 .row-gestor .col-gestor{position:relative;padding-left:24px}
 .row-gestor .expand-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;transition:transform .2s;color:var(--text3)}
@@ -170,188 +196,300 @@ tr:last-child td{border-bottom:none}
 .equipe-header .equipe-stats{font-size:.7rem;color:var(--text3)}
 .equipe-table{width:100%;border-collapse:collapse;font-size:.74rem;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .equipe-table thead{background:var(--surface)}
-.equipe-table th{padding:7px 10px;font-size:.65rem;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px;cursor:default}
+.equipe-table th{padding:7px 10px;font-size:.65rem;cursor:default}
 .equipe-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
 .equipe-table tr:last-child td{border-bottom:none}
 .equipe-table tr:hover{background:var(--blue-bg)}
-.equipe-table .col-pos{width:30px;font-size:.7rem}
-.equipe-table .col-nome{font-weight:500;color:var(--text1);min-width:160px}
-.equipe-table .col-num{text-align:center;font-weight:600}
-.equipe-table .col-money{text-align:right;white-space:nowrap}
 .equipe-table .row-highlight{background:var(--accent-light)}
 .equipe-table .row-highlight td{color:var(--accent);font-weight:600}
+
+/* ========= FILTER PANEL ========= */
+.filter-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:0;margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
+.filter-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;transition:background .15s}
+.filter-header:hover{background:var(--surface-2)}
+.filter-header h3{font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.filter-chevron{transition:transform .2s;color:var(--text3)}
+.filter-panel.open .filter-chevron{transform:rotate(180deg)}
+.filter-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.filter-panel.open .filter-body{display:block}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.filter-group label{display:block;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-bottom:4px}
+.filter-group input,.filter-group select{width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(27,122,61,.08)}
+[data-theme="dark"] .filter-group input,[data-theme="dark"] .filter-group select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+
+/* ========= PROGRESS ========= */
+.progress-bar{display:none;margin-top:12px}
+.progress-bar.visible{display:block}
+.progress-track{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:4px;transition:width .4s ease}
+.progress-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:12px;flex-wrap:wrap}
+.progress-gestor{font-size:.78rem;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.progress-stats{font-size:.7rem;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap}
+.progress-pct{font-size:.82rem;font-weight:700;color:var(--accent)}
+
+/* ========= SEARCH ========= */
+.search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.search-row input,.search-row select{padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px}
+.search-row input:focus,.search-row select:focus{outline:none;border-color:var(--accent)}
+[data-theme="dark"] .search-row input,[data-theme="dark"] .search-row select{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+
+/* ========= HIDDEN GESTORES ========= */
+.hidden-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.78rem;color:var(--text3)}
+.hidden-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.hidden-panel.open{display:block}
+.hidden-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem}
+.hidden-item:last-child{border-bottom:none}
+
+/* ========= MISC ========= */
+.cache-info{font-size:.7rem;color:var(--text3);font-style:italic;margin-bottom:12px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:.88rem}
+
+
+/* ========= RESPONSIVE ========= */
 @media(max-width:768px) and (pointer:coarse){
-.equipe-container{margin-left:8px;padding:10px 12px}
-.equipe-table{font-size:.68rem}
-.equipe-table td,.equipe-table th{padding:5px 6px}
-.equipe-table .col-nome{min-width:120px}
+  .app-sidebar{display:none}
+  .bottom-nav{display:block}
+  .app-layout{margin-top:48px;height:calc(100vh - 48px - 60px)}
+  .app-main{padding:16px 16px 24px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi-value{font-size:1.4rem}
+  .kpi-card{padding:14px 16px}
+  .filter-grid{grid-template-columns:1fr}
+  .search-row{flex-direction:column;align-items:stretch}
+  .search-row input,.search-row select{width:100%}
+  table{font-size:.72rem}
+  td,th{padding:7px 8px}
+  .col-gestor{min-width:150px}
+  .semana-cards{gap:8px}
+  .semana-card{min-width:90px;padding:10px 12px}
+  .semana-card .sc-value{font-size:1rem}
+  .bar-chart{height:80px}
+  .equipe-container{margin-left:8px;padding:10px 12px}
+  .equipe-table{font-size:.68rem}
+  .equipe-table td,.equipe-table th{padding:5px 6px}
+  .app-header{padding:10px 16px}
 }
-@media(max-width:768px) and (pointer:coarse){
-.container{padding:16px}
-.kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-.kpi-value{font-size:1.4rem}
-.page-header{padding:12px 16px}
-.report-tab{padding:8px 12px;font-size:.78rem}
-.filter-grid{grid-template-columns:1fr}
-.search-row{flex-direction:column;align-items:stretch}
-.search-row input,.search-row select{width:100%}
-table{font-size:.72rem}
-td,th{padding:7px 8px}
-.col-gestor{min-width:150px}
+@media(min-width:769px){
+  .bottom-nav{display:none!important}
 }
 </style>
 </head>
+
+
 <body>
-<header class="page-header">
-<div class="logo">
-<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-AutoVale <span>Relatorios</span>
-</div>
-<div class="header-right">
-<button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
-</div>
+<!-- Header -->
+<header class="app-header">
+  <div class="app-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    AutoVale <span>Relatorios</span>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+  </div>
 </header>
-<div class="container">
-<nav class="report-tabs">
-<button class="report-tab active" data-panel="top-adesoes">Top Adesoes</button>
-<button class="report-tab" data-panel="acompanhamento">Acompanhamento</button>
-<button class="report-tab" data-panel="r3" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
+
+<!-- Layout: Sidebar + Main -->
+<div class="app-layout">
+  <!-- Sidebar (desktop) -->
+  <aside class="app-sidebar" id="appSidebar">
+    <nav class="sidebar-nav">
+      <div class="sidebar-group expanded" data-group="top-adesao">
+        <button class="sidebar-item has-children" data-tooltip="Top Adesao" onclick="toggleSidebarGroup('top-adesao')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></span>
+          <span class="si-text">Top Adesao</span>
+          <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </button>
+        <div class="sidebar-sub">
+          <button class="sidebar-sub-item active" onclick="goPanel('acompanhamento')">
+            <span class="si-text">Acompanhamento</span>
+          </button>
+          <button class="sidebar-sub-item" onclick="goPanel('pesquisa-livre')">
+            <span class="si-text">Pesquisa Livre</span>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-group" data-group="relat2">
+        <button class="sidebar-item" data-tooltip="Em breve" style="opacity:.5;cursor:not-allowed">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v4l3 3"/></svg></span>
+          <span class="si-text">Em breve</span>
+        </button>
+      </div>
+    </nav>
+    <div class="sidebar-pin">
+      <button class="sidebar-item" data-tooltip="Fixar menu" onclick="toggleSidebar()">
+        <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76z"/></svg></span>
+        <span class="si-text">Fixar menu</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <div class="app-main-inner">
+
+      <!-- PANEL: ACOMPANHAMENTO -->
+      <div class="panel active" id="panel-acompanhamento">
+        <!-- Notification bar (semana pendente) -->
+        <div class="notif-bar" id="notifSemana" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="notifSemanaText">Semana pendente de fechamento.</span>
+          <button class="btn btn-green" style="padding:5px 12px;font-size:.72rem" onclick="fecharSemana()">Fechar agora</button>
+        </div>
+
+        <!-- Month selector -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-outline" onclick="acompMesAnterior()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <h2 id="acompMesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h2>
+          <button class="btn btn-outline" onclick="acompMesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+          <button class="btn btn-green" onclick="fecharSemana()" id="btnFecharSemana" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" id="acompKpis">
+          <div class="kpi-card green"><div class="kpi-value" id="acompTotal">-</div><div class="kpi-label">Total Ativadas</div><div class="kpi-compare" id="acompTotalComp"></div></div>
+          <div class="kpi-card purple"><div class="kpi-value" id="acompValor">-</div><div class="kpi-label">Valor Acumulado</div><div class="kpi-compare" id="acompValorComp"></div></div>
+          <div class="kpi-card blue"><div class="kpi-value" id="acompSemanas">-</div><div class="kpi-label">Semanas Fechadas</div></div>
+          <div class="kpi-card amber"><div class="kpi-value" id="acompMedia">-</div><div class="kpi-label">Media Semanal</div></div>
+        </div>
+
+        <!-- Semana cards -->
+        <div class="semana-cards" id="acompSemanasCards"></div>
+
+        <!-- Bar chart -->
+        <div class="card" id="acompComparativo">
+          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Comparativo Mensal</div>
+          <div id="acompBarChart"></div>
+        </div>
+
+        <!-- Hidden bar -->
+        <div class="hidden-bar" id="hiddenBar" style="display:none">
+          <span id="hiddenCount">0 ocultos</span>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:.72rem" onclick="toggleHiddenPanel()">Gerenciar</button>
+        </div>
+        <div class="hidden-panel" id="hiddenPanel"></div>
+
+        <!-- Table -->
+        <div class="search-row">
+          <input type="text" id="filterGestorAcomp" placeholder="Filtrar por gestor..." oninput="renderTabelaAcompFromUI()">
+        </div>
+        <div class="table-wrap">
+          <table id="tblAcomp">
+            <thead><tr id="tblAcompHeaderGroup"></tr><tr id="tblAcompHeader"></tr></thead>
+            <tbody id="tbodyAcomp"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL: PESQUISA LIVRE -->
+      <div class="panel" id="panel-pesquisa-livre">
+        <!-- Filter Panel -->
+        <div class="filter-panel open" id="filterPanel">
+          <div class="filter-header" onclick="document.getElementById('filterPanel').classList.toggle('open')">
+            <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros de Pesquisa</h3>
+            <svg class="filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="filter-body">
+            <div class="filter-grid">
+              <div class="filter-group"><label>Tipo Data</label><select id="fTipoData"><option value="3">Data Ativacao</option><option value="2">Data da Cotacao</option><option value="4">Data da Venda Efetivada</option><option value="5">Primeiro Boleto Pago</option></select></div>
+              <div class="filter-group"><label>Data Inicial</label><input type="date" id="fDataIni" value="2026-07-01"></div>
+              <div class="filter-group"><label>Data Final</label><input type="date" id="fDataFim" value="2026-07-15"></div>
+              <div class="filter-group"><label>Ordenacao Adesao</label><select id="fOrdenar"><option value="6">Ativadas</option><option value="2">Cadastros</option><option value="1">Cotacao</option><option value="7">Primeiro Boleto Pago</option></select></div>
+              <div class="filter-group"><label>Retornar Lider</label><select id="fLider"><option value="NAO">Equipe sem lideres</option><option value="SIM">Equipe completa</option><option value="ATE_NIVEL_1">Equipe ate lider 1o nivel</option></select></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-green" id="btnBuscar" onclick="buscarDados()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar Dados</button>
+              <button class="btn btn-outline" onclick="forcarAtualizacao()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Forcar Atualizacao</button>
+            </div>
+            <div class="progress-bar" id="progressBar">
+              <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+              <div class="progress-info"><span class="progress-gestor" id="progressGestor">Aguardando...</span><span class="progress-pct" id="progressPct">0%</span></div>
+              <div class="progress-stats"><span id="progressCounter">0 de 0</span><span id="progressTime">Tempo: 0s</span><span id="progressEta">Restante: --</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cache-info" id="cacheInfo"></div>
+        <div class="kpi-grid">
+          <div class="kpi-card blue"><div class="kpi-value" id="kpiGestores">-</div><div class="kpi-label">Gestores</div></div>
+          <div class="kpi-card green"><div class="kpi-value" id="kpiTotal">-</div><div class="kpi-label">Total Ativadas</div></div>
+          <div class="kpi-card purple"><div class="kpi-value" id="kpiValor">-</div><div class="kpi-label">Valor Total</div></div>
+          <div class="kpi-card amber"><div class="kpi-value" id="kpiInd">-</div><div class="kpi-label">Individual</div></div>
+          <div class="kpi-card red"><div class="kpi-value" id="kpiEquipe">-</div><div class="kpi-label">Equipe</div></div>
+        </div>
+        <div class="search-row">
+          <input type="text" id="filterGestor" placeholder="Filtrar por gestor..." oninput="filtrarTabela()">
+          <select id="filterSede" onchange="filtrarTabela()"><option value="">Todas as Cidades</option></select>
+        </div>
+        <div class="table-wrap" id="tableWrap">
+          <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>Configure os filtros acima e clique <strong>Buscar Dados</strong></p>
+          </div>
+          <table id="tblAdesoes" style="display:none">
+            <thead>
+              <tr><th colspan="3" class="th-group">&nbsp;</th><th colspan="2" class="th-group green-g" style="border-left:1px solid var(--border)">Gestor (Individual)</th><th colspan="2" class="th-group purple-g" style="border-left:1px solid var(--border)">Equipe (sem gestor)</th><th colspan="2" class="th-group blue-g" style="border-left:1px solid var(--border)">Total Geral</th><th class="th-group">&nbsp;</th></tr>
+              <tr><th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="cidade">Cidade</th><th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th><th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th><th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th><th class="col-actions"></th></tr>
+            </thead>
+            <tbody id="tbodyAdesoes"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Bottom Nav (mobile) -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bottom-nav-item active" onclick="goPanel('acompanhamento')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      Acomp.
+    </button>
+    <button class="bottom-nav-item" onclick="goPanel('pesquisa-livre')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Pesquisa
+    </button>
+  </div>
 </nav>
-<section class="report-panel active" id="panel-top-adesoes">
 
-<!-- Filter Panel -->
-<div class="filter-panel open" id="filterPanel">
-<div class="filter-header" onclick="document.getElementById('filterPanel').classList.toggle('open')">
-<h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros de Pesquisa</h3>
-<svg class="filter-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-</div>
-<div class="filter-body">
-<div class="filter-grid">
-<div class="filter-group"><label>Tipo Data</label><select id="fTipoData"><option value="3">Data Ativacao</option><option value="2">Data da Cotacao</option><option value="4">Data da Venda Efetivada</option><option value="5">Primeiro Boleto Pago</option></select></div>
-<div class="filter-group"><label>Data Inicial</label><input type="date" id="fDataIni" value="2026-07-01"></div>
-<div class="filter-group"><label>Data Final</label><input type="date" id="fDataFim" value="2026-07-15"></div>
-<div class="filter-group"><label>Ordenacao Adesao</label><select id="fOrdenar"><option value="6">Ativadas</option><option value="2">Cadastros</option><option value="1">Cotacao</option><option value="7">Primeiro Boleto Pago</option></select></div>
-<div class="filter-group"><label>Retornar Lider</label><select id="fLider"><option value="NAO">Equipe sem lideres</option><option value="SIM">Equipe completa</option><option value="ATE_NIVEL_1">Equipe ate lider 1o nivel</option></select></div>
-</div>
-<div style="display:flex;gap:10px;align-items:center">
-<button class="btn btn-green" id="btnBuscar" onclick="buscarDados()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar Dados</button>
-<button class="btn btn-outline" onclick="forcarAtualizacao()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Forcar Atualizacao</button>
-</div>
-<div class="progress-bar" id="progressBar">
-<div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-<div class="progress-info">
-<span class="progress-gestor" id="progressGestor">Aguardando...</span>
-<span class="progress-pct" id="progressPct">0%</span>
-</div>
-<div class="progress-stats">
-<span id="progressCounter">0 de 0 gestores</span>
-<span id="progressTime">Tempo: 0s</span>
-<span id="progressEta">Restante: calculando...</span>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Cache info -->
-<div class="cache-info" id="cacheInfo"></div>
-
-<!-- KPIs -->
-<div class="kpi-grid" id="kpiGrid">
-<div class="kpi-card blue"><div class="kpi-value" id="kpiGestores">-</div><div class="kpi-label">Gestores</div></div>
-<div class="kpi-card green"><div class="kpi-value" id="kpiTotal">-</div><div class="kpi-label">Total Ativadas</div></div>
-<div class="kpi-card purple"><div class="kpi-value" id="kpiValor">-</div><div class="kpi-label">Valor Total</div></div>
-<div class="kpi-card amber"><div class="kpi-value" id="kpiInd">-</div><div class="kpi-label">Individual Gestores</div></div>
-<div class="kpi-card red"><div class="kpi-value" id="kpiEquipe">-</div><div class="kpi-label">Producao Equipes</div></div>
-</div>
-
-<!-- Hidden gestores bar -->
-<div class="hidden-bar" id="hiddenBar" style="display:none">
-<span id="hiddenCount">0 gestores ocultos</span>
-<button class="btn btn-outline" style="padding:4px 10px;font-size:.72rem" onclick="toggleHiddenPanel()">Gerenciar</button>
-</div>
-<div class="hidden-panel" id="hiddenPanel"></div>
-
-<!-- Search -->
-<div class="search-row">
-<input type="text" id="filterGestor" placeholder="Filtrar por gestor..." oninput="filtrarTabela()">
-<select id="filterSede" onchange="filtrarTabela()"><option value="">Todas as Cidades</option></select>
-</div>
-
-<!-- Table -->
-<div class="table-wrap" id="tableWrap">
-<div class="empty-state" id="emptyState">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-<p>Configure os filtros acima e clique <strong>Buscar Dados</strong></p>
-</div>
-<table id="tblAdesoes" style="display:none">
-<thead>
-<tr>
-<th colspan="3" class="th-group">&nbsp;</th>
-<th colspan="2" class="th-group green-g" style="border-left:1px solid var(--border)">Gestor (Individual)</th>
-<th colspan="2" class="th-group purple-g" style="border-left:1px solid var(--border)">Equipe (sem gestor)</th>
-<th colspan="2" class="th-group blue-g" style="border-left:1px solid var(--border)">Total Geral</th>
-<th class="th-group">&nbsp;</th>
-</tr>
-<tr>
-<th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="cidade">Cidade</th>
-<th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th>
-<th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th>
-<th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th>
-<th class="col-actions"></th>
-</tr>
-</thead>
-<tbody id="tbodyAdesoes"></tbody>
-</table>
-</div>
-</section>
-
-<!-- Panel: Acompanhamento Semanal -->
-<section class="report-panel" id="panel-acompanhamento">
-
-<!-- Month selector -->
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-<button class="btn btn-outline" onclick="acompMesAnterior()" id="btnMesAnt" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-<h3 id="acompMesLabel" style="font-size:1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h3>
-<button class="btn btn-outline" onclick="acompMesSeguinte()" id="btnMesProx" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-<button class="btn btn-green" onclick="fecharSemana()" id="btnFecharSemana" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
-</div>
-
-<!-- KPIs do mes -->
-<div class="kpi-grid" id="acompKpis">
-<div class="kpi-card green"><div class="kpi-value" id="acompTotal">-</div><div class="kpi-label">Total Ativadas (acumulado)</div></div>
-<div class="kpi-card purple"><div class="kpi-value" id="acompValor">-</div><div class="kpi-label">Valor Acumulado</div></div>
-<div class="kpi-card blue"><div class="kpi-value" id="acompSemanas">-</div><div class="kpi-label">Semanas Fechadas</div></div>
-<div class="kpi-card amber"><div class="kpi-value" id="acompMedia">-</div><div class="kpi-label">Media Semanal</div></div>
-</div>
-
-<!-- Semanas cards -->
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px" id="acompSemanasCards"></div>
-
-<!-- Comparativo mensal -->
-<div class="card" style="margin-bottom:20px" id="acompComparativo">
-<h4 style="font-size:.82rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Comparativo Mensal (fechamentos)</h4>
-<div style="overflow-x:auto" id="acompBarChart"></div>
-</div>
-
-<!-- Tabela ranking do mes -->
-<div class="table-wrap">
-<table id="tblAcomp">
-<thead>
-<tr>
-<th colspan="3" class="th-group">&nbsp;</th>
-<th class="th-group green-g" id="thSemCols" colspan="4">Semanas (acumulado)</th>
-</tr>
-<tr id="tblAcompHeader">
-<th>#</th><th>Gestor</th><th>Cidade</th>
-</tr>
-</thead>
-<tbody id="tbodyAcomp"></tbody>
-</table>
-</div>
-
-</section>
-</div>
 <script>
+
+/* ====== NAVIGATION ====== */
+function goPanel(panelId){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  var panel=document.getElementById('panel-'+panelId);
+  if(panel)panel.classList.add('active');
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-sub-item').forEach(function(s){s.classList.remove('active')});
+  document.querySelectorAll('.sidebar-sub-item').forEach(function(s){
+    if(s.getAttribute('onclick')&&s.getAttribute('onclick').indexOf(panelId)>=0)s.classList.add('active');
+  });
+  // Update bottom nav
+  document.querySelectorAll('.bottom-nav-item').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.bottom-nav-item').forEach(function(b){
+    if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf(panelId)>=0)b.classList.add('active');
+  });
+  // Load data if acompanhamento
+  if(panelId==='acompanhamento')loadAcompanhamento();
+}
+function toggleSidebarGroup(group){
+  var el=document.querySelector('[data-group="'+group+'"]');
+  if(el)el.classList.toggle('expanded');
+}
+function toggleSidebar(){
+  document.getElementById('appSidebar').classList.toggle('collapsed');
+}
+
+/* ====== RENDER ACOMP TABLE FROM UI FILTER ====== */
+function renderTabelaAcompFromUI(){
+  if(typeof lastSemanasOrdenadas!=='undefined'&&lastSemanasOrdenadas)renderTabelaAcomp(lastSemanasOrdenadas,lastFechamento);
+}
+var lastSemanasOrdenadas=null,lastFechamento=null;
+
+
 /* ====== CONFIG ====== */
 var SUPABASE_URL='https://xoshndinqznjhcvxttww.supabase.co';
 var SUPABASE_KEY='sb_publishable_-lC-azE6POYOVBBbQQv4Zw_Yr_FD4Nm';
@@ -365,8 +503,7 @@ var currentSort={key:'total_qtd',dir:'desc'};
 function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('avp-theme',t)}
 (function(){var s=localStorage.getItem('avp-theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
 
-/* ====== TABS ====== */
-document.querySelectorAll('.report-tab').forEach(function(tab){tab.addEventListener('click',function(){if(this.disabled)return;document.querySelectorAll('.report-tab').forEach(function(t){t.classList.remove('active')});document.querySelectorAll('.report-panel').forEach(function(p){p.classList.remove('active')});this.classList.add('active');var p=document.getElementById('panel-'+this.getAttribute('data-panel'));if(p)p.classList.add('active')});});
+/* Tabs removed - using goPanel() */
 
 /* ====== SUPABASE HELPERS ====== */
 function sbFetch(path,opts){
@@ -830,6 +967,7 @@ async function loadComparativoMensal(){
 }
 
 function renderTabelaAcomp(semanasOrdenadas,fechamento){
+  lastSemanasOrdenadas=semanasOrdenadas;lastFechamento=fechamento;
   // Build header
   var headerHtml='<th>#</th><th>Gestor</th><th>Cidade</th>';
   semanasOrdenadas.forEach(function(s){
@@ -837,6 +975,7 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
   });
   if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
   document.getElementById('tblAcompHeader').innerHTML=headerHtml;
+  document.getElementById('tblAcompHeaderGroup').innerHTML='<th colspan="3" class="th-group">&nbsp;</th><th class="th-group green-g" colspan="'+(semanasOrdenadas.length+(fechamento?1:0))+'">Semanas (acumulado)</th>';
   document.getElementById('thSemCols').setAttribute('colspan',semanasOrdenadas.length+(fechamento?1:0));
 
   // Build body - group by gestor using last semana or fechamento
@@ -845,6 +984,9 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
 
   // Sort gestores by total desc
   var gestoresRank=fonte.gestores.slice().sort(function(a,b){return b.equipe_total_qtd-a.equipe_total_qtd});
+  // Filter by search
+  var searchVal=(document.getElementById('filterGestorAcomp')||{}).value||'';
+  if(searchVal){searchVal=searchVal.toLowerCase();gestoresRank=gestoresRank.filter(function(g){return g.gestor_nome.toLowerCase().indexOf(searchVal)>=0});}
 
   // Build lookup: semana -> gestor_nome -> value
   var lookup={};
@@ -944,6 +1086,18 @@ async function fecharSemana(){
   // Load acompanhamento
   loadAcompanhamento();
 })();
+
+/* ====== CHECK PENDING WEEK ====== */
+function checkPendingWeek(){
+  var today=new Date();
+  if(today.getDay()===1){// Monday
+    var notif=document.getElementById('notifSemana');
+    if(notif)notif.style.display='flex';
+  }
+}
+
+// Check pending week on load
+checkPendingWeek();
 </script>
 </body>
 </html>
