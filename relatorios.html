@@ -134,6 +134,28 @@ tr:last-child td{border-bottom:none}
 .empty-state p{font-size:.88rem}
 /* Expandable rows */
 .row-gestor{cursor:pointer;transition:background .15s}
+
+/* Acompanhamento */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow)}
+.semana-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;min-width:120px;flex:1;text-align:center;transition:all .2s}
+.semana-card:hover{box-shadow:var(--shadow-md)}
+.semana-card.active{border-color:var(--accent);border-width:2px}
+.semana-card .sc-label{font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.semana-card .sc-value{font-size:1.3rem;font-weight:800;color:var(--green)}
+.semana-card .sc-sub{font-size:.65rem;color:var(--text3);margin-top:2px}
+.semana-card .sc-diff{font-size:.7rem;font-weight:600;margin-top:4px}
+.semana-card .sc-diff.up{color:var(--green)}
+.semana-card .sc-diff.down{color:var(--red)}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px}
+.bar-fill{width:100%;max-width:40px;background:linear-gradient(180deg,var(--blue),var(--accent));border-radius:4px 4px 0 0;transition:height .4s;min-height:2px}
+.bar-label{font-size:.6rem;color:var(--text3);font-weight:600}
+.bar-value{font-size:.65rem;color:var(--text2);font-weight:700}
+@media(max-width:768px) and (pointer:coarse){
+.semana-card{min-width:90px;padding:10px 12px}
+.semana-card .sc-value{font-size:1rem}
+.bar-chart{height:80px}
+}
 .row-gestor:hover{background:var(--blue-bg)}
 .row-gestor .col-gestor{position:relative;padding-left:24px}
 .row-gestor .expand-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;transition:transform .2s;color:var(--text3)}
@@ -192,7 +214,7 @@ AutoVale <span>Relatorios</span>
 <div class="container">
 <nav class="report-tabs">
 <button class="report-tab active" data-panel="top-adesoes">Top Adesoes</button>
-<button class="report-tab" data-panel="r2" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
+<button class="report-tab" data-panel="acompanhamento">Acompanhamento</button>
 <button class="report-tab" data-panel="r3" disabled style="opacity:.4;cursor:not-allowed">Em breve</button>
 </nav>
 <section class="report-panel active" id="panel-top-adesoes">
@@ -281,6 +303,52 @@ AutoVale <span>Relatorios</span>
 <tbody id="tbodyAdesoes"></tbody>
 </table>
 </div>
+</section>
+
+<!-- Panel: Acompanhamento Semanal -->
+<section class="report-panel" id="panel-acompanhamento">
+
+<!-- Month selector -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+<button class="btn btn-outline" onclick="acompMesAnterior()" id="btnMesAnt" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+<h3 id="acompMesLabel" style="font-size:1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h3>
+<button class="btn btn-outline" onclick="acompMesSeguinte()" id="btnMesProx" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+<button class="btn btn-green" onclick="fecharSemana()" id="btnFecharSemana" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
+</div>
+
+<!-- KPIs do mes -->
+<div class="kpi-grid" id="acompKpis">
+<div class="kpi-card green"><div class="kpi-value" id="acompTotal">-</div><div class="kpi-label">Total Ativadas (acumulado)</div></div>
+<div class="kpi-card purple"><div class="kpi-value" id="acompValor">-</div><div class="kpi-label">Valor Acumulado</div></div>
+<div class="kpi-card blue"><div class="kpi-value" id="acompSemanas">-</div><div class="kpi-label">Semanas Fechadas</div></div>
+<div class="kpi-card amber"><div class="kpi-value" id="acompMedia">-</div><div class="kpi-label">Media Semanal</div></div>
+</div>
+
+<!-- Semanas cards -->
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px" id="acompSemanasCards"></div>
+
+<!-- Comparativo mensal -->
+<div class="card" style="margin-bottom:20px" id="acompComparativo">
+<h4 style="font-size:.82rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Comparativo Mensal (fechamentos)</h4>
+<div style="overflow-x:auto" id="acompBarChart"></div>
+</div>
+
+<!-- Tabela ranking do mes -->
+<div class="table-wrap">
+<table id="tblAcomp">
+<thead>
+<tr>
+<th colspan="3" class="th-group">&nbsp;</th>
+<th class="th-group green-g" id="thSemCols" colspan="4">Semanas (acumulado)</th>
+</tr>
+<tr id="tblAcompHeader">
+<th>#</th><th>Gestor</th><th>Cidade</th>
+</tr>
+</thead>
+<tbody id="tbodyAcomp"></tbody>
+</table>
+</div>
+
 </section>
 </div>
 <script>
@@ -646,11 +714,226 @@ function renderHiddenPanel(){
   panel.innerHTML=h;
 }
 
+/* ====== ACOMPANHAMENTO SEMANAL ====== */
+var ACOMP_MES = 7;
+var ACOMP_ANO = 2026;
+var ACOMP_DATA = {};
+var MESES_NOMES = ['','Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function acompMesAnterior(){
+  ACOMP_MES--;
+  if(ACOMP_MES<1){ACOMP_MES=12;ACOMP_ANO--}
+  loadAcompanhamento();
+}
+function acompMesSeguinte(){
+  ACOMP_MES++;
+  if(ACOMP_MES>12){ACOMP_MES=1;ACOMP_ANO++}
+  loadAcompanhamento();
+}
+
+async function loadAcompanhamento(){
+  document.getElementById('acompMesLabel').textContent=MESES_NOMES[ACOMP_MES]+' '+ACOMP_ANO;
+  // Fetch data for this month
+  try{
+    var r=await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&order=semana.asc');
+    var data=await r.json();
+    ACOMP_DATA[ACOMP_MES]=data;
+    renderAcompanhamento(data);
+  }catch(e){console.error(e)}
+}
+
+function renderAcompanhamento(data){
+  if(!data||data.length===0){
+    document.getElementById('acompTotal').textContent='-';
+    document.getElementById('acompValor').textContent='-';
+    document.getElementById('acompSemanas').textContent='0';
+    document.getElementById('acompMedia').textContent='-';
+    document.getElementById('acompSemanasCards').innerHTML='<p style="color:var(--text3);font-size:.82rem">Nenhum dado para este mes.</p>';
+    document.getElementById('tbodyAcomp').innerHTML='';
+    return;
+  }
+
+  // Group by semana
+  var semanas={};
+  data.forEach(function(r){
+    var k=r.semana+'_'+r.tipo;
+    if(!semanas[k])semanas[k]={semana:r.semana,tipo:r.tipo,data_fim:r.data_fim,gestores:[]};
+    semanas[k].gestores.push(r);
+  });
+
+  // Get ordered semanas (exclude fechamento for weekly view)
+  var semanasOrdenadas=Object.values(semanas).filter(function(s){return s.tipo==='semanal'}).sort(function(a,b){return a.semana-b.semana});
+  var fechamento=Object.values(semanas).find(function(s){return s.tipo==='fechamento'});
+
+  // KPIs - use last semana or fechamento
+  var ultimaSem=fechamento||semanasOrdenadas[semanasOrdenadas.length-1];
+  var totalAtivadas=0,totalValor=0;
+  if(ultimaSem){
+    ultimaSem.gestores.forEach(function(g){totalAtivadas+=g.equipe_total_qtd;totalValor+=g.equipe_total_valor});
+  }
+  document.getElementById('acompTotal').textContent=fk(totalAtivadas);
+  document.getElementById('acompValor').textContent='R$ '+fk(Math.round(totalValor));
+  document.getElementById('acompSemanas').textContent=semanasOrdenadas.length;
+  var media=semanasOrdenadas.length>0?Math.round(totalAtivadas/semanasOrdenadas.length):0;
+  document.getElementById('acompMedia').textContent=fk(media)+'/sem';
+
+  // Semanas cards
+  var cardsHtml='';
+  var prevTotal=0;
+  semanasOrdenadas.forEach(function(sem,idx){
+    var total=0;
+    sem.gestores.forEach(function(g){total+=g.equipe_total_qtd});
+    var diff=total-prevTotal;
+    var diffLabel=idx===0?'(1a semana)':((diff>=0?'+':'')+fk(diff)+' vs anterior');
+    var diffClass=idx===0?'':(diff>=0?'up':'down');
+    cardsHtml+='<div class="semana-card"><div class="sc-label">Sem '+sem.semana+'</div><div class="sc-value">'+fk(total)+'</div><div class="sc-sub">ate '+sem.data_fim.substring(5).replace('-','/')+'</div><div class="sc-diff '+diffClass+'">'+diffLabel+'</div></div>';
+    prevTotal=total;
+  });
+  if(fechamento){
+    var ft=0;
+    fechamento.gestores.forEach(function(g){ft+=g.equipe_total_qtd});
+    cardsHtml+='<div class="semana-card active"><div class="sc-label">Fechamento</div><div class="sc-value">'+fk(ft)+'</div><div class="sc-sub">mes completo</div><div class="sc-diff up">FINAL</div></div>';
+  }
+  document.getElementById('acompSemanasCards').innerHTML=cardsHtml;
+
+  // Comparativo mensal (bar chart)
+  loadComparativoMensal();
+
+  // Tabela ranking
+  renderTabelaAcomp(semanasOrdenadas,fechamento);
+}
+
+async function loadComparativoMensal(){
+  try{
+    var r=await sbFetch('relatorios_semanal?ano=eq.2026&tipo=eq.fechamento&select=mes,equipe_total_qtd');
+    var data=await r.json();
+    var meses={};
+    data.forEach(function(r){
+      if(!meses[r.mes])meses[r.mes]=0;
+      meses[r.mes]+=r.equipe_total_qtd;
+    });
+    var maxVal=Math.max.apply(null,Object.values(meses))||1;
+    var html='<div class="bar-chart">';
+    for(var m=1;m<=12;m++){
+      var val=meses[m]||0;
+      var pct=Math.round((val/maxVal)*100);
+      var label=MESES_NOMES[m].substring(0,3);
+      if(val>0){
+        html+='<div class="bar-col"><div class="bar-value">'+fk(val)+'</div><div class="bar-fill" style="height:'+pct+'%"></div><div class="bar-label">'+label+'</div></div>';
+      }else{
+        html+='<div class="bar-col"><div class="bar-value">-</div><div class="bar-fill" style="height:2%"></div><div class="bar-label">'+label+'</div></div>';
+      }
+    }
+    html+='</div>';
+    document.getElementById('acompBarChart').innerHTML=html;
+  }catch(e){console.error(e)}
+}
+
+function renderTabelaAcomp(semanasOrdenadas,fechamento){
+  // Build header
+  var headerHtml='<th>#</th><th>Gestor</th><th>Cidade</th>';
+  semanasOrdenadas.forEach(function(s){
+    headerHtml+='<th style="text-align:center">Sem '+s.semana+'</th>';
+  });
+  if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
+  document.getElementById('tblAcompHeader').innerHTML=headerHtml;
+  document.getElementById('thSemCols').setAttribute('colspan',semanasOrdenadas.length+(fechamento?1:0));
+
+  // Build body - group by gestor using last semana or fechamento
+  var fonte=fechamento||semanasOrdenadas[semanasOrdenadas.length-1];
+  if(!fonte){document.getElementById('tbodyAcomp').innerHTML='';return}
+
+  // Sort gestores by total desc
+  var gestoresRank=fonte.gestores.slice().sort(function(a,b){return b.equipe_total_qtd-a.equipe_total_qtd});
+
+  // Build lookup: semana -> gestor_nome -> value
+  var lookup={};
+  semanasOrdenadas.forEach(function(s){
+    lookup[s.semana]={};
+    s.gestores.forEach(function(g){lookup[s.semana][g.gestor_nome]=g.equipe_total_qtd});
+  });
+  var fechLookup={};
+  if(fechamento){fechamento.gestores.forEach(function(g){fechLookup[g.gestor_nome]=g.equipe_total_qtd})}
+
+  var bodyHtml='';
+  gestoresRank.forEach(function(g,idx){
+    if(hiddenGestores.indexOf(g.gestor_nome)>=0)return;
+    var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
+    bodyHtml+='<tr><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
+    semanasOrdenadas.forEach(function(s){
+      var val=lookup[s.semana][g.gestor_nome]||0;
+      bodyHtml+='<td class="col-num">'+val+'</td>';
+    });
+    if(fechamento){
+      var ft=fechLookup[g.gestor_nome]||0;
+      bodyHtml+='<td class="col-num bold">'+ft+'</td>';
+    }
+    bodyHtml+='</tr>';
+  });
+  document.getElementById('tbodyAcomp').innerHTML=bodyHtml;
+}
+
+/* ====== FECHAR SEMANA ====== */
+async function fecharSemana(){
+  var btn=document.getElementById('btnFecharSemana');
+  btn.disabled=true;
+  btn.textContent='Processando...';
+  try{
+    // Detect next semana to close
+    var r=await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&tipo=eq.semanal&select=semana,data_fim&limit=1&order=semana.desc');
+    var existing=await r.json();
+    var lastSem=existing.length>0?existing[0].semana:0;
+    var nextSem=lastSem+1;
+
+    // Find next monday after last data_fim
+    var lastDate=existing.length>0?new Date(existing[0].data_fim+'T12:00:00'):new Date(ACOMP_ANO,ACOMP_MES-1,0);
+    var today=new Date();
+    var dataFim=today.toISOString().split('T')[0];
+
+    // Always start from day 1
+    var mes2=ACOMP_MES<10?'0'+ACOMP_MES:''+ACOMP_MES;
+    var dataIni=ACOMP_ANO+'-'+mes2+'-01';
+
+    if(confirm('Fechar Semana '+nextSem+'?\n\nPeriodo: '+dataIni+' ate '+dataFim)){
+      // Call edge function
+      var loginResult=await edgeCall({action:'login'});
+      if(!loginResult.success)throw new Error('Falha no login');
+      var sessionCookie=loginResult.session_cookie;
+
+      var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+      if(!gestoresResult.success)throw new Error('Falha gestores');
+      var gestoresList=gestoresResult.gestores;
+
+      var results=[];
+      var BATCH_SIZE=5;
+      for(var i=0;i<gestoresList.length;i+=BATCH_SIZE){
+        var batch=gestoresList.slice(i,i+BATCH_SIZE);
+        var batchResult=await edgeCall({action:'batch',session_cookie:sessionCookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:batch});
+        if(batchResult.success)results=results.concat(batchResult.data);
+      }
+
+      // Save to supabase
+      var registros=results.map(function(g){
+        return{ano:ACOMP_ANO,mes:ACOMP_MES,semana:nextSem,data_inicio:dataIni,data_fim:dataFim,gestor_nome:g.gestor,cidade:g.cidade,gestor_ativadas_qtd:g.gestor_ativadas_qtd,gestor_ativadas_valor:g.gestor_ativadas_valor,equipe_total_qtd:g.equipe_total_qtd,equipe_total_valor:g.equipe_total_valor,equipe_sem_gestor_qtd:g.equipe_sem_gestor_qtd,equipe_sem_gestor_valor:g.equipe_sem_gestor_valor,tipo:'semanal'};
+      });
+      var body=JSON.stringify(registros);
+      await sbFetch('relatorios_semanal',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
+
+      alert('Semana '+nextSem+' fechada com sucesso!');
+      loadAcompanhamento();
+    }
+  }catch(e){
+    alert('Erro: '+e.message);
+    console.error(e);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana';
+}
+
 /* ====== INIT ====== */
 (async function(){
   await loadHiddenFromSupabase();
   updateHiddenBar();
-  // Try to load last used cache
   var hash=getFilterHash();
   var local=localStorage.getItem('avp-cache-'+hash);
   if(local){
@@ -658,6 +941,8 @@ function renderHiddenPanel(){
     DATA=parsed.dados;
     showData('Cache local - salvo em '+new Date(parsed.ts).toLocaleString('pt-BR'));
   }
+  // Load acompanhamento
+  loadAcompanhamento();
 })();
 </script>
 </body>
