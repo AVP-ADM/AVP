@@ -1217,6 +1217,13 @@ function buildDetailContent(nome,cidade,semanas){
     }
   });
   html+='</div>';
+  // Aviso se mês não está fechado
+  var temFechamento=semanasArr.some(function(s){return s.tipo==='fechamento'});
+  if(!temFechamento&&semanasArr.length>0){
+    var ultimaData=semanasArr[semanasArr.length-1].data_fim;
+    var dataFormatada=ultimaData.substring(8)+'/'+ultimaData.substring(5,7);
+    html+='<div style="font-size:.7rem;color:var(--amber);margin-top:6px;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Dados ate '+dataFormatada+' (ultima semana fechada). Para dados atualizados, use Pesquisa Livre.</div>';
+  }
   html+='</div>';
   html+='<div id="equipeMembrosContainer"><div class="detail-loading" style="color:var(--text3);font-size:.75rem;padding:10px 0">Clique em "Total" ou numa semana para ver a equipe</div></div>';
 
