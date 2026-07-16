@@ -387,7 +387,9 @@ tr:last-child td{border-bottom:none}
           <button class="btn btn-outline" onclick="acompMesAnterior()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <h2 id="acompMesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h2>
           <button class="btn btn-outline" onclick="acompMesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-          <button class="btn btn-green" onclick="fecharSemana()" id="btnFecharSemana" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
+          <button class="btn btn-green" onclick="iniciarFechamento('semana')" id="btnFecharSemana" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
+          <button class="btn btn-green" onclick="iniciarFechamento('mes')" id="btnFecharMes" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Fechar Mes</button>
+          <button class="btn btn-outline" onclick="desfazerUltimo()" id="btnDesfazer" style="display:none;padding:6px 12px;font-size:.72rem" title="Desfazer ultimo fechamento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
         </div>
 
         <!-- KPIs -->
@@ -497,6 +499,14 @@ tr:last-child td{border-bottom:none}
     </button>
   </div>
 </nav>
+
+<!-- Confirmation Modal -->
+<div class="bottom-sheet-overlay" id="confirmOverlay" onclick="closeConfirmModal()">
+<div class="bottom-sheet" onclick="event.stopPropagation()" style="max-width:440px;margin:0 auto;border-radius:var(--radius-lg)">
+<div class="bottom-sheet-handle"></div>
+<div id="confirmContent"></div>
+</div>
+</div>
 
 <!-- Bottom Sheet (mobile detail) -->
 <div class="bottom-sheet-overlay" id="bsOverlay" onclick="closeBottomSheet()">
@@ -976,9 +986,37 @@ function renderAcompanhamento(data){
   var semanasOrdenadas=Object.values(semanas).filter(function(s){return s.tipo==='semanal'}).sort(function(a,b){return a.semana-b.semana});
   var fechamento=Object.values(semanas).find(function(s){return s.tipo==='fechamento'});
 
-  // Hide/show Fechar Semana button based on fechamento
-  var btnFechar=document.getElementById('btnFecharSemana');
-  if(btnFechar){btnFechar.style.display=fechamento?'none':'inline-flex'}
+  // Hide/show buttons based on state
+  var btnFecharSem=document.getElementById('btnFecharSemana');
+  var btnFecharMes=document.getElementById('btnFecharMes');
+  var btnDesfazer=document.getElementById('btnDesfazer');
+  if(fechamento){
+    // Mes ja fechado - esconde ambos, mostra desfazer
+    if(btnFecharSem)btnFecharSem.style.display='none';
+    if(btnFecharMes)btnFecharMes.style.display='none';
+    if(btnDesfazer)btnDesfazer.style.display='inline-flex';
+  }else{
+    // Verificar se todas as segundas do mes ja passaram (hora de fechar mes)
+    var lastDay=new Date(ACOMP_ANO,ACOMP_MES,0).getDate();
+    var today=new Date();
+    var todayDate=today.getFullYear()===ACOMP_ANO&&(today.getMonth()+1)===ACOMP_MES?today.getDate():lastDay+1;
+    // Encontrar ultima segunda do mes
+    var ultimaSegunda=0;
+    for(var d=1;d<=lastDay;d++){if(new Date(ACOMP_ANO,ACOMP_MES-1,d).getDay()===1)ultimaSegunda=d}
+    var todasSemanasFechadas=semanasOrdenadas.length>0&&semanasOrdenadas[semanasOrdenadas.length-1].semana>=4;
+    var mesJaAcabou=todayDate>lastDay||ACOMP_ANO<today.getFullYear()||(ACOMP_ANO===today.getFullYear()&&ACOMP_MES<today.getMonth()+1);
+
+    if(todasSemanasFechadas||mesJaAcabou){
+      // Mostrar "Fechar Mes"
+      if(btnFecharSem)btnFecharSem.style.display='none';
+      if(btnFecharMes)btnFecharMes.style.display='inline-flex';
+    }else{
+      // Mostrar "Fechar Semana"
+      if(btnFecharSem)btnFecharSem.style.display='inline-flex';
+      if(btnFecharMes)btnFecharMes.style.display='none';
+    }
+    if(btnDesfazer)btnDesfazer.style.display=(semanasOrdenadas.length>0)?'inline-flex':'none';
+  }
 
   // KPIs - use last semana or fechamento
   var ultimaSem=fechamento||semanasOrdenadas[semanasOrdenadas.length-1];
@@ -1322,61 +1360,140 @@ function renderEquipeMembros(container,membros,gestorNome){
   container.innerHTML=html;
 }
 
-/* ====== FECHAR SEMANA ====== */
-async function fecharSemana(){
-  var btn=document.getElementById('btnFecharSemana');
-  btn.disabled=true;
-  btn.textContent='Processando...';
-  try{
-    // Detect next semana to close
-    var r=await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&tipo=eq.semanal&select=semana,data_fim&limit=1&order=semana.desc');
-    var existing=await r.json();
-    var lastSem=existing.length>0?existing[0].semana:0;
+/* ====== FECHAR SEMANA / MES ====== */
+function iniciarFechamento(tipo){
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var semanais=data.filter(function(r){return r.tipo==='semanal'});
+  var semanas={};
+  semanais.forEach(function(r){if(!semanas[r.semana])semanas[r.semana]=r});
+  var lastSem=0;
+  Object.keys(semanas).forEach(function(k){if(parseInt(k)>lastSem)lastSem=parseInt(k)});
+
+  var mes2=ACOMP_MES<10?'0'+ACOMP_MES:''+ACOMP_MES;
+  var dataIni=ACOMP_ANO+'-'+mes2+'-01';
+  var today=new Date().toISOString().split('T')[0];
+  var todayFormatado=today.substring(8)+'/'+today.substring(5,7)+'/'+today.substring(0,4);
+
+  var titulo,periodo,semNum,dataFim,tipoFech;
+  if(tipo==='mes'){
+    var lastDay=new Date(ACOMP_ANO,ACOMP_MES,0).getDate();
+    dataFim=ACOMP_ANO+'-'+mes2+'-'+(lastDay<10?'0':'')+lastDay;
+    titulo='Fechar Mes de '+MESES_NOMES[ACOMP_MES];
+    periodo=dataIni+' ate '+dataFim+' (mes completo)';
+    semNum=0;
+    tipoFech='fechamento';
+  }else{
     var nextSem=lastSem+1;
+    dataFim=today;
+    titulo='Fechar Semana '+nextSem;
+    periodo=dataIni+' ate '+dataFim+' (hoje '+todayFormatado+')';
+    semNum=nextSem;
+    tipoFech='semanal';
+  }
 
-    // Find next monday after last data_fim
-    var lastDate=existing.length>0?new Date(existing[0].data_fim+'T12:00:00'):new Date(ACOMP_ANO,ACOMP_MES-1,0);
-    var today=new Date();
-    var dataFim=today.toISOString().split('T')[0];
+  var html='<div style="padding:4px 0">';
+  html+='<h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">'+titulo+'</h3>';
+  html+='<div style="background:var(--surface-2);border-radius:var(--radius);padding:12px;margin-bottom:16px">';
+  html+='<div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Periodo da busca:</div>';
+  html+='<div style="font-size:.85rem;font-weight:600;color:var(--text1)">'+periodo+'</div>';
+  html+='</div>';
+  html+='<div style="font-size:.75rem;color:var(--text3);margin-bottom:16px">Isso vai buscar os dados de todos os gestores no AEasy para este periodo e salvar no sistema. A operacao pode levar ate 60 segundos.</div>';
+  html+='<div style="display:flex;gap:10px;justify-content:flex-end">';
+  html+='<button class="btn btn-outline" onclick="closeConfirmModal()">Cancelar</button>';
+  html+='<button class="btn btn-green" onclick="executarFechamento('+semNum+',\''+dataIni+'\',\''+dataFim+'\',\''+tipoFech+'\')">Confirmar</button>';
+  html+='</div></div>';
 
-    // Always start from day 1
-    var mes2=ACOMP_MES<10?'0'+ACOMP_MES:''+ACOMP_MES;
-    var dataIni=ACOMP_ANO+'-'+mes2+'-01';
+  document.getElementById('confirmContent').innerHTML=html;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
 
-    if(confirm('Fechar Semana '+nextSem+'?\n\nPeriodo: '+dataIni+' ate '+dataFim)){
-      // Call edge function
-      var loginResult=await edgeCall({action:'login'});
-      if(!loginResult.success)throw new Error('Falha no login');
-      var sessionCookie=loginResult.session_cookie;
+function closeConfirmModal(){document.getElementById('confirmOverlay').classList.remove('open')}
 
-      var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
-      if(!gestoresResult.success)throw new Error('Falha gestores');
-      var gestoresList=gestoresResult.gestores;
+async function executarFechamento(semNum,dataIni,dataFim,tipoFech){
+  closeConfirmModal();
+  var btn=document.getElementById(tipoFech==='fechamento'?'btnFecharMes':'btnFecharSemana');
+  if(btn){btn.disabled=true;btn.textContent='Processando...'}
 
-      var results=[];
-      var BATCH_SIZE=5;
-      for(var i=0;i<gestoresList.length;i+=BATCH_SIZE){
-        var batch=gestoresList.slice(i,i+BATCH_SIZE);
-        var batchResult=await edgeCall({action:'batch',session_cookie:sessionCookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:batch});
-        if(batchResult.success)results=results.concat(batchResult.data);
-      }
+  try{
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success)throw new Error('Falha no login');
+    var sessionCookie=loginResult.session_cookie;
 
-      // Save to supabase
-      var registros=results.map(function(g){
-        return{ano:ACOMP_ANO,mes:ACOMP_MES,semana:nextSem,data_inicio:dataIni,data_fim:dataFim,gestor_nome:g.gestor,cidade:g.cidade,gestor_ativadas_qtd:g.gestor_ativadas_qtd,gestor_ativadas_valor:g.gestor_ativadas_valor,equipe_total_qtd:g.equipe_total_qtd,equipe_total_valor:g.equipe_total_valor,equipe_sem_gestor_qtd:g.equipe_sem_gestor_qtd,equipe_sem_gestor_valor:g.equipe_sem_gestor_valor,tipo:'semanal'};
-      });
-      var body=JSON.stringify(registros);
-      await sbFetch('relatorios_semanal',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+    if(!gestoresResult.success)throw new Error('Falha gestores');
+    var gestoresList=gestoresResult.gestores;
 
-      alert('Semana '+nextSem+' fechada com sucesso!');
-      loadAcompanhamento();
+    var results=[];
+    var BATCH_SIZE=5;
+    for(var i=0;i<gestoresList.length;i+=BATCH_SIZE){
+      var batch=gestoresList.slice(i,i+BATCH_SIZE);
+      var batchResult=await edgeCall({action:'batch',session_cookie:sessionCookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:batch});
+      if(batchResult.success)results=results.concat(batchResult.data);
     }
+
+    var registros=results.map(function(g){
+      return{ano:ACOMP_ANO,mes:ACOMP_MES,semana:semNum,data_inicio:dataIni,data_fim:dataFim,gestor_nome:g.gestor,cidade:g.cidade,gestor_ativadas_qtd:g.gestor_ativadas_qtd,gestor_ativadas_valor:g.gestor_ativadas_valor,equipe_total_qtd:g.equipe_total_qtd,equipe_total_valor:g.equipe_total_valor,equipe_sem_gestor_qtd:g.equipe_sem_gestor_qtd,equipe_sem_gestor_valor:g.equipe_sem_gestor_valor,tipo:tipoFech};
+    });
+    await sbFetch('relatorios_semanal',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'resolution=merge-duplicates'}});
+
+    var label=tipoFech==='fechamento'?'Mes fechado':'Semana '+semNum+' fechada';
+    alert(label+' com sucesso! ('+results.length+' gestores)');
+    // Update max month if needed
+    if(ACOMP_ANO>ACOMP_ANO_MAX||(ACOMP_ANO===ACOMP_ANO_MAX&&ACOMP_MES>ACOMP_MES_MAX)){
+      ACOMP_MES_MAX=ACOMP_MES;ACOMP_ANO_MAX=ACOMP_ANO;
+    }
+    loadAcompanhamento();
   }catch(e){
     alert('Erro: '+e.message);
     console.error(e);
   }
-  btn.disabled=false;
-  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana';
+  if(btn){btn.disabled=false;btn.innerHTML=tipoFech==='fechamento'?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Fechar Mes':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana'}
+}
+
+/* ====== DESFAZER ULTIMO FECHAMENTO ====== */
+async function desfazerUltimo(){
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  // Find what to undo: fechamento first, then last semana
+  var temFechamento=data.some(function(r){return r.tipo==='fechamento'});
+  var semanais=data.filter(function(r){return r.tipo==='semanal'});
+  var semanas={};
+  semanais.forEach(function(r){if(!semanas[r.semana])semanas[r.semana]=r});
+  var lastSem=0;
+  Object.keys(semanas).forEach(function(k){if(parseInt(k)>lastSem)lastSem=parseInt(k)});
+
+  var alvo,label;
+  if(temFechamento){
+    alvo='tipo=eq.fechamento';
+    label='fechamento do mes';
+  }else if(lastSem>0){
+    alvo='tipo=eq.semanal&semana=eq.'+lastSem;
+    label='Semana '+lastSem;
+  }else{
+    alert('Nada para desfazer neste mes.');
+    return;
+  }
+
+  var html='<div style="padding:4px 0">';
+  html+='<h3 style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--red)">Desfazer: '+label+'</h3>';
+  html+='<div style="font-size:.78rem;color:var(--text2);margin-bottom:16px">Isso vai <strong>apagar</strong> os dados de '+label+' de '+MESES_NOMES[ACOMP_MES]+' '+ACOMP_ANO+'. Voce podera fechar novamente depois.</div>';
+  html+='<div style="display:flex;gap:10px;justify-content:flex-end">';
+  html+='<button class="btn btn-outline" onclick="closeConfirmModal()">Cancelar</button>';
+  html+='<button class="btn" style="background:var(--red);color:#fff" onclick="executarDesfazer(\''+alvo+'\')">Apagar '+label+'</button>';
+  html+='</div></div>';
+
+  document.getElementById('confirmContent').innerHTML=html;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+async function executarDesfazer(filtro){
+  closeConfirmModal();
+  try{
+    await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&'+filtro,{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    alert('Desfeito com sucesso!');
+    loadAcompanhamento();
+  }catch(e){
+    alert('Erro ao desfazer: '+e.message);
+  }
 }
 
 /* ====== INIT ====== */
