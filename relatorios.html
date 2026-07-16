@@ -63,17 +63,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text1);height:100%
 .sidebar-item .si-icon svg{width:18px;height:18px}
 .sidebar-item .si-text{opacity:1;transition:opacity .2s .05s;overflow:hidden}
 .app-sidebar.collapsed .si-text{opacity:0;transition:opacity .1s}
-.sidebar-item .si-expand{margin-left:auto;transition:transform .2s;flex-shrink:0}
+.sidebar-item .si-expand{margin-left:auto;transition:transform .2s;flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.sidebar-item .si-expand svg{width:14px;height:14px}
 .sidebar-group{margin-bottom:2px}
-.sidebar-group .sidebar-sub{display:none;padding:2px 0 2px 20px}
+.sidebar-group .sidebar-sub{display:none;overflow:hidden}
 .sidebar-group.expanded .sidebar-sub{display:block}
 .sidebar-group.expanded .si-expand{transform:rotate(90deg)}
-.sidebar-sub-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:.8rem;color:var(--text3);transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.sidebar-sub-item{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 44px;margin-bottom:1px;border-radius:var(--radius);cursor:pointer;font-size:.78rem;font-weight:500;color:var(--text3);transition:all .15s;border:none;background:none;width:100%;text-align:left;position:relative;white-space:nowrap}
 .sidebar-sub-item:hover{background:var(--surface-2);color:var(--text1)}
-.sidebar-sub-item.active{color:var(--accent);font-weight:600}
+.sidebar-sub-item.active{color:var(--accent);font-weight:600;background:var(--accent-light)}
+[data-theme="dark"] .sidebar-sub-item:hover{background:var(--surface-2);color:var(--text1)}
+[data-theme="dark"] .sidebar-sub-item.active{background:rgba(52,208,88,.08);color:var(--accent)}
 .app-sidebar.collapsed .sidebar-sub{display:none!important}
 .app-sidebar.collapsed .si-expand{display:none}
 .app-sidebar.collapsed .sidebar-item[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:.72rem;padding:4px 10px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none}
+.app-sidebar.collapsed.hover-expanded{width:240px;min-width:240px}
+.app-sidebar.collapsed.hover-expanded .si-text{opacity:1;transition:opacity .15s .05s}
+.app-sidebar.collapsed.hover-expanded .sidebar-group.expanded .sidebar-sub{display:block!important}
+.app-sidebar.collapsed.hover-expanded .sidebar-item{padding:10px 14px}
 .sidebar-pin{padding:8px;border-top:1px solid var(--border);margin-top:auto}
 
 /* ========= MAIN ========= */
@@ -283,7 +290,7 @@ tr:last-child td{border-bottom:none}
 <!-- Header -->
 <header class="app-header">
   <div class="app-logo">
-    <img src="android-chrome-512x512.png" alt="AutoVale" style="height:28px;width:auto">
+    <img src="logo.png" alt="AutoVale" style="height:28px;width:28px;object-fit:contain">
     <span>Relatorios</span>
   </div>
   <div class="header-right">
@@ -489,8 +496,8 @@ function toggleSidebar(){
   if(!sidebar)return;
   // Start collapsed
   sidebar.classList.add('collapsed');
-  sidebar.addEventListener('mouseenter',function(){sidebar.classList.remove('collapsed')});
-  sidebar.addEventListener('mouseleave',function(){sidebar.classList.add('collapsed')});
+  sidebar.addEventListener('mouseenter',function(){sidebar.classList.add('hover-expanded')});
+  sidebar.addEventListener('mouseleave',function(){sidebar.classList.remove('hover-expanded')});
 })();
 
 /* ====== RENDER ACOMP TABLE FROM UI FILTER ====== */
