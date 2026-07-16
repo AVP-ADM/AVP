@@ -283,11 +283,11 @@ tr:last-child td{border-bottom:none}
 <!-- Header -->
 <header class="app-header">
   <div class="app-logo">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    AutoVale <span>Relatorios</span>
+    <img src="android-chrome-512x512.png" alt="AutoVale" style="height:28px;width:auto">
+    <span>Relatorios</span>
   </div>
   <div class="header-right">
-    <button class="theme-toggle" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn"><svg id="iconMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><svg id="iconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button>
   </div>
 </header>
 
@@ -483,6 +483,16 @@ function toggleSidebar(){
   document.getElementById('appSidebar').classList.toggle('collapsed');
 }
 
+/* ====== SIDEBAR HOVER BEHAVIOR ====== */
+(function(){
+  var sidebar=document.getElementById('appSidebar');
+  if(!sidebar)return;
+  // Start collapsed
+  sidebar.classList.add('collapsed');
+  sidebar.addEventListener('mouseenter',function(){sidebar.classList.remove('collapsed')});
+  sidebar.addEventListener('mouseleave',function(){sidebar.classList.add('collapsed')});
+})();
+
 /* ====== RENDER ACOMP TABLE FROM UI FILTER ====== */
 function renderTabelaAcompFromUI(){
   if(typeof lastSemanasOrdenadas!=='undefined'&&lastSemanasOrdenadas)renderTabelaAcomp(lastSemanasOrdenadas,lastFechamento);
@@ -500,8 +510,9 @@ var hiddenGestores=JSON.parse(localStorage.getItem('avp-hidden-gestores')||'[]')
 var currentSort={key:'total_qtd',dir:'desc'};
 
 /* ====== THEME ====== */
-function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('avp-theme',t)}
-(function(){var s=localStorage.getItem('avp-theme');if(s)document.documentElement.setAttribute('data-theme',s)})();
+function toggleTheme(){var t=document.documentElement.getAttribute('data-theme')==='dark'?'':'dark';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('avp-theme',t);updateThemeIcon()}
+function updateThemeIcon(){var isDark=document.documentElement.getAttribute('data-theme')==='dark';document.getElementById('iconMoon').style.display=isDark?'none':'block';document.getElementById('iconSun').style.display=isDark?'block':'none'}
+(function(){var s=localStorage.getItem('avp-theme');if(s)document.documentElement.setAttribute('data-theme',s);updateThemeIcon()})();
 
 /* Tabs removed - using goPanel() */
 
@@ -901,6 +912,10 @@ function renderAcompanhamento(data){
   // Get ordered semanas (exclude fechamento for weekly view)
   var semanasOrdenadas=Object.values(semanas).filter(function(s){return s.tipo==='semanal'}).sort(function(a,b){return a.semana-b.semana});
   var fechamento=Object.values(semanas).find(function(s){return s.tipo==='fechamento'});
+
+  // Hide/show Fechar Semana button based on fechamento
+  var btnFechar=document.getElementById('btnFecharSemana');
+  if(btnFechar){btnFechar.style.display=fechamento?'none':'inline-flex'}
 
   // KPIs - use last semana or fechamento
   var ultimaSem=fechamento||semanasOrdenadas[semanasOrdenadas.length-1];
