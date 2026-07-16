@@ -1204,26 +1204,63 @@ function buildDetailContent(nome,cidade,semanas){
     html+='</tbody></table></div>';
   }
 
-  // Botão para ver equipe
-  html+='<div style="margin-top:8px"><button class="btn btn-outline" style="font-size:.72rem;padding:6px 12px" onclick="loadEquipeMembros(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Ver equipe detalhada</button></div>';
-  html+='<div id="equipeMembrosContainer"></div>';
+  // Botão para ver equipe com seletor de semana
+  html+='<div style="margin-top:12px">';
+  html+='<div style="font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px">Equipe detalhada:</div>';
+  html+='<div class="sem-selector" id="semSelector">';
+  html+='<button class="sem-btn active" onclick="loadEquipeSemana(\''+nome.replace(/'/g,"\\'")+'\',\'total\')">Total</button>';
+  semanasArr.forEach(function(s){
+    if(s.tipo==='semanal'){
+      var label='Sem '+s.semana;
+      var periodo=s.data_fim.substring(8)+'/'+s.data_fim.substring(5,7);
+      html+='<button class="sem-btn" onclick="loadEquipeSemana(\''+nome.replace(/'/g,"\\'")+'\','+s.semana+')" title="01 - '+periodo+'">'+label+'</button>';
+    }
+  });
+  html+='</div>';
+  html+='</div>';
+  html+='<div id="equipeMembrosContainer"><div class="detail-loading" style="color:var(--text3);font-size:.75rem;padding:10px 0">Clique em "Total" ou numa semana para ver a equipe</div></div>';
 
   return html;
 }
 
-async function loadEquipeMembros(nome){
+function updateSemSelector(activeBtn){
+  var btns=document.querySelectorAll('.sem-selector .sem-btn');
+  btns.forEach(function(b){b.classList.remove('active')});
+  if(activeBtn)activeBtn.classList.add('active');
+}
+
+async function loadEquipeSemana(nome,semana){
+  // Update button state
+  var btns=document.querySelectorAll('.sem-selector .sem-btn');
+  btns.forEach(function(b){
+    b.classList.remove('active');
+    if(semana==='total'&&b.textContent==='Total')b.classList.add('active');
+    if(semana!=='total'&&b.textContent==='Sem '+semana)b.classList.add('active');
+  });
+
   var container=document.getElementById('equipeMembrosContainer');
   if(!container)return;
   container.innerHTML='<div class="detail-loading">Buscando equipe...</div>';
 
-  // Find gestor data from loaded ACOMP_DATA
+  // Determine the period
   var data=ACOMP_DATA[ACOMP_MES]||[];
-  var gestorData=data.find(function(r){return r.gestor_nome===nome&&r.tipo==='semanal'});
-  if(!gestorData)gestorData=data.find(function(r){return r.gestor_nome===nome});
-  var dataFim=gestorData?gestorData.data_fim:null;
+  var gestorData;
+  if(semana==='total'){
+    // Use fechamento or last semana
+    gestorData=data.find(function(r){return r.gestor_nome===nome&&r.tipo==='fechamento'});
+    if(!gestorData){
+      var maxSem=0;
+      data.forEach(function(r){if(r.gestor_nome===nome&&r.tipo==='semanal'&&r.semana>maxSem){maxSem=r.semana;gestorData=r}});
+    }
+  }else{
+    gestorData=data.find(function(r){return r.gestor_nome===nome&&r.tipo==='semanal'&&r.semana===semana});
+  }
+
+  if(!gestorData){container.innerHTML='<div class="detail-loading">Sem dados para este periodo</div>';return}
+
+  var dataFim=gestorData.data_fim;
   var dataIni='2026-'+(ACOMP_MES<10?'0':'')+ACOMP_MES+'-01';
-  if(!dataFim)dataFim=dataIni;
-  var semNum=gestorData?gestorData.semana:0;
+  var semNum=gestorData.semana;
 
   // Check memory cache
   var cacheKey='equipe_'+nome+'_'+ACOMP_ANO+'_'+ACOMP_MES+'_'+semNum;
@@ -1244,28 +1281,23 @@ async function loadEquipeMembros(nome){
     }
   }catch(e){console.warn('Supabase membros check failed',e)}
 
-  // Not in cache - fetch from Edge Function
+  // Fetch from Edge Function
   try{
     var loginResult=await edgeCall({action:'login'});
     if(!loginResult.success){container.innerHTML='<div class="detail-loading">Erro no login</div>';return}
-
     var gestoresResult=await edgeCall({action:'gestores',session_cookie:loginResult.session_cookie});
     var gestorInfo=gestoresResult.gestores.find(function(g){return g.nome===nome});
     if(!gestorInfo){container.innerHTML='<div class="detail-loading">Gestor nao encontrado</div>';return}
-
     var batchResult=await edgeCall({action:'batch',session_cookie:loginResult.session_cookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6',retornar_lider:'NAO',gestores:[gestorInfo]});
     if(batchResult.success&&batchResult.data.length>0){
       var membros=batchResult.data[0].membros||[];
       detailCache[cacheKey]=membros;
-
-      // Save to Supabase for future use
       var registros=membros.filter(function(m){return m.ativadas_qtd>0}).map(function(m){
         return{ano:ACOMP_ANO,mes:ACOMP_MES,semana:semNum,data_inicio:dataIni,data_fim:dataFim,gestor_nome:nome,membro_nome:m.nome,ativadas_qtd:m.ativadas_qtd,ativadas_valor:m.ativadas_valor};
       });
       if(registros.length>0){
         sbFetch('relatorios_membros',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'resolution=merge-duplicates'}}).catch(function(){});
       }
-
       renderEquipeMembros(container,membros,nome);
     }else{container.innerHTML='<div class="detail-loading">Sem dados</div>'}
   }catch(e){container.innerHTML='<div class="detail-loading">Erro: '+e.message+'</div>'}
