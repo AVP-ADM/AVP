@@ -417,8 +417,12 @@ tr:last-child td{border-bottom:none}
         <div class="hidden-panel" id="hiddenPanel"></div>
 
         <!-- Table -->
-        <div class="search-row">
-          <input type="text" id="filterGestorAcomp" placeholder="Filtrar por gestor..." oninput="renderTabelaAcompFromUI()">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <div style="display:flex;gap:4px;background:var(--surface-2);border-radius:var(--radius);padding:3px">
+            <button class="sem-btn active" id="btnModoResumo" onclick="setModoTabela('resumo')" style="border:none">Resumo</button>
+            <button class="sem-btn" id="btnModoDetalhado" onclick="setModoTabela('detalhado')" style="border:none">Detalhado</button>
+          </div>
+          <input type="text" id="filterGestorAcomp" placeholder="Filtrar por gestor..." oninput="renderTabelaAcompFromUI()" style="padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px">
         </div>
         <div class="table-wrap">
           <table id="tblAcomp">
@@ -559,6 +563,14 @@ function renderTabelaAcompFromUI(){
   if(typeof lastSemanasOrdenadas!=='undefined'&&lastSemanasOrdenadas)renderTabelaAcomp(lastSemanasOrdenadas,lastFechamento);
 }
 var lastSemanasOrdenadas=null,lastFechamento=null;
+var modoTabela='resumo';
+
+function setModoTabela(modo){
+  modoTabela=modo;
+  document.getElementById('btnModoResumo').classList.toggle('active',modo==='resumo');
+  document.getElementById('btnModoDetalhado').classList.toggle('active',modo==='detalhado');
+  renderTabelaAcompFromUI();
+}
 
 
 /* ====== CONFIG ====== */
@@ -1110,24 +1122,67 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
   var fechLookup={};
   if(fechamento){fechamento.gestores.forEach(function(g){fechLookup[g.gestor_nome]=g})}
 
-  var colCount=3+semanasOrdenadas.length+(fechamento?1:0);
+  var colCount;
+  if(modoTabela==='detalhado'){
+    colCount=4+semanasOrdenadas.length+(fechamento?1:0);
+    // Header for detalhado mode
+    var headerHtml='<th>#</th><th>Gestor</th><th>Cidade</th><th></th>';
+    semanasOrdenadas.forEach(function(s){headerHtml+='<th style="text-align:center">Sem '+s.semana+'</th>'});
+    if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
+    document.getElementById('tblAcompHeader').innerHTML=headerHtml;
+    document.getElementById('tblAcompHeaderGroup').innerHTML='<th colspan="4" class="th-group">&nbsp;</th><th class="th-group green-g" colspan="'+(semanasOrdenadas.length+(fechamento?1:0))+'">Semanas (acumulado)</th>';
+  }else{
+    colCount=3+semanasOrdenadas.length+(fechamento?1:0);
+  }
+
   var bodyHtml='';
   gestoresRank.forEach(function(g,idx){
     if(hiddenGestores.indexOf(g.gestor_nome)>=0)return;
     var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
     var safeNome=g.gestor_nome.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    bodyHtml+='<tr class="row-acomp" onclick="openGestorDetail(\''+safeNome+'\',\''+cidade+'\')" title="Clique para ver detalhes"><td class="col-pos" style="padding-left:24px;position:relative"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
-    semanasOrdenadas.forEach(function(s){
-      var val=lookupFull[s.semana][g.gestor_nome]?lookupFull[s.semana][g.gestor_nome].equipe_total_qtd:0;
-      bodyHtml+='<td class="col-num">'+val+'</td>';
-    });
-    if(fechamento){
-      var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;
-      bodyHtml+='<td class="col-num bold">'+ft+'</td>';
+
+    if(modoTabela==='detalhado'){
+      // 3 linhas por gestor: Ind, Eq, Tot
+      // Linha Individual
+      bodyHtml+='<tr class="row-acomp" onclick="openGestorDetail(\''+safeNome+'\',\''+cidade+'\')" title="Clique para ver equipe" style="border-bottom:none"><td class="col-pos" rowspan="3" style="padding-left:24px;position:relative;vertical-align:middle"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+(idx+1)+'</td><td class="col-gestor" rowspan="3" style="vertical-align:middle">'+g.gestor_nome+'</td><td class="col-sede" rowspan="3" style="vertical-align:middle">'+cidade+'</td><td style="font-size:.65rem;color:var(--green);font-weight:600;white-space:nowrap">Ind.</td>';
+      semanasOrdenadas.forEach(function(s){
+        var d=lookupFull[s.semana][g.gestor_nome];
+        bodyHtml+='<td class="col-num" style="color:var(--green);font-size:.72rem">'+(d?d.gestor_ativadas_qtd:0)+'</td>';
+      });
+      if(fechamento){var fd=fechLookup[g.gestor_nome];bodyHtml+='<td class="col-num" style="color:var(--green);font-weight:700;font-size:.72rem">'+(fd?fd.gestor_ativadas_qtd:0)+'</td>'}
+      bodyHtml+='</tr>';
+      // Linha Equipe
+      bodyHtml+='<tr style="border-bottom:none"><td style="font-size:.65rem;color:var(--purple);font-weight:600;white-space:nowrap">Eq.</td>';
+      semanasOrdenadas.forEach(function(s){
+        var d=lookupFull[s.semana][g.gestor_nome];
+        bodyHtml+='<td class="col-num" style="color:var(--purple);font-size:.72rem">'+(d?d.equipe_sem_gestor_qtd:0)+'</td>';
+      });
+      if(fechamento){var fd=fechLookup[g.gestor_nome];bodyHtml+='<td class="col-num" style="color:var(--purple);font-weight:700;font-size:.72rem">'+(fd?fd.equipe_sem_gestor_qtd:0)+'</td>'}
+      bodyHtml+='</tr>';
+      // Linha Total
+      bodyHtml+='<tr style="border-bottom:2px solid var(--border)"><td style="font-size:.65rem;color:var(--text2);font-weight:600;white-space:nowrap">Tot.</td>';
+      semanasOrdenadas.forEach(function(s){
+        var d=lookupFull[s.semana][g.gestor_nome];
+        bodyHtml+='<td class="col-num bold" style="font-size:.72rem">'+(d?d.equipe_total_qtd:0)+'</td>';
+      });
+      if(fechamento){var fd=fechLookup[g.gestor_nome];bodyHtml+='<td class="col-num bold" style="font-size:.72rem">'+(fd?fd.equipe_total_qtd:0)+'</td>'}
+      bodyHtml+='</tr>';
+      // Detail row
+      bodyHtml+='<tr class="row-acomp-detail" id="acomp-detail-'+idx+'"><td colspan="'+colCount+'"></td></tr>';
+    }else{
+      // Modo resumo (como antes)
+      bodyHtml+='<tr class="row-acomp" onclick="openGestorDetail(\''+safeNome+'\',\''+cidade+'\')" title="Clique para ver detalhes"><td class="col-pos" style="padding-left:24px;position:relative"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
+      semanasOrdenadas.forEach(function(s){
+        var val=lookupFull[s.semana][g.gestor_nome]?lookupFull[s.semana][g.gestor_nome].equipe_total_qtd:0;
+        bodyHtml+='<td class="col-num">'+val+'</td>';
+      });
+      if(fechamento){
+        var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;
+        bodyHtml+='<td class="col-num bold">'+ft+'</td>';
+      }
+      bodyHtml+='</tr>';
+      bodyHtml+='<tr class="row-acomp-detail" id="acomp-detail-'+idx+'"><td colspan="'+colCount+'"></td></tr>';
     }
-    bodyHtml+='</tr>';
-    // Detail row (desktop only)
-    bodyHtml+='<tr class="row-acomp-detail" id="acomp-detail-'+idx+'"><td colspan="'+colCount+'"></td></tr>';
   });
   document.getElementById('tbodyAcomp').innerHTML=bodyHtml;
 }
