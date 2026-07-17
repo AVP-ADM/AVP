@@ -252,6 +252,42 @@ tr:last-child td{border-bottom:none}
 .hidden-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.78rem}
 .hidden-item:last-child{border-bottom:none}
 
+/* ========= TAGS (Acordo, Exceção) ========= */
+.tag-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;vertical-align:middle;margin-left:6px}
+.tag-acordo{background:var(--amber-light);color:var(--amber)}
+[data-theme="dark"] .tag-acordo{background:var(--amber-bg);color:var(--amber)}
+.tag-excecao{background:var(--purple-light);color:var(--purple)}
+[data-theme="dark"] .tag-excecao{background:rgba(124,58,237,.15);color:var(--purple)}
+
+/* ========= MANAGE PANEL (Acordo/Exceções) ========= */
+.manage-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+.manage-overlay.open{display:flex}
+.manage-panel{background:var(--surface);border-radius:var(--radius-lg);width:90%;max-width:540px;max-height:80vh;overflow-y:auto;padding:24px;box-shadow:var(--shadow-md);animation:slideUp .3s ease}
+.manage-panel h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.manage-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.manage-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:.82rem}
+.manage-item:last-child{border-bottom:none}
+.manage-item .btn-remove{background:none;border:none;cursor:pointer;color:var(--red);padding:4px;border-radius:4px;transition:all .15s}
+.manage-item .btn-remove:hover{background:var(--red-bg)}
+.manage-add{display:flex;gap:8px;margin-bottom:16px}
+.manage-add input{flex:1;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1)}
+.manage-add input:focus{outline:none;border-color:var(--accent)}
+[data-theme="dark"] .manage-add input{background:var(--surface-2);color:var(--text1);border-color:var(--border-strong)}
+.manage-empty{text-align:center;padding:20px;color:var(--text3);font-size:.78rem}
+
+/* ========= CAMPANHA ========= */
+.campanha-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.campanha-premio{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.premio-ouro{background:linear-gradient(135deg,#FDE68A,#F59E0B);color:#78350F}
+.premio-prata{background:linear-gradient(135deg,#E2E8F0,#94A3B8);color:#1E293B}
+.premio-bronze{background:linear-gradient(135deg,#FED7AA,#F97316);color:#7C2D12}
+.premio-macbook{background:linear-gradient(135deg,#C4B5FD,#7C3AED);color:#fff}
+.premio-casal{background:linear-gradient(135deg,#BBF7D0,#16A34A);color:#052E16}
+.premio-individual{background:linear-gradient(135deg,#BFDBFE,#2563EB);color:#fff}
+.premio-sem{background:var(--surface-2);color:var(--text3)}
+.campanha-progress{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:6px}
+.campanha-progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
 /* ========= MISC ========= */
 .cache-info{font-size:.7rem;color:var(--text3);font-style:italic;margin-bottom:12px}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
@@ -352,13 +388,10 @@ tr:last-child td{border-bottom:none}
           <button class="sidebar-sub-item" onclick="goPanel('pesquisa-livre')">
             <span class="si-text">Pesquisa Livre</span>
           </button>
+          <button class="sidebar-sub-item" onclick="goPanel('campanha')">
+            <span class="si-text">Campanha</span>
+          </button>
         </div>
-      </div>
-      <div class="sidebar-group" data-group="relat2">
-        <button class="sidebar-item" data-tooltip="Em breve" style="opacity:.5;cursor:not-allowed">
-          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v4l3 3"/></svg></span>
-          <span class="si-text">Em breve</span>
-        </button>
       </div>
     </nav>
     <div class="sidebar-pin">
@@ -423,6 +456,7 @@ tr:last-child td{border-bottom:none}
             <button class="sem-btn" id="btnModoDetalhado" onclick="setModoTabela('detalhado')" style="border:none">Detalhado</button>
           </div>
           <input type="text" id="filterGestorAcomp" placeholder="Filtrar por gestor..." oninput="renderTabelaAcompFromUI()" style="padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);height:36px">
+          <button class="btn btn-outline" onclick="openManageAcordo()" style="margin-left:auto;padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Gerenciar Acordos</button>
         </div>
         <div class="table-wrap">
           <table id="tblAcomp">
@@ -486,6 +520,52 @@ tr:last-child td{border-bottom:none}
         </div>
       </div>
 
+      <!-- PANEL: CAMPANHA PREMIAÇÕES -->
+      <div class="panel" id="panel-campanha">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <h2 style="font-size:1.1rem;font-weight:700">Campanha Premiacoes Gestores 2026</h2>
+          <button class="btn btn-green" onclick="campanhaAtualizar()" id="btnCampanhaAtualizar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar Dados</button>
+          <button class="btn btn-outline" onclick="openManageExcecoes()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Excecoes</button>
+        </div>
+
+        <!-- Campanha Progress Bar -->
+        <div class="progress-bar" id="campanhaProgressBar">
+          <div class="progress-track"><div class="progress-fill" id="campanhaProgressFill" style="width:0%"></div></div>
+          <div class="progress-info"><span class="progress-gestor" id="campanhaProgressGestor">Aguardando...</span><span class="progress-pct" id="campanhaProgressPct">0%</span></div>
+          <div class="progress-stats"><span id="campanhaProgressCounter">0 de 0</span><span id="campanhaProgressTime">Tempo: 0s</span><span id="campanhaProgressEta">Restante: --</span></div>
+        </div>
+
+        <!-- Campanha KPIs -->
+        <div class="campanha-kpis" id="campanhaKpis">
+          <div class="kpi-card green"><div class="kpi-value" id="campKpiGestores">-</div><div class="kpi-label">Gestores</div></div>
+          <div class="kpi-card blue"><div class="kpi-value" id="campKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
+          <div class="kpi-card purple"><div class="kpi-value" id="campKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
+          <div class="kpi-card amber"><div class="kpi-value" id="campKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
+        </div>
+
+        <!-- Campanha Info -->
+        <div class="cache-info" id="campanhaCacheInfo"></div>
+
+        <!-- Campanha Search -->
+        <div class="search-row" style="margin-bottom:12px">
+          <input type="text" id="filterCampanha" placeholder="Filtrar por gestor..." oninput="filtrarCampanha()">
+        </div>
+
+        <!-- Campanha Table -->
+        <div class="table-wrap">
+          <div class="empty-state" id="campanhaEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15l-3-3m0 0l3-3m-3 3h12M6.4 19A9 9 0 1119.6 5"/></svg>
+            <p>Clique <strong>Atualizar Dados</strong> para buscar os dados da campanha</p>
+          </div>
+          <table id="tblCampanha" style="display:none">
+            <thead>
+              <tr><th>#</th><th>Gestor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
+            </thead>
+            <tbody id="tbodyCampanha"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -501,6 +581,10 @@ tr:last-child td{border-bottom:none}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       Pesquisa
     </button>
+    <button class="bottom-nav-item" onclick="goPanel('campanha')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 010 5H18"/><path d="M6 9h12l-1.5 10a2 2 0 01-2 1.5h-5A2 2 0 017.5 19L6 9z"/></svg>
+      Campanha
+    </button>
   </div>
 </nav>
 
@@ -509,6 +593,38 @@ tr:last-child td{border-bottom:none}
 <div class="bottom-sheet" onclick="event.stopPropagation()" style="max-width:440px;margin:0 auto;border-radius:var(--radius-lg)">
 <div class="bottom-sheet-handle"></div>
 <div id="confirmContent"></div>
+</div>
+</div>
+
+<!-- Manage Acordo Modal -->
+<div class="manage-overlay" id="manageAcordoOverlay" onclick="closeManageAcordo()">
+<div class="manage-panel" onclick="event.stopPropagation()">
+<h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Gerenciar Gestores com Acordo</h3>
+<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Gestores marcados como "Acordo" aparecem com uma tag na tabela de Acompanhamento.</p>
+<div class="manage-add">
+<input type="text" id="acordoAddInput" placeholder="Nome do gestor..." list="gestoresDatalist">
+<button class="btn btn-green" style="padding:6px 14px;font-size:.78rem" onclick="addAcordo()">Adicionar</button>
+</div>
+<datalist id="gestoresDatalist"></datalist>
+<div id="acordoList"></div>
+<div style="text-align:right;margin-top:12px"><button class="btn btn-outline" onclick="closeManageAcordo()">Fechar</button></div>
+</div>
+</div>
+
+<!-- Manage Exceções Modal -->
+<div class="manage-overlay" id="manageExcecoesOverlay" onclick="closeManageExcecoes()">
+<div class="manage-panel" onclick="event.stopPropagation()">
+<h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gerenciar Excecoes da Campanha</h3>
+<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Gestores com excecao usam "Equipe Completa" na busca. Caso Osnir: subtrai vendas do Jose Everton.</p>
+<div id="excecoesList"></div>
+<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+<p style="font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:8px">Adicionar excecao:</p>
+<div class="manage-add">
+<input type="text" id="excecaoAddNome" placeholder="Nome do gestor..." list="gestoresDatalist">
+<button class="btn btn-green" style="padding:6px 14px;font-size:.78rem" onclick="addExcecao()">Adicionar</button>
+</div>
+</div>
+<div style="text-align:right;margin-top:12px"><button class="btn btn-outline" onclick="closeManageExcecoes()">Fechar</button></div>
 </div>
 </div>
 
@@ -1577,6 +1693,443 @@ function checkPendingWeek(){
 
 // Check pending week on load
 checkPendingWeek();
+
+/* ====== GESTORES ACORDO ====== */
+var gestoresAcordo=[];
+
+async function loadGestoresAcordo(){
+  try{
+    var r=await sbFetch('gestores_acordo?select=gestor_nome&order=gestor_nome.asc');
+    if(r.ok){
+      var data=await r.json();
+      gestoresAcordo=data.map(function(x){return x.gestor_nome});
+    }
+  }catch(e){console.warn('Falha ao carregar acordos',e)}
+}
+
+function isAcordo(nome){return gestoresAcordo.indexOf(nome)>=0}
+
+function openManageAcordo(){
+  document.getElementById('manageAcordoOverlay').classList.add('open');
+  renderAcordoList();
+  populateGestoresDatalist();
+}
+function closeManageAcordo(){document.getElementById('manageAcordoOverlay').classList.remove('open')}
+
+function renderAcordoList(){
+  var container=document.getElementById('acordoList');
+  if(gestoresAcordo.length===0){
+    container.innerHTML='<div class="manage-empty">Nenhum gestor marcado como Acordo.</div>';
+    return;
+  }
+  var html='<div class="manage-list">';
+  gestoresAcordo.forEach(function(nome){
+    html+='<div class="manage-item"><span>'+nome+' <span class="tag-badge tag-acordo">Acordo</span></span><button class="btn-remove" onclick="removeAcordo(\''+nome.replace(/'/g,"\\'")+'\')" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+  });
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+async function addAcordo(){
+  var input=document.getElementById('acordoAddInput');
+  var nome=input.value.trim().toUpperCase();
+  if(!nome)return;
+  if(gestoresAcordo.indexOf(nome)>=0){alert('Gestor ja esta marcado como Acordo.');return}
+  try{
+    var r=await sbFetch('gestores_acordo',{method:'POST',body:JSON.stringify({gestor_nome:nome}),headers:{'Prefer':'return=minimal'}});
+    if(r.ok){
+      gestoresAcordo.push(nome);
+      gestoresAcordo.sort();
+      input.value='';
+      renderAcordoList();
+      renderTabelaAcompFromUI();
+    }else{
+      var err=await r.json();
+      alert('Erro: '+(err.message||'Falha ao salvar'));
+    }
+  }catch(e){alert('Erro: '+e.message)}
+}
+
+async function removeAcordo(nome){
+  try{
+    await sbFetch('gestores_acordo?gestor_nome=eq.'+encodeURIComponent(nome),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    gestoresAcordo=gestoresAcordo.filter(function(n){return n!==nome});
+    renderAcordoList();
+    renderTabelaAcompFromUI();
+  }catch(e){alert('Erro: '+e.message)}
+}
+
+function populateGestoresDatalist(){
+  var dl=document.getElementById('gestoresDatalist');
+  dl.innerHTML='';
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var nomes={};
+  data.forEach(function(r){nomes[r.gestor_nome]=true});
+  Object.keys(nomes).sort().forEach(function(n){
+    var o=document.createElement('option');o.value=n;dl.appendChild(o);
+  });
+}
+
+/* ====== CAMPANHA PREMIAÇÕES GESTORES 2026 ====== */
+var CAMPANHA_DATA=[];
+var CAMPANHA_EXCECOES=[];
+
+// Score table
+function getScore(ticketMedio){
+  if(ticketMedio>=450)return 9;
+  if(ticketMedio>=400)return 8;
+  if(ticketMedio>=350)return 7;
+  if(ticketMedio>=250)return 5;
+  if(ticketMedio>=200)return 4;
+  if(ticketMedio>=150)return 3;
+  if(ticketMedio>=100)return 2;
+  if(ticketMedio>=50)return 1;
+  return 0;
+}
+
+// Premiação
+function getPremiacao(pontos){
+  if(pontos>=12000)return{label:'VW Tera 1.0 0KM + Kit Apple',css:'premio-ouro'};
+  if(pontos>=8000)return{label:'Hornet 500 0KM + Kit Apple',css:'premio-ouro'};
+  if(pontos>=5000)return{label:'XRE 190 0KM + Kit Apple',css:'premio-prata'};
+  if(pontos>=2500)return{label:'MacBook + Kit Apple',css:'premio-macbook'};
+  if(pontos>=1000)return{label:'Hospedagem casal',css:'premio-casal'};
+  if(pontos>=500)return{label:'Hospedagem individual',css:'premio-individual'};
+  return{label:'Sem premiacao',css:'premio-sem'};
+}
+
+// Next level info for progress bar
+function getNextLevel(pontos){
+  var levels=[500,1000,2500,5000,8000,12000];
+  for(var i=0;i<levels.length;i++){if(pontos<levels[i])return levels[i]}
+  return levels[levels.length-1];
+}
+
+// Exceções
+var EXCECOES_DEFAULT=[
+  {gestor_nome:'ALISSON PEREIRA DA SILVA',gestor_id:'9B386575-5156-F9D4-A13D-BC7B82DE6E0C',tipo:'equipe_completa',subtrai_gestor_nome:null,subtrai_gestor_id:null},
+  {gestor_nome:'FAGNER RAMON ALVES LEITE',gestor_id:'7899d01f-abc9-11ee-98aa-0244bdb3ddcc',tipo:'equipe_completa',subtrai_gestor_nome:null,subtrai_gestor_id:null},
+  {gestor_nome:'CARLOS EDUARDO SILVA',gestor_id:'AB4BFE4A-1C1B-0D67-99E3-94DD6E5AF3D5',tipo:'equipe_completa',subtrai_gestor_nome:null,subtrai_gestor_id:null},
+  {gestor_nome:'OSNIR DA SILVA LIMA',gestor_id:'FF56C930-8002-C235-0E12-E4AB25E49AAF',tipo:'subtrai',subtrai_gestor_nome:'JOSE EVERTON SOUZA SANTANA',subtrai_gestor_id:'72E6588B-4CC9-5041-5FCB-C2539871739F'}
+];
+
+async function loadExcecoes(){
+  try{
+    var r=await sbFetch('campanha_excecoes?select=*&order=gestor_nome.asc');
+    if(r.ok){
+      var data=await r.json();
+      if(data&&data.length>0){CAMPANHA_EXCECOES=data;return}
+    }
+  }catch(e){console.warn('Falha ao carregar excecoes, usando default',e)}
+  CAMPANHA_EXCECOES=EXCECOES_DEFAULT;
+}
+
+function isExcecao(nome){
+  return CAMPANHA_EXCECOES.some(function(e){return e.gestor_nome===nome});
+}
+function getExcecaoInfo(nome){
+  return CAMPANHA_EXCECOES.find(function(e){return e.gestor_nome===nome});
+}
+
+function openManageExcecoes(){
+  document.getElementById('manageExcecoesOverlay').classList.add('open');
+  renderExcecoesList();
+}
+function closeManageExcecoes(){document.getElementById('manageExcecoesOverlay').classList.remove('open')}
+
+function renderExcecoesList(){
+  var container=document.getElementById('excecoesList');
+  if(CAMPANHA_EXCECOES.length===0){
+    container.innerHTML='<div class="manage-empty">Nenhuma excecao configurada.</div>';
+    return;
+  }
+  var html='<div class="manage-list">';
+  CAMPANHA_EXCECOES.forEach(function(exc){
+    var info=exc.tipo==='subtrai'?'(subtrai '+exc.subtrai_gestor_nome+')':'(equipe completa)';
+    html+='<div class="manage-item"><span>'+exc.gestor_nome+' <span class="tag-badge tag-excecao">Excecao</span><br><small style="color:var(--text3)">'+info+'</small></span><button class="btn-remove" onclick="removeExcecao(\''+exc.gestor_nome.replace(/'/g,"\\'")+'\')" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+  });
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+async function addExcecao(){
+  var input=document.getElementById('excecaoAddNome');
+  var nome=input.value.trim().toUpperCase();
+  if(!nome)return;
+  if(isExcecao(nome)){alert('Gestor ja e uma excecao.');return}
+  var novaExc={gestor_nome:nome,tipo:'equipe_completa',subtrai_gestor_nome:null,subtrai_gestor_id:null};
+  try{
+    var r=await sbFetch('campanha_excecoes',{method:'POST',body:JSON.stringify(novaExc),headers:{'Prefer':'return=minimal'}});
+    if(r.ok){
+      CAMPANHA_EXCECOES.push(novaExc);
+      input.value='';
+      renderExcecoesList();
+    }else{
+      // If table doesn't exist, just save locally
+      CAMPANHA_EXCECOES.push(novaExc);
+      input.value='';
+      renderExcecoesList();
+    }
+  }catch(e){
+    CAMPANHA_EXCECOES.push(novaExc);
+    input.value='';
+    renderExcecoesList();
+  }
+}
+
+async function removeExcecao(nome){
+  try{
+    await sbFetch('campanha_excecoes?gestor_nome=eq.'+encodeURIComponent(nome),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+  }catch(e){}
+  CAMPANHA_EXCECOES=CAMPANHA_EXCECOES.filter(function(e){return e.gestor_nome!==nome});
+  renderExcecoesList();
+}
+
+/* ====== CAMPANHA: ATUALIZAR DADOS ====== */
+async function campanhaAtualizar(){
+  var btn=document.getElementById('btnCampanhaAtualizar');
+  btn.disabled=true;btn.textContent='Processando...';
+  var pb=document.getElementById('campanhaProgressBar');
+  pb.classList.add('visible');
+  var startTime=Date.now();
+
+  function updProgress(pct,gestor,done,total){
+    var elapsed=Math.round((Date.now()-startTime)/1000);
+    document.getElementById('campanhaProgressFill').style.width=pct+'%';
+    document.getElementById('campanhaProgressPct').textContent=Math.round(pct)+'%';
+    document.getElementById('campanhaProgressGestor').textContent=gestor;
+    document.getElementById('campanhaProgressCounter').textContent=done+' de '+total;
+    document.getElementById('campanhaProgressTime').textContent='Tempo: '+elapsed+'s';
+    if(done>0&&done<total){var avg=elapsed/done;document.getElementById('campanhaProgressEta').textContent='Restante: ~'+Math.round(avg*(total-done))+'s'}
+    else if(done>=total){document.getElementById('campanhaProgressEta').textContent='Concluido!'}
+    else{document.getElementById('campanhaProgressEta').textContent='Restante: calculando...'}
+  }
+
+  try{
+    updProgress(2,'Fazendo login...',0,0);
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success)throw new Error(loginResult.error||'Falha no login');
+    var sessionCookie=loginResult.session_cookie;
+
+    updProgress(5,'Buscando gestores...',0,0);
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+    if(!gestoresResult.success)throw new Error(gestoresResult.error||'Falha gestores');
+    var gestores=gestoresResult.gestores;
+    var total=gestores.length;
+
+    var today=new Date().toISOString().split('T')[0];
+    var results=[];
+
+    // Process each gestor individually using batch with year range
+    for(var i=0;i<gestores.length;i++){
+      var g=gestores[i];
+      var pct=5+Math.round((i/total)*90);
+      updProgress(pct,g.nome,i,total);
+
+      var excInfo=getExcecaoInfo(g.nome);
+      var usarLiderCompleta=!!excInfo;
+
+      // Try campanha action first, fallback to batch
+      var campResult;
+      try{
+        campResult=await edgeCall({
+          action:'campanha',
+          session_cookie:sessionCookie,
+          gestor_id:g.id,
+          gestor_nome:g.nome,
+          data_final:today,
+          retornar_lider:usarLiderCompleta?'SIM':'NAO'
+        });
+      }catch(e){campResult={error:'action invalida'}}
+
+      // Fallback: use batch with full year range
+      if(!campResult.success&&(campResult.error==='action invalida'||!campResult.success)){
+        var batchResult=await edgeCall({
+          action:'batch',
+          session_cookie:sessionCookie,
+          tipo_data:'3',
+          data_inicial:'2026-01-01',
+          data_final:today,
+          ordenar:'6',
+          retornar_lider:usarLiderCompleta?'SIM':'NAO',
+          gestores:[g]
+        });
+        if(batchResult.success&&batchResult.data&&batchResult.data.length>0){
+          var bData=batchResult.data[0];
+          campResult={success:true,ativados:bData.equipe_total_qtd,mensalidade:bData.equipe_total_valor};
+        }else{
+          campResult={success:true,ativados:0,mensalidade:0};
+        }
+      }
+
+      if(campResult.success){
+        var ativados=campResult.ativados||0;
+        var mensalidade=campResult.mensalidade||0;
+
+        // Handle subtraction case (Osnir)
+        if(excInfo&&excInfo.tipo==='subtrai'&&excInfo.subtrai_gestor_id){
+          var subGestor={id:excInfo.subtrai_gestor_id,nome:excInfo.subtrai_gestor_nome,sede:null,cidade:null};
+          var subResult;
+          try{
+            subResult=await edgeCall({
+              action:'campanha',
+              session_cookie:sessionCookie,
+              gestor_id:excInfo.subtrai_gestor_id,
+              gestor_nome:excInfo.subtrai_gestor_nome,
+              data_final:today,
+              retornar_lider:'SIM'
+            });
+          }catch(e){subResult={error:'action invalida'}}
+
+          if(!subResult.success){
+            var subBatch=await edgeCall({
+              action:'batch',
+              session_cookie:sessionCookie,
+              tipo_data:'3',
+              data_inicial:'2026-01-01',
+              data_final:today,
+              ordenar:'6',
+              retornar_lider:'SIM',
+              gestores:[subGestor]
+            });
+            if(subBatch.success&&subBatch.data&&subBatch.data.length>0){
+              subResult={success:true,ativados:subBatch.data[0].equipe_total_qtd,mensalidade:subBatch.data[0].equipe_total_valor};
+            }else{subResult={success:true,ativados:0,mensalidade:0}}
+          }
+
+          if(subResult.success){
+            ativados=Math.max(0,ativados-(subResult.ativados||0));
+            mensalidade=Math.max(0,mensalidade-(subResult.mensalidade||0));
+          }
+        }
+
+        var ticketMedio=ativados>0?(mensalidade/ativados):0;
+        var score=getScore(ticketMedio);
+        var pontuacao=ativados*score;
+        var premiacao=getPremiacao(pontuacao);
+
+        results.push({
+          gestor:g.nome,
+          cidade:g.cidade||g.sede,
+          ativados:ativados,
+          mensalidade:mensalidade,
+          ticket_medio:ticketMedio,
+          score:score,
+          pontuacao:pontuacao,
+          premiacao:premiacao.label,
+          premiacao_css:premiacao.css,
+          excecao:!!excInfo
+        });
+      }else{
+        results.push({gestor:g.nome,cidade:g.cidade||g.sede,ativados:0,mensalidade:0,ticket_medio:0,score:0,pontuacao:0,premiacao:'Sem premiacao',premiacao_css:'premio-sem',excecao:!!excInfo});
+      }
+    }
+
+    results.sort(function(a,b){return b.pontuacao-a.pontuacao});
+    CAMPANHA_DATA=results;
+
+    // Save to localStorage
+    localStorage.setItem('avp-campanha-data',JSON.stringify({dados:results,ts:Date.now()}));
+
+    updProgress(100,'Concluido!',total,total);
+    setTimeout(function(){pb.classList.remove('visible')},3000);
+    renderCampanha();
+
+  }catch(e){
+    updProgress(0,'Erro: '+e.message,0,0);
+    console.error(e);
+  }
+
+  btn.disabled=false;
+  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar Dados';
+}
+
+function renderCampanha(){
+  if(CAMPANHA_DATA.length===0)return;
+  document.getElementById('campanhaEmpty').style.display='none';
+  document.getElementById('tblCampanha').style.display='';
+
+  // KPIs
+  var totalAtivados=0,totalMensalidade=0;
+  CAMPANHA_DATA.forEach(function(g){totalAtivados+=g.ativados;totalMensalidade+=g.mensalidade});
+  var ticketGeral=totalAtivados>0?(totalMensalidade/totalAtivados):0;
+  document.getElementById('campKpiGestores').textContent=CAMPANHA_DATA.length;
+  document.getElementById('campKpiAtivados').textContent=fk(totalAtivados);
+  document.getElementById('campKpiMensalidade').textContent='R$ '+fk(Math.round(totalMensalidade));
+  document.getElementById('campKpiTicket').textContent='R$ '+ticketGeral.toFixed(2).replace('.',',');
+
+  // Cache info
+  var cached=localStorage.getItem('avp-campanha-data');
+  if(cached){
+    var p=JSON.parse(cached);
+    document.getElementById('campanhaCacheInfo').textContent='Ultima atualizacao: '+new Date(p.ts).toLocaleString('pt-BR');
+  }
+
+  filtrarCampanha();
+}
+
+function filtrarCampanha(){
+  var s=(document.getElementById('filterCampanha')||{}).value||'';
+  s=s.toLowerCase();
+  var filtered=CAMPANHA_DATA.filter(function(g){return!s||g.gestor.toLowerCase().indexOf(s)>=0});
+  renderCampanhaTable(filtered);
+}
+
+function renderCampanhaTable(data){
+  var html='';
+  data.forEach(function(g,idx){
+    var excTag=g.excecao?'<span class="tag-badge tag-excecao">Excecao</span>':'';
+    var nextLvl=getNextLevel(g.pontuacao);
+    var pctProgress=Math.min(100,Math.round((g.pontuacao/nextLvl)*100));
+    var progressColor=g.pontuacao>=12000?'var(--green)':g.pontuacao>=5000?'var(--amber)':'var(--blue)';
+
+    html+='<tr>';
+    html+='<td class="col-pos">'+(idx+1)+'</td>';
+    html+='<td class="col-gestor">'+g.gestor+excTag+'</td>';
+    html+='<td class="col-num">'+fk(g.ativados)+'</td>';
+    html+='<td class="col-money">'+fmtBRL(g.mensalidade)+'</td>';
+    html+='<td class="col-num">R$ '+g.ticket_medio.toFixed(2).replace('.',',')+'</td>';
+    html+='<td class="col-num">'+g.score+'</td>';
+    html+='<td class="col-num" style="min-width:100px"><strong>'+fk(g.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pctProgress+'%;background:'+progressColor+'"></div></div></td>';
+    html+='<td><span class="campanha-premio '+g.premiacao_css+'">'+g.premiacao+'</span></td>';
+    html+='</tr>';
+  });
+  document.getElementById('tbodyCampanha').innerHTML=html;
+}
+
+/* ====== LOAD CAMPANHA FROM CACHE ====== */
+function loadCampanhaFromCache(){
+  var cached=localStorage.getItem('avp-campanha-data');
+  if(cached){
+    var p=JSON.parse(cached);
+    CAMPANHA_DATA=p.dados;
+    renderCampanha();
+  }
+}
+
+/* ====== MODIFY renderTabelaAcomp to show Acordo tags ====== */
+var _origRenderTabelaAcomp=renderTabelaAcomp;
+renderTabelaAcomp=function(semanasOrdenadas,fechamento){
+  _origRenderTabelaAcomp(semanasOrdenadas,fechamento);
+  // Post-process: add Acordo tags
+  if(gestoresAcordo.length===0)return;
+  var cells=document.querySelectorAll('#tbodyAcomp .col-gestor');
+  cells.forEach(function(cell){
+    var nome=cell.textContent.trim();
+    if(isAcordo(nome)){
+      cell.innerHTML=cell.innerHTML+'<span class="tag-badge tag-acordo">Acordo</span>';
+    }
+  });
+};
+
+/* ====== INIT CAMPANHA + ACORDO ====== */
+(async function(){
+  await loadGestoresAcordo();
+  await loadExcecoes();
+  loadCampanhaFromCache();
+  // Re-render acompanhamento with Acordo tags
+  renderTabelaAcompFromUI();
+})();
 </script>
 </body>
 </html>
