@@ -1290,7 +1290,7 @@ function buildDetailContent(nome,cidade,semanas){
   if(semanasArr.length>0){
     html+='<div style="overflow-x:auto;margin-bottom:12px"><table class="equipe-table"><thead><tr><th></th><th>Individual</th><th>Equipe</th><th>Total</th><th>Valor</th></tr></thead><tbody>';
     semanasArr.forEach(function(s){
-      var label=s.tipo==='fechamento'?'Fech.':'Sem '+s.semana;
+      var label=s.tipo==='fechamento'?'Fech. (01→'+s.data_fim.substring(8)+'/'+s.data_fim.substring(5,7)+')':'Sem '+s.semana+' (01→'+s.data_fim.substring(8)+'/'+s.data_fim.substring(5,7)+')';
       var bold=s.tipo==='fechamento'?'font-weight:700':'';
       html+='<tr style="'+bold+'"><td>'+label+'</td><td class="col-num">'+s.gestor_ativadas_qtd+'</td><td class="col-num">'+s.equipe_sem_gestor_qtd+'</td><td class="col-num">'+s.equipe_total_qtd+'</td><td class="col-money">'+fmtBRL(s.equipe_total_valor)+'</td></tr>';
     });
