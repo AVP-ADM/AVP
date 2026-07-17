@@ -1099,7 +1099,7 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
   semanasOrdenadas.forEach(function(s){
     headerHtml+='<th style="text-align:center">Sem '+s.semana+'</th>';
   });
-  if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
+  if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Mes Completo</th>';
   document.getElementById('tblAcompHeader').innerHTML=headerHtml;
   document.getElementById('tblAcompHeaderGroup').innerHTML='<th colspan="3" class="th-group">&nbsp;</th><th class="th-group green-g" colspan="'+(semanasOrdenadas.length+(fechamento?1:0))+'">Semanas (acumulado)</th>';
 
@@ -1128,7 +1128,7 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
     // Header for detalhado mode
     var headerHtml='<th>#</th><th>Gestor</th><th>Cidade</th><th></th>';
     semanasOrdenadas.forEach(function(s){headerHtml+='<th style="text-align:center">Sem '+s.semana+'</th>'});
-    if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Total</th>';
+    if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Mes Completo</th>';
     document.getElementById('tblAcompHeader').innerHTML=headerHtml;
     document.getElementById('tblAcompHeaderGroup').innerHTML='<th colspan="4" class="th-group">&nbsp;</th><th class="th-group green-g" colspan="'+(semanasOrdenadas.length+(fechamento?1:0))+'">Semanas (acumulado)</th>';
   }else{
