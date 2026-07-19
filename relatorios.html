@@ -305,8 +305,9 @@ tr:last-child td{border-bottom:none}
 
 /* ========= CAMPANHA: DISTRIBUICAO FAIXAS ========= */
 .faixas-container{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-.faixa-card{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;transition:all .2s}
+.faixa-card{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;transition:all .2s;cursor:pointer}
 .faixa-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.faixa-card.faixa-active{box-shadow:0 0 0 2px var(--accent);transform:translateY(-2px)}
 .faixa-card .faixa-count{font-size:1.4rem;font-weight:800;line-height:1}
 .faixa-card .faixa-label{font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-top:4px}
 .faixa-card .faixa-meta{font-size:.55rem;color:var(--text3);margin-top:2px}
@@ -2255,13 +2256,13 @@ function renderCampanhaPodio(){
 
 function renderCampanhaFaixas(){
   var faixas=[
-    {min:12000,label:'VW Tera',css:'fx-ouro',meta:'12.000+'},
-    {min:8000,max:11999,label:'Hornet',css:'fx-ouro',meta:'8.000+'},
-    {min:5000,max:7999,label:'XRE 190',css:'fx-prata',meta:'5.000+'},
-    {min:2500,max:4999,label:'MacBook',css:'fx-macbook',meta:'2.500+'},
-    {min:1000,max:2499,label:'Hosp. Casal',css:'fx-casal',meta:'1.000+'},
-    {min:500,max:999,label:'Hosp. Ind.',css:'fx-individual',meta:'500+'},
-    {min:0,max:499,label:'Sem Premio',css:'fx-sem',meta:'< 500'}
+    {min:12000,label:'VW Tera',css:'fx-ouro',meta:'12.000+ pts'},
+    {min:8000,max:11999,label:'Hornet',css:'fx-ouro',meta:'8.000+ pts'},
+    {min:5000,max:7999,label:'XRE 190',css:'fx-prata',meta:'5.000+ pts'},
+    {min:2500,max:4999,label:'MacBook',css:'fx-macbook',meta:'2.500+ pts'},
+    {min:1000,max:2499,label:'Hosp. Casal',css:'fx-casal',meta:'1.000+ pts'},
+    {min:500,max:999,label:'Hosp. Ind.',css:'fx-individual',meta:'500+ pts'},
+    {min:0,max:499,label:'Sem Premio',css:'fx-sem',meta:'< 500 pts'}
   ];
   var counts=faixas.map(function(){return 0});
   CAMPANHA_DATA.forEach(function(g){
@@ -2273,15 +2274,34 @@ function renderCampanhaFaixas(){
   });
   var html='<div class="faixas-container">';
   faixas.forEach(function(f,i){
-    html+='<div class="faixa-card '+f.css+'">';
+    var activeClass=(campanhaFaixaFiltro===i)?'faixa-active':'';
+    html+='<div class="faixa-card '+f.css+' '+activeClass+'" onclick="toggleFaixaFiltro('+i+')">';
     html+='<div class="faixa-count">'+counts[i]+'</div>';
     html+='<div class="faixa-label">'+f.label+'</div>';
-    html+='<div class="faixa-meta">'+f.meta+' pts</div>';
+    html+='<div class="faixa-meta">'+f.meta+'</div>';
     html+='</div>';
   });
   html+='</div>';
   document.getElementById('campanhaFaixas').innerHTML=html;
   document.getElementById('campanhaFaixas').style.display='';
+}
+
+var campanhaFaixaFiltro=-1;
+var CAMPANHA_FAIXAS=[
+  {min:12000,max:999999},
+  {min:8000,max:11999},
+  {min:5000,max:7999},
+  {min:2500,max:4999},
+  {min:1000,max:2499},
+  {min:500,max:999},
+  {min:0,max:499}
+];
+
+function toggleFaixaFiltro(idx){
+  if(campanhaFaixaFiltro===idx){campanhaFaixaFiltro=-1}
+  else{campanhaFaixaFiltro=idx}
+  renderCampanhaFaixas();
+  filtrarCampanha();
 }
 
 function renderCampanhaChart(){
@@ -2350,7 +2370,13 @@ function filtrarCampanha(){
   s=s.toLowerCase();
   var cidade=(document.getElementById('filterCampanhaCidade')||{}).value||'';
   var filtered=CAMPANHA_DATA.filter(function(g){
-    return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!cidade||g.cidade===cidade);
+    if(s&&g.gestor.toLowerCase().indexOf(s)<0)return false;
+    if(cidade&&g.cidade!==cidade)return false;
+    if(campanhaFaixaFiltro>=0){
+      var f=CAMPANHA_FAIXAS[campanhaFaixaFiltro];
+      if(g.pontuacao<f.min||g.pontuacao>f.max)return false;
+    }
+    return true;
   });
   // Sort
   filtered.sort(function(a,b){
