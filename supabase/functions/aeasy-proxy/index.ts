@@ -165,14 +165,15 @@ async function fetchGestorAdesoes(
   const formData = new URLSearchParams();
   formData.append("formPesquisa[DepartNivel]", "1");
   formData.append("formPesquisa[TipoData]", tipoData === "3" ? "VendasDataAtivacao" : tipoData === "2" ? "VendasDataCotacao" : tipoData === "4" ? "VendasDataEfetivacao" : "VendasDataPrimeiroBoleto");
-  formData.append("formPesquisa[DataInicial]", formatDateBR(dataInicial));
-  formData.append("formPesquisa[DataFinal]", formatDateBR(dataFinal));
+  formData.append("formPesquisa[DataInicial]", dataInicial);
+  formData.append("formPesquisa[DataFinal]", dataFinal);
   formData.append("formPesquisa[VendasSituacao][]", "1");
   formData.append("formPesquisa[FaturasPagas]", "1");
   formData.append("formPesquisa[TipoVendasFaturasPagas]", ">");
   formData.append("formPesquisa[EquipesId]", gestor.id);
   formData.append("formPesquisa[RetornarLiderComEquipe]", retornarLider || "NAO");
   formData.append("formPesquisa[submitFilter]", "true");
+  formData.append("serverSide", "true");
   formData.append("length", "5000");
   formData.append("start", "0");
 
@@ -255,14 +256,15 @@ async function handleCampanha(body: any) {
   const formData = new URLSearchParams();
   formData.append("formPesquisa[DepartNivel]", "1");
   formData.append("formPesquisa[TipoData]", "VendasDataAtivacao");
-  formData.append("formPesquisa[DataInicial]", "01/01/2026");
-  formData.append("formPesquisa[DataFinal]", formatDateBR(data_final));
+  formData.append("formPesquisa[DataInicial]", "2026-01-01");
+  formData.append("formPesquisa[DataFinal]", data_final);
   formData.append("formPesquisa[VendasSituacao][]", "1");
   formData.append("formPesquisa[FaturasPagas]", "1");
   formData.append("formPesquisa[TipoVendasFaturasPagas]", ">");
   formData.append("formPesquisa[EquipesId]", gestor_id);
   formData.append("formPesquisa[RetornarLiderComEquipe]", retornar_lider || "NAO");
   formData.append("formPesquisa[submitFilter]", "true");
+  formData.append("serverSide", "true");
   formData.append("length", "5000");
   formData.append("start", "0");
 
