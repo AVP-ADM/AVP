@@ -2374,7 +2374,7 @@ function renderCampanhaTable(data){
     var projecao=Math.round(g.pontuacao*fatorProjecao);
     var premioProj=getPremiacao(projecao);
     var faltam=nextLvl-g.pontuacao;
-    var projLabel=faltam>0?'Faltam '+fk(faltam)+' pts':'Nivel maximo';
+    var projLabel=faltam>0?pctProgress+'% — Faltam '+fk(faltam)+' pts':'100% — Nivel maximo';
 
     // Row class for top 3 highlight
     var rowClass='';
