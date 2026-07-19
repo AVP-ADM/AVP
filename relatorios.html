@@ -320,14 +320,26 @@ tr:last-child td{border-bottom:none}
 /* ========= CAMPANHA: GRAFICO BARRAS TOP 10 ========= */
 .camp-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow)}
 .camp-chart-title{font-size:.82rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.camp-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.camp-bar-pos{width:20px;font-size:.68rem;font-weight:700;color:var(--text3);text-align:right;flex-shrink:0}
-.camp-bar-nome{width:140px;font-size:.72rem;font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.camp-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:8px 10px;border-radius:var(--radius);transition:background .15s}
+.camp-bar-row:hover{background:var(--surface-2)}
+.camp-bar-pos{width:20px;font-size:.72rem;font-weight:800;color:var(--text3);text-align:right;flex-shrink:0}
+.camp-bar-info{width:160px;flex-shrink:0}
+.camp-bar-nome{font-size:.74rem;font-weight:700;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.camp-bar-cidade{font-size:.6rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .camp-bar-track{flex:1;height:22px;background:var(--surface-2);border-radius:4px;position:relative;overflow:hidden}
 .camp-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative}
 .camp-bar-value{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.65rem;font-weight:700;color:var(--text1)}
 .camp-bar-markers{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none}
 .camp-bar-marker{position:absolute;top:0;bottom:0;width:1px;background:var(--border-strong);opacity:.5}
+.camp-bar-stats{display:flex;gap:12px;flex-shrink:0;margin-left:8px}
+.camp-bar-stat{text-align:center;min-width:50px}
+.camp-bar-stat-value{font-size:.72rem;font-weight:700;color:var(--text1);line-height:1.2}
+.camp-bar-stat-label{font-size:.52rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3)}
+@media(max-width:768px) and (pointer:coarse){
+  .camp-bar-stats{display:none}
+  .camp-bar-info{width:100px}
+  .camp-bar-row{gap:6px;padding:6px 4px}
+}
 
 /* ========= CAMPANHA: CARD REGRAS ========= */
 .camp-rules{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden}
@@ -2283,11 +2295,11 @@ function renderCampanhaChart(){
     var pct=Math.max(2,Math.round((g.pontuacao/Math.max(maxPts,1))*100));
     var color=g.pontuacao>=5000?'linear-gradient(90deg,var(--amber),#F59E0B)':g.pontuacao>=2500?'linear-gradient(90deg,var(--purple),#A78BFA)':g.pontuacao>=1000?'linear-gradient(90deg,var(--green),var(--accent))':'linear-gradient(90deg,var(--blue),#60A5FA)';
     var nome=g.gestor.split(' ').slice(0,2).join(' ');
+    var cidade=(g.cidade&&g.cidade!=='None')?g.cidade.split(' - ')[0]:'-';
     html+='<div class="camp-bar-row">';
     html+='<div class="camp-bar-pos">'+(idx+1)+'</div>';
-    html+='<div class="camp-bar-nome" title="'+g.gestor+'">'+nome+'</div>';
+    html+='<div class="camp-bar-info"><div class="camp-bar-nome" title="'+g.gestor+'">'+nome+'</div><div class="camp-bar-cidade">'+cidade+'</div></div>';
     html+='<div class="camp-bar-track">';
-    // Marker lines
     html+='<div class="camp-bar-markers">';
     markers.forEach(function(m){
       var mPct=Math.round((m/Math.max(maxPts*1.1,1))*100);
@@ -2295,6 +2307,11 @@ function renderCampanhaChart(){
     });
     html+='</div>';
     html+='<div class="camp-bar-fill" style="width:'+pct+'%;background:'+color+'"><span class="camp-bar-value">'+fk(g.pontuacao)+'</span></div>';
+    html+='</div>';
+    html+='<div class="camp-bar-stats">';
+    html+='<div class="camp-bar-stat"><div class="camp-bar-stat-value">'+fk(g.ativados)+'</div><div class="camp-bar-stat-label">Ativados</div></div>';
+    html+='<div class="camp-bar-stat"><div class="camp-bar-stat-value">R$'+g.ticket_medio.toFixed(0)+'</div><div class="camp-bar-stat-label">Ticket</div></div>';
+    html+='<div class="camp-bar-stat"><div class="camp-bar-stat-value">'+g.score+'</div><div class="camp-bar-stat-label">Score</div></div>';
     html+='</div>';
     html+='</div>';
   });
