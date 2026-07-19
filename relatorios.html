@@ -2305,6 +2305,7 @@ function toggleFaixaFiltro(idx){
   updateKpiActiveState();
   renderCampanhaFaixas();
   filtrarCampanha();
+  document.getElementById('tblCampanha').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function toggleKpiFiltro(tipo){
@@ -2314,6 +2315,7 @@ function toggleKpiFiltro(tipo){
   updateKpiActiveState();
   renderCampanhaFaixas();
   filtrarCampanha();
+  document.getElementById('tblCampanha').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function updateKpiActiveState(){
