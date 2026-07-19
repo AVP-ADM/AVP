@@ -2039,6 +2039,9 @@ async function campanhaAtualizar(){
     // Save to localStorage
     localStorage.setItem('avp-campanha-data',JSON.stringify({dados:results,ts:Date.now()}));
 
+    // Save to Supabase
+    await saveCampanhaToSupabase(results);
+
     updProgress(100,'Concluido!',total,total);
     setTimeout(function(){pb.classList.remove('visible')},3000);
     renderCampanha();
@@ -2106,13 +2109,64 @@ function renderCampanhaTable(data){
 }
 
 /* ====== LOAD CAMPANHA FROM CACHE ====== */
-function loadCampanhaFromCache(){
+async function loadCampanhaFromCache(){
+  // Try Supabase first
+  try{
+    var r=await sbFetch('campanha_dados?select=*&order=pontuacao.desc');
+    if(r.ok){
+      var data=await r.json();
+      if(data&&data.length>0){
+        CAMPANHA_DATA=data.map(function(row){
+          var premiacao=getPremiacao(row.pontuacao);
+          return{
+            gestor:row.gestor_nome,
+            cidade:row.cidade,
+            ativados:row.ativados,
+            mensalidade:row.mensalidade,
+            ticket_medio:row.ticket_medio,
+            score:row.score,
+            pontuacao:row.pontuacao,
+            premiacao:premiacao.label,
+            premiacao_css:premiacao.css,
+            excecao:row.excecao||false
+          };
+        });
+        document.getElementById('campanhaCacheInfo').textContent='Cache Supabase - salvo em '+new Date(data[0].updated_at).toLocaleString('pt-BR');
+        renderCampanha();
+        return;
+      }
+    }
+  }catch(e){console.warn('Campanha Supabase cache failed',e)}
+
+  // Fallback to localStorage
   var cached=localStorage.getItem('avp-campanha-data');
   if(cached){
     var p=JSON.parse(cached);
     CAMPANHA_DATA=p.dados;
     renderCampanha();
   }
+}
+
+async function saveCampanhaToSupabase(results){
+  try{
+    // Delete old data
+    await sbFetch('campanha_dados?gestor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    // Insert new data
+    var registros=results.map(function(g){
+      return{
+        gestor_nome:g.gestor,
+        cidade:g.cidade,
+        ativados:g.ativados,
+        mensalidade:g.mensalidade,
+        ticket_medio:g.ticket_medio,
+        score:g.score,
+        pontuacao:g.pontuacao,
+        excecao:g.excecao,
+        updated_at:new Date().toISOString()
+      };
+    });
+    await sbFetch('campanha_dados',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'return=minimal'}});
+  }catch(e){console.warn('Falha ao salvar campanha no Supabase',e)}
 }
 
 /* ====== MODIFY renderTabelaAcomp to show Acordo tags ====== */
