@@ -676,9 +676,12 @@ tr:last-child td{border-bottom:none}
         </div>
 
         <!-- Campanha Search + Filter -->
-        <div class="search-row" style="margin-bottom:12px">
-          <input type="text" id="filterCampanha" placeholder="Filtrar por gestor..." oninput="filtrarCampanha()">
-          <select id="filterCampanhaCidade" onchange="filtrarCampanha()"><option value="">Todas as Cidades</option></select>
+        <div class="search-row" style="margin-bottom:12px;flex-wrap:wrap">
+          <input type="text" id="filterCampanha" placeholder="Filtrar por gestor..." oninput="filtrarCampanha()" style="min-width:160px">
+          <select id="filterCampAtivados" onchange="filtrarCampanha()" style="min-width:120px"><option value="">Ativados</option><option value="50">50+</option><option value="100">100+</option><option value="200">200+</option><option value="500">500+</option><option value="1000">1.000+</option></select>
+          <select id="filterCampTicket" onchange="filtrarCampanha()" style="min-width:120px"><option value="">Ticket Medio</option><option value="50">R$50+</option><option value="100">R$100+</option><option value="150">R$150+</option><option value="200">R$200+</option><option value="250">R$250+</option><option value="350">R$350+</option><option value="450">R$450+</option></select>
+          <select id="filterCampScore" onchange="filtrarCampanha()" style="min-width:100px"><option value="">Score</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option><option value="7">7+</option><option value="8">8+</option><option value="9">9</option></select>
+          <select id="filterCampPontuacao" onchange="filtrarCampanha()" style="min-width:130px"><option value="">Pontuacao</option><option value="100">100+</option><option value="500">500+</option><option value="1000">1.000+</option><option value="2500">2.500+</option><option value="5000">5.000+</option><option value="8000">8.000+</option><option value="12000">12.000+</option></select>
         </div>
 
         <!-- Active filter indicator -->
@@ -2229,8 +2232,6 @@ function renderCampanha(){
   renderCampanhaFaixas();
   // Render Chart
   renderCampanhaChart();
-  // Populate cidade filter
-  populateCampanhaCidades();
   // Setup table sort
   setupCampanhaSort();
 
@@ -2396,17 +2397,6 @@ function renderCampanhaChart(){
   document.getElementById('campChartBars').innerHTML=html;
 }
 
-function populateCampanhaCidades(){
-  var sel=document.getElementById('filterCampanhaCidade');
-  if(!sel)return;
-  var current=sel.value;
-  sel.innerHTML='<option value="">Todas as Cidades</option>';
-  var cidades={};
-  CAMPANHA_DATA.forEach(function(g){if(g.cidade&&g.cidade!=='None'&&g.cidade!==null)cidades[g.cidade]=true});
-  Object.keys(cidades).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)});
-  sel.value=current;
-}
-
 var campanhaSortKey='pontuacao',campanhaSortDir='desc';
 function setupCampanhaSort(){
   document.querySelectorAll('#tblCampanha thead th[data-csort]').forEach(function(th){
@@ -2426,10 +2416,16 @@ function setupCampanhaSort(){
 function filtrarCampanha(){
   var s=(document.getElementById('filterCampanha')||{}).value||'';
   s=s.toLowerCase();
-  var cidade=(document.getElementById('filterCampanhaCidade')||{}).value||'';
+  var minAtivados=parseInt((document.getElementById('filterCampAtivados')||{}).value)||0;
+  var minTicket=parseInt((document.getElementById('filterCampTicket')||{}).value)||0;
+  var minScore=parseInt((document.getElementById('filterCampScore')||{}).value)||0;
+  var minPontuacao=parseInt((document.getElementById('filterCampPontuacao')||{}).value)||0;
   var filtered=CAMPANHA_DATA.filter(function(g){
     if(s&&g.gestor.toLowerCase().indexOf(s)<0)return false;
-    if(cidade&&g.cidade!==cidade)return false;
+    if(minAtivados&&g.ativados<minAtivados)return false;
+    if(minTicket&&g.ticket_medio<minTicket)return false;
+    if(minScore&&g.score<minScore)return false;
+    if(minPontuacao&&g.pontuacao<minPontuacao)return false;
     if(campanhaFaixaFiltro>=0){
       var f=CAMPANHA_FAIXAS[campanhaFaixaFiltro];
       if(g.pontuacao<f.min||g.pontuacao>f.max)return false;
