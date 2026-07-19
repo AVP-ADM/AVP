@@ -276,7 +276,7 @@ tr:last-child td{border-bottom:none}
 .manage-empty{text-align:center;padding:20px;color:var(--text3);font-size:.78rem}
 
 /* ========= CAMPANHA ========= */
-.campanha-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.campanha-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .campanha-premio{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap}
 .premio-ouro{background:linear-gradient(135deg,#FDE68A,#F59E0B);color:#78350F}
 .premio-prata{background:linear-gradient(135deg,#E2E8F0,#94A3B8);color:#1E293B}
@@ -287,6 +287,75 @@ tr:last-child td{border-bottom:none}
 .premio-sem{background:var(--surface-2);color:var(--text3)}
 .campanha-progress{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:6px}
 .campanha-progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* ========= CAMPANHA: PODIO ========= */
+.podio-container{display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:24px;padding:20px 10px 0}
+.podio-item{display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.podio-item .podio-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;margin-bottom:6px}
+.podio-item.gold .podio-avatar{background:linear-gradient(135deg,#FDE68A,#F59E0B);color:#78350F;width:56px;height:56px;font-size:1.1rem;box-shadow:0 4px 12px rgba(245,158,11,.3)}
+.podio-item.silver .podio-avatar{background:linear-gradient(135deg,#E2E8F0,#94A3B8);color:#1E293B;box-shadow:0 4px 12px rgba(148,163,184,.3)}
+.podio-item.bronze .podio-avatar{background:linear-gradient(135deg,#FED7AA,#F97316);color:#7C2D12;box-shadow:0 4px 12px rgba(249,115,22,.3)}
+.podio-item .podio-nome{font-size:.7rem;font-weight:700;color:var(--text1);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podio-item .podio-pts{font-size:.82rem;font-weight:800;color:var(--accent);margin-top:2px}
+.podio-item .podio-premio{margin-top:4px}
+.podio-item .podio-base{width:80px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;margin-top:8px;font-weight:800;color:#fff;font-size:.9rem}
+.podio-item.gold .podio-base{height:80px;background:linear-gradient(180deg,#F59E0B,#D97706)}
+.podio-item.silver .podio-base{height:60px;background:linear-gradient(180deg,#94A3B8,#64748B)}
+.podio-item.bronze .podio-base{height:45px;background:linear-gradient(180deg,#F97316,#EA580C)}
+
+/* ========= CAMPANHA: DISTRIBUICAO FAIXAS ========= */
+.faixas-container{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.faixa-card{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;transition:all .2s}
+.faixa-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.faixa-card .faixa-count{font-size:1.4rem;font-weight:800;line-height:1}
+.faixa-card .faixa-label{font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-top:4px}
+.faixa-card .faixa-meta{font-size:.55rem;color:var(--text3);margin-top:2px}
+.faixa-card.fx-ouro .faixa-count{color:#D97706}.faixa-card.fx-ouro{border-left:3px solid #F59E0B}
+.faixa-card.fx-prata .faixa-count{color:#64748B}.faixa-card.fx-prata{border-left:3px solid #94A3B8}
+.faixa-card.fx-macbook .faixa-count{color:#7C3AED}.faixa-card.fx-macbook{border-left:3px solid #7C3AED}
+.faixa-card.fx-casal .faixa-count{color:#16A34A}.faixa-card.fx-casal{border-left:3px solid #16A34A}
+.faixa-card.fx-individual .faixa-count{color:#2563EB}.faixa-card.fx-individual{border-left:3px solid #2563EB}
+.faixa-card.fx-sem .faixa-count{color:var(--text3)}.faixa-card.fx-sem{border-left:3px solid var(--border)}
+
+/* ========= CAMPANHA: GRAFICO BARRAS TOP 10 ========= */
+.camp-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:20px;box-shadow:var(--shadow)}
+.camp-chart-title{font-size:.82rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.camp-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.camp-bar-pos{width:20px;font-size:.68rem;font-weight:700;color:var(--text3);text-align:right;flex-shrink:0}
+.camp-bar-nome{width:140px;font-size:.72rem;font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.camp-bar-track{flex:1;height:22px;background:var(--surface-2);border-radius:4px;position:relative;overflow:hidden}
+.camp-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative}
+.camp-bar-value{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.65rem;font-weight:700;color:var(--text1)}
+.camp-bar-markers{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none}
+.camp-bar-marker{position:absolute;top:0;bottom:0;width:1px;background:var(--border-strong);opacity:.5}
+
+/* ========= CAMPANHA: CARD REGRAS ========= */
+.camp-rules{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden}
+.camp-rules-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .15s}
+.camp-rules-header:hover{background:var(--surface-2)}
+.camp-rules-header h4{font-size:.78rem;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px}
+.camp-rules-body{display:none;padding:12px 16px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text2);line-height:1.8}
+.camp-rules.open .camp-rules-body{display:block}
+.camp-rules.open .camp-rules-chevron{transform:rotate(180deg)}
+.camp-rules-chevron{transition:transform .2s;color:var(--text3)}
+.camp-rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.camp-rules-col h5{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-bottom:6px}
+.camp-rules-col table{width:100%;font-size:.68rem;border-collapse:collapse}
+.camp-rules-col td{padding:3px 6px;border-bottom:1px solid var(--border)}
+.camp-rules-col td:first-child{font-weight:600}
+.camp-rules-col td:last-child{text-align:right}
+
+/* ========= CAMPANHA: PROJECAO ========= */
+.camp-proj{font-size:.62rem;color:var(--text3);margin-top:2px}
+.camp-proj-up{color:var(--green)}
+
+/* ========= CAMPANHA: TABELA TOP 3 HIGHLIGHT ========= */
+.row-gold td{background:rgba(245,158,11,.04)}
+.row-silver td{background:rgba(148,163,184,.04)}
+.row-bronze td{background:rgba(249,115,22,.04)}
+[data-theme="dark"] .row-gold td{background:rgba(245,158,11,.06)}
+[data-theme="dark"] .row-silver td{background:rgba(148,163,184,.06)}
+[data-theme="dark"] .row-bronze td{background:rgba(249,115,22,.06)}
 
 /* ========= MISC ========= */
 .cache-info{font-size:.7rem;color:var(--text3);font-style:italic;margin-bottom:12px}
@@ -538,20 +607,59 @@ tr:last-child td{border-bottom:none}
           <div class="progress-stats"><span id="campanhaProgressCounter">0 de 0</span><span id="campanhaProgressTime">Tempo: 0s</span><span id="campanhaProgressEta">Restante: --</span></div>
         </div>
 
-        <!-- Campanha KPIs -->
+        <!-- Campanha KPIs (6 cards) -->
         <div class="campanha-kpis" id="campanhaKpis">
           <div class="kpi-card green"><div class="kpi-value" id="campKpiGestores">-</div><div class="kpi-label">Gestores</div></div>
           <div class="kpi-card blue"><div class="kpi-value" id="campKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
           <div class="kpi-card purple"><div class="kpi-value" id="campKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
           <div class="kpi-card amber"><div class="kpi-value" id="campKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
+          <div class="kpi-card green" style="border-left-color:var(--accent)"><div class="kpi-value" id="campKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
+          <div class="kpi-card red"><div class="kpi-value" id="campKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
         </div>
 
         <!-- Campanha Info -->
         <div class="cache-info" id="campanhaCacheInfo"></div>
 
-        <!-- Campanha Search -->
+        <!-- Card Regras (colapsavel) -->
+        <div class="camp-rules" id="campRules">
+          <div class="camp-rules-header" onclick="document.getElementById('campRules').classList.toggle('open')">
+            <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Regras da Campanha</h4>
+            <svg class="camp-rules-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="camp-rules-body">
+            <div class="camp-rules-grid">
+              <div class="camp-rules-col">
+                <h5>Score por Ticket Medio</h5>
+                <table><tr><td>R$ 450+</td><td>9</td></tr><tr><td>R$ 400+</td><td>8</td></tr><tr><td>R$ 350+</td><td>7</td></tr><tr><td>R$ 250+</td><td>5</td></tr><tr><td>R$ 200+</td><td>4</td></tr><tr><td>R$ 150+</td><td>3</td></tr><tr><td>R$ 100+</td><td>2</td></tr><tr><td>R$ 50+</td><td>1</td></tr><tr><td>&lt; R$ 50</td><td>0</td></tr></table>
+              </div>
+              <div class="camp-rules-col">
+                <h5>Premiacoes por Pontuacao</h5>
+                <table><tr><td>12.000+</td><td>VW Tera 1.0 + Kit Apple</td></tr><tr><td>8.000+</td><td>Hornet 500 + Kit Apple</td></tr><tr><td>5.000+</td><td>XRE 190 + Kit Apple</td></tr><tr><td>2.500+</td><td>MacBook + Kit Apple</td></tr><tr><td>1.000+</td><td>Hospedagem casal</td></tr><tr><td>500+</td><td>Hospedagem individual</td></tr></table>
+                <p style="margin-top:8px;font-weight:600">Pontuacao = Ativados x Score</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Podio Top 3 -->
+        <div class="card" id="campanhaPodio" style="display:none">
+          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 010 5H18"/><path d="M6 9h12l-1.5 10a2 2 0 01-2 1.5h-5A2 2 0 017.5 19L6 9z"/></svg> Top 3 - Podio</div>
+          <div id="podioContent"></div>
+        </div>
+
+        <!-- Distribuicao por Faixa -->
+        <div id="campanhaFaixas" style="display:none"></div>
+
+        <!-- Grafico Barras Top 10 -->
+        <div class="camp-chart" id="campanhaChart" style="display:none">
+          <div class="camp-chart-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Top 10 - Ranking de Pontuacao</div>
+          <div id="campChartBars"></div>
+        </div>
+
+        <!-- Campanha Search + Filter -->
         <div class="search-row" style="margin-bottom:12px">
           <input type="text" id="filterCampanha" placeholder="Filtrar por gestor..." oninput="filtrarCampanha()">
+          <select id="filterCampanhaCidade" onchange="filtrarCampanha()"><option value="">Todas as Cidades</option></select>
         </div>
 
         <!-- Campanha Table -->
@@ -562,7 +670,7 @@ tr:last-child td{border-bottom:none}
           </div>
           <table id="tblCampanha" style="display:none">
             <thead>
-              <tr><th>#</th><th>Gestor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
+              <tr><th data-csort="pos">#</th><th data-csort="gestor">Gestor</th><th data-csort="cidade">Cidade</th><th data-csort="ativados" style="text-align:center">Ativados</th><th data-csort="mensalidade" style="text-align:right">Mensalidade</th><th data-csort="ticket" style="text-align:center">Ticket Medio</th><th data-csort="score" style="text-align:center">Score</th><th data-csort="pontuacao" style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
             </thead>
             <tbody id="tbodyCampanha"></tbody>
           </table>
@@ -2070,14 +2178,21 @@ function renderCampanha(){
   document.getElementById('campanhaEmpty').style.display='none';
   document.getElementById('tblCampanha').style.display='';
 
-  // KPIs
-  var totalAtivados=0,totalMensalidade=0;
-  CAMPANHA_DATA.forEach(function(g){totalAtivados+=g.ativados;totalMensalidade+=g.mensalidade});
+  // KPIs (6 cards)
+  var totalAtivados=0,totalMensalidade=0,premiados=0,maiorPontuacao=0;
+  CAMPANHA_DATA.forEach(function(g){
+    totalAtivados+=g.ativados;
+    totalMensalidade+=g.mensalidade;
+    if(g.pontuacao>=500)premiados++;
+    if(g.pontuacao>maiorPontuacao)maiorPontuacao=g.pontuacao;
+  });
   var ticketGeral=totalAtivados>0?(totalMensalidade/totalAtivados):0;
   document.getElementById('campKpiGestores').textContent=CAMPANHA_DATA.length;
   document.getElementById('campKpiAtivados').textContent=fk(totalAtivados);
   document.getElementById('campKpiMensalidade').textContent='R$ '+fk(Math.round(totalMensalidade));
   document.getElementById('campKpiTicket').textContent='R$ '+ticketGeral.toFixed(2).replace('.',',');
+  document.getElementById('campKpiPremiados').textContent=premiados;
+  document.getElementById('campKpiMaior').textContent=fk(maiorPontuacao);
 
   // Cache info
   var cached=localStorage.getItem('avp-campanha-data');
@@ -2086,33 +2201,199 @@ function renderCampanha(){
     document.getElementById('campanhaCacheInfo').textContent='Ultima atualizacao: '+new Date(p.ts).toLocaleString('pt-BR');
   }
 
+  // Render Podio
+  renderCampanhaPodio();
+  // Render Faixas
+  renderCampanhaFaixas();
+  // Render Chart
+  renderCampanhaChart();
+  // Populate cidade filter
+  populateCampanhaCidades();
+  // Setup table sort
+  setupCampanhaSort();
+
   filtrarCampanha();
+}
+
+function renderCampanhaPodio(){
+  if(CAMPANHA_DATA.length<3){document.getElementById('campanhaPodio').style.display='none';return}
+  document.getElementById('campanhaPodio').style.display='';
+  var top3=CAMPANHA_DATA.slice(0,3);
+  var classes=['gold','silver','bronze'];
+  var labels=['1','2','3'];
+  // Order visually: 2nd | 1st | 3rd
+  var order=[1,0,2];
+  var html='<div class="podio-container">';
+  order.forEach(function(idx){
+    var g=top3[idx];
+    var cls=classes[idx];
+    var initials=g.gestor.split(' ').map(function(w){return w[0]}).slice(0,2).join('');
+    var premio=getPremiacao(g.pontuacao);
+    html+='<div class="podio-item '+cls+'">';
+    html+='<div class="podio-avatar">'+initials+'</div>';
+    html+='<div class="podio-nome" title="'+g.gestor+'">'+g.gestor.split(' ').slice(0,2).join(' ')+'</div>';
+    html+='<div class="podio-pts">'+fk(g.pontuacao)+' pts</div>';
+    html+='<div class="podio-premio"><span class="campanha-premio '+premio.css+'" style="font-size:.6rem">'+premio.label+'</span></div>';
+    html+='<div class="podio-base">'+labels[idx]+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('podioContent').innerHTML=html;
+}
+
+function renderCampanhaFaixas(){
+  var faixas=[
+    {min:12000,label:'VW Tera',css:'fx-ouro',meta:'12.000+'},
+    {min:8000,max:11999,label:'Hornet',css:'fx-ouro',meta:'8.000+'},
+    {min:5000,max:7999,label:'XRE 190',css:'fx-prata',meta:'5.000+'},
+    {min:2500,max:4999,label:'MacBook',css:'fx-macbook',meta:'2.500+'},
+    {min:1000,max:2499,label:'Hosp. Casal',css:'fx-casal',meta:'1.000+'},
+    {min:500,max:999,label:'Hosp. Ind.',css:'fx-individual',meta:'500+'},
+    {min:0,max:499,label:'Sem Premio',css:'fx-sem',meta:'< 500'}
+  ];
+  var counts=faixas.map(function(){return 0});
+  CAMPANHA_DATA.forEach(function(g){
+    for(var i=0;i<faixas.length;i++){
+      var f=faixas[i];
+      if(f.max===undefined&&g.pontuacao>=f.min){counts[i]++;break}
+      if(g.pontuacao>=f.min&&g.pontuacao<=(f.max||999999)){counts[i]++;break}
+    }
+  });
+  var html='<div class="faixas-container">';
+  faixas.forEach(function(f,i){
+    html+='<div class="faixa-card '+f.css+'">';
+    html+='<div class="faixa-count">'+counts[i]+'</div>';
+    html+='<div class="faixa-label">'+f.label+'</div>';
+    html+='<div class="faixa-meta">'+f.meta+' pts</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  document.getElementById('campanhaFaixas').innerHTML=html;
+  document.getElementById('campanhaFaixas').style.display='';
+}
+
+function renderCampanhaChart(){
+  if(CAMPANHA_DATA.length===0){document.getElementById('campanhaChart').style.display='none';return}
+  document.getElementById('campanhaChart').style.display='';
+  var top10=CAMPANHA_DATA.slice(0,10);
+  var maxPts=top10[0]?top10[0].pontuacao:1;
+  var markers=[500,1000,2500,5000,8000,12000];
+  var html='';
+  top10.forEach(function(g,idx){
+    var pct=Math.max(2,Math.round((g.pontuacao/Math.max(maxPts,1))*100));
+    var color=g.pontuacao>=5000?'linear-gradient(90deg,var(--amber),#F59E0B)':g.pontuacao>=2500?'linear-gradient(90deg,var(--purple),#A78BFA)':g.pontuacao>=1000?'linear-gradient(90deg,var(--green),var(--accent))':'linear-gradient(90deg,var(--blue),#60A5FA)';
+    var nome=g.gestor.split(' ').slice(0,2).join(' ');
+    html+='<div class="camp-bar-row">';
+    html+='<div class="camp-bar-pos">'+(idx+1)+'</div>';
+    html+='<div class="camp-bar-nome" title="'+g.gestor+'">'+nome+'</div>';
+    html+='<div class="camp-bar-track">';
+    // Marker lines
+    html+='<div class="camp-bar-markers">';
+    markers.forEach(function(m){
+      var mPct=Math.round((m/Math.max(maxPts*1.1,1))*100);
+      if(mPct>0&&mPct<100)html+='<div class="camp-bar-marker" style="left:'+mPct+'%" title="'+fk(m)+' pts"></div>';
+    });
+    html+='</div>';
+    html+='<div class="camp-bar-fill" style="width:'+pct+'%;background:'+color+'"><span class="camp-bar-value">'+fk(g.pontuacao)+'</span></div>';
+    html+='</div>';
+    html+='</div>';
+  });
+  document.getElementById('campChartBars').innerHTML=html;
+}
+
+function populateCampanhaCidades(){
+  var sel=document.getElementById('filterCampanhaCidade');
+  if(!sel)return;
+  var current=sel.value;
+  sel.innerHTML='<option value="">Todas as Cidades</option>';
+  var cidades={};
+  CAMPANHA_DATA.forEach(function(g){if(g.cidade&&g.cidade!=='None'&&g.cidade!==null)cidades[g.cidade]=true});
+  Object.keys(cidades).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)});
+  sel.value=current;
+}
+
+var campanhaSortKey='pontuacao',campanhaSortDir='desc';
+function setupCampanhaSort(){
+  document.querySelectorAll('#tblCampanha thead th[data-csort]').forEach(function(th){
+    th.style.cursor='pointer';
+    th.onclick=function(){
+      var k=this.getAttribute('data-csort');
+      if(!k)return;
+      if(campanhaSortKey===k){campanhaSortDir=campanhaSortDir==='asc'?'desc':'asc'}
+      else{campanhaSortKey=k;campanhaSortDir='desc'}
+      document.querySelectorAll('#tblCampanha thead th').forEach(function(t){t.classList.remove('sorted-asc','sorted-desc')});
+      this.classList.add(campanhaSortDir==='asc'?'sorted-asc':'sorted-desc');
+      filtrarCampanha();
+    };
+  });
 }
 
 function filtrarCampanha(){
   var s=(document.getElementById('filterCampanha')||{}).value||'';
   s=s.toLowerCase();
-  var filtered=CAMPANHA_DATA.filter(function(g){return!s||g.gestor.toLowerCase().indexOf(s)>=0});
+  var cidade=(document.getElementById('filterCampanhaCidade')||{}).value||'';
+  var filtered=CAMPANHA_DATA.filter(function(g){
+    return(!s||g.gestor.toLowerCase().indexOf(s)>=0)&&(!cidade||g.cidade===cidade);
+  });
+  // Sort
+  filtered.sort(function(a,b){
+    var va,vb,d=campanhaSortDir==='asc'?1:-1;
+    switch(campanhaSortKey){
+      case'gestor':va=a.gestor.toLowerCase();vb=b.gestor.toLowerCase();break;
+      case'cidade':va=(a.cidade||'').toLowerCase();vb=(b.cidade||'').toLowerCase();break;
+      case'ativados':va=a.ativados;vb=b.ativados;break;
+      case'mensalidade':va=a.mensalidade;vb=b.mensalidade;break;
+      case'ticket':va=a.ticket_medio;vb=b.ticket_medio;break;
+      case'score':va=a.score;vb=b.score;break;
+      case'pontuacao':va=a.pontuacao;vb=b.pontuacao;break;
+      default:va=a.pontuacao;vb=b.pontuacao;
+    }
+    if(va<vb)return-1*d;if(va>vb)return 1*d;return 0;
+  });
   renderCampanhaTable(filtered);
 }
 
 function renderCampanhaTable(data){
   var html='';
+  // Calc projeção (dias passados no ano / dias totais no ano)
+  var today=new Date();
+  var startYear=new Date(today.getFullYear(),0,1);
+  var endYear=new Date(today.getFullYear(),11,31);
+  var diasPassados=Math.ceil((today-startYear)/(1000*60*60*24));
+  var diasTotal=Math.ceil((endYear-startYear)/(1000*60*60*24));
+  var fatorProjecao=diasTotal/Math.max(diasPassados,1);
+
   data.forEach(function(g,idx){
     var excTag=g.excecao?'<span class="tag-badge tag-excecao">Excecao</span>':'';
     var nextLvl=getNextLevel(g.pontuacao);
     var pctProgress=Math.min(100,Math.round((g.pontuacao/nextLvl)*100));
     var progressColor=g.pontuacao>=12000?'var(--green)':g.pontuacao>=5000?'var(--amber)':'var(--blue)';
+    var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
 
-    html+='<tr>';
+    // Projeção fim do ano
+    var projecao=Math.round(g.pontuacao*fatorProjecao);
+    var premioProj=getPremiacao(projecao);
+    var faltam=nextLvl-g.pontuacao;
+    var projLabel=faltam>0?'Faltam '+fk(faltam)+' pts':'Nivel maximo';
+
+    // Row class for top 3 highlight
+    var rowClass='';
+    // Find original position in CAMPANHA_DATA
+    var origIdx=CAMPANHA_DATA.indexOf(g);
+    if(origIdx===0)rowClass='row-gold';
+    else if(origIdx===1)rowClass='row-silver';
+    else if(origIdx===2)rowClass='row-bronze';
+
+    html+='<tr class="'+rowClass+'">';
     html+='<td class="col-pos">'+(idx+1)+'</td>';
     html+='<td class="col-gestor">'+g.gestor+excTag+'</td>';
+    html+='<td class="col-sede">'+cidade+'</td>';
     html+='<td class="col-num">'+fk(g.ativados)+'</td>';
     html+='<td class="col-money">'+fmtBRL(g.mensalidade)+'</td>';
     html+='<td class="col-num">R$ '+g.ticket_medio.toFixed(2).replace('.',',')+'</td>';
     html+='<td class="col-num">'+g.score+'</td>';
-    html+='<td class="col-num" style="min-width:100px"><strong>'+fk(g.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pctProgress+'%;background:'+progressColor+'"></div></div></td>';
-    html+='<td><span class="campanha-premio '+g.premiacao_css+'">'+g.premiacao+'</span></td>';
+    html+='<td class="col-num" style="min-width:120px"><strong>'+fk(g.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pctProgress+'%;background:'+progressColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td>';
+    html+='<td><span class="campanha-premio '+g.premiacao_css+'">'+g.premiacao+'</span><div class="camp-proj camp-proj-up" title="Projecao fim do ano: '+fk(projecao)+' pts">Proj: '+premioProj.label+'</div></td>';
     html+='</tr>';
   });
   document.getElementById('tbodyCampanha').innerHTML=html;
