@@ -173,7 +173,6 @@ async function fetchGestorAdesoes(
   formData.append("formPesquisa[EquipesId]", gestor.id);
   formData.append("formPesquisa[RetornarLiderComEquipe]", retornarLider || "NAO");
   formData.append("formPesquisa[submitFilter]", "true");
-  formData.append("serverSide", "true");
   formData.append("length", "5000");
   formData.append("start", "0");
 
@@ -264,7 +263,6 @@ async function handleCampanha(body: any) {
   formData.append("formPesquisa[EquipesId]", gestor_id);
   formData.append("formPesquisa[RetornarLiderComEquipe]", retornar_lider || "NAO");
   formData.append("formPesquisa[submitFilter]", "true");
-  formData.append("serverSide", "true");
   formData.append("length", "5000");
   formData.append("start", "0");
 
