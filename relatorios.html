@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:13px;height:100%;overflow:hidden}
@@ -369,6 +370,28 @@ tr:last-child td{border-bottom:none}
 .camp-filter-tag svg:hover{opacity:1}
 [data-theme="dark"] .camp-filter-tag{background:rgba(52,208,88,.1)}
 
+/* ========= CAMPANHA: PODIO STATS ========= */
+.podio-stats{display:flex;gap:8px;margin-top:6px;font-size:.58rem;color:var(--text3)}
+.podio-stats span{display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.podio-stats .ps-val{font-weight:700;font-size:.66rem;color:var(--text2)}
+
+/* ========= CAMPANHA: GAP INDICATOR ========= */
+.camp-bar-gap{display:flex;align-items:center;justify-content:flex-end;padding:0 10px 0 192px;margin:-4px 0 4px;font-size:.58rem;color:var(--text3);opacity:.7}
+.camp-bar-gap::before{content:'';flex:1;height:1px;background:var(--border);margin-right:8px}
+
+/* ========= CAMPANHA: TOTALIZADOR ========= */
+.camp-tfoot td{background:var(--surface-2);font-weight:700;font-size:.76rem;border-top:2px solid var(--border-strong);padding:10px 12px}
+.camp-tfoot .tf-label{font-size:.72rem;color:var(--text2)}
+
+/* ========= CAMPANHA: OCULTAR GESTORES ========= */
+.camp-hidden-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.78rem;color:var(--text3)}
+.camp-hidden-panel{display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+.camp-hidden-panel.open{display:block}
+
+/* ========= CAMPANHA: EXPORT BTN ========= */
+.btn-export{background:var(--surface);color:var(--text2);border:1px solid var(--border-strong);padding:6px 14px;font-size:.72rem}
+.btn-export:hover{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+
 /* ========= CAMPANHA: TABELA TOP 3 HIGHLIGHT ========= */
 .row-gold td{background:rgba(245,158,11,.04)}
 .row-silver td{background:rgba(148,163,184,.04)}
@@ -617,6 +640,7 @@ tr:last-child td{border-bottom:none}
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <h2 style="font-size:1.1rem;font-weight:700">Campanha Premiacoes Gestores 2026</h2>
           <button class="btn btn-green" onclick="campanhaAtualizar()" id="btnCampanhaAtualizar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar Dados</button>
+          <button class="btn btn-export" onclick="exportarCampanhaXLSX()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar XLSX</button>
           <button class="btn btn-outline" onclick="openManageExcecoes()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Excecoes</button>
         </div>
 
@@ -629,10 +653,10 @@ tr:last-child td{border-bottom:none}
 
         <!-- Campanha KPIs (6 cards) -->
         <div class="campanha-kpis" id="campanhaKpis">
-          <div class="kpi-card green"><div class="kpi-value" id="campKpiGestores">-</div><div class="kpi-label">Gestores</div></div>
-          <div class="kpi-card blue"><div class="kpi-value" id="campKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
-          <div class="kpi-card purple"><div class="kpi-value" id="campKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
-          <div class="kpi-card amber"><div class="kpi-value" id="campKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
+          <div class="kpi-card green" style="cursor:pointer" onclick="toggleKpiFiltro('todos')"><div class="kpi-value" id="campKpiGestores">-</div><div class="kpi-label">Gestores</div></div>
+          <div class="kpi-card blue" style="cursor:pointer" onclick="campanhaOrdenar('ativados')"><div class="kpi-value" id="campKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
+          <div class="kpi-card purple" style="cursor:pointer" onclick="campanhaOrdenar('mensalidade')"><div class="kpi-value" id="campKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
+          <div class="kpi-card amber" style="cursor:pointer" onclick="campanhaOrdenar('ticket')"><div class="kpi-value" id="campKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
           <div class="kpi-card green" style="border-left-color:var(--accent);cursor:pointer" onclick="toggleKpiFiltro('premiados')"><div class="kpi-value" id="campKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
           <div class="kpi-card red" style="cursor:pointer" onclick="toggleKpiFiltro('maior')"><div class="kpi-value" id="campKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
         </div>
@@ -686,7 +710,14 @@ tr:last-child td{border-bottom:none}
         </div>
 
         <!-- Active filter indicator -->
-        <div id="campanhaFilterTag" style="display:none;margin-bottom:12px;display:none;align-items:center;gap:8px"></div>
+        <div id="campanhaFilterTag" style="display:none;margin-bottom:12px;align-items:center;gap:8px"></div>
+
+        <!-- Hidden gestores bar -->
+        <div class="camp-hidden-bar" id="campHiddenBar" style="display:none">
+          <span id="campHiddenCount">0 ocultos</span>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:.72rem" onclick="toggleCampHiddenPanel()">Gerenciar</button>
+        </div>
+        <div class="camp-hidden-panel" id="campHiddenPanel"></div>
 
         <!-- Campanha Table -->
         <div class="table-wrap">
@@ -696,9 +727,10 @@ tr:last-child td{border-bottom:none}
           </div>
           <table id="tblCampanha" style="display:none">
             <thead>
-              <tr><th data-csort="pos">#</th><th data-csort="gestor">Gestor</th><th data-csort="cidade">Cidade</th><th data-csort="ativados" style="text-align:center">Ativados</th><th data-csort="mensalidade" style="text-align:right">Mensalidade</th><th data-csort="ticket" style="text-align:center">Ticket Medio</th><th data-csort="score" style="text-align:center">Score</th><th data-csort="pontuacao" style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
+              <tr><th data-csort="pos">#</th><th data-csort="gestor">Gestor</th><th data-csort="cidade">Cidade</th><th data-csort="ativados" style="text-align:center">Ativados</th><th data-csort="mensalidade" style="text-align:right">Mensalidade</th><th data-csort="ticket" style="text-align:center">Ticket Medio</th><th data-csort="score" style="text-align:center">Score</th><th data-csort="pontuacao" style="text-align:center">Pontuacao</th><th>Premiacao</th><th class="col-actions"></th></tr>
             </thead>
             <tbody id="tbodyCampanha"></tbody>
+            <tfoot id="tfootCampanha"></tfoot>
           </table>
         </div>
       </div>
@@ -2204,21 +2236,25 @@ function renderCampanha(){
   document.getElementById('campanhaEmpty').style.display='none';
   document.getElementById('tblCampanha').style.display='';
 
-  // KPIs (6 cards)
+  // KPIs (6 cards) - based on VISIBLE data
+  var visible=getCampanhaVisible();
   var totalAtivados=0,totalMensalidade=0,premiados=0,maiorPontuacao=0;
-  CAMPANHA_DATA.forEach(function(g){
+  visible.forEach(function(g){
     totalAtivados+=g.ativados;
     totalMensalidade+=g.mensalidade;
     if(g.pontuacao>=500)premiados++;
     if(g.pontuacao>maiorPontuacao)maiorPontuacao=g.pontuacao;
   });
   var ticketGeral=totalAtivados>0?(totalMensalidade/totalAtivados):0;
-  document.getElementById('campKpiGestores').textContent=CAMPANHA_DATA.length;
+  document.getElementById('campKpiGestores').textContent=visible.length;
   document.getElementById('campKpiAtivados').textContent=fk(totalAtivados);
   document.getElementById('campKpiMensalidade').textContent='R$ '+fk(Math.round(totalMensalidade));
   document.getElementById('campKpiTicket').textContent='R$ '+ticketGeral.toFixed(2).replace('.',',');
   document.getElementById('campKpiPremiados').textContent=premiados;
   document.getElementById('campKpiMaior').textContent=fk(maiorPontuacao);
+
+  // Hidden bar
+  updateCampHiddenBar();
 
   // Cache info
   var cached=localStorage.getItem('avp-campanha-data');
@@ -2258,6 +2294,7 @@ function renderCampanhaPodio(){
     html+='<div class="podio-nome" title="'+g.gestor+'">'+g.gestor.split(' ').slice(0,2).join(' ')+'</div>';
     html+='<div class="podio-pts">'+fk(g.pontuacao)+' pts</div>';
     html+='<div class="podio-premio"><span class="campanha-premio '+premio.css+'" style="font-size:.6rem">'+premio.label+'</span></div>';
+    html+='<div class="podio-stats"><span><span class="ps-val">'+fk(g.ativados)+'</span>atv</span><span><span class="ps-val">R$'+g.ticket_medio.toFixed(0)+'</span>tk</span><span><span class="ps-val">'+g.score+'</span>score</span></div>';
     html+='<div class="podio-base">'+labels[idx]+'</div>';
     html+='</div>';
   });
@@ -2276,7 +2313,7 @@ function renderCampanhaFaixas(){
     {min:0,max:499,label:'Sem Premio',css:'fx-sem',meta:'< 500 pts'}
   ];
   var counts=faixas.map(function(){return 0});
-  CAMPANHA_DATA.forEach(function(g){
+  getCampanhaVisible().forEach(function(g){
     for(var i=0;i<faixas.length;i++){
       var f=faixas[i];
       if(f.max===undefined&&g.pontuacao>=f.min){counts[i]++;break}
@@ -2320,8 +2357,22 @@ function toggleFaixaFiltro(idx){
 }
 
 function toggleKpiFiltro(tipo){
-  if(campanhaKpiFiltro===tipo){campanhaKpiFiltro=''}
+  if(tipo==='todos'){
+    campanhaKpiFiltro='';
+    campanhaFaixaFiltro=-1;
+  }else if(campanhaKpiFiltro===tipo){campanhaKpiFiltro=''}
   else{campanhaKpiFiltro=tipo}
+  if(tipo!=='todos')campanhaFaixaFiltro=-1;
+  updateKpiActiveState();
+  renderCampanhaFaixas();
+  filtrarCampanha();
+  if(tipo!=='todos')document.getElementById('tblCampanha').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function campanhaOrdenar(key){
+  campanhaSortKey=key;
+  campanhaSortDir='desc';
+  campanhaKpiFiltro='';
   campanhaFaixaFiltro=-1;
   updateKpiActiveState();
   renderCampanhaFaixas();
@@ -2364,10 +2415,141 @@ function clearCampanhaFilter(){
   filtrarCampanha();
 }
 
+/* ====== CAMPANHA: OCULTAR GESTORES (independente) ====== */
+var campanhaOcultos=[];
+
+async function loadCampanhaOcultos(){
+  try{
+    var r=await sbFetch('campanha_ocultos?select=gestor_nome&order=gestor_nome.asc');
+    if(r.ok){var data=await r.json();campanhaOcultos=data.map(function(x){return x.gestor_nome})}
+  }catch(e){console.warn('Falha carregar campanha ocultos',e)}
+}
+
+function getCampanhaVisible(){
+  return CAMPANHA_DATA.filter(function(g){return campanhaOcultos.indexOf(g.gestor)===-1});
+}
+
+function hideCampGestor(nome){
+  if(campanhaOcultos.indexOf(nome)===-1){
+    campanhaOcultos.push(nome);
+    saveCampanhaOcultos();
+    renderCampanha();
+  }
+}
+
+function showCampGestor(nome){
+  campanhaOcultos=campanhaOcultos.filter(function(n){return n!==nome});
+  saveCampanhaOcultos();
+  renderCampHiddenPanel();
+  renderCampanha();
+}
+
+async function saveCampanhaOcultos(){
+  updateCampHiddenBar();
+  try{
+    await sbFetch('campanha_ocultos?gestor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    if(campanhaOcultos.length>0){
+      var body=JSON.stringify(campanhaOcultos.map(function(n){return{gestor_nome:n}}));
+      await sbFetch('campanha_ocultos',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
+    }
+  }catch(e){console.warn('Sync campanha ocultos failed',e)}
+}
+
+function updateCampHiddenBar(){
+  var bar=document.getElementById('campHiddenBar');
+  if(campanhaOcultos.length>0){
+    bar.style.display='flex';
+    document.getElementById('campHiddenCount').textContent=campanhaOcultos.length+' gestor'+(campanhaOcultos.length>1?'es':'')+' oculto'+(campanhaOcultos.length>1?'s':'');
+  }else{bar.style.display='none'}
+}
+
+function toggleCampHiddenPanel(){
+  var panel=document.getElementById('campHiddenPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open'))renderCampHiddenPanel();
+}
+
+function renderCampHiddenPanel(){
+  var panel=document.getElementById('campHiddenPanel');
+  if(!panel.classList.contains('open'))return;
+  if(campanhaOcultos.length===0){panel.classList.remove('open');return}
+  var h='';
+  campanhaOcultos.forEach(function(nome){
+    h+='<div class="hidden-item"><span>'+nome+'</span><button class="btn btn-outline" style="padding:3px 8px;font-size:.7rem" onclick="showCampGestor(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reativar</button></div>';
+  });
+  panel.innerHTML=h;
+}
+
+/* ====== CAMPANHA: EXPORTAR XLSX ====== */
+function exportarCampanhaXLSX(){
+  if(CAMPANHA_DATA.length===0){alert('Sem dados para exportar. Clique Atualizar Dados primeiro.');return}
+  var visible=getCampanhaVisible();
+
+  // Sheet 1: Ranking
+  var hoje=new Date();
+  var dataHoje=hoje.toISOString().split('T')[0];
+  var diasPassados=Math.ceil((hoje-new Date(hoje.getFullYear(),0,1))/(1000*60*60*24));
+  var diasTotal=365;
+  var fatorProj=diasTotal/Math.max(diasPassados,1);
+
+  var rows=[['#','Gestor','Cidade','Ativados','Mensalidade','Ticket Medio','Score','Pontuacao','Premiacao Atual','Proximo Premio','Faltam (pts)','Projecao Fim Ano']];
+  var totalAtv=0,totalMens=0;
+  visible.forEach(function(g,i){
+    var nextLvl=getNextLevel(g.pontuacao);
+    var faltam=nextLvl-g.pontuacao;
+    var proj=Math.round(g.pontuacao*fatorProj);
+    var projPremio=getPremiacao(proj);
+    totalAtv+=g.ativados;totalMens+=g.mensalidade;
+    rows.push([i+1,g.gestor,g.cidade||'-',g.ativados,g.mensalidade,g.ticket_medio,g.score,g.pontuacao,g.premiacao,projPremio.label,faltam>0?faltam:0,proj]);
+  });
+  var ticketGeral=totalAtv>0?(totalMens/totalAtv):0;
+  rows.push(['','TOTAL ('+visible.length+' gestores)','',totalAtv,totalMens,Math.round(ticketGeral*100)/100,'','','','','','']);
+
+  var ws1=XLSX.utils.aoa_to_sheet(rows);
+  // Column widths
+  ws1['!cols']=[{wch:4},{wch:35},{wch:25},{wch:10},{wch:14},{wch:12},{wch:6},{wch:10},{wch:22},{wch:22},{wch:10},{wch:14}];
+
+  // Sheet 2: Regras
+  var regras=[
+    ['CAMPANHA PREMIACOES GESTORES 2026'],
+    ['Periodo: 01/01/2026 a '+dataHoje],
+    ['Gerado em: '+hoje.toLocaleString('pt-BR')],
+    [''],
+    ['TABELA DE SCORE (por Ticket Medio)'],
+    ['Ticket Medio','Score'],
+    ['>= R$ 450',9],['>= R$ 400',8],['>= R$ 350',7],['>= R$ 250',5],['>= R$ 200',4],['>= R$ 150',3],['>= R$ 100',2],['>= R$ 50',1],['< R$ 50',0],
+    [''],
+    ['Formula: PONTUACAO = Ativados x Score'],
+    [''],
+    ['TABELA DE PREMIACAO (maior marco atingido)'],
+    ['Pontuacao','Premio'],
+    ['>= 12.000','VW Tera 1.0 0KM + Kit Apple'],['>= 8.000','Hornet 500 0KM + Kit Apple'],['>= 5.000','XRE 190 0KM + Kit Apple'],['>= 2.500','MacBook + Kit Apple'],['>= 1.000','Hospedagem casal'],['>= 500','Hospedagem individual'],['< 500','SEM PREMIACAO'],
+    [''],
+    ['RESUMO'],
+    ['Total de Gestores',visible.length],
+    ['Premiados (>= 500 pts)',visible.filter(function(g){return g.pontuacao>=500}).length],
+    ['Sem Premiacao',visible.filter(function(g){return g.pontuacao<500}).length],
+    ['Total Ativados',totalAtv],
+    ['Mensalidade Total','R$ '+fk(Math.round(totalMens))],
+    ['Ticket Medio Geral','R$ '+ticketGeral.toFixed(2).replace('.',',')]
+  ];
+  var ws2=XLSX.utils.aoa_to_sheet(regras);
+  ws2['!cols']=[{wch:20},{wch:35}];
+
+  // Create workbook
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws1,'Ranking Campanha');
+  XLSX.utils.book_append_sheet(wb,ws2,'Regras da Campanha');
+
+  // Download
+  var filename='Campanha_Premiacoes_2026_'+dataHoje.replace(/-/g,'-')+'.xlsx';
+  XLSX.writeFile(wb,filename);
+}
+
 function renderCampanhaChart(){
   if(CAMPANHA_DATA.length===0){document.getElementById('campanhaChart').style.display='none';return}
   document.getElementById('campanhaChart').style.display='';
-  var top10=CAMPANHA_DATA.slice(0,10);
+  var top10=getCampanhaVisible().slice(0,10);
   var maxPts=top10[0]?top10[0].pontuacao:1;
   var markers=[500,1000,2500,5000,8000,12000];
   var html='';
@@ -2394,6 +2576,11 @@ function renderCampanhaChart(){
     html+='<div class="camp-bar-stat"><div class="camp-bar-stat-value">'+g.score+'</div><div class="camp-bar-stat-label">Score</div></div>';
     html+='</div>';
     html+='</div>';
+    // Gap indicator between positions
+    if(idx<top10.length-1){
+      var gap=g.pontuacao-top10[idx+1].pontuacao;
+      if(gap>0)html+='<div class="camp-bar-gap">'+fk(gap)+' pts de diferenca</div>';
+    }
   });
   document.getElementById('campChartBars').innerHTML=html;
 }
@@ -2421,7 +2608,8 @@ function filtrarCampanha(){
   var minTicket=parseInt((document.getElementById('filterCampTicket')||{}).value)||0;
   var minScore=parseInt((document.getElementById('filterCampScore')||{}).value)||0;
   var minPontuacao=parseInt((document.getElementById('filterCampPontuacao')||{}).value)||0;
-  var filtered=CAMPANHA_DATA.filter(function(g){
+  var visible=getCampanhaVisible();
+  var filtered=visible.filter(function(g){
     if(s&&g.gestor.toLowerCase().indexOf(s)<0)return false;
     if(minAtivados&&g.ativados<minAtivados)return false;
     if(minTicket&&g.ticket_medio<minTicket)return false;
@@ -2463,12 +2651,14 @@ function renderCampanhaTable(data){
   var diasTotal=Math.ceil((endYear-startYear)/(1000*60*60*24));
   var fatorProjecao=diasTotal/Math.max(diasPassados,1);
 
+  var sumAtv=0,sumMens=0;
   data.forEach(function(g,idx){
     var excTag=g.excecao?'<span class="tag-badge tag-excecao">Excecao</span>':'';
     var nextLvl=getNextLevel(g.pontuacao);
     var pctProgress=Math.min(100,Math.round((g.pontuacao/nextLvl)*100));
     var progressColor=g.pontuacao>=12000?'var(--green)':g.pontuacao>=5000?'var(--amber)':'var(--blue)';
     var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
+    var safeNome=g.gestor.replace(/'/g,"\\'").replace(/"/g,'&quot;');
 
     // Projeção fim do ano
     var projecao=Math.round(g.pontuacao*fatorProjecao);
@@ -2478,11 +2668,12 @@ function renderCampanhaTable(data){
 
     // Row class for top 3 highlight
     var rowClass='';
-    // Find original position in CAMPANHA_DATA
-    var origIdx=CAMPANHA_DATA.indexOf(g);
-    if(origIdx===0)rowClass='row-gold';
-    else if(origIdx===1)rowClass='row-silver';
-    else if(origIdx===2)rowClass='row-bronze';
+    var visible=getCampanhaVisible();
+    if(g===visible[0])rowClass='row-gold';
+    else if(g===visible[1])rowClass='row-silver';
+    else if(g===visible[2])rowClass='row-bronze';
+
+    sumAtv+=g.ativados;sumMens+=g.mensalidade;
 
     html+='<tr class="'+rowClass+'">';
     html+='<td class="col-pos">'+(idx+1)+'</td>';
@@ -2494,9 +2685,15 @@ function renderCampanhaTable(data){
     html+='<td class="col-num">'+g.score+'</td>';
     html+='<td class="col-num" style="min-width:120px"><strong>'+fk(g.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pctProgress+'%;background:'+progressColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td>';
     html+='<td><span class="campanha-premio '+g.premiacao_css+'">'+g.premiacao+'</span><div class="camp-proj camp-proj-up" title="Projecao fim do ano: '+fk(projecao)+' pts">Proj: '+premioProj.label+'</div></td>';
+    html+='<td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideCampGestor(\''+safeNome+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td>';
     html+='</tr>';
   });
   document.getElementById('tbodyCampanha').innerHTML=html;
+
+  // Totalizador (tfoot)
+  var ticketFilt=sumAtv>0?(sumMens/sumAtv):0;
+  var tfHtml='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' gestor'+(data.length>1?'es':'')+')</td><td></td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+ticketFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td><td></td></tr>';
+  document.getElementById('tfootCampanha').innerHTML=tfHtml;
 }
 
 /* ====== LOAD CAMPANHA FROM CACHE ====== */
@@ -2579,6 +2776,7 @@ renderTabelaAcomp=function(semanasOrdenadas,fechamento){
 (async function(){
   await loadGestoresAcordo();
   await loadExcecoes();
+  await loadCampanhaOcultos();
   loadCampanhaFromCache();
   // Re-render acompanhamento with Acordo tags
   renderTabelaAcompFromUI();
