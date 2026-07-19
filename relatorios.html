@@ -362,6 +362,12 @@ tr:last-child td{border-bottom:none}
 .camp-proj{font-size:.62rem;color:var(--text3);margin-top:2px}
 .camp-proj-up{color:var(--green)}
 
+/* ========= CAMPANHA: FILTER TAG ========= */
+.camp-filter-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:.72rem;font-weight:600;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent)}
+.camp-filter-tag svg{cursor:pointer;opacity:.7;transition:opacity .15s}
+.camp-filter-tag svg:hover{opacity:1}
+[data-theme="dark"] .camp-filter-tag{background:rgba(52,208,88,.1)}
+
 /* ========= CAMPANHA: TABELA TOP 3 HIGHLIGHT ========= */
 .row-gold td{background:rgba(245,158,11,.04)}
 .row-silver td{background:rgba(148,163,184,.04)}
@@ -674,6 +680,9 @@ tr:last-child td{border-bottom:none}
           <input type="text" id="filterCampanha" placeholder="Filtrar por gestor..." oninput="filtrarCampanha()">
           <select id="filterCampanhaCidade" onchange="filtrarCampanha()"><option value="">Todas as Cidades</option></select>
         </div>
+
+        <!-- Active filter indicator -->
+        <div id="campanhaFilterTag" style="display:none;margin-bottom:12px;display:none;align-items:center;gap:8px"></div>
 
         <!-- Campanha Table -->
         <div class="table-wrap">
@@ -2323,6 +2332,34 @@ function updateKpiActiveState(){
   var maior=document.getElementById('campKpiMaior').closest('.kpi-card');
   if(premiados)premiados.style.boxShadow=campanhaKpiFiltro==='premiados'?'0 0 0 2px var(--accent)':'';
   if(maior)maior.style.boxShadow=campanhaKpiFiltro==='maior'?'0 0 0 2px var(--accent)':'';
+  updateCampanhaFilterTag();
+}
+
+function updateCampanhaFilterTag(){
+  var container=document.getElementById('campanhaFilterTag');
+  if(!container)return;
+  var label='';
+  if(campanhaKpiFiltro==='premiados')label='Premiados (>= 500 pts)';
+  else if(campanhaKpiFiltro==='maior')label='Maior Pontuacao (Lider)';
+  else if(campanhaFaixaFiltro>=0){
+    var nomes=['VW Tera (12.000+ pts)','Hornet (8.000+ pts)','XRE 190 (5.000+ pts)','MacBook (2.500+ pts)','Hosp. Casal (1.000+ pts)','Hosp. Individual (500+ pts)','Sem Premio (< 500 pts)'];
+    label=nomes[campanhaFaixaFiltro]||'';
+  }
+  if(label){
+    container.style.display='flex';
+    container.innerHTML='<span class="camp-filter-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>'+label+'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" onclick="clearCampanhaFilter()"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+  }else{
+    container.style.display='none';
+    container.innerHTML='';
+  }
+}
+
+function clearCampanhaFilter(){
+  campanhaFaixaFiltro=-1;
+  campanhaKpiFiltro='';
+  updateKpiActiveState();
+  renderCampanhaFaixas();
+  filtrarCampanha();
 }
 
 function renderCampanhaChart(){
