@@ -480,8 +480,8 @@ tr:last-child td{border-bottom:none}
           <div class="filter-body">
             <div class="filter-grid">
               <div class="filter-group"><label>Tipo Data</label><select id="fTipoData"><option value="3">Data Ativacao</option><option value="2">Data da Cotacao</option><option value="4">Data da Venda Efetivada</option><option value="5">Primeiro Boleto Pago</option></select></div>
-              <div class="filter-group"><label>Data Inicial</label><input type="date" id="fDataIni" value="2026-07-01"></div>
-              <div class="filter-group"><label>Data Final</label><input type="date" id="fDataFim" value="2026-07-15"></div>
+              <div class="filter-group"><label>Data Inicial</label><input type="date" id="fDataIni"></div>
+              <div class="filter-group"><label>Data Final</label><input type="date" id="fDataFim"></div>
               <div class="filter-group"><label>Ordenacao Adesao</label><select id="fOrdenar"><option value="6">Ativadas</option><option value="2">Cadastros</option><option value="1">Cotacao</option><option value="7">Primeiro Boleto Pago</option></select></div>
               <div class="filter-group"><label>Retornar Lider</label><select id="fLider"><option value="NAO">Equipe sem lideres</option><option value="SIM">Equipe completa</option><option value="ATE_NIVEL_1">Equipe ate lider 1o nivel</option></select></div>
             </div>
@@ -1701,6 +1701,16 @@ function checkPendingWeek(){
 
 // Check pending week on load
 checkPendingWeek();
+
+// Set default dates (Data Inicial = 1o dia do mes, Data Final = hoje)
+(function(){
+  var today=new Date();
+  var yyyy=today.getFullYear();
+  var mm=String(today.getMonth()+1).padStart(2,'0');
+  var dd=String(today.getDate()).padStart(2,'0');
+  document.getElementById('fDataFim').value=yyyy+'-'+mm+'-'+dd;
+  document.getElementById('fDataIni').value=yyyy+'-'+mm+'-01';
+})();
 
 /* ====== GESTORES ACORDO ====== */
 var gestoresAcordo=[];
