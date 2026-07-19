@@ -104,18 +104,25 @@ serve(async (req) => {
       const { gestor_id, gestor_nome, data_final: camp_data_final, retornar_lider: camp_retornar_lider } = body;
       const url = `${AEASY_URL}/vendas/listagem`;
       const formData = new URLSearchParams();
+      formData.append("draw", "1");
+      formData.append("columns[0][data]", "ClientesIndividuosNome");
+      formData.append("columns[0][name]", "ClientesIndividuosNome");
+      formData.append("columns[0][searchable]", "false");
+      formData.append("columns[0][orderable]", "true");
+      formData.append("order[0][column]", "0");
+      formData.append("order[0][dir]", "DESC");
+      formData.append("start", "0");
+      formData.append("length", "5000");
       formData.append("formPesquisa[DepartNivel]", "1");
       formData.append("formPesquisa[TipoData]", "VendasDataAtivacao");
-      formData.append("formPesquisa[DataInicial]", "01/01/2026");
-      formData.append("formPesquisa[DataFinal]", formatDateBR(camp_data_final));
+      formData.append("formPesquisa[DataInicial]", "2026-01-01");
+      formData.append("formPesquisa[DataFinal]", camp_data_final);
       formData.append("formPesquisa[VendasSituacao][]", "1");
       formData.append("formPesquisa[FaturasPagas]", "1");
       formData.append("formPesquisa[TipoVendasFaturasPagas]", ">");
       formData.append("formPesquisa[EquipesId]", gestor_id);
       formData.append("formPesquisa[RetornarLiderComEquipe]", camp_retornar_lider || "NAO");
       formData.append("formPesquisa[submitFilter]", "true");
-      formData.append("length", "5000");
-      formData.append("start", "0");
 
       try {
         const resp = await fetch(url, {
@@ -130,7 +137,7 @@ serve(async (req) => {
         });
 
         const data = await resp.json();
-        const ativados = data.recordsTotal || 0;
+        const ativados = parseInt(data.recordsTotal) || 0;
 
         let mensalidade = 0;
         if (data.data) {
