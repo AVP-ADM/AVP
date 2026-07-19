@@ -626,8 +626,8 @@ tr:last-child td{border-bottom:none}
           <div class="kpi-card blue"><div class="kpi-value" id="campKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
           <div class="kpi-card purple"><div class="kpi-value" id="campKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
           <div class="kpi-card amber"><div class="kpi-value" id="campKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
-          <div class="kpi-card green" style="border-left-color:var(--accent)"><div class="kpi-value" id="campKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
-          <div class="kpi-card red"><div class="kpi-value" id="campKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
+          <div class="kpi-card green" style="border-left-color:var(--accent);cursor:pointer" onclick="toggleKpiFiltro('premiados')"><div class="kpi-value" id="campKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
+          <div class="kpi-card red" style="cursor:pointer" onclick="toggleKpiFiltro('maior')"><div class="kpi-value" id="campKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
         </div>
 
         <!-- Campanha Info -->
@@ -2287,6 +2287,7 @@ function renderCampanhaFaixas(){
 }
 
 var campanhaFaixaFiltro=-1;
+var campanhaKpiFiltro=''; // 'premiados' or 'maior'
 var CAMPANHA_FAIXAS=[
   {min:12000,max:999999},
   {min:8000,max:11999},
@@ -2300,8 +2301,26 @@ var CAMPANHA_FAIXAS=[
 function toggleFaixaFiltro(idx){
   if(campanhaFaixaFiltro===idx){campanhaFaixaFiltro=-1}
   else{campanhaFaixaFiltro=idx}
+  campanhaKpiFiltro='';
+  updateKpiActiveState();
   renderCampanhaFaixas();
   filtrarCampanha();
+}
+
+function toggleKpiFiltro(tipo){
+  if(campanhaKpiFiltro===tipo){campanhaKpiFiltro=''}
+  else{campanhaKpiFiltro=tipo}
+  campanhaFaixaFiltro=-1;
+  updateKpiActiveState();
+  renderCampanhaFaixas();
+  filtrarCampanha();
+}
+
+function updateKpiActiveState(){
+  var premiados=document.getElementById('campKpiPremiados').closest('.kpi-card');
+  var maior=document.getElementById('campKpiMaior').closest('.kpi-card');
+  if(premiados)premiados.style.boxShadow=campanhaKpiFiltro==='premiados'?'0 0 0 2px var(--accent)':'';
+  if(maior)maior.style.boxShadow=campanhaKpiFiltro==='maior'?'0 0 0 2px var(--accent)':'';
 }
 
 function renderCampanhaChart(){
@@ -2376,6 +2395,8 @@ function filtrarCampanha(){
       var f=CAMPANHA_FAIXAS[campanhaFaixaFiltro];
       if(g.pontuacao<f.min||g.pontuacao>f.max)return false;
     }
+    if(campanhaKpiFiltro==='premiados'&&g.pontuacao<500)return false;
+    if(campanhaKpiFiltro==='maior'&&g.pontuacao!==CAMPANHA_DATA[0].pontuacao)return false;
     return true;
   });
   // Sort
