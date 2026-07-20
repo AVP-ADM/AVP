@@ -260,6 +260,8 @@ tr:last-child td{border-bottom:none}
 [data-theme="dark"] .tag-acordo{background:var(--amber-bg);color:var(--amber)}
 .tag-excecao{background:var(--purple-light);color:var(--purple)}
 [data-theme="dark"] .tag-excecao{background:rgba(124,58,237,.15);color:var(--purple)}
+.tag-gestor{background:var(--blue-light);color:var(--blue)}
+[data-theme="dark"] .tag-gestor{background:rgba(96,165,250,.12);color:var(--blue)}
 
 /* ========= MANAGE PANEL (Acordo/Exceções) ========= */
 .manage-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
@@ -820,6 +822,13 @@ tr:last-child td{border-bottom:none}
         <!-- Filter tag -->
         <div id="consultoresFilterTag" style="display:none;margin-bottom:12px;align-items:center;gap:8px"></div>
 
+        <!-- Hidden consultores bar -->
+        <div class="camp-hidden-bar" id="consHiddenBar" style="display:none">
+          <span id="consHiddenCount">0 ocultos</span>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:.72rem" onclick="toggleConsHiddenPanel()">Gerenciar</button>
+        </div>
+        <div class="camp-hidden-panel" id="consHiddenPanel"></div>
+
         <!-- Table -->
         <div class="table-wrap">
           <div class="empty-state" id="consultoresEmpty">
@@ -828,7 +837,7 @@ tr:last-child td{border-bottom:none}
           </div>
           <table id="tblConsultores" style="display:none">
             <thead>
-              <tr><th>#</th><th>Consultor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
+              <tr><th>#</th><th>Consultor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th><th class="col-actions"></th></tr>
             </thead>
             <tbody id="tbodyConsultores"></tbody>
             <tfoot id="tfootConsultores"></tfoot>
@@ -2969,11 +2978,11 @@ async function consultoresAtualizar(){
 
     updProg(80,'Processando dados...');
 
-    // Filtrar: remover gestores da lista
+    // Processar todos os consultores (incluindo gestores)
     var results=[];
     (consResult.consultores||[]).forEach(function(c){
       if(c.ativados<1)return;
-      if(gestoresNomes[c.nome.toUpperCase()])return; // Remove gestores
+      var isGestor=!!gestoresNomes[c.nome.toUpperCase()];
       var ticket=c.ativados>0?(c.mensalidade/c.ativados):0;
       var score=getScoreConsultor(ticket);
       var pontuacao=c.ativados*score;
@@ -2986,7 +2995,8 @@ async function consultoresAtualizar(){
         score:score,
         pontuacao:pontuacao,
         premiacao:premiacao.label,
-        premiacao_css:premiacao.css
+        premiacao_css:premiacao.css,
+        isGestor:isGestor
       });
     });
     results.sort(function(a,b){return b.pontuacao-a.pontuacao});
@@ -3011,19 +3021,22 @@ function renderConsultores(){
   document.getElementById('consultoresEmpty').style.display='none';
   document.getElementById('tblConsultores').style.display='';
 
+  var visible=getConsultoresVisible();
   var totalAtv=0,totalMens=0,premiados=0,maiorPts=0;
-  CONSULTORES_DATA.forEach(function(c){
+  visible.forEach(function(c){
     totalAtv+=c.ativados;totalMens+=c.mensalidade;
     if(c.pontuacao>=300)premiados++;
     if(c.pontuacao>maiorPts)maiorPts=c.pontuacao;
   });
   var ticketGeral=totalAtv>0?(totalMens/totalAtv):0;
-  document.getElementById('consKpiTotal').textContent=fk(CONSULTORES_DATA.length);
+  document.getElementById('consKpiTotal').textContent=fk(visible.length);
   document.getElementById('consKpiAtivados').textContent=fk(totalAtv);
   document.getElementById('consKpiMensalidade').textContent='R$ '+fk(Math.round(totalMens));
   document.getElementById('consKpiTicket').textContent='R$ '+ticketGeral.toFixed(2).replace('.',',');
   document.getElementById('consKpiPremiados').textContent=premiados;
   document.getElementById('consKpiMaior').textContent=fk(maiorPts);
+
+  updateConsHiddenBar();
 
   var cached=localStorage.getItem('avp-consultores-data');
   if(cached){document.getElementById('consultoresCacheInfo').textContent='Ultima atualizacao: '+new Date(JSON.parse(cached).ts).toLocaleString('pt-BR')}
@@ -3104,7 +3117,8 @@ function filtrarConsultores(){
   var minAtv=parseInt((document.getElementById('filterConsAtivados')||{}).value)||0;
   var minScore=parseInt((document.getElementById('filterConsScore')||{}).value)||0;
   var minPts=parseInt((document.getElementById('filterConsPontuacao')||{}).value)||0;
-  var filtered=CONSULTORES_DATA.filter(function(c){
+  var visible=getConsultoresVisible();
+  var filtered=visible.filter(function(c){
     if(s&&c.nome.toLowerCase().indexOf(s)<0)return false;
     if(minAtv&&c.ativados<minAtv)return false;
     if(minScore&&c.score<minScore)return false;
@@ -3131,12 +3145,79 @@ function renderConsultoresTable(data){
     var faltam=nextLvl-c.pontuacao;
     var projLabel=faltam>0?pct+'% — Faltam '+fk(faltam)+' pts':'100%';
     var rowCls=idx===0?'row-gold':idx===1?'row-silver':idx===2?'row-bronze':'';
+    var gestorTag=c.isGestor?'<span class="tag-badge tag-gestor">Gestor</span>':'';
+    var safeNome=c.nome.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     sumAtv+=c.ativados;sumMens+=c.mensalidade;
-    html+='<tr class="'+rowCls+'"><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+'</td><td class="col-num">'+fk(c.ativados)+'</td><td class="col-money">'+fmtBRL(c.mensalidade)+'</td><td class="col-num">R$ '+c.ticket_medio.toFixed(2).replace('.',',')+'</td><td class="col-num">'+c.score+'</td><td class="col-num" style="min-width:110px"><strong>'+fk(c.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pct+'%;background:'+pColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td><td><span class="campanha-premio '+c.premiacao_css+'">'+c.premiacao+'</span></td></tr>';
+    html+='<tr class="'+rowCls+'"><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+gestorTag+'</td><td class="col-num">'+fk(c.ativados)+'</td><td class="col-money">'+fmtBRL(c.mensalidade)+'</td><td class="col-num">R$ '+c.ticket_medio.toFixed(2).replace('.',',')+'</td><td class="col-num">'+c.score+'</td><td class="col-num" style="min-width:110px"><strong>'+fk(c.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pct+'%;background:'+pColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td><td><span class="campanha-premio '+c.premiacao_css+'">'+c.premiacao+'</span></td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideConsultor(\''+safeNome+'\')" title="Ocultar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
   });
   document.getElementById('tbodyConsultores').innerHTML=html;
   var tkFilt=sumAtv>0?(sumMens/sumAtv):0;
-  document.getElementById('tfootConsultores').innerHTML='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' consultores)</td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+tkFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td></tr>';
+  document.getElementById('tfootConsultores').innerHTML='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' consultores)</td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+tkFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td><td></td></tr>';
+}
+
+/* ====== CONSULTORES: OCULTAR (independente) ====== */
+var consultoresOcultos=[];
+
+async function loadConsultoresOcultos(){
+  try{
+    var r=await sbFetch('campanha_consultores_ocultos?select=consultor_nome&order=consultor_nome.asc');
+    if(r.ok){var data=await r.json();consultoresOcultos=data.map(function(x){return x.consultor_nome})}
+  }catch(e){console.warn('Falha carregar consultores ocultos',e)}
+}
+
+function getConsultoresVisible(){
+  return CONSULTORES_DATA.filter(function(c){return consultoresOcultos.indexOf(c.nome)===-1});
+}
+
+function hideConsultor(nome){
+  if(consultoresOcultos.indexOf(nome)===-1){
+    consultoresOcultos.push(nome);
+    saveConsultoresOcultos();
+    renderConsultores();
+  }
+}
+
+function showConsultor(nome){
+  consultoresOcultos=consultoresOcultos.filter(function(n){return n!==nome});
+  saveConsultoresOcultos();
+  renderConsHiddenPanel();
+  renderConsultores();
+}
+
+async function saveConsultoresOcultos(){
+  updateConsHiddenBar();
+  try{
+    await sbFetch('campanha_consultores_ocultos?consultor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    if(consultoresOcultos.length>0){
+      var body=JSON.stringify(consultoresOcultos.map(function(n){return{consultor_nome:n}}));
+      await sbFetch('campanha_consultores_ocultos',{method:'POST',body:body,headers:{'Prefer':'resolution=merge-duplicates'}});
+    }
+  }catch(e){console.warn('Sync consultores ocultos failed',e)}
+}
+
+function updateConsHiddenBar(){
+  var bar=document.getElementById('consHiddenBar');
+  if(consultoresOcultos.length>0){
+    bar.style.display='flex';
+    document.getElementById('consHiddenCount').textContent=consultoresOcultos.length+' consultor'+(consultoresOcultos.length>1?'es':'')+' oculto'+(consultoresOcultos.length>1?'s':'');
+  }else{bar.style.display='none'}
+}
+
+function toggleConsHiddenPanel(){
+  var panel=document.getElementById('consHiddenPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open'))renderConsHiddenPanel();
+}
+
+function renderConsHiddenPanel(){
+  var panel=document.getElementById('consHiddenPanel');
+  if(!panel.classList.contains('open'))return;
+  if(consultoresOcultos.length===0){panel.classList.remove('open');return}
+  var h='';
+  consultoresOcultos.forEach(function(nome){
+    h+='<div class="hidden-item"><span>'+nome+'</span><button class="btn btn-outline" style="padding:3px 8px;font-size:.7rem" onclick="showConsultor(\''+nome.replace(/'/g,"\\'")+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Reativar</button></div>';
+  });
+  panel.innerHTML=h;
 }
 
 function loadConsultoresFromCache(){
@@ -3177,6 +3258,7 @@ function exportarConsultoresXLSX(){
   await loadGestoresAcordo();
   await loadExcecoes();
   await loadCampanhaOcultos();
+  await loadConsultoresOcultos();
   loadCampanhaFromCache();
   loadConsultoresFromCache();
   // Re-render acompanhamento with Acordo tags
