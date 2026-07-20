@@ -658,6 +658,7 @@ tr:last-child td{border-bottom:none}
           <button class="btn btn-outline" onclick="top20MesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn btn-green" onclick="top20FecharSemana()" id="btnTop20Fechar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
           <button class="btn btn-outline" onclick="top20Desfazer()" id="btnTop20Desfazer" style="display:none;padding:6px 12px;font-size:.72rem" title="Desfazer ultimo fechamento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+          <button class="btn btn-outline" onclick="top20PopularRetroativo()" style="padding:6px 12px;font-size:.72rem" title="Popular dados de Jan-Jul 2026"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9"/></svg> Popular Retroativo</button>
         </div>
 
         <!-- Toggle: Semanal / Evolução Anual -->
@@ -3255,6 +3256,92 @@ async function executarTop20Desfazer(semNum){
     await sbFetch('top20_consultores_semanal?ano=eq.'+TOP20_ANO+'&mes=eq.'+TOP20_MES+'&semana=eq.'+semNum+'&tipo=eq.semanal',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
     loadTop20();
   }catch(e){alert('Erro: '+e.message)}
+}
+
+async function top20PopularRetroativo(){
+  var html='<div style="padding:4px 0"><h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">Popular Dados Retroativos</h3>';
+  html+='<div style="font-size:.78rem;color:var(--text2);margin-bottom:16px">Vai buscar dados de <strong>Janeiro a Julho 2026</strong> (todas as semanas). Isso pode levar <strong>2-3 minutos</strong>.</div>';
+  html+='<div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-outline" onclick="closeConfirmModal()">Cancelar</button><button class="btn btn-green" onclick="executarTop20Retroativo()">Iniciar</button></div></div>';
+  document.getElementById('confirmContent').innerHTML=html;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+async function executarTop20Retroativo(){
+  closeConfirmModal();
+  var pb=document.getElementById('top20ProgressBar');
+  pb.classList.add('visible');
+
+  // Calculate all weeks (segundas) for each month
+  var semanas=[];
+  for(var mes=1;mes<=7;mes++){
+    var primeiroDia=new Date(2026,mes-1,1);
+    var ultimoDia=mes<7?new Date(2026,mes,0):new Date();
+    // Find all Mondays in the month
+    var d=new Date(primeiroDia);
+    var semCount=0;
+    while(d<=ultimoDia){
+      if(d.getDay()===1){
+        semCount++;
+        var dataFim=new Date(d);
+        var dd=String(dataFim.getDate()).padStart(2,'0');
+        var mm=String(dataFim.getMonth()+1).padStart(2,'0');
+        semanas.push({mes:mes,semana:semCount,dataIni:'01/'+mm+'/2026',dataFim:dd+'/'+mm+'/2026',dataFimISO:'2026-'+mm+'-'+dd,tipo:'semanal'});
+      }
+      d.setDate(d.getDate()+1);
+    }
+    // Fechamento do mês (se já acabou)
+    if(mes<7){
+      var ult=new Date(2026,mes,0);
+      var dd2=String(ult.getDate()).padStart(2,'0');
+      var mm2=String(mes).padStart(2,'0');
+      semanas.push({mes:mes,semana:0,dataIni:'01/'+mm2+'/2026',dataFim:dd2+'/'+mm2+'/2026',dataFimISO:'2026-'+mm2+'-'+dd2,tipo:'fechamento'});
+    }
+  }
+
+  var total=semanas.length;
+  document.getElementById('top20ProgressMsg').textContent='Fazendo login...';
+  document.getElementById('top20ProgressFill').style.width='2%';
+
+  try{
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success)throw new Error('Falha login');
+    var sessionCookie=loginResult.session_cookie;
+
+    // Get gestores for is_gestor flag
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+    var gestoresNomes={};
+    if(gestoresResult.success)gestoresResult.gestores.forEach(function(g){gestoresNomes[g.nome.toUpperCase()]=true});
+
+    for(var i=0;i<semanas.length;i++){
+      var s=semanas[i];
+      var pct=5+Math.round((i/total)*90);
+      document.getElementById('top20ProgressFill').style.width=pct+'%';
+      document.getElementById('top20ProgressMsg').textContent=MESES_NOMES[s.mes]+' - '+(s.tipo==='fechamento'?'Fechamento':'Sem '+s.semana)+' ('+( i+1)+'/'+total+')';
+      document.getElementById('top20ProgressPct').textContent=pct+'%';
+
+      var consResult=await edgeCall({action:'consultores_todos',session_cookie:sessionCookie,tipo_data:'3',data_inicial:s.dataIni,data_final:s.dataFim,ordenar:'6'});
+
+      if(consResult.success){
+        var top50=(consResult.consultores||[]).filter(function(c){return c.ativados>=1}).slice(0,50);
+        var registros=top50.map(function(c,idx){
+          return{ano:2026,mes:s.mes,semana:s.semana,data_inicio:'2026-'+String(s.mes).padStart(2,'0')+'-01',data_fim:s.dataFimISO,consultor_nome:c.nome,ativados:c.ativados,valor:c.mensalidade,tipo:s.tipo,is_gestor:!!gestoresNomes[c.nome.toUpperCase()],posicao:idx+1};
+        });
+        if(registros.length>0){
+          await sbFetch('top20_consultores_semanal',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'resolution=merge-duplicates'}});
+        }
+      }
+    }
+
+    document.getElementById('top20ProgressFill').style.width='100%';
+    document.getElementById('top20ProgressMsg').textContent='Concluido! '+total+' periodos processados.';
+    setTimeout(function(){pb.classList.remove('visible')},3000);
+    // Clear cache and reload
+    for(var m=1;m<=7;m++){TOP20_DATA[m]=null;localStorage.removeItem('avp-top20-2026-'+m)}
+    loadTop20();
+  }catch(e){
+    document.getElementById('top20ProgressMsg').textContent='Erro: '+e.message;
+    console.error(e);
+  }
 }
 
 /* ====== CAMPANHA CONSULTORES ====== */
