@@ -767,30 +767,33 @@ tr:last-child td{border-bottom:none}
 
 <!-- Manage Acordo Modal -->
 <div class="manage-overlay" id="manageAcordoOverlay" onclick="closeManageAcordo()">
-<div class="manage-panel" onclick="event.stopPropagation()">
+<div class="manage-panel" onclick="event.stopPropagation()" style="max-width:600px">
 <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Gerenciar Gestores com Acordo</h3>
-<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Gestores marcados como "Acordo" aparecem com uma tag na tabela de Acompanhamento.</p>
-<div class="manage-add">
-<input type="text" id="acordoAddInput" placeholder="Nome do gestor..." list="gestoresDatalist">
-<button class="btn btn-green" style="padding:6px 14px;font-size:.78rem" onclick="addAcordo()">Adicionar</button>
-</div>
-<datalist id="gestoresDatalist"></datalist>
-<div id="acordoList"></div>
+<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Clique no gestor para marcar/desmarcar como "Acordo". Gestores marcados aparecem com uma tag na tabela de Acompanhamento.</p>
+<input type="text" id="acordoSearchInput" placeholder="Buscar gestor..." oninput="renderAcordoGestorList()" style="width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1);margin-bottom:12px">
+<div id="acordoGestorList" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)"></div>
 <div style="text-align:right;margin-top:12px"><button class="btn btn-outline" onclick="closeManageAcordo()">Fechar</button></div>
 </div>
 </div>
 
 <!-- Manage Exceções Modal -->
 <div class="manage-overlay" id="manageExcecoesOverlay" onclick="closeManageExcecoes()">
-<div class="manage-panel" onclick="event.stopPropagation()">
+<div class="manage-panel" onclick="event.stopPropagation()" style="max-width:620px">
 <h3><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gerenciar Excecoes da Campanha</h3>
-<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Gestores com excecao usam "Equipe Completa" na busca. Caso Osnir: subtrai vendas do Jose Everton.</p>
-<div id="excecoesList"></div>
-<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
-<p style="font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:8px">Adicionar excecao:</p>
-<div class="manage-add">
-<input type="text" id="excecaoAddNome" placeholder="Nome do gestor..." list="gestoresDatalist">
-<button class="btn btn-green" style="padding:6px 14px;font-size:.78rem" onclick="addExcecao()">Adicionar</button>
+<p style="font-size:.75rem;color:var(--text3);margin-bottom:12px">Gestores com excecao usam "Equipe Completa" na busca. Configure a regra para cada gestor.</p>
+<div id="excecoesList" style="margin-bottom:16px"></div>
+<div style="border-top:1px solid var(--border);padding-top:14px">
+<p style="font-size:.78rem;font-weight:700;color:var(--text1);margin-bottom:10px">Adicionar Excecao</p>
+<div style="display:grid;gap:10px">
+<div><label style="font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Gestor</label><select id="excecaoAddGestor" style="width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Selecione o gestor...</option></select></div>
+<div><label style="font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Regra</label>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;cursor:pointer;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);transition:all .15s"><input type="radio" name="excecaoTipo" value="equipe_completa" checked style="accent-color:var(--accent)"><span><strong>Equipe Completa</strong><br><span style="font-size:.68rem;color:var(--text3)">Busca com RetornarLider=SIM (inclui sub-lideres)</span></span></label>
+<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;cursor:pointer;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);transition:all .15s"><input type="radio" name="excecaoTipo" value="subtrai" onchange="document.getElementById('excecaoSubtraiDiv').style.display=this.checked?'block':'none'" style="accent-color:var(--accent)"><span><strong>Equipe Completa com Subtracao</strong><br><span style="font-size:.68rem;color:var(--text3)">Inclui sub-lideres, mas subtrai dados de outro gestor</span></span></label>
+</div>
+</div>
+<div id="excecaoSubtraiDiv" style="display:none"><label style="font-size:.68rem;font-weight:600;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:4px">Subtrair resultados de</label><select id="excecaoSubtraiGestor" style="width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.82rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Selecione o gestor a subtrair...</option></select><p style="font-size:.65rem;color:var(--text3);margin-top:4px">Os ativados e mensalidade deste gestor serao subtraidos do resultado do gestor principal.</p></div>
+<button class="btn btn-green" style="width:100%" onclick="addExcecaoNova()">Salvar Excecao</button>
 </div>
 </div>
 <div style="text-align:right;margin-top:12px"><button class="btn btn-outline" onclick="closeManageExcecoes()">Fechar</button></div>
@@ -990,6 +993,7 @@ async function buscarDados(){
     var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
     if(!gestoresResult.success)throw new Error(gestoresResult.error||'Falha ao buscar gestores');
     var gestores=gestoresResult.gestores;
+    window._lastGestores=gestores;
     var total=gestores.length;
     updateProgress(5,'Encontrados '+total+' gestores. Iniciando...',0,total,Math.round((Date.now()-startTime)/1000));
 
@@ -1895,63 +1899,48 @@ function isAcordo(nome){return gestoresAcordo.indexOf(nome)>=0}
 
 function openManageAcordo(){
   document.getElementById('manageAcordoOverlay').classList.add('open');
-  renderAcordoList();
-  populateGestoresDatalist();
+  renderAcordoGestorList();
 }
 function closeManageAcordo(){document.getElementById('manageAcordoOverlay').classList.remove('open')}
 
-function renderAcordoList(){
-  var container=document.getElementById('acordoList');
-  if(gestoresAcordo.length===0){
-    container.innerHTML='<div class="manage-empty">Nenhum gestor marcado como Acordo.</div>';
-    return;
-  }
-  var html='<div class="manage-list">';
-  gestoresAcordo.forEach(function(nome){
-    html+='<div class="manage-item"><span>'+nome+' <span class="tag-badge tag-acordo">Acordo</span></span><button class="btn-remove" onclick="removeAcordo(\''+nome.replace(/'/g,"\\'")+'\')" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
-  });
-  html+='</div>';
-  container.innerHTML=html;
-}
-
-async function addAcordo(){
-  var input=document.getElementById('acordoAddInput');
-  var nome=input.value.trim().toUpperCase();
-  if(!nome)return;
-  if(gestoresAcordo.indexOf(nome)>=0){alert('Gestor ja esta marcado como Acordo.');return}
-  try{
-    var r=await sbFetch('gestores_acordo',{method:'POST',body:JSON.stringify({gestor_nome:nome}),headers:{'Prefer':'return=minimal'}});
-    if(r.ok){
-      gestoresAcordo.push(nome);
-      gestoresAcordo.sort();
-      input.value='';
-      renderAcordoList();
-      renderTabelaAcompFromUI();
-    }else{
-      var err=await r.json();
-      alert('Erro: '+(err.message||'Falha ao salvar'));
-    }
-  }catch(e){alert('Erro: '+e.message)}
-}
-
-async function removeAcordo(nome){
-  try{
-    await sbFetch('gestores_acordo?gestor_nome=eq.'+encodeURIComponent(nome),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
-    gestoresAcordo=gestoresAcordo.filter(function(n){return n!==nome});
-    renderAcordoList();
-    renderTabelaAcompFromUI();
-  }catch(e){alert('Erro: '+e.message)}
-}
-
-function populateGestoresDatalist(){
-  var dl=document.getElementById('gestoresDatalist');
-  dl.innerHTML='';
+function renderAcordoGestorList(){
+  var container=document.getElementById('acordoGestorList');
+  var search=(document.getElementById('acordoSearchInput')||{}).value||'';
+  search=search.toLowerCase();
   var data=ACOMP_DATA[ACOMP_MES]||[];
   var nomes={};
   data.forEach(function(r){nomes[r.gestor_nome]=true});
-  Object.keys(nomes).sort().forEach(function(n){
-    var o=document.createElement('option');o.value=n;dl.appendChild(o);
+  var sorted=Object.keys(nomes).sort();
+  if(search)sorted=sorted.filter(function(n){return n.toLowerCase().indexOf(search)>=0});
+  var html='';
+  sorted.forEach(function(nome){
+    var checked=isAcordo(nome);
+    var cls=checked?'background:var(--accent-light);':'';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;'+cls+'" onclick="toggleAcordo(\''+nome.replace(/'/g,"\\'")+'\')">';
+    html+='<div style="width:18px;height:18px;border-radius:4px;border:2px solid '+(checked?'var(--accent)':'var(--border-strong)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+(checked?'var(--accent)':'transparent')+'">'+(checked?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
+    html+='<span style="font-size:.8rem;font-weight:'+(checked?'600':'400')+';color:var(--text1)">'+nome+'</span>';
+    if(checked)html+='<span class="tag-badge tag-acordo" style="margin-left:auto">Acordo</span>';
+    html+='</div>';
   });
+  if(sorted.length===0)html='<div style="padding:20px;text-align:center;color:var(--text3);font-size:.78rem">Nenhum gestor encontrado</div>';
+  container.innerHTML=html;
+}
+
+async function toggleAcordo(nome){
+  if(isAcordo(nome)){
+    try{
+      await sbFetch('gestores_acordo?gestor_nome=eq.'+encodeURIComponent(nome),{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+      gestoresAcordo=gestoresAcordo.filter(function(n){return n!==nome});
+    }catch(e){alert('Erro: '+e.message);return}
+  }else{
+    try{
+      var r=await sbFetch('gestores_acordo',{method:'POST',body:JSON.stringify({gestor_nome:nome}),headers:{'Prefer':'return=minimal'}});
+      if(r.ok){gestoresAcordo.push(nome);gestoresAcordo.sort()}
+      else{var err=await r.json();alert('Erro: '+(err.message||'Falha'));return}
+    }catch(e){alert('Erro: '+e.message);return}
+  }
+  renderAcordoGestorList();
+  renderTabelaAcompFromUI();
 }
 
 /* ====== CAMPANHA PREMIAÇÕES GESTORES 2026 ====== */
@@ -2017,9 +2006,30 @@ function getExcecaoInfo(nome){
 
 function openManageExcecoes(){
   document.getElementById('manageExcecoesOverlay').classList.add('open');
+  populateExcecaoDropdowns();
   renderExcecoesList();
+  // Reset radio
+  document.querySelector('input[name="excecaoTipo"][value="equipe_completa"]').checked=true;
+  document.getElementById('excecaoSubtraiDiv').style.display='none';
 }
 function closeManageExcecoes(){document.getElementById('manageExcecoesOverlay').classList.remove('open')}
+
+function populateExcecaoDropdowns(){
+  var data=ACOMP_DATA[ACOMP_MES]||[];
+  var nomes={};
+  data.forEach(function(r){nomes[r.gestor_nome]={nome:r.gestor_nome,id:r.gestor_nome}});
+  // Also include gestores from edge function if available
+  if(window._lastGestores){window._lastGestores.forEach(function(g){nomes[g.nome]={nome:g.nome,id:g.id}})}
+  var sorted=Object.values(nomes).sort(function(a,b){return a.nome.localeCompare(b.nome)});
+  var sel1=document.getElementById('excecaoAddGestor');
+  var sel2=document.getElementById('excecaoSubtraiGestor');
+  sel1.innerHTML='<option value="">Selecione o gestor...</option>';
+  sel2.innerHTML='<option value="">Selecione o gestor a subtrair...</option>';
+  sorted.forEach(function(g){
+    sel1.innerHTML+='<option value="'+g.nome+'" data-id="'+(g.id||'')+'">'+g.nome+'</option>';
+    sel2.innerHTML+='<option value="'+g.nome+'" data-id="'+(g.id||'')+'">'+g.nome+'</option>';
+  });
+}
 
 function renderExcecoesList(){
   var container=document.getElementById('excecoesList');
@@ -2029,34 +2039,42 @@ function renderExcecoesList(){
   }
   var html='<div class="manage-list">';
   CAMPANHA_EXCECOES.forEach(function(exc){
-    var info=exc.tipo==='subtrai'?'(subtrai '+exc.subtrai_gestor_nome+')':'(equipe completa)';
-    html+='<div class="manage-item"><span>'+exc.gestor_nome+' <span class="tag-badge tag-excecao">Excecao</span><br><small style="color:var(--text3)">'+info+'</small></span><button class="btn-remove" onclick="removeExcecao(\''+exc.gestor_nome.replace(/'/g,"\\'")+'\')" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
+    var regra=exc.tipo==='subtrai'?'Equipe Completa - Subtrai: '+exc.subtrai_gestor_nome:'Equipe Completa';
+    html+='<div class="manage-item" style="flex-direction:column;align-items:flex-start;gap:4px"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><span style="font-weight:600">'+exc.gestor_nome+' <span class="tag-badge tag-excecao">Excecao</span></span><button class="btn-remove" onclick="removeExcecao(\''+exc.gestor_nome.replace(/'/g,"\\'")+'\')" title="Remover"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div style="font-size:.68rem;color:var(--text3)">Regra: '+regra+'</div></div>';
   });
   html+='</div>';
   container.innerHTML=html;
 }
 
-async function addExcecao(){
-  var input=document.getElementById('excecaoAddNome');
-  var nome=input.value.trim().toUpperCase();
-  if(!nome)return;
-  if(isExcecao(nome)){alert('Gestor ja e uma excecao.');return}
-  var novaExc={gestor_nome:nome,tipo:'equipe_completa',subtrai_gestor_nome:null,subtrai_gestor_id:null};
+async function addExcecaoNova(){
+  var selGestor=document.getElementById('excecaoAddGestor');
+  var nome=selGestor.value;
+  if(!nome){alert('Selecione o gestor.');return}
+  if(isExcecao(nome)){alert('Este gestor ja e uma excecao.');return}
+  var gestorId=selGestor.selectedOptions[0].getAttribute('data-id')||'';
+  var tipo=document.querySelector('input[name="excecaoTipo"]:checked').value;
+  var subNome=null,subId=null;
+  if(tipo==='subtrai'){
+    var selSub=document.getElementById('excecaoSubtraiGestor');
+    subNome=selSub.value;
+    if(!subNome){alert('Selecione o gestor a subtrair.');return}
+    subId=selSub.selectedOptions[0].getAttribute('data-id')||'';
+  }
+  var novaExc={gestor_nome:nome,gestor_id:gestorId,tipo:tipo,subtrai_gestor_nome:subNome,subtrai_gestor_id:subId};
   try{
     var r=await sbFetch('campanha_excecoes',{method:'POST',body:JSON.stringify(novaExc),headers:{'Prefer':'return=minimal'}});
     if(r.ok){
       CAMPANHA_EXCECOES.push(novaExc);
-      input.value='';
+      selGestor.value='';
+      document.querySelector('input[name="excecaoTipo"][value="equipe_completa"]').checked=true;
+      document.getElementById('excecaoSubtraiDiv').style.display='none';
       renderExcecoesList();
     }else{
-      // If table doesn't exist, just save locally
       CAMPANHA_EXCECOES.push(novaExc);
-      input.value='';
       renderExcecoesList();
     }
   }catch(e){
     CAMPANHA_EXCECOES.push(novaExc);
-    input.value='';
     renderExcecoesList();
   }
 }
@@ -2099,6 +2117,7 @@ async function campanhaAtualizar(){
     var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
     if(!gestoresResult.success)throw new Error(gestoresResult.error||'Falha gestores');
     var gestores=gestoresResult.gestores;
+    window._lastGestores=gestores;
     var total=gestores.length;
 
     var today=new Date().toISOString().split('T')[0];
