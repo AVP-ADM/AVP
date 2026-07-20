@@ -3058,7 +3058,8 @@ function renderConsPodio(){
     var c=top3[idx];var cls=classes[idx];
     var initials=c.nome.split(' ').map(function(w){return w[0]}).slice(0,2).join('');
     var premio=getPremiacaoConsultor(c.pontuacao);
-    html+='<div class="podio-item '+cls+'"><div class="podio-avatar">'+initials+'</div><div class="podio-nome" title="'+c.nome+'">'+c.nome.split(' ').slice(0,2).join(' ')+'</div><div class="podio-pts">'+fk(c.pontuacao)+' pts</div><div class="podio-premio"><span class="campanha-premio '+premio.css+'" style="font-size:.6rem">'+premio.label+'</span></div><div class="podio-stats"><span><span class="ps-val">'+fk(c.ativados)+'</span>atv</span><span><span class="ps-val">R$'+c.ticket_medio.toFixed(0)+'</span>tk</span><span><span class="ps-val">'+c.score+'</span>score</span></div><div class="podio-base">'+labels[idx]+'</div></div>';
+    var gestorBadge=c.isGestor?'<span class="tag-badge tag-gestor" style="font-size:.5rem;margin-top:2px">Gestor</span>':'';
+    html+='<div class="podio-item '+cls+'"><div class="podio-avatar">'+initials+'</div><div class="podio-nome" title="'+c.nome+'">'+c.nome.split(' ').slice(0,2).join(' ')+'</div>'+gestorBadge+'<div class="podio-pts">'+fk(c.pontuacao)+' pts</div><div class="podio-premio"><span class="campanha-premio '+premio.css+'" style="font-size:.6rem">'+premio.label+'</span></div><div class="podio-stats"><span><span class="ps-val">'+fk(c.ativados)+'</span>atv</span><span><span class="ps-val">R$'+c.ticket_medio.toFixed(0)+'</span>tk</span><span><span class="ps-val">'+c.score+'</span>score</span></div><div class="podio-base">'+labels[idx]+'</div></div>';
   });
   html+='</div>';
   document.getElementById('consPodioContent').innerHTML=html;
@@ -3098,7 +3099,8 @@ function renderConsChart(){
   top10.forEach(function(c,idx){
     var pct=Math.max(2,Math.round((c.pontuacao/Math.max(maxPts,1))*100));
     var color=c.pontuacao>=1200?'linear-gradient(90deg,var(--amber),#F59E0B)':c.pontuacao>=600?'linear-gradient(90deg,var(--purple),#A78BFA)':c.pontuacao>=300?'linear-gradient(90deg,var(--green),var(--accent))':'linear-gradient(90deg,var(--blue),#60A5FA)';
-    html+='<div class="camp-bar-row"><div class="camp-bar-pos">'+(idx+1)+'</div><div class="camp-bar-info"><div class="camp-bar-nome" title="'+c.nome+'">'+c.nome+'</div></div><div class="camp-bar-track"><div class="camp-bar-markers">';
+    var gestorBadge=c.isGestor?' <span class="tag-badge tag-gestor" style="font-size:.5rem">Gestor</span>':'';
+    html+='<div class="camp-bar-row"><div class="camp-bar-pos">'+(idx+1)+'</div><div class="camp-bar-info"><div class="camp-bar-nome" title="'+c.nome+'">'+c.nome+gestorBadge+'</div></div><div class="camp-bar-track"><div class="camp-bar-markers">';
     markers.forEach(function(m){var mPct=Math.round((m/Math.max(maxPts*1.1,1))*100);if(mPct>0&&mPct<100)html+='<div class="camp-bar-marker" style="left:'+mPct+'%" title="'+fk(m)+' pts"></div>'});
     html+='</div><div class="camp-bar-fill" style="width:'+pct+'%;background:'+color+'"><span class="camp-bar-value">'+fk(c.pontuacao)+'</span></div></div><div class="camp-bar-stats"><div class="camp-bar-stat"><div class="camp-bar-stat-value">'+fk(c.ativados)+'</div><div class="camp-bar-stat-label">Ativados</div></div><div class="camp-bar-stat"><div class="camp-bar-stat-value">R$'+c.ticket_medio.toFixed(0)+'</div><div class="camp-bar-stat-label">Ticket</div></div><div class="camp-bar-stat"><div class="camp-bar-stat-value">'+c.score+'</div><div class="camp-bar-stat-label">Score</div></div></div></div>';
     if(idx<top10.length-1){var gap=c.pontuacao-top10[idx+1].pontuacao;if(gap>0)html+='<div class="camp-bar-gap">'+fk(gap)+' pts</div>'}
