@@ -2927,75 +2927,53 @@ async function consultoresAtualizar(){
   pb.classList.add('visible');
   var startTime=Date.now();
 
-  function updProg(pct,msg,done,total){
+  function updProg(pct,msg){
     var elapsed=Math.round((Date.now()-startTime)/1000);
     document.getElementById('consultoresProgressFill').style.width=pct+'%';
     document.getElementById('consultoresProgressPct').textContent=Math.round(pct)+'%';
     document.getElementById('consultoresProgressGestor').textContent=msg;
-    document.getElementById('consultoresProgressCounter').textContent=done+' de '+total;
+    document.getElementById('consultoresProgressCounter').textContent='';
     document.getElementById('consultoresProgressTime').textContent='Tempo: '+elapsed+'s';
-    if(done>0&&done<total){document.getElementById('consultoresProgressEta').textContent='Restante: ~'+Math.round((elapsed/done)*(total-done))+'s'}
-    else if(done>=total){document.getElementById('consultoresProgressEta').textContent='Concluido!'}
+    document.getElementById('consultoresProgressEta').textContent='';
   }
 
   try{
-    updProg(2,'Fazendo login...',0,0);
+    updProg(10,'Fazendo login...');
     var loginResult=await edgeCall({action:'login'});
     if(!loginResult.success)throw new Error(loginResult.error||'Falha no login');
     var sessionCookie=loginResult.session_cookie;
 
-    updProg(5,'Buscando gestores...',0,0);
+    updProg(20,'Buscando lista de gestores...');
     var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
     if(!gestoresResult.success)throw new Error('Falha gestores');
-    var gestores=gestoresResult.gestores;
-    window._lastGestores=gestores;
-    var total=gestores.length;
+    var gestoresNomes={};
+    gestoresResult.gestores.forEach(function(g){gestoresNomes[g.nome.toUpperCase()]=true});
+    window._lastGestores=gestoresResult.gestores;
 
+    updProg(40,'Buscando todos os consultores...');
     var today=new Date().toISOString().split('T')[0];
     var todayParts=today.split('-');
     var dataIni='01/01/2026';
     var dataFim=todayParts[2]+'/'+todayParts[1]+'/'+todayParts[0];
 
-    // Collect all members from all gestores
-    var allConsultores={};
-    var BATCH_SIZE=5;
-    for(var i=0;i<gestores.length;i+=BATCH_SIZE){
-      var batch=gestores.slice(i,i+BATCH_SIZE);
-      var pct=5+Math.round((i/total)*90);
-      updProg(pct,batch[0].nome,i,total);
+    var consResult=await edgeCall({
+      action:'consultores_todos',
+      session_cookie:sessionCookie,
+      tipo_data:'3',
+      data_inicial:dataIni,
+      data_final:dataFim,
+      ordenar:'6'
+    });
 
-      var batchResult=await edgeCall({
-        action:'batch',
-        session_cookie:sessionCookie,
-        tipo_data:'3',
-        data_inicial:dataIni,
-        data_final:dataFim,
-        ordenar:'6',
-        retornar_lider:'NAO',
-        gestores:batch
-      });
+    if(!consResult.success)throw new Error(consResult.error||'Falha ao buscar consultores');
 
-      if(batchResult.success&&batchResult.data){
-        batchResult.data.forEach(function(g){
-          if(g.membros){
-            g.membros.forEach(function(m){
-              if(m.ativadas_qtd>0){
-                var key=m.nome.toUpperCase();
-                if(!allConsultores[key]){
-                  allConsultores[key]={nome:m.nome,ativados:0,mensalidade:0};
-                }
-                allConsultores[key].ativados+=m.ativadas_qtd;
-                allConsultores[key].mensalidade+=m.ativadas_valor;
-              }
-            });
-          }
-        });
-      }
-    }
+    updProg(80,'Processando dados...');
 
-    // Build results
+    // Filtrar: remover gestores da lista
     var results=[];
-    Object.values(allConsultores).forEach(function(c){
+    (consResult.consultores||[]).forEach(function(c){
+      if(c.ativados<1)return;
+      if(gestoresNomes[c.nome.toUpperCase()])return; // Remove gestores
       var ticket=c.ativados>0?(c.mensalidade/c.ativados):0;
       var score=getScoreConsultor(ticket);
       var pontuacao=c.ativados*score;
@@ -3003,7 +2981,7 @@ async function consultoresAtualizar(){
       results.push({
         nome:c.nome,
         ativados:c.ativados,
-        mensalidade:Math.round(c.mensalidade*100)/100,
+        mensalidade:c.mensalidade,
         ticket_medio:Math.round(ticket*100)/100,
         score:score,
         pontuacao:pontuacao,
@@ -3016,12 +2994,12 @@ async function consultoresAtualizar(){
 
     localStorage.setItem('avp-consultores-data',JSON.stringify({dados:results,ts:Date.now()}));
 
-    updProg(100,'Concluido! '+results.length+' consultores',total,total);
+    updProg(100,'Concluido! '+results.length+' consultores');
     setTimeout(function(){pb.classList.remove('visible')},3000);
     renderConsultores();
 
   }catch(e){
-    updProg(0,'Erro: '+e.message,0,0);
+    updProg(0,'Erro: '+e.message);
     console.error(e);
   }
   btn.disabled=false;

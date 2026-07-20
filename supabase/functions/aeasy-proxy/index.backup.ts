@@ -99,36 +99,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, data: results }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ACTION: CONSULTORES_TODOS
-    if (action === "consultores_todos") {
-      const url = `${AEASY_URL}/TopVendas?TipoData=${tipo_data || '3'}&DataInicial=${data_inicial}&DataFinal=${data_final}&Ordenar=${ordenar || '6'}&CampoOrder=Quantidade`;
-      try {
-        const resp = await fetch(url, { headers: { Cookie: session_cookie, "User-Agent": "Mozilla/5.0" } });
-        const html = await resp.text();
-        const tbodyMatch = html.match(/<tbody>([\s\S]*?)<\/tbody>/);
-        if (!tbodyMatch) {
-          return new Response(JSON.stringify({ success: true, consultores: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-        const rows = tbodyMatch[1].match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || [];
-        const consultores: any[] = [];
-        for (const row of rows) {
-          const cells = (row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) || []).map(c => c.replace(/<[^>]+>/g, "").trim());
-          if (cells.length >= 15) {
-            const nome = cells[1];
-            const aq = parseInt(cells[13]) || 0;
-            const av = parseFloat(cells[14].replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0;
-            if (aq > 0) {
-              consultores.push({ nome, ativados: aq, mensalidade: Math.round(av * 100) / 100 });
-            }
-          }
-        }
-        consultores.sort((a: any, b: any) => b.ativados - a.ativados);
-        return new Response(JSON.stringify({ success: true, consultores, total: consultores.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch (e: any) {
-        return new Response(JSON.stringify({ success: false, error: e.message, consultores: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
     // ACTION: CAMPANHA
     if (action === "campanha") {
       const { gestor_id, gestor_nome, data_final: camp_data_final, retornar_lider: camp_retornar_lider } = body;
