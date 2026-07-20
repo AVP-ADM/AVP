@@ -1429,11 +1429,19 @@ async function loadAcompanhamento(){
   var btnProx=document.querySelector('[onclick="acompMesSeguinte()"]');
   if(btnAnt)btnAnt.style.opacity=(ACOMP_ANO===ACOMP_ANO_MIN&&ACOMP_MES<=ACOMP_MES_MIN)?'.3':'1';
   if(btnProx)btnProx.style.opacity=(ACOMP_ANO===ACOMP_ANO_MAX&&ACOMP_MES>=ACOMP_MES_MAX)?'.3':'1';
-  // Fetch data for this month
+  // Try localStorage cache first
+  var cacheKey='avp-acomp-'+ACOMP_ANO+'-'+ACOMP_MES;
+  var cached=localStorage.getItem(cacheKey);
+  if(cached&&!ACOMP_DATA[ACOMP_MES]){
+    ACOMP_DATA[ACOMP_MES]=JSON.parse(cached);
+    renderAcompanhamento(ACOMP_DATA[ACOMP_MES]);
+  }
+  // Fetch data for this month from Supabase (always update)
   try{
     var r=await sbFetch('relatorios_semanal?ano=eq.'+ACOMP_ANO+'&mes=eq.'+ACOMP_MES+'&order=semana.asc');
     var data=await r.json();
     ACOMP_DATA[ACOMP_MES]=data;
+    localStorage.setItem(cacheKey,JSON.stringify(data));
     renderAcompanhamento(data);
   }catch(e){console.error(e)}
 }
@@ -2981,10 +2989,19 @@ function setTop20Mode(mode){
 
 async function loadTop20(){
   document.getElementById('top20MesLabel').textContent=MESES_NOMES[TOP20_MES]+' '+TOP20_ANO;
+  // Try localStorage cache first
+  var cacheKey='avp-top20-'+TOP20_ANO+'-'+TOP20_MES;
+  var cached=localStorage.getItem(cacheKey);
+  if(cached&&!TOP20_DATA[TOP20_MES]){
+    TOP20_DATA[TOP20_MES]=JSON.parse(cached);
+    renderTop20();
+  }
+  // Then fetch from Supabase (always update)
   try{
     var r=await sbFetch('top20_consultores_semanal?ano=eq.'+TOP20_ANO+'&mes=eq.'+TOP20_MES+'&order=semana.asc,posicao.asc');
     var data=await r.json();
     TOP20_DATA[TOP20_MES]=data;
+    localStorage.setItem(cacheKey,JSON.stringify(data));
     renderTop20();
   }catch(e){console.error(e)}
 }
