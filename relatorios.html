@@ -2088,35 +2088,45 @@ function exportarAcompXLSX(){
   var ws1=XLSX.utils.aoa_to_sheet(rows1);
   ws1['!cols']=[{wch:4},{wch:35},{wch:25}].concat(header1.slice(3).map(function(){return{wch:12}}));
 
-  // Sheet 2: Detalhado (Ind + Eq + Total por semana)
-  var header2=['#','Gestor','Cidade','Tipo'];
-  semanasArr.forEach(function(s){header2.push('Sem '+s.semana)});
-  if(fechamento)header2.push('Mes Completo');
-  var rows2=[header2];
+  // Sheet 2: Detalhado (semanas horizontais: Ind | Eq | Total com delta)
+  var headerGrupo2=['#','Gestor','Cidade'];
+  var headerSub2=['','',''];
+  semanasArr.forEach(function(s){
+    headerGrupo2.push('Semana '+s.semana,'','');
+    headerSub2.push('Individual','Equipe','Total');
+  });
+  if(fechamento){headerGrupo2.push('Mes Completo','','');headerSub2.push('Individual','Equipe','Total')}
+  var rows2=[headerGrupo2,headerSub2];
 
   ranked.forEach(function(g,idx){
     if(hiddenGestores.indexOf(g.gestor_nome)>=0)return;
     var cidade=(g.cidade&&g.cidade!=='None')?g.cidade:'-';
-    // Individual
-    var rowInd=[idx+1,g.gestor_nome,cidade,'Individual'];
-    semanasArr.forEach(function(s){var d=lookup[s.semana][g.gestor_nome];rowInd.push(d?d.gestor_ativadas_qtd:0)});
-    if(fechamento){var fd=fechLookup[g.gestor_nome];rowInd.push(fd?fd.gestor_ativadas_qtd:0)}
-    rows2.push(rowInd);
-    // Equipe
-    var rowEq=['','','','Equipe'];
-    semanasArr.forEach(function(s){var d=lookup[s.semana][g.gestor_nome];rowEq.push(d?d.equipe_sem_gestor_qtd:0)});
-    if(fechamento){var fd=fechLookup[g.gestor_nome];rowEq.push(fd?fd.equipe_sem_gestor_qtd:0)}
-    rows2.push(rowEq);
-    // Total
-    var rowTot=['','','','Total'];
-    semanasArr.forEach(function(s){var d=lookup[s.semana][g.gestor_nome];rowTot.push(d?d.equipe_total_qtd:0)});
-    if(fechamento){var fd=fechLookup[g.gestor_nome];rowTot.push(fd?fd.equipe_total_qtd:0)}
-    rows2.push(rowTot);
-    rows2.push([]);
+    var row=[idx+1,g.gestor_nome,cidade];
+    var prevTotal=0;
+    semanasArr.forEach(function(s,si){
+      var d=lookup[s.semana][g.gestor_nome];
+      var ind=d?d.gestor_ativadas_qtd:0;
+      var eq=d?d.equipe_sem_gestor_qtd:0;
+      var tot=d?d.equipe_total_qtd:0;
+      var delta=tot-prevTotal;
+      row.push(ind,eq,si===0?tot:tot+' (+'+delta+')');
+      prevTotal=tot;
+    });
+    if(fechamento){
+      var fd=fechLookup[g.gestor_nome];
+      var ind=fd?fd.gestor_ativadas_qtd:0;
+      var eq=fd?fd.equipe_sem_gestor_qtd:0;
+      var tot=fd?fd.equipe_total_qtd:0;
+      var delta=tot-prevTotal;
+      row.push(ind,eq,prevTotal>0?tot+' (+'+delta+')':tot);
+    }
+    rows2.push(row);
   });
 
   var ws2=XLSX.utils.aoa_to_sheet(rows2);
-  ws2['!cols']=[{wch:4},{wch:35},{wch:25},{wch:10}].concat(header2.slice(4).map(function(){return{wch:12}}));
+  var cols2=[{wch:4},{wch:35},{wch:25}];
+  for(var ci=3;ci<headerGrupo2.length;ci++)cols2.push({wch:12});
+  ws2['!cols']=cols2;
 
   // Sheet 3: Resumo Mensal
   var rows3=[['Mes','Total Ativadas','Semanas','Media Semanal']];
