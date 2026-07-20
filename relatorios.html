@@ -503,6 +503,9 @@ tr:last-child td{border-bottom:none}
           <button class="sidebar-sub-item" onclick="goPanel('pesquisa-livre')">
             <span class="si-text">Pesquisa Livre</span>
           </button>
+          <button class="sidebar-sub-item" onclick="goPanel('top20-consultores')">
+            <span class="si-text">Top 20 Consultores</span>
+          </button>
         </div>
       </div>
       <div class="sidebar-group" data-group="campanhas">
@@ -643,6 +646,54 @@ tr:last-child td{border-bottom:none}
               <tr><th data-sort="pos">#</th><th data-sort="gestor">Gestor</th><th data-sort="cidade">Cidade</th><th data-sort="ind_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="ind_val">Valor</th><th data-sort="eq_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="eq_val">Valor</th><th data-sort="total_qtd" style="border-left:1px solid var(--border)">Qtd</th><th data-sort="total_val">Valor</th><th class="col-actions"></th></tr>
             </thead>
             <tbody id="tbodyAdesoes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL: TOP 20 CONSULTORES -->
+      <div class="panel" id="panel-top20-consultores">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-outline" onclick="top20MesAnterior()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <h2 id="top20MesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h2>
+          <button class="btn btn-outline" onclick="top20MesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+          <button class="btn btn-green" onclick="top20FecharSemana()" id="btnTop20Fechar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
+          <button class="btn btn-outline" onclick="top20Desfazer()" id="btnTop20Desfazer" style="display:none;padding:6px 12px;font-size:.72rem" title="Desfazer ultimo fechamento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
+        </div>
+
+        <!-- Toggle: Semanal / Evolução Anual -->
+        <div style="display:flex;gap:4px;background:var(--surface-2);border-radius:var(--radius);padding:3px;margin-bottom:16px;width:fit-content">
+          <button class="sem-btn active" id="btnTop20ModeSemanal" onclick="setTop20Mode('semanal')" style="border:none">Semanal</button>
+          <button class="sem-btn" id="btnTop20ModeAnual" onclick="setTop20Mode('anual')" style="border:none">Evolucao Anual</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" style="margin-bottom:20px">
+          <div class="kpi-card green"><div class="kpi-value" id="top20KpiAtivados">-</div><div class="kpi-label">Total Ativados (Top 20)</div></div>
+          <div class="kpi-card purple"><div class="kpi-value" id="top20KpiValor">-</div><div class="kpi-label">Valor Acumulado</div></div>
+          <div class="kpi-card blue"><div class="kpi-value" id="top20KpiSemanas">-</div><div class="kpi-label">Semanas Fechadas</div></div>
+          <div class="kpi-card amber"><div class="kpi-value" id="top20KpiMedia">-</div><div class="kpi-label">Media Semanal</div></div>
+        </div>
+
+        <!-- Semana cards -->
+        <div class="semana-cards" id="top20SemanasCards"></div>
+
+        <!-- Destaques -->
+        <div class="card" id="top20Destaques" style="display:none">
+          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Destaques</div>
+          <div id="top20DestaquesContent"></div>
+        </div>
+
+        <!-- Progress bar (for fechar semana) -->
+        <div class="progress-bar" id="top20ProgressBar">
+          <div class="progress-track"><div class="progress-fill" id="top20ProgressFill" style="width:0%"></div></div>
+          <div class="progress-info"><span class="progress-gestor" id="top20ProgressMsg">Aguardando...</span><span class="progress-pct" id="top20ProgressPct">0%</span></div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <table id="tblTop20">
+            <thead><tr id="tblTop20Header"></tr></thead>
+            <tbody id="tbodyTop20"></tbody>
           </table>
         </div>
       </div>
@@ -946,6 +997,7 @@ function goPanel(panelId){
   });
   // Load data if acompanhamento
   if(panelId==='acompanhamento')loadAcompanhamento();
+  if(panelId==='top20-consultores')loadTop20();
 }
 function toggleSidebarGroup(group){
   var el=document.querySelector('[data-group="'+group+'"]');
@@ -2910,6 +2962,283 @@ renderTabelaAcomp=function(semanasOrdenadas,fechamento){
     }
   });
 };
+
+/* ====== TOP 20 CONSULTORES ====== */
+var TOP20_MES=new Date().getMonth()+1;
+var TOP20_ANO=2026;
+var TOP20_DATA={};
+var top20Mode='semanal';
+
+function top20MesAnterior(){if(TOP20_MES<=1)return;TOP20_MES--;loadTop20()}
+function top20MesSeguinte(){if(TOP20_MES>=new Date().getMonth()+1&&TOP20_ANO>=new Date().getFullYear())return;TOP20_MES++;loadTop20()}
+
+function setTop20Mode(mode){
+  top20Mode=mode;
+  document.getElementById('btnTop20ModeSemanal').classList.toggle('active',mode==='semanal');
+  document.getElementById('btnTop20ModeAnual').classList.toggle('active',mode==='anual');
+  renderTop20();
+}
+
+async function loadTop20(){
+  document.getElementById('top20MesLabel').textContent=MESES_NOMES[TOP20_MES]+' '+TOP20_ANO;
+  try{
+    var r=await sbFetch('top20_consultores_semanal?ano=eq.'+TOP20_ANO+'&mes=eq.'+TOP20_MES+'&order=semana.asc,posicao.asc');
+    var data=await r.json();
+    TOP20_DATA[TOP20_MES]=data;
+    renderTop20();
+  }catch(e){console.error(e)}
+}
+
+function renderTop20(){
+  var data=TOP20_DATA[TOP20_MES]||[];
+  if(top20Mode==='anual'){renderTop20Anual();return}
+
+  // Group by semana
+  var semanas={};
+  data.forEach(function(r){
+    if(!semanas[r.semana])semanas[r.semana]={semana:r.semana,tipo:r.tipo,data_fim:r.data_fim,consultores:[]};
+    semanas[r.semana].consultores.push(r);
+  });
+  var semanasArr=Object.values(semanas).filter(function(s){return s.tipo==='semanal'}).sort(function(a,b){return a.semana-b.semana});
+  var fechamento=Object.values(semanas).find(function(s){return s.tipo==='fechamento'});
+
+  // Buttons
+  var btnFechar=document.getElementById('btnTop20Fechar');
+  var btnDesfazer=document.getElementById('btnTop20Desfazer');
+  if(fechamento){btnFechar.style.display='none';btnDesfazer.style.display='inline-flex'}
+  else{btnFechar.style.display='inline-flex';btnDesfazer.style.display=semanasArr.length>0?'inline-flex':'none'}
+
+  // KPIs
+  var ultimaSem=fechamento||semanasArr[semanasArr.length-1];
+  var totalAtv=0,totalVal=0;
+  if(ultimaSem){ultimaSem.consultores.forEach(function(c){totalAtv+=c.ativados;totalVal+=parseFloat(c.valor)||0})}
+  document.getElementById('top20KpiAtivados').textContent=fk(totalAtv);
+  document.getElementById('top20KpiValor').textContent='R$ '+fk(Math.round(totalVal));
+  document.getElementById('top20KpiSemanas').textContent=semanasArr.length;
+  document.getElementById('top20KpiMedia').textContent=semanasArr.length>0?fk(Math.round(totalAtv/semanasArr.length))+'/sem':'-';
+
+  // Semana cards
+  var cardsHtml='';var prev=0;
+  semanasArr.forEach(function(sem,idx){
+    var t=0;sem.consultores.forEach(function(c){t+=c.ativados});
+    var diff=t-prev;var diffLabel=idx===0?'(1a semana)':((diff>=0?'+':'')+fk(diff)+' vs anterior');
+    var diffClass=idx===0?'':(diff>=0?'up':'down');
+    cardsHtml+='<div class="semana-card"><div class="sc-label">Sem '+sem.semana+'</div><div class="sc-value">'+fk(t)+'</div><div class="sc-sub">01 - '+sem.data_fim.substring(8)+'/'+sem.data_fim.substring(5,7)+'</div><div class="sc-diff '+diffClass+'">'+diffLabel+'</div></div>';
+    prev=t;
+  });
+  document.getElementById('top20SemanasCards').innerHTML=cardsHtml;
+
+  // Table
+  var headerHtml='<th>#</th><th>Consultor</th>';
+  semanasArr.forEach(function(s){headerHtml+='<th style="text-align:center">Sem '+s.semana+'</th>'});
+  if(fechamento)headerHtml+='<th style="text-align:center;font-weight:700">Mes</th>';
+  document.getElementById('tblTop20Header').innerHTML=headerHtml;
+
+  // Build lookup
+  var lookup={};
+  semanasArr.forEach(function(s){lookup[s.semana]={};s.consultores.forEach(function(c){lookup[s.semana][c.consultor_nome]=c})});
+  var fechLookup={};
+  if(fechamento){fechamento.consultores.forEach(function(c){fechLookup[c.consultor_nome]=c})}
+
+  // Rank by last semana
+  var fonte=fechamento||semanasArr[semanasArr.length-1];
+  if(!fonte){document.getElementById('tbodyTop20').innerHTML='<tr><td colspan="20" style="text-align:center;color:var(--text3);padding:40px">Nenhum dado. Clique "Fechar Semana" para buscar.</td></tr>';return}
+  var ranked=fonte.consultores.slice().sort(function(a,b){return b.ativados-a.ativados}).slice(0,20);
+
+  var bodyHtml='';
+  ranked.forEach(function(c,idx){
+    var gestorTag=c.is_gestor?'<span class="tag-badge tag-gestor">Gestor</span>':'';
+    bodyHtml+='<tr><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.consultor_nome+gestorTag+'</td>';
+    semanasArr.forEach(function(s){
+      var d=lookup[s.semana][c.consultor_nome];
+      bodyHtml+='<td class="col-num">'+(d?d.ativados:'-')+'</td>';
+    });
+    if(fechamento){var fd=fechLookup[c.consultor_nome];bodyHtml+='<td class="col-num bold">'+(fd?fd.ativados:'-')+'</td>'}
+    bodyHtml+='</tr>';
+  });
+  document.getElementById('tbodyTop20').innerHTML=bodyHtml;
+
+  // Destaques
+  renderTop20Destaques(semanasArr);
+}
+
+async function renderTop20Anual(){
+  // Load all months
+  var html='<th>#</th><th>Consultor</th>';
+  var mesesData={};
+  for(var m=1;m<=TOP20_MES;m++){
+    html+='<th style="text-align:center">'+MESES_NOMES[m].substring(0,3)+'</th>';
+    if(!TOP20_DATA[m]){
+      try{var r=await sbFetch('top20_consultores_semanal?ano=eq.'+TOP20_ANO+'&mes=eq.'+m+'&order=semana.asc,posicao.asc');TOP20_DATA[m]=await r.json()}catch(e){TOP20_DATA[m]=[]}
+    }
+    // Get fechamento or last semana for this month
+    var monthData=TOP20_DATA[m]||[];
+    var fech=monthData.filter(function(r){return r.tipo==='fechamento'});
+    if(fech.length===0){var maxSem=0;monthData.forEach(function(r){if(r.tipo==='semanal'&&r.semana>maxSem)maxSem=r.semana});fech=monthData.filter(function(r){return r.semana===maxSem&&r.tipo==='semanal'})}
+    mesesData[m]=fech;
+  }
+  html+='<th>Trend</th><th>Consist.</th>';
+  document.getElementById('tblTop20Header').innerHTML=html;
+
+  // Collect all consultores and their monthly data
+  var allNames={};
+  Object.values(mesesData).forEach(function(arr){arr.forEach(function(c){
+    if(!allNames[c.consultor_nome])allNames[c.consultor_nome]={nome:c.consultor_nome,is_gestor:c.is_gestor,meses:{}};
+    allNames[c.consultor_nome].meses[c.mes||TOP20_MES]=c.ativados;
+  })});
+
+  // Sort by current month ativados
+  var sorted=Object.values(allNames).sort(function(a,b){return(b.meses[TOP20_MES]||0)-(a.meses[TOP20_MES]||0)}).slice(0,20);
+
+  var bodyHtml='';
+  sorted.forEach(function(c,idx){
+    var gestorTag=c.is_gestor?'<span class="tag-badge tag-gestor">Gestor</span>':'';
+    var consistencia=0;
+    bodyHtml+='<tr><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+gestorTag+'</td>';
+    var vals=[];
+    for(var m=1;m<=TOP20_MES;m++){
+      var v=c.meses[m]||0;
+      vals.push(v);
+      if(v>0)consistencia++;
+      bodyHtml+='<td class="col-num">'+(v||'-')+'</td>';
+    }
+    // Sparkline
+    var maxV=Math.max.apply(null,vals)||1;
+    var spark='<div class="sparkline">';
+    vals.forEach(function(v,i){
+      var h=Math.max(2,Math.round((v/maxV)*20));
+      var cls=i===vals.length-1?'current':'';
+      spark+='<div class="sparkline-bar '+cls+'" style="height:'+h+'px"></div>';
+    });
+    spark+='</div>';
+    bodyHtml+='<td>'+spark+'</td>';
+    bodyHtml+='<td class="col-num" style="font-size:.7rem;color:'+(consistencia>=6?'var(--green)':consistencia>=4?'var(--amber)':'var(--text3)')+'">'+consistencia+'/'+TOP20_MES+'</td>';
+    bodyHtml+='</tr>';
+  });
+  document.getElementById('tbodyTop20').innerHTML=bodyHtml;
+  document.getElementById('top20SemanasCards').innerHTML='';
+  document.getElementById('top20Destaques').style.display='none';
+}
+
+function renderTop20Destaques(semanasArr){
+  if(semanasArr.length<2){document.getElementById('top20Destaques').style.display='none';return}
+  document.getElementById('top20Destaques').style.display='';
+  // Compare last 2 semanas for position changes
+  var prev=semanasArr[semanasArr.length-2];
+  var curr=semanasArr[semanasArr.length-1];
+  var prevRank={};prev.consultores.slice().sort(function(a,b){return b.ativados-a.ativados}).forEach(function(c,i){prevRank[c.consultor_nome]=i+1});
+  var currRank={};curr.consultores.slice().sort(function(a,b){return b.ativados-a.ativados}).forEach(function(c,i){currRank[c.consultor_nome]=i+1});
+
+  var destaques=[];
+  // Novos no top 20
+  Object.keys(currRank).forEach(function(nome){
+    if(currRank[nome]<=20&&!prevRank[nome]){destaques.push('<span style="color:var(--blue);font-weight:600">Novo:</span> '+nome+' (entrou em #'+currRank[nome]+')')}
+  });
+  // Maiores subidas
+  Object.keys(currRank).forEach(function(nome){
+    if(prevRank[nome]&&currRank[nome]<=20){
+      var diff=prevRank[nome]-currRank[nome];
+      if(diff>=3)destaques.push('<span style="color:var(--green);font-weight:600">Subiu:</span> '+nome+' (+'+diff+' posicoes)');
+    }
+  });
+  // Maiores quedas
+  Object.keys(prevRank).forEach(function(nome){
+    if(prevRank[nome]<=20&&(!currRank[nome]||currRank[nome]>20)){
+      destaques.push('<span style="color:var(--red);font-weight:600">Saiu do Top:</span> '+nome);
+    }
+  });
+
+  if(destaques.length===0){document.getElementById('top20Destaques').style.display='none';return}
+  document.getElementById('top20DestaquesContent').innerHTML=destaques.map(function(d){return'<div style="font-size:.78rem;margin-bottom:4px">'+d+'</div>'}).join('');
+}
+
+async function top20FecharSemana(){
+  var data=TOP20_DATA[TOP20_MES]||[];
+  var semanais=data.filter(function(r){return r.tipo==='semanal'});
+  var lastSem=0;
+  semanais.forEach(function(r){if(r.semana>lastSem)lastSem=r.semana});
+  var nextSem=lastSem+1;
+
+  var mes2=TOP20_MES<10?'0'+TOP20_MES:''+TOP20_MES;
+  var dataIni='01/'+mes2+'/'+TOP20_ANO;
+  var today=new Date();
+  var dd=String(today.getDate()).padStart(2,'0');
+  var mm=String(today.getMonth()+1).padStart(2,'0');
+  var dataFim=dd+'/'+mm+'/'+today.getFullYear();
+  var dataFimISO=today.toISOString().split('T')[0];
+
+  var html='<div style="padding:4px 0"><h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">Fechar Semana '+nextSem+' - Top 20 Consultores</h3>';
+  html+='<div style="background:var(--surface-2);border-radius:var(--radius);padding:12px;margin-bottom:16px"><div style="font-size:.75rem;color:var(--text3);margin-bottom:4px">Periodo:</div><div style="font-size:.85rem;font-weight:600">01/'+mes2+'/'+TOP20_ANO+' ate '+dd+'/'+mm+'/'+TOP20_ANO+'</div></div>';
+  html+='<div style="font-size:.75rem;color:var(--text3);margin-bottom:16px">Vai buscar todos os consultores no AEasy e salvar os top 50 por ativacoes.</div>';
+  html+='<div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-outline" onclick="closeConfirmModal()">Cancelar</button><button class="btn btn-green" onclick="executarTop20Fechamento('+nextSem+',\''+dataIni+'\',\''+dataFim+'\',\''+dataFimISO+'\')">Confirmar</button></div></div>';
+  document.getElementById('confirmContent').innerHTML=html;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+async function executarTop20Fechamento(semNum,dataIni,dataFim,dataFimISO){
+  closeConfirmModal();
+  var pb=document.getElementById('top20ProgressBar');
+  pb.classList.add('visible');
+  document.getElementById('top20ProgressFill').style.width='20%';
+  document.getElementById('top20ProgressMsg').textContent='Fazendo login...';
+
+  try{
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success)throw new Error('Falha login');
+    var sessionCookie=loginResult.session_cookie;
+
+    document.getElementById('top20ProgressFill').style.width='40%';
+    document.getElementById('top20ProgressMsg').textContent='Buscando gestores...';
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+    var gestoresNomes={};
+    if(gestoresResult.success)gestoresResult.gestores.forEach(function(g){gestoresNomes[g.nome.toUpperCase()]=true});
+
+    document.getElementById('top20ProgressFill').style.width='60%';
+    document.getElementById('top20ProgressMsg').textContent='Buscando consultores...';
+    var consResult=await edgeCall({action:'consultores_todos',session_cookie:sessionCookie,tipo_data:'3',data_inicial:dataIni,data_final:dataFim,ordenar:'6'});
+    if(!consResult.success)throw new Error(consResult.error||'Falha consultores');
+
+    document.getElementById('top20ProgressFill').style.width='80%';
+    document.getElementById('top20ProgressMsg').textContent='Salvando top 50...';
+
+    // Get top 50 by ativados
+    var top50=(consResult.consultores||[]).filter(function(c){return c.ativados>=1}).slice(0,50);
+    var registros=top50.map(function(c,i){
+      return{ano:TOP20_ANO,mes:TOP20_MES,semana:semNum,data_inicio:TOP20_ANO+'-'+(TOP20_MES<10?'0':'')+TOP20_MES+'-01',data_fim:dataFimISO,consultor_nome:c.nome,ativados:c.ativados,valor:c.mensalidade,tipo:'semanal',is_gestor:!!gestoresNomes[c.nome.toUpperCase()],posicao:i+1};
+    });
+    await sbFetch('top20_consultores_semanal',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'resolution=merge-duplicates'}});
+
+    document.getElementById('top20ProgressFill').style.width='100%';
+    document.getElementById('top20ProgressMsg').textContent='Concluido!';
+    setTimeout(function(){pb.classList.remove('visible')},2000);
+    loadTop20();
+  }catch(e){
+    document.getElementById('top20ProgressMsg').textContent='Erro: '+e.message;
+    console.error(e);
+  }
+}
+
+async function top20Desfazer(){
+  var data=TOP20_DATA[TOP20_MES]||[];
+  var semanais=data.filter(function(r){return r.tipo==='semanal'});
+  var lastSem=0;
+  semanais.forEach(function(r){if(r.semana>lastSem)lastSem=r.semana});
+  if(lastSem===0){alert('Nada para desfazer.');return}
+
+  var html='<div style="padding:4px 0"><h3 style="font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--red)">Desfazer Semana '+lastSem+'</h3>';
+  html+='<div style="font-size:.78rem;color:var(--text2);margin-bottom:16px">Isso vai apagar os dados da Semana '+lastSem+' do Top 20 de '+MESES_NOMES[TOP20_MES]+' '+TOP20_ANO+'.</div>';
+  html+='<div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn btn-outline" onclick="closeConfirmModal()">Cancelar</button><button class="btn" style="background:var(--red);color:#fff" onclick="executarTop20Desfazer('+lastSem+')">Apagar</button></div></div>';
+  document.getElementById('confirmContent').innerHTML=html;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+async function executarTop20Desfazer(semNum){
+  closeConfirmModal();
+  try{
+    await sbFetch('top20_consultores_semanal?ano=eq.'+TOP20_ANO+'&mes=eq.'+TOP20_MES+'&semana=eq.'+semNum+'&tipo=eq.semanal',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    loadTop20();
+  }catch(e){alert('Erro: '+e.message)}
+}
 
 /* ====== CAMPANHA CONSULTORES ====== */
 var CONSULTORES_DATA=[];
