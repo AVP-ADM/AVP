@@ -764,10 +764,10 @@ tr:last-child td{border-bottom:none}
 
         <!-- KPIs -->
         <div class="campanha-kpis" id="consultoresKpis">
-          <div class="kpi-card green"><div class="kpi-value" id="consKpiTotal">-</div><div class="kpi-label">Consultores</div></div>
-          <div class="kpi-card blue"><div class="kpi-value" id="consKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
-          <div class="kpi-card purple"><div class="kpi-value" id="consKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
-          <div class="kpi-card amber"><div class="kpi-value" id="consKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
+          <div class="kpi-card green" style="cursor:pointer" onclick="toggleConsKpiFiltro('todos')"><div class="kpi-value" id="consKpiTotal">-</div><div class="kpi-label">Consultores</div></div>
+          <div class="kpi-card blue" style="cursor:pointer" onclick="consOrdenar('ativados')"><div class="kpi-value" id="consKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
+          <div class="kpi-card purple" style="cursor:pointer" onclick="consOrdenar('mensalidade')"><div class="kpi-value" id="consKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
+          <div class="kpi-card amber" style="cursor:pointer" onclick="consOrdenar('ticket')"><div class="kpi-value" id="consKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
           <div class="kpi-card green" style="border-left-color:var(--accent);cursor:pointer" onclick="toggleConsKpiFiltro('premiados')"><div class="kpi-value" id="consKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
           <div class="kpi-card red" style="cursor:pointer" onclick="toggleConsKpiFiltro('maior')"><div class="kpi-value" id="consKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
         </div>
@@ -3107,8 +3107,24 @@ function renderConsChart(){
 }
 
 function toggleConsKpiFiltro(tipo){
-  if(consKpiFiltro===tipo){consKpiFiltro=''}else{consKpiFiltro=tipo}
+  if(tipo==='todos'){consKpiFiltro=''}
+  else if(consKpiFiltro===tipo){consKpiFiltro=''}
+  else{consKpiFiltro=tipo}
   filtrarConsultores();
+  if(tipo!=='todos')document.getElementById('tblConsultores').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function consOrdenar(key){
+  consKpiFiltro='';
+  // Sort CONSULTORES_DATA by key desc
+  var visible=getConsultoresVisible();
+  visible.sort(function(a,b){
+    if(key==='ativados')return b.ativados-a.ativados;
+    if(key==='mensalidade')return b.mensalidade-a.mensalidade;
+    if(key==='ticket')return b.ticket_medio-a.ticket_medio;
+    return b.pontuacao-a.pontuacao;
+  });
+  renderConsultoresTable(visible);
   document.getElementById('tblConsultores').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
