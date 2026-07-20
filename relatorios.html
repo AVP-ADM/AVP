@@ -1277,18 +1277,21 @@ function hideGestor(nome){
   if(hiddenGestores.indexOf(nome)===-1){
     hiddenGestores.push(nome);
     saveHidden();
-    updateKPIs();
     updateHiddenBar();
-    filtrarTabela();
+    // Re-render both panels
+    if(typeof updateKPIs==='function')updateKPIs();
+    if(typeof filtrarTabela==='function')filtrarTabela();
+    renderTabelaAcompFromUI();
   }
 }
 function showGestor(nome){
   hiddenGestores=hiddenGestores.filter(function(n){return n!==nome});
   saveHidden();
-  updateKPIs();
   updateHiddenBar();
   renderHiddenPanel();
-  filtrarTabela();
+  if(typeof updateKPIs==='function')updateKPIs();
+  if(typeof filtrarTabela==='function')filtrarTabela();
+  renderTabelaAcompFromUI();
 }
 function saveHidden(){
   localStorage.setItem('avp-hidden-gestores',JSON.stringify(hiddenGestores));
