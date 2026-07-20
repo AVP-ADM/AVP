@@ -3356,6 +3356,9 @@ async function consultoresAtualizar(){
 
     localStorage.setItem('avp-consultores-data',JSON.stringify({dados:results,ts:Date.now()}));
 
+    // Salvar no Supabase
+    await saveConsultoresToSupabase(results);
+
     updProg(100,'Concluido! '+results.length+' consultores');
     setTimeout(function(){pb.classList.remove('visible')},3000);
     renderConsultores();
@@ -3591,8 +3594,36 @@ function renderConsHiddenPanel(){
 }
 
 function loadConsultoresFromCache(){
-  var cached=localStorage.getItem('avp-consultores-data');
-  if(cached){var p=JSON.parse(cached);CONSULTORES_DATA=p.dados;renderConsultores()}
+  // Try Supabase first
+  sbFetch('campanha_consultores_dados?select=*&order=pontuacao.desc').then(function(r){
+    if(r.ok)return r.json();return null;
+  }).then(function(data){
+    if(data&&data.length>0){
+      CONSULTORES_DATA=data.map(function(row){
+        var premiacao=getPremiacaoConsultor(row.pontuacao);
+        return{nome:row.consultor_nome,ativados:row.ativados,mensalidade:parseFloat(row.mensalidade)||0,ticket_medio:parseFloat(row.ticket_medio)||0,score:row.score,pontuacao:row.pontuacao,premiacao:premiacao.label,premiacao_css:premiacao.css,isGestor:row.is_gestor||false};
+      });
+      document.getElementById('consultoresCacheInfo').textContent='Cache Supabase - salvo em '+new Date(data[0].updated_at).toLocaleString('pt-BR');
+      renderConsultores();
+      return;
+    }
+    // Fallback localStorage
+    var cached=localStorage.getItem('avp-consultores-data');
+    if(cached){var p=JSON.parse(cached);CONSULTORES_DATA=p.dados;renderConsultores()}
+  }).catch(function(){
+    var cached=localStorage.getItem('avp-consultores-data');
+    if(cached){var p=JSON.parse(cached);CONSULTORES_DATA=p.dados;renderConsultores()}
+  });
+}
+
+async function saveConsultoresToSupabase(results){
+  try{
+    await sbFetch('campanha_consultores_dados?consultor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
+    var registros=results.map(function(c){
+      return{consultor_nome:c.nome,ativados:c.ativados,mensalidade:c.mensalidade,ticket_medio:c.ticket_medio,score:c.score,pontuacao:c.pontuacao,is_gestor:c.isGestor||false,updated_at:new Date().toISOString()};
+    });
+    await sbFetch('campanha_consultores_dados',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'return=minimal'}});
+  }catch(e){console.warn('Falha ao salvar consultores no Supabase',e)}
 }
 
 function exportarConsultoresXLSX(){
