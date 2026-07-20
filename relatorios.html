@@ -748,11 +748,91 @@ tr:last-child td{border-bottom:none}
       <!-- PANEL: CAMPANHA CONSULTORES -->
       <div class="panel" id="panel-campanha-consultores">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-          <h2 style="font-size:1.1rem;font-weight:700">Campanha Premiacoes Consultores 2026</h2>
+          <h2 style="font-size:1.1rem;font-weight:700">Campanha Premiacoes — Consultores 2026</h2>
+          <button class="btn btn-green" onclick="consultoresAtualizar()" id="btnConsultoresAtualizar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar Dados</button>
+          <button class="btn btn-export" onclick="exportarConsultoresXLSX()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar XLSX</button>
         </div>
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          <p>Relatorio de consultores em construcao</p>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="consultoresProgressBar">
+          <div class="progress-track"><div class="progress-fill" id="consultoresProgressFill" style="width:0%"></div></div>
+          <div class="progress-info"><span class="progress-gestor" id="consultoresProgressGestor">Aguardando...</span><span class="progress-pct" id="consultoresProgressPct">0%</span></div>
+          <div class="progress-stats"><span id="consultoresProgressCounter">0 de 0</span><span id="consultoresProgressTime">Tempo: 0s</span><span id="consultoresProgressEta">Restante: --</span></div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="campanha-kpis" id="consultoresKpis">
+          <div class="kpi-card green"><div class="kpi-value" id="consKpiTotal">-</div><div class="kpi-label">Consultores</div></div>
+          <div class="kpi-card blue"><div class="kpi-value" id="consKpiAtivados">-</div><div class="kpi-label">Total Ativados</div></div>
+          <div class="kpi-card purple"><div class="kpi-value" id="consKpiMensalidade">-</div><div class="kpi-label">Mensalidade Total</div></div>
+          <div class="kpi-card amber"><div class="kpi-value" id="consKpiTicket">-</div><div class="kpi-label">Ticket Medio Geral</div></div>
+          <div class="kpi-card green" style="border-left-color:var(--accent);cursor:pointer" onclick="toggleConsKpiFiltro('premiados')"><div class="kpi-value" id="consKpiPremiados">-</div><div class="kpi-label">Premiados</div></div>
+          <div class="kpi-card red" style="cursor:pointer" onclick="toggleConsKpiFiltro('maior')"><div class="kpi-value" id="consKpiMaior">-</div><div class="kpi-label">Maior Pontuacao</div></div>
+        </div>
+
+        <!-- Cache info -->
+        <div class="cache-info" id="consultoresCacheInfo"></div>
+
+        <!-- Regras Consultores (colapsavel) -->
+        <div class="camp-rules" id="consRules">
+          <div class="camp-rules-header" onclick="document.getElementById('consRules').classList.toggle('open')">
+            <h4><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Regras da Campanha (Consultores)</h4>
+            <svg class="camp-rules-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="camp-rules-body">
+            <div class="camp-rules-grid">
+              <div class="camp-rules-col">
+                <h5>Score por Ticket Medio</h5>
+                <table><tr><td>R$ 500+</td><td>10</td></tr><tr><td>R$ 450+</td><td>9</td></tr><tr><td>R$ 400+</td><td>8</td></tr><tr><td>R$ 350+</td><td>7</td></tr><tr><td>R$ 300+</td><td>6</td></tr><tr><td>R$ 250+</td><td>5</td></tr><tr><td>R$ 200+</td><td>4</td></tr><tr><td>R$ 150+</td><td>3</td></tr><tr><td>R$ 100+</td><td>2</td></tr><tr><td>R$ 50+</td><td>1</td></tr><tr><td>&lt; R$ 50</td><td>0</td></tr></table>
+              </div>
+              <div class="camp-rules-col">
+                <h5>Premiacoes por Pontuacao</h5>
+                <table><tr><td>1.200+</td><td>iPhone + iPad + Apple Watch</td></tr><tr><td>600+</td><td>iPad + Apple Watch</td></tr><tr><td>300+</td><td>Apple Watch</td></tr><tr><td>&lt; 300</td><td>Sem premiacao</td></tr></table>
+                <p style="margin-top:8px;font-weight:600">Pontuacao = Ativados x Score</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Podio Top 3 -->
+        <div class="card" id="consultoresPodio" style="display:none">
+          <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 010 5H18"/><path d="M6 9h12l-1.5 10a2 2 0 01-2 1.5h-5A2 2 0 017.5 19L6 9z"/></svg> Top 3 - Podio Consultores</div>
+          <div id="consPodioContent"></div>
+        </div>
+
+        <!-- Distribuicao por Faixa -->
+        <div id="consultoresFaixas" style="display:none"></div>
+
+        <!-- Top 10 Chart -->
+        <div class="camp-chart" id="consultoresChart" style="display:none">
+          <div class="camp-chart-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Top 10 - Ranking de Pontuacao</div>
+          <div id="consChartBars"></div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="search-row" style="margin-bottom:12px;flex-wrap:wrap">
+          <input type="text" id="filterConsultores" placeholder="Filtrar por consultor..." oninput="filtrarConsultores()" style="min-width:160px">
+          <select id="filterConsAtivados" onchange="filtrarConsultores()" style="min-width:120px"><option value="">Ativados</option><option value="10">10+</option><option value="50">50+</option><option value="100">100+</option><option value="200">200+</option><option value="500">500+</option></select>
+          <select id="filterConsScore" onchange="filtrarConsultores()" style="min-width:100px"><option value="">Score</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="5">5+</option><option value="7">7+</option><option value="10">10</option></select>
+          <select id="filterConsPontuacao" onchange="filtrarConsultores()" style="min-width:130px"><option value="">Pontuacao</option><option value="100">100+</option><option value="300">300+</option><option value="600">600+</option><option value="1200">1.200+</option></select>
+        </div>
+
+        <!-- Filter tag -->
+        <div id="consultoresFilterTag" style="display:none;margin-bottom:12px;align-items:center;gap:8px"></div>
+
+        <!-- Table -->
+        <div class="table-wrap">
+          <div class="empty-state" id="consultoresEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            <p>Clique <strong>Atualizar Dados</strong> para buscar os dados dos consultores</p>
+          </div>
+          <table id="tblConsultores" style="display:none">
+            <thead>
+              <tr><th>#</th><th>Consultor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th></tr>
+            </thead>
+            <tbody id="tbodyConsultores"></tbody>
+            <tfoot id="tfootConsultores"></tfoot>
+          </table>
         </div>
       </div>
 
@@ -2816,12 +2896,311 @@ renderTabelaAcomp=function(semanasOrdenadas,fechamento){
   });
 };
 
+/* ====== CAMPANHA CONSULTORES ====== */
+var CONSULTORES_DATA=[];
+var consKpiFiltro='';
+
+function getScoreConsultor(ticket){
+  if(ticket>=500)return 10;if(ticket>=450)return 9;if(ticket>=400)return 8;
+  if(ticket>=350)return 7;if(ticket>=300)return 6;if(ticket>=250)return 5;
+  if(ticket>=200)return 4;if(ticket>=150)return 3;if(ticket>=100)return 2;
+  if(ticket>=50)return 1;return 0;
+}
+
+function getPremiacaoConsultor(pontos){
+  if(pontos>=1200)return{label:'iPhone + iPad + Apple Watch',css:'premio-ouro'};
+  if(pontos>=600)return{label:'iPad + Apple Watch',css:'premio-macbook'};
+  if(pontos>=300)return{label:'Apple Watch',css:'premio-casal'};
+  return{label:'Sem premiacao',css:'premio-sem'};
+}
+
+function getNextLevelConsultor(pontos){
+  var levels=[300,600,1200];
+  for(var i=0;i<levels.length;i++){if(pontos<levels[i])return levels[i]}
+  return levels[levels.length-1];
+}
+
+async function consultoresAtualizar(){
+  var btn=document.getElementById('btnConsultoresAtualizar');
+  btn.disabled=true;btn.textContent='Processando...';
+  var pb=document.getElementById('consultoresProgressBar');
+  pb.classList.add('visible');
+  var startTime=Date.now();
+
+  function updProg(pct,msg,done,total){
+    var elapsed=Math.round((Date.now()-startTime)/1000);
+    document.getElementById('consultoresProgressFill').style.width=pct+'%';
+    document.getElementById('consultoresProgressPct').textContent=Math.round(pct)+'%';
+    document.getElementById('consultoresProgressGestor').textContent=msg;
+    document.getElementById('consultoresProgressCounter').textContent=done+' de '+total;
+    document.getElementById('consultoresProgressTime').textContent='Tempo: '+elapsed+'s';
+    if(done>0&&done<total){document.getElementById('consultoresProgressEta').textContent='Restante: ~'+Math.round((elapsed/done)*(total-done))+'s'}
+    else if(done>=total){document.getElementById('consultoresProgressEta').textContent='Concluido!'}
+  }
+
+  try{
+    updProg(2,'Fazendo login...',0,0);
+    var loginResult=await edgeCall({action:'login'});
+    if(!loginResult.success)throw new Error(loginResult.error||'Falha no login');
+    var sessionCookie=loginResult.session_cookie;
+
+    updProg(5,'Buscando gestores...',0,0);
+    var gestoresResult=await edgeCall({action:'gestores',session_cookie:sessionCookie});
+    if(!gestoresResult.success)throw new Error('Falha gestores');
+    var gestores=gestoresResult.gestores;
+    window._lastGestores=gestores;
+    var total=gestores.length;
+
+    var today=new Date().toISOString().split('T')[0];
+    var todayParts=today.split('-');
+    var dataIni='01/01/2026';
+    var dataFim=todayParts[2]+'/'+todayParts[1]+'/'+todayParts[0];
+
+    // Collect all members from all gestores
+    var allConsultores={};
+    var BATCH_SIZE=5;
+    for(var i=0;i<gestores.length;i+=BATCH_SIZE){
+      var batch=gestores.slice(i,i+BATCH_SIZE);
+      var pct=5+Math.round((i/total)*90);
+      updProg(pct,batch[0].nome,i,total);
+
+      var batchResult=await edgeCall({
+        action:'batch',
+        session_cookie:sessionCookie,
+        tipo_data:'3',
+        data_inicial:dataIni,
+        data_final:dataFim,
+        ordenar:'6',
+        retornar_lider:'NAO',
+        gestores:batch
+      });
+
+      if(batchResult.success&&batchResult.data){
+        batchResult.data.forEach(function(g){
+          if(g.membros){
+            g.membros.forEach(function(m){
+              if(m.ativadas_qtd>0){
+                var key=m.nome.toUpperCase();
+                if(!allConsultores[key]){
+                  allConsultores[key]={nome:m.nome,ativados:0,mensalidade:0};
+                }
+                allConsultores[key].ativados+=m.ativadas_qtd;
+                allConsultores[key].mensalidade+=m.ativadas_valor;
+              }
+            });
+          }
+        });
+      }
+    }
+
+    // Build results
+    var results=[];
+    Object.values(allConsultores).forEach(function(c){
+      var ticket=c.ativados>0?(c.mensalidade/c.ativados):0;
+      var score=getScoreConsultor(ticket);
+      var pontuacao=c.ativados*score;
+      var premiacao=getPremiacaoConsultor(pontuacao);
+      results.push({
+        nome:c.nome,
+        ativados:c.ativados,
+        mensalidade:Math.round(c.mensalidade*100)/100,
+        ticket_medio:Math.round(ticket*100)/100,
+        score:score,
+        pontuacao:pontuacao,
+        premiacao:premiacao.label,
+        premiacao_css:premiacao.css
+      });
+    });
+    results.sort(function(a,b){return b.pontuacao-a.pontuacao});
+    CONSULTORES_DATA=results;
+
+    localStorage.setItem('avp-consultores-data',JSON.stringify({dados:results,ts:Date.now()}));
+
+    updProg(100,'Concluido! '+results.length+' consultores',total,total);
+    setTimeout(function(){pb.classList.remove('visible')},3000);
+    renderConsultores();
+
+  }catch(e){
+    updProg(0,'Erro: '+e.message,0,0);
+    console.error(e);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar Dados';
+}
+
+function renderConsultores(){
+  if(CONSULTORES_DATA.length===0)return;
+  document.getElementById('consultoresEmpty').style.display='none';
+  document.getElementById('tblConsultores').style.display='';
+
+  var totalAtv=0,totalMens=0,premiados=0,maiorPts=0;
+  CONSULTORES_DATA.forEach(function(c){
+    totalAtv+=c.ativados;totalMens+=c.mensalidade;
+    if(c.pontuacao>=300)premiados++;
+    if(c.pontuacao>maiorPts)maiorPts=c.pontuacao;
+  });
+  var ticketGeral=totalAtv>0?(totalMens/totalAtv):0;
+  document.getElementById('consKpiTotal').textContent=fk(CONSULTORES_DATA.length);
+  document.getElementById('consKpiAtivados').textContent=fk(totalAtv);
+  document.getElementById('consKpiMensalidade').textContent='R$ '+fk(Math.round(totalMens));
+  document.getElementById('consKpiTicket').textContent='R$ '+ticketGeral.toFixed(2).replace('.',',');
+  document.getElementById('consKpiPremiados').textContent=premiados;
+  document.getElementById('consKpiMaior').textContent=fk(maiorPts);
+
+  var cached=localStorage.getItem('avp-consultores-data');
+  if(cached){document.getElementById('consultoresCacheInfo').textContent='Ultima atualizacao: '+new Date(JSON.parse(cached).ts).toLocaleString('pt-BR')}
+
+  renderConsPodio();
+  renderConsFaixas();
+  renderConsChart();
+  filtrarConsultores();
+}
+
+function renderConsPodio(){
+  if(CONSULTORES_DATA.length<3){document.getElementById('consultoresPodio').style.display='none';return}
+  document.getElementById('consultoresPodio').style.display='';
+  var top3=CONSULTORES_DATA.slice(0,3);
+  var classes=['gold','silver','bronze'];var labels=['1','2','3'];
+  var order=[1,0,2];
+  var html='<div class="podio-container">';
+  order.forEach(function(idx){
+    var c=top3[idx];var cls=classes[idx];
+    var initials=c.nome.split(' ').map(function(w){return w[0]}).slice(0,2).join('');
+    var premio=getPremiacaoConsultor(c.pontuacao);
+    html+='<div class="podio-item '+cls+'"><div class="podio-avatar">'+initials+'</div><div class="podio-nome" title="'+c.nome+'">'+c.nome.split(' ').slice(0,2).join(' ')+'</div><div class="podio-pts">'+fk(c.pontuacao)+' pts</div><div class="podio-premio"><span class="campanha-premio '+premio.css+'" style="font-size:.6rem">'+premio.label+'</span></div><div class="podio-stats"><span><span class="ps-val">'+fk(c.ativados)+'</span>atv</span><span><span class="ps-val">R$'+c.ticket_medio.toFixed(0)+'</span>tk</span><span><span class="ps-val">'+c.score+'</span>score</span></div><div class="podio-base">'+labels[idx]+'</div></div>';
+  });
+  html+='</div>';
+  document.getElementById('consPodioContent').innerHTML=html;
+}
+
+function renderConsFaixas(){
+  var faixas=[
+    {min:1200,label:'iPhone+iPad+Watch',css:'fx-ouro',meta:'1.200+ pts'},
+    {min:600,max:1199,label:'iPad+Watch',css:'fx-macbook',meta:'600+ pts'},
+    {min:300,max:599,label:'Apple Watch',css:'fx-casal',meta:'300+ pts'},
+    {min:0,max:299,label:'Sem Premio',css:'fx-sem',meta:'< 300 pts'}
+  ];
+  var counts=faixas.map(function(){return 0});
+  CONSULTORES_DATA.forEach(function(c){
+    for(var i=0;i<faixas.length;i++){
+      var f=faixas[i];
+      if(f.max===undefined&&c.pontuacao>=f.min){counts[i]++;break}
+      if(c.pontuacao>=f.min&&c.pontuacao<=(f.max||999999)){counts[i]++;break}
+    }
+  });
+  var html='<div class="faixas-container">';
+  faixas.forEach(function(f,i){
+    html+='<div class="faixa-card '+f.css+'"><div class="faixa-count">'+counts[i]+'</div><div class="faixa-label">'+f.label+'</div><div class="faixa-meta">'+f.meta+'</div></div>';
+  });
+  html+='</div>';
+  document.getElementById('consultoresFaixas').innerHTML=html;
+  document.getElementById('consultoresFaixas').style.display='';
+}
+
+function renderConsChart(){
+  if(CONSULTORES_DATA.length===0){document.getElementById('consultoresChart').style.display='none';return}
+  document.getElementById('consultoresChart').style.display='';
+  var top10=CONSULTORES_DATA.slice(0,10);
+  var maxPts=top10[0]?top10[0].pontuacao:1;
+  var markers=[300,600,1200];
+  var html='';
+  top10.forEach(function(c,idx){
+    var pct=Math.max(2,Math.round((c.pontuacao/Math.max(maxPts,1))*100));
+    var color=c.pontuacao>=1200?'linear-gradient(90deg,var(--amber),#F59E0B)':c.pontuacao>=600?'linear-gradient(90deg,var(--purple),#A78BFA)':c.pontuacao>=300?'linear-gradient(90deg,var(--green),var(--accent))':'linear-gradient(90deg,var(--blue),#60A5FA)';
+    html+='<div class="camp-bar-row"><div class="camp-bar-pos">'+(idx+1)+'</div><div class="camp-bar-info"><div class="camp-bar-nome" title="'+c.nome+'">'+c.nome+'</div></div><div class="camp-bar-track"><div class="camp-bar-markers">';
+    markers.forEach(function(m){var mPct=Math.round((m/Math.max(maxPts*1.1,1))*100);if(mPct>0&&mPct<100)html+='<div class="camp-bar-marker" style="left:'+mPct+'%" title="'+fk(m)+' pts"></div>'});
+    html+='</div><div class="camp-bar-fill" style="width:'+pct+'%;background:'+color+'"><span class="camp-bar-value">'+fk(c.pontuacao)+'</span></div></div><div class="camp-bar-stats"><div class="camp-bar-stat"><div class="camp-bar-stat-value">'+fk(c.ativados)+'</div><div class="camp-bar-stat-label">Ativados</div></div><div class="camp-bar-stat"><div class="camp-bar-stat-value">R$'+c.ticket_medio.toFixed(0)+'</div><div class="camp-bar-stat-label">Ticket</div></div><div class="camp-bar-stat"><div class="camp-bar-stat-value">'+c.score+'</div><div class="camp-bar-stat-label">Score</div></div></div></div>';
+    if(idx<top10.length-1){var gap=c.pontuacao-top10[idx+1].pontuacao;if(gap>0)html+='<div class="camp-bar-gap">'+fk(gap)+' pts</div>'}
+  });
+  document.getElementById('consChartBars').innerHTML=html;
+}
+
+function toggleConsKpiFiltro(tipo){
+  if(consKpiFiltro===tipo){consKpiFiltro=''}else{consKpiFiltro=tipo}
+  filtrarConsultores();
+  document.getElementById('tblConsultores').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function filtrarConsultores(){
+  var s=(document.getElementById('filterConsultores')||{}).value||'';s=s.toLowerCase();
+  var minAtv=parseInt((document.getElementById('filterConsAtivados')||{}).value)||0;
+  var minScore=parseInt((document.getElementById('filterConsScore')||{}).value)||0;
+  var minPts=parseInt((document.getElementById('filterConsPontuacao')||{}).value)||0;
+  var filtered=CONSULTORES_DATA.filter(function(c){
+    if(s&&c.nome.toLowerCase().indexOf(s)<0)return false;
+    if(minAtv&&c.ativados<minAtv)return false;
+    if(minScore&&c.score<minScore)return false;
+    if(minPts&&c.pontuacao<minPts)return false;
+    if(consKpiFiltro==='premiados'&&c.pontuacao<300)return false;
+    if(consKpiFiltro==='maior'&&c.pontuacao!==CONSULTORES_DATA[0].pontuacao)return false;
+    return true;
+  });
+  renderConsultoresTable(filtered);
+  // Filter tag
+  var tag=document.getElementById('consultoresFilterTag');
+  if(consKpiFiltro){
+    var lbl=consKpiFiltro==='premiados'?'Premiados (>= 300 pts)':'Maior Pontuacao';
+    tag.style.display='flex';tag.innerHTML='<span class="camp-filter-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>'+lbl+'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" onclick="consKpiFiltro=\'\';filtrarConsultores()"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+  }else{tag.style.display='none';tag.innerHTML=''}
+}
+
+function renderConsultoresTable(data){
+  var html='';var sumAtv=0,sumMens=0;
+  data.forEach(function(c,idx){
+    var nextLvl=getNextLevelConsultor(c.pontuacao);
+    var pct=Math.min(100,Math.round((c.pontuacao/nextLvl)*100));
+    var pColor=c.pontuacao>=1200?'var(--green)':c.pontuacao>=600?'var(--amber)':'var(--blue)';
+    var faltam=nextLvl-c.pontuacao;
+    var projLabel=faltam>0?pct+'% — Faltam '+fk(faltam)+' pts':'100%';
+    var rowCls=idx===0?'row-gold':idx===1?'row-silver':idx===2?'row-bronze':'';
+    sumAtv+=c.ativados;sumMens+=c.mensalidade;
+    html+='<tr class="'+rowCls+'"><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+'</td><td class="col-num">'+fk(c.ativados)+'</td><td class="col-money">'+fmtBRL(c.mensalidade)+'</td><td class="col-num">R$ '+c.ticket_medio.toFixed(2).replace('.',',')+'</td><td class="col-num">'+c.score+'</td><td class="col-num" style="min-width:110px"><strong>'+fk(c.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pct+'%;background:'+pColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td><td><span class="campanha-premio '+c.premiacao_css+'">'+c.premiacao+'</span></td></tr>';
+  });
+  document.getElementById('tbodyConsultores').innerHTML=html;
+  var tkFilt=sumAtv>0?(sumMens/sumAtv):0;
+  document.getElementById('tfootConsultores').innerHTML='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' consultores)</td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+tkFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td></tr>';
+}
+
+function loadConsultoresFromCache(){
+  var cached=localStorage.getItem('avp-consultores-data');
+  if(cached){var p=JSON.parse(cached);CONSULTORES_DATA=p.dados;renderConsultores()}
+}
+
+function exportarConsultoresXLSX(){
+  if(CONSULTORES_DATA.length===0){alert('Sem dados. Clique Atualizar Dados primeiro.');return}
+  var hoje=new Date();var dataHoje=hoje.toISOString().split('T')[0];
+  var rows=[['#','Consultor','Ativados','Mensalidade','Ticket Medio','Score','Pontuacao','Premiacao']];
+  var totalAtv=0,totalMens=0;
+  CONSULTORES_DATA.forEach(function(c,i){
+    totalAtv+=c.ativados;totalMens+=c.mensalidade;
+    rows.push([i+1,c.nome,c.ativados,c.mensalidade,c.ticket_medio,c.score,c.pontuacao,c.premiacao]);
+  });
+  rows.push(['','TOTAL ('+CONSULTORES_DATA.length+' consultores)','',totalAtv,totalMens,totalAtv>0?Math.round((totalMens/totalAtv)*100)/100:0,'','','']);
+
+  var ws1=XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols']=[{wch:4},{wch:40},{wch:10},{wch:14},{wch:12},{wch:6},{wch:10},{wch:28}];
+
+  var regras=[['CAMPANHA PREMIACOES CONSULTORES 2026'],['Periodo: 01/01/2026 a '+dataHoje],['Gerado em: '+hoje.toLocaleString('pt-BR')],[''],
+    ['TABELA DE SCORE'],['Ticket Medio','Score'],['>=R$500',10],['>=R$450',9],['>=R$400',8],['>=R$350',7],['>=R$300',6],['>=R$250',5],['>=R$200',4],['>=R$150',3],['>=R$100',2],['>=R$50',1],['<R$50',0],[''],
+    ['TABELA DE PREMIACAO'],['Pontuacao','Premio'],['>=1.200','iPhone + iPad + Apple Watch'],['>=600','iPad + Apple Watch'],['>=300','Apple Watch'],['<300','Sem premiacao'],[''],
+    ['RESUMO'],['Total Consultores',CONSULTORES_DATA.length],['Premiados (>=300)',CONSULTORES_DATA.filter(function(c){return c.pontuacao>=300}).length],['Total Ativados',totalAtv],['Mensalidade Total','R$ '+fk(Math.round(totalMens))]
+  ];
+  var ws2=XLSX.utils.aoa_to_sheet(regras);
+  ws2['!cols']=[{wch:20},{wch:30}];
+
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws1,'Ranking Consultores');
+  XLSX.utils.book_append_sheet(wb,ws2,'Regras Consultores');
+  XLSX.writeFile(wb,'Campanha_Consultores_2026_'+dataHoje+'.xlsx');
+}
+
 /* ====== INIT CAMPANHA + ACORDO ====== */
 (async function(){
   await loadGestoresAcordo();
   await loadExcecoes();
   await loadCampanhaOcultos();
   loadCampanhaFromCache();
+  loadConsultoresFromCache();
   // Re-render acompanhamento with Acordo tags
   renderTabelaAcompFromUI();
 })();
