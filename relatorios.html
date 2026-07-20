@@ -1649,13 +1649,19 @@ function renderTabelaAcomp(semanasOrdenadas,fechamento){
     }else{
       // Modo resumo (como antes)
       bodyHtml+='<tr class="row-acomp" onclick="openGestorDetail(\''+safeNome+'\',\''+cidade+'\')" title="Clique para ver detalhes"><td class="col-pos" style="padding-left:24px;position:relative"><svg class="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'+(idx+1)+'</td><td class="col-gestor">'+g.gestor_nome+'</td><td class="col-sede">'+cidade+'</td>';
-      semanasOrdenadas.forEach(function(s){
+      var prevVal=0;
+      semanasOrdenadas.forEach(function(s,si){
         var val=lookupFull[s.semana][g.gestor_nome]?lookupFull[s.semana][g.gestor_nome].equipe_total_qtd:0;
-        bodyHtml+='<td class="col-num">'+val+'</td>';
+        var delta=val-prevVal;
+        var deltaHtml=si===0?'':'<div style="font-size:.6rem;color:var(--green);font-weight:600">+'+(delta)+'</div>';
+        bodyHtml+='<td class="col-num">'+val+deltaHtml+'</td>';
+        prevVal=val;
       });
       if(fechamento){
         var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;
-        bodyHtml+='<td class="col-num bold">'+ft+'</td>';
+        var deltaFech=ft-prevVal;
+        var deltaFechHtml=prevVal>0?'<div style="font-size:.6rem;color:var(--green);font-weight:600">+'+(deltaFech)+'</div>':'';
+        bodyHtml+='<td class="col-num bold">'+ft+deltaFechHtml+'</td>';
       }
       bodyHtml+='<td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideGestor(\''+safeNome+'\')" title="Ocultar gestor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td>';
       bodyHtml+='</tr>';
@@ -2064,11 +2070,15 @@ function exportarAcompXLSX(){
   ranked.forEach(function(g,idx){
     if(hiddenGestores.indexOf(g.gestor_nome)>=0)return;
     var row=[idx+1,g.gestor_nome,(g.cidade&&g.cidade!=='None')?g.cidade:'-'];
+    var prevV=0;
     semanasArr.forEach(function(s,si){
       var val=lookup[s.semana][g.gestor_nome]?lookup[s.semana][g.gestor_nome].equipe_total_qtd:0;
-      row.push(val);totais1[si+3]+=val;
+      var delta=val-prevV;
+      row.push(si===0?val:val+' (+'+delta+')');
+      totais1[si+3]+=val;
+      prevV=val;
     });
-    if(fechamento){var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;row.push(ft);totais1[row.length-1]=(totais1[row.length-1]||0)+ft}
+    if(fechamento){var ft=fechLookup[g.gestor_nome]?fechLookup[g.gestor_nome].equipe_total_qtd:0;var dF=ft-prevV;row.push(ft+(prevV>0?' (+'+dF+')':''));totais1[row.length-1]=(totais1[row.length-1]||0)+ft}
     rows1.push(row);
   });
   var totalRow1=['','TOTAL ('+ranked.filter(function(g){return hiddenGestores.indexOf(g.gestor_nome)<0}).length+' gestores)',''];
