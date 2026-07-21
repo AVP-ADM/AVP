@@ -4236,44 +4236,72 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchChunk(session_cookie, situacao, start, length) {
-  var maxRetries = 2;
+async function biFetchChunk(session_cookie, situacao, start, length, dataInicial, dataFinal) {
+  var maxRetries = 3;
   var retries = 0;
   while (retries <= maxRetries) {
     try {
+      var payload = { action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length };
+      if (dataInicial && dataFinal) { payload.data_inicial = dataInicial; payload.data_final = dataFinal; }
       var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length })
+        body: JSON.stringify(payload)
       });
       var d = await resp.json();
       if (d.success) return d;
       retries++;
       if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
-      await new Promise(function(r){ setTimeout(r, 2000); });
+      await new Promise(function(r){ setTimeout(r, 3000); });
     } catch(e) {
       retries++;
       if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
-      await new Promise(function(r){ setTimeout(r, 2000); });
+      await new Promise(function(r){ setTimeout(r, 3000); });
     }
   }
   return { success: false, recordsTotal: 0, data: [] };
 }
 
-async function biFetchSituacao(session_cookie, situacao, onProgress) {
-  var batchSize = 2000;
+async function biFetchSituacaoSemestral(session_cookie, situacao, onProgress, onSemestre) {
+  // Semestres sequenciais com DataCadastro para evitar timeout
+  var semesters = [
+    { ini: '2000-01-01', fim: '2023-06-30', label: 'ate Jun/23' },
+    { ini: '2023-07-01', fim: '2023-12-31', label: 'Jul-Dez/23' },
+    { ini: '2024-01-01', fim: '2024-06-30', label: 'Jan-Jun/24' },
+    { ini: '2024-07-01', fim: '2024-12-31', label: 'Jul-Dez/24' },
+    { ini: '2025-01-01', fim: '2025-06-30', label: 'Jan-Jun/25' },
+    { ini: '2025-07-01', fim: '2025-12-31', label: 'Jul-Dez/25' },
+    { ini: '2026-01-01', fim: '2026-12-31', label: '2026' }
+  ];
   var allData = [];
-  var d = await biFetchChunk(session_cookie, situacao, 0, batchSize);
-  if (!d.success) return { data: [], total: 0 };
-  var total = d.recordsTotal;
-  allData = allData.concat(d.data || []);
-  if (onProgress) onProgress(allData.length, total);
-  while (allData.length < total) {
-    d = await biFetchChunk(session_cookie, situacao, allData.length, batchSize);
-    if (!d.success || !d.data || d.data.length === 0) break;
-    allData = allData.concat(d.data);
-    if (onProgress) onProgress(allData.length, total);
+  var totalGeral = 0;
+  var batchSize = 2000;
+
+  for (var s = 0; s < semesters.length; s++) {
+    var sem = semesters[s];
+    if (onSemestre) onSemestre(sem.label, 'loading');
+
+    // Primeiro batch: descobre total do semestre
+    var d = await biFetchChunk(session_cookie, situacao, 0, batchSize, sem.ini, sem.fim);
+    if (!d.success) { if (onSemestre) onSemestre(sem.label, 'done', 0); continue; }
+
+    var semTotal = d.recordsTotal;
+    totalGeral += semTotal;
+    var semData = d.data || [];
+
+    // Baixar batches restantes do semestre
+    while (semData.length < semTotal) {
+      d = await biFetchChunk(session_cookie, situacao, semData.length, batchSize, sem.ini, sem.fim);
+      if (!d.success || !d.data || d.data.length === 0) break;
+      semData = semData.concat(d.data);
+      if (onProgress) onProgress(allData.length + semData.length, totalGeral);
+    }
+
+    allData = allData.concat(semData);
+    if (onSemestre) onSemestre(sem.label, 'done', semData.length);
+    if (onProgress) onProgress(allData.length, totalGeral);
   }
-  return { data: allData, total: total };
+
+  return { data: allData, total: totalGeral };
 }
 
 async function biLoadBase() {
@@ -4289,7 +4317,7 @@ async function biLoadBase() {
     '<p class="bi-progress-text" id="biProgCurrent"></p>' +
     '<p class="bi-progress-text" id="biProgSummary" style="margin-top:4px"></p>' +
     '<button onclick="document.getElementById(\'biProgDetails\').style.display=document.getElementById(\'biProgDetails\').style.display===\'none\'?\'block\':\'none\';this.textContent=document.getElementById(\'biProgDetails\').style.display===\'none\'?\'Mostrar detalhes ▼\':\'Ocultar detalhes ▲\'" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:5px 12px;font-size:.7rem;color:var(--text2);cursor:pointer;font-family:var(--font)">Mostrar detalhes ▼</button>' +
-    '<div id="biProgDetails" style="display:none;margin-top:10px;text-align:left;font-size:.7rem;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg)"></div>' +
+    '<div id="biProgDetails" style="display:none;margin-top:10px;text-align:left;font-size:.7rem;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg)"></div>' +
     '</div>';
   document.body.appendChild(overlay);
 
@@ -4304,47 +4332,69 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // 3 situações em paralelo, sem filtro de data
-    var situacoes = [1, 2, 3];
+    // Estado do progresso
     var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
-    var progress = { 1: { loaded: 0, total: 0, status: 'waiting' }, 2: { loaded: 0, total: 0, status: 'waiting' }, 3: { loaded: 0, total: 0, status: 'waiting' } };
+    var sitProgress = {
+      1: { loaded: 0, total: 0, status: 'waiting', semestres: {} },
+      2: { loaded: 0, total: 0, status: 'waiting', semestres: {} },
+      3: { loaded: 0, total: 0, status: 'waiting', semestres: {} }
+    };
     var totalEsperado = 63000;
 
-    function updateProgress() {
-      var sumLoaded = progress[1].loaded + progress[2].loaded + progress[3].loaded;
-      var sumTotal = progress[1].total + progress[2].total + progress[3].total;
+    function updateUI() {
+      var sumLoaded = sitProgress[1].loaded + sitProgress[2].loaded + sitProgress[3].loaded;
+      var sumTotal = sitProgress[1].total + sitProgress[2].total + sitProgress[3].total;
       if (sumTotal > 0) totalEsperado = sumTotal;
       var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
       fill.style.width = Math.min(pct, 95) + '%';
 
-      // Current status
-      var activeList = [];
-      for (var s in progress) { if (progress[s].status === 'loading') activeList.push(sitLabels[s] + ': ' + progress[s].loaded.toLocaleString('pt-BR') + '/' + progress[s].total.toLocaleString('pt-BR')); }
-      progCurrent.textContent = activeList.length > 0 ? '● ' + activeList.join('  |  ') : 'Processando...';
+      // Current
+      var active = [];
+      for (var s in sitProgress) {
+        if (sitProgress[s].status === 'loading') {
+          active.push(sitLabels[s] + ': ' + sitProgress[s].loaded.toLocaleString('pt-BR') + '/' + (sitProgress[s].total > 0 ? sitProgress[s].total.toLocaleString('pt-BR') : '...'));
+        }
+      }
+      progCurrent.textContent = active.length > 0 ? '● ' + active.join('  |  ') : 'Processando...';
       progSummary.textContent = sumLoaded.toLocaleString('pt-BR') + ' de ' + (sumTotal > 0 ? sumTotal.toLocaleString('pt-BR') : '~63.000') + ' registros';
 
       // Details
       var detHtml = '';
-      for (var s in progress) {
-        var p = progress[s];
-        var icon = p.status === 'done' ? '<span style="color:var(--green)">✓</span>' : p.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
-        var info = p.status === 'done' ? p.loaded.toLocaleString('pt-BR') + ' registros' : p.status === 'loading' ? p.loaded.toLocaleString('pt-BR') + ' / ' + p.total.toLocaleString('pt-BR') : 'aguardando';
-        detHtml += '<div style="margin-bottom:6px">' + icon + ' <strong>' + sitLabels[s] + '</strong>: ' + info + '</div>';
+      for (var s in sitProgress) {
+        var sp = sitProgress[s];
+        var icon = sp.status === 'done' ? '<span style="color:var(--green)">✓</span>' : sp.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
+        detHtml += '<div style="margin-bottom:8px">' + icon + ' <strong>' + sitLabels[s] + '</strong>';
+        if (sp.status === 'done') detHtml += ' — ' + sp.loaded.toLocaleString('pt-BR') + ' registros';
+        detHtml += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;margin-left:16px">';
+        for (var sem in sp.semestres) {
+          var ss = sp.semestres[sem];
+          var sIcon = ss.status === 'done' ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--amber)">●</span>';
+          detHtml += '<span style="background:var(--surface-2);padding:2px 6px;border-radius:4px;white-space:nowrap;font-size:.65rem">' + sIcon + ' ' + sem + (ss.count !== undefined ? ': ' + ss.count.toLocaleString('pt-BR') : '') + '</span>';
+        }
+        detHtml += '</div></div>';
       }
       progDetails.innerHTML = detHtml;
     }
 
-    updateProgress();
+    updateUI();
 
-    // Lançar as 3 situações em paralelo
-    var results = await Promise.all(situacoes.map(function(sit) {
-      progress[sit].status = 'loading';
-      return biFetchSituacao(session, sit, function(loaded, total) {
-        progress[sit] = { loaded: loaded, total: total, status: 'loading' };
-        updateProgress();
-      }).then(function(result) {
-        progress[sit] = { loaded: result.data.length, total: result.total, status: 'done' };
-        updateProgress();
+    // Lançar 3 situações em PARALELO, cada uma busca por semestre
+    var results = await Promise.all([1, 2, 3].map(function(sit) {
+      sitProgress[sit].status = 'loading';
+      updateUI();
+      return biFetchSituacaoSemestral(session, sit,
+        function(loaded, total) {
+          sitProgress[sit].loaded = loaded;
+          sitProgress[sit].total = total;
+          updateUI();
+        },
+        function(semLabel, status, count) {
+          sitProgress[sit].semestres[semLabel] = { status: status, count: count };
+          updateUI();
+        }
+      ).then(function(result) {
+        sitProgress[sit] = { loaded: result.data.length, total: result.total, status: 'done', semestres: sitProgress[sit].semestres };
+        updateUI();
         return { situacao: sit, data: result.data, total: result.total };
       });
     }));
