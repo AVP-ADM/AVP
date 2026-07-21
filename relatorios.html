@@ -4236,14 +4236,14 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, start, length) {
+async function biFetchChunk(session_cookie, situacao, start, length) {
   var maxRetries = 2;
   var retries = 0;
   while (retries <= maxRetries) {
     try {
       var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length, data_inicial: dataInicial, data_final: dataFinal })
+        body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length })
       });
       var d = await resp.json();
       if (d.success) return d;
@@ -4259,29 +4259,16 @@ async function biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, st
   return { success: false, recordsTotal: 0, data: [] };
 }
 
-async function biFetchSituacaoAno(session_cookie, situacao, ano, onProgress) {
-  // Suporta ranges como "2000-2022" ou anos simples como "2023"
-  var dataInicial, dataFinal;
-  if (ano.indexOf('-') > 4) {
-    // Range format: "2000-2022"
-    var parts = ano.split('-');
-    dataInicial = parts[0] + '-01-01';
-    dataFinal = parts[1] + '-12-31';
-  } else {
-    dataInicial = ano + '-01-01';
-    dataFinal = ano + '-12-31';
-  }
+async function biFetchSituacao(session_cookie, situacao, onProgress) {
   var batchSize = 2000;
   var allData = [];
-  // First batch to get total
-  var d = await biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, 0, batchSize);
+  var d = await biFetchChunk(session_cookie, situacao, 0, batchSize);
   if (!d.success) return { data: [], total: 0 };
   var total = d.recordsTotal;
   allData = allData.concat(d.data || []);
   if (onProgress) onProgress(allData.length, total);
-  // Remaining batches
   while (allData.length < total) {
-    d = await biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, allData.length, batchSize);
+    d = await biFetchChunk(session_cookie, situacao, allData.length, batchSize);
     if (!d.success || !d.data || d.data.length === 0) break;
     allData = allData.concat(d.data);
     if (onProgress) onProgress(allData.length, total);
@@ -4317,105 +4304,59 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Situação × Ano (3 situações × 5 períodos = 15 jobs em paralelo)
-    // Usa DataCadastro para capturar toda a base (igual South)
-    var anos = ['2000-2022', '2023', '2024', '2025', '2026'];
-    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Suspenso, 3=Cancelado
+    // 3 situações em paralelo, sem filtro de data
+    var situacoes = [1, 2, 3];
     var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
-    var jobs = [];
-    for (var s = 0; s < situacoes.length; s++) {
-      for (var a = 0; a < anos.length; a++) {
-        jobs.push({ situacao: situacoes[s], ano: anos[a], label: sitLabels[situacoes[s]] + ' ' + anos[a] });
-      }
-    }
-
-    var progress = {};
+    var progress = { 1: { loaded: 0, total: 0, status: 'waiting' }, 2: { loaded: 0, total: 0, status: 'waiting' }, 3: { loaded: 0, total: 0, status: 'waiting' } };
     var totalEsperado = 63000;
-    var completedJobs = 0;
-    var activeJob = '';
-
-    // Initialize progress tracking
-    for (var j = 0; j < jobs.length; j++) {
-      progress[jobs[j].label] = { loaded: 0, total: 0, status: 'waiting' };
-    }
 
     function updateProgress() {
-      var sumLoaded = 0, sumTotal = 0;
-      for (var k in progress) { sumLoaded += progress[k].loaded; sumTotal += progress[k].total; }
+      var sumLoaded = progress[1].loaded + progress[2].loaded + progress[3].loaded;
+      var sumTotal = progress[1].total + progress[2].total + progress[3].total;
       if (sumTotal > 0) totalEsperado = sumTotal;
       var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
       fill.style.width = Math.min(pct, 95) + '%';
 
-      // Current job text
-      progCurrent.textContent = activeJob ? ('● ' + activeJob) : 'Processando...';
+      // Current status
+      var activeList = [];
+      for (var s in progress) { if (progress[s].status === 'loading') activeList.push(sitLabels[s] + ': ' + progress[s].loaded.toLocaleString('pt-BR') + '/' + progress[s].total.toLocaleString('pt-BR')); }
+      progCurrent.textContent = activeList.length > 0 ? '● ' + activeList.join('  |  ') : 'Processando...';
+      progSummary.textContent = sumLoaded.toLocaleString('pt-BR') + ' de ' + (sumTotal > 0 ? sumTotal.toLocaleString('pt-BR') : '~63.000') + ' registros';
 
-      // Summary
-      progSummary.textContent = sumLoaded.toLocaleString('pt-BR') + ' de ' + sumTotal.toLocaleString('pt-BR') + ' registros  •  ' + completedJobs + '/' + jobs.length + ' concluidos';
-
-      // Details panel
+      // Details
       var detHtml = '';
-      var groups = { 'Ativos': [], 'Suspensos': [], 'Cancelados': [] };
-      for (var k in progress) {
-        var p = progress[k];
-        var groupName = k.split(' ')[0];
-        var ano = k.split(' ')[1];
+      for (var s in progress) {
+        var p = progress[s];
         var icon = p.status === 'done' ? '<span style="color:var(--green)">✓</span>' : p.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
-        var info = p.status === 'done' ? p.loaded.toLocaleString('pt-BR') : p.status === 'loading' ? (p.loaded.toLocaleString('pt-BR') + '/' + p.total.toLocaleString('pt-BR')) : '';
-        if (groups[groupName]) groups[groupName].push({ ano: ano, icon: icon, info: info });
-      }
-      for (var g in groups) {
-        detHtml += '<div style="margin-bottom:8px"><strong style="color:var(--text1)">' + g + '</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        for (var i = 0; i < groups[g].length; i++) {
-          var item = groups[g][i];
-          detHtml += '<span style="background:var(--surface-2);padding:2px 8px;border-radius:4px;white-space:nowrap">' + item.icon + ' ' + item.ano + (item.info ? ': ' + item.info : '') + '</span>';
-        }
-        detHtml += '</div></div>';
+        var info = p.status === 'done' ? p.loaded.toLocaleString('pt-BR') + ' registros' : p.status === 'loading' ? p.loaded.toLocaleString('pt-BR') + ' / ' + p.total.toLocaleString('pt-BR') : 'aguardando';
+        detHtml += '<div style="margin-bottom:6px">' + icon + ' <strong>' + sitLabels[s] + '</strong>: ' + info + '</div>';
       }
       progDetails.innerHTML = detHtml;
     }
 
     updateProgress();
 
-    // Throttle: max 4 simultâneos
-    var allData = [];
-    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
-    var concurrency = 4;
-
-    async function runJob(job) {
-      var key = job.label;
-      progress[key] = { loaded: 0, total: 0, status: 'loading' };
-      activeJob = key;
-      updateProgress();
-      var result = await biFetchSituacaoAno(session, job.situacao, job.ano, function(loaded, total) {
-        progress[key] = { loaded: loaded, total: total, status: 'loading' };
-        activeJob = key + ' — ' + loaded.toLocaleString('pt-BR') + '/' + total.toLocaleString('pt-BR');
+    // Lançar as 3 situações em paralelo
+    var results = await Promise.all(situacoes.map(function(sit) {
+      progress[sit].status = 'loading';
+      return biFetchSituacao(session, sit, function(loaded, total) {
+        progress[sit] = { loaded: loaded, total: total, status: 'loading' };
         updateProgress();
+      }).then(function(result) {
+        progress[sit] = { loaded: result.data.length, total: result.total, status: 'done' };
+        updateProgress();
+        return { situacao: sit, data: result.data, total: result.total };
       });
-      progress[key] = { loaded: result.data.length, total: result.total, status: 'done' };
-      completedJobs++;
-      updateProgress();
-      return { situacao: job.situacao, ano: job.ano, data: result.data, total: result.total };
-    }
-
-    // Run with concurrency limit
-    var results = [];
-    var executing = [];
-    for (var i = 0; i < jobs.length; i++) {
-      var p = runJob(jobs[i]).then(function(r) { results.push(r); });
-      executing.push(p);
-      if (executing.length >= concurrency) {
-        await Promise.race(executing);
-        executing = executing.filter(function(ep) { return ep !== undefined; });
-      }
-    }
-    await Promise.all(executing);
+    }));
 
     // Consolidar
+    var allData = [];
+    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
     for (var i = 0; i < results.length; i++) {
       allData = allData.concat(results[i].data);
-      if (results[i].situacao === 1) totaisReais.ativos += results[i].total;
-      else if (results[i].situacao === 2) totaisReais.suspensos += results[i].total;
-      else if (results[i].situacao === 3) totaisReais.cancelados += results[i].total;
+      if (results[i].situacao === 1) totaisReais.ativos = results[i].total;
+      else if (results[i].situacao === 2) totaisReais.suspensos = results[i].total;
+      else if (results[i].situacao === 3) totaisReais.cancelados = results[i].total;
     }
 
     BI_DATA = allData;
