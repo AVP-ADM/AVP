@@ -4187,32 +4187,33 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchSituacao(session_cookie, situacao, progressCb) {
+async function biFetchByYear(session_cookie, ano, progressCb) {
   var allData = [];
-  var start = 0;
   var batchSize = 2000;
   var total = 0;
   var maxRetries = 2;
-  // First request to get total
+  var dataInicial = ano + '-01-01';
+  var dataFinal = ano + '-12-31';
+  // First request to get total for this year
   var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-    body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: 0, length: batchSize })
+    body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [1, 2, 3], start: 0, length: batchSize, data_inicial: dataInicial, data_final: dataFinal })
   });
   var d = await resp.json();
   if (!d.success) return { data: [], total: 0 };
   total = d.recordsTotal;
   allData = allData.concat(d.data || []);
-  if (progressCb) progressCb(allData.length, total);
+  if (progressCb) progressCb(allData.length, total, ano);
   // Fetch remaining batches
   while (allData.length < total) {
-    start = allData.length;
+    var start = allData.length;
     var retries = 0;
     var batchOk = false;
     while (retries < maxRetries && !batchOk) {
       try {
         resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-          body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: start, length: batchSize })
+          body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [1, 2, 3], start: start, length: batchSize, data_inicial: dataInicial, data_final: dataFinal })
         });
         d = await resp.json();
         if (d.success && d.data && d.data.length > 0) {
@@ -4230,14 +4231,14 @@ async function biFetchSituacao(session_cookie, situacao, progressCb) {
       }
     }
     if (!batchOk) break;
-    if (progressCb) progressCb(allData.length, total);
+    if (progressCb) progressCb(allData.length, total, ano);
   }
   return { data: allData, total: total };
 }
+
 async function biLoadBase() {
   if (BI_LOADING) return;
   BI_LOADING = true;
-  // Show progress
   var overlay = document.createElement('div');
   overlay.className = 'bi-progress-overlay';
   overlay.id = 'biProgressOverlay';
@@ -4251,31 +4252,46 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
+    // Buscar por ano em paralelo (2022-2026)
+    var anos = ['2022', '2023', '2024', '2025', '2026'];
+    var totalBaixado = 0;
+    var totalEsperado = 60000; // estimativa inicial
     var allData = [];
-    var situacoes = [1, 2, 3];
-    var labels = ['Ativos', 'Cancelados', 'Suspensos'];
-    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
-    var totalGeral = 0;
+    var anoResults = {};
 
-    for (var i = 0; i < situacoes.length; i++) {
-      text.textContent = 'Buscando ' + labels[i] + '...';
-      var result = await biFetchSituacao(session, situacoes[i], function(loaded, total) {
-        var pct = Math.round(((allData.length + loaded) / Math.max(totalGeral || total * 3, 1)) * 100);
+    // Lançar todos os anos em paralelo
+    text.textContent = 'Buscando base por ano (paralelo)...';
+    var promises = anos.map(function(ano) {
+      return biFetchByYear(session, ano, function(loaded, total, anoLabel) {
+        anoResults[anoLabel] = { loaded: loaded, total: total };
+        var sumLoaded = 0, sumTotal = 0;
+        for (var k in anoResults) { sumLoaded += anoResults[k].loaded; sumTotal += anoResults[k].total; }
+        if (sumTotal > 0) totalEsperado = sumTotal;
+        var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
         fill.style.width = Math.min(pct, 95) + '%';
-        text.textContent = 'Buscando ' + labels[i] + '... ' + loaded + '/' + total;
+        text.textContent = 'Buscando... ' + sumLoaded.toLocaleString('pt-BR') + ' / ' + sumTotal.toLocaleString('pt-BR') + ' registros';
       });
-      // Salvar total REAL da API (recordsTotal)
-      if (situacoes[i] === 1) totaisReais.ativos = result.total;
-      else if (situacoes[i] === 2) totaisReais.cancelados = result.total;
-      else if (situacoes[i] === 3) totaisReais.suspensos = result.total;
-      if (i === 0) totalGeral = result.total * 2.5;
-      allData = allData.concat(result.data);
+    });
+
+    var results = await Promise.all(promises);
+
+    // Consolidar dados
+    for (var i = 0; i < results.length; i++) {
+      allData = allData.concat(results[i].data);
+    }
+
+    // Calcular totais reais por situação (client-side)
+    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
+    for (var i = 0; i < allData.length; i++) {
+      if (allData[i].situacao === 'Ativo') totaisReais.ativos++;
+      else if (allData[i].situacao === 'Suspenso') totaisReais.suspensos++;
+      else totaisReais.cancelados++;
     }
 
     BI_DATA = allData;
     BI_TOTAIS_REAIS = totaisReais;
     fill.style.width = '100%';
-    text.textContent = 'Concluido! ' + BI_DATA.length + ' registros carregados.';
+    text.textContent = 'Concluido! ' + BI_DATA.length.toLocaleString('pt-BR') + ' registros carregados.';
     biSaveToCache();
 
     setTimeout(function() {

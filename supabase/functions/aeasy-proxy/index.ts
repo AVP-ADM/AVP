@@ -189,10 +189,10 @@ serve(async (req) => {
     }
 
     // ACTION: BASE_ASSOCIADOS
-    // Busca a base completa de associados por situação (paginado)
-    // Params: session_cookie, situacao (1=Ativo,2=Cancelado,3=Suspenso), start (offset), length (batch size)
+    // Busca a base completa de associados (paginado)
+    // Params: session_cookie, situacoes (array [1,2,3]), start (offset), length (batch size), data_inicial (opcional), data_final (opcional)
     if (action === "base_associados") {
-      const { situacao, start: startOffset, length: batchLength } = body;
+      const { situacao, situacoes, start: startOffset, length: batchLength, data_inicial: biDataInicial, data_final: biDataFinal } = body;
       const url = `${AEASY_URL}/vendas/listagem`;
       const formData = new URLSearchParams();
       formData.append("draw", "1");
@@ -205,8 +205,17 @@ serve(async (req) => {
       formData.append("start", String(startOffset || 0));
       formData.append("length", String(batchLength || 5000));
       formData.append("formPesquisa[DepartNivel]", "1");
-      // Sem filtro de data — traz toda a base da situação
-      formData.append("formPesquisa[VendasSituacao][]", String(situacao || 1));
+      // Filtro de data (opcional — se presente, usa TipoData=VendasDataAtivacao)
+      if (biDataInicial && biDataFinal) {
+        formData.append("formPesquisa[TipoData]", "VendasDataAtivacao");
+        formData.append("formPesquisa[DataInicial]", biDataInicial);
+        formData.append("formPesquisa[DataFinal]", biDataFinal);
+      }
+      // Suporta array de situações ou situação única
+      const sits = situacoes || [situacao || 1];
+      for (const s of sits) {
+        formData.append("formPesquisa[VendasSituacao][]", String(s));
+      }
       formData.append("formPesquisa[submitFilter]", "true");
 
       try {
