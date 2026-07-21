@@ -4236,72 +4236,108 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchChunk(session_cookie, situacao, start, length, dataInicial, dataFinal) {
-  var maxRetries = 3;
-  var retries = 0;
-  while (retries <= maxRetries) {
+async function biFetchExcel(session_cookie, dataIni, dataFim) {
+  var maxRetries = 2;
+  for (var attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      var payload = { action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length };
-      if (dataInicial && dataFinal) { payload.data_inicial = dataInicial; payload.data_final = dataFinal; }
       var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ action: 'base_excel', session_cookie: session_cookie, data_inicial: dataIni, data_final: dataFim })
       });
       var d = await resp.json();
-      if (d.success) return d;
-      retries++;
-      if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
-      await new Promise(function(r){ setTimeout(r, 3000); });
+      if (d.success && d.xlsx_base64) return d;
+      if (attempt < maxRetries) await new Promise(function(r){ setTimeout(r, 3000); });
     } catch(e) {
-      retries++;
-      if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
-      await new Promise(function(r){ setTimeout(r, 3000); });
+      if (attempt < maxRetries) await new Promise(function(r){ setTimeout(r, 3000); });
     }
   }
-  return { success: false, recordsTotal: 0, data: [] };
+  return { success: false, error: 'Falha após ' + (maxRetries+1) + ' tentativas' };
 }
 
-async function biFetchSituacaoSemestral(session_cookie, situacao, onProgress, onSemestre) {
-  // Semestres sequenciais com DataCadastro para evitar timeout
-  var semesters = [
-    { ini: '2000-01-01', fim: '2023-06-30', label: 'ate Jun/23' },
-    { ini: '2023-07-01', fim: '2023-12-31', label: 'Jul-Dez/23' },
-    { ini: '2024-01-01', fim: '2024-06-30', label: 'Jan-Jun/24' },
-    { ini: '2024-07-01', fim: '2024-12-31', label: 'Jul-Dez/24' },
-    { ini: '2025-01-01', fim: '2025-06-30', label: 'Jan-Jun/25' },
-    { ini: '2025-07-01', fim: '2025-12-31', label: 'Jul-Dez/25' },
-    { ini: '2026-01-01', fim: '2026-12-31', label: '2026' }
-  ];
-  var allData = [];
-  var totalGeral = 0;
-  var batchSize = 2000;
+function biParseExcel(base64) {
+  var binary = atob(base64);
+  var bytes = new Uint8Array(binary.length);
+  for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  var wb = XLSX.read(bytes, { type: 'array' });
+  var ws = wb.Sheets[wb.SheetNames[0]];
+  var rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+  if (rows.length < 2) return [];
 
-  for (var s = 0; s < semesters.length; s++) {
-    var sem = semesters[s];
-    if (onSemestre) onSemestre(sem.label, 'loading');
-
-    // Primeiro batch: descobre total do semestre
-    var d = await biFetchChunk(session_cookie, situacao, 0, batchSize, sem.ini, sem.fim);
-    if (!d.success) { if (onSemestre) onSemestre(sem.label, 'done', 0); continue; }
-
-    var semTotal = d.recordsTotal;
-    totalGeral += semTotal;
-    var semData = d.data || [];
-
-    // Baixar batches restantes do semestre
-    while (semData.length < semTotal) {
-      d = await biFetchChunk(session_cookie, situacao, semData.length, batchSize, sem.ini, sem.fim);
-      if (!d.success || !d.data || d.data.length === 0) break;
-      semData = semData.concat(d.data);
-      if (onProgress) onProgress(allData.length + semData.length, totalGeral);
-    }
-
-    allData = allData.concat(semData);
-    if (onSemestre) onSemestre(sem.label, 'done', semData.length);
-    if (onProgress) onProgress(allData.length, totalGeral);
+  // Identificar colunas pelo header
+  var headers = rows[0];
+  var colMap = {};
+  for (var i = 0; i < headers.length; i++) {
+    var h = (headers[i] || '').toString().trim().toLowerCase();
+    if (h === 'associado') colMap.nome = i;
+    else if (h === 'situacao' || h === 'situação') colMap.situacao = i;
+    else if (h === 'categoria') colMap.categoria = i;
+    else if (h === 'plano') colMap.plano = i;
+    else if (h === 'marca') colMap.marca = i;
+    else if (h === 'modelo') colMap.modelo = i;
+    else if (h === 'placa') colMap.placa = i;
+    else if (h === 'cidade') colMap.cidade = i;
+    else if (h === 'estado') colMap.uf = i;
+    else if (h === 'consultor') colMap.consultor = i;
+    else if (h === 'valor mensalidade') colMap.valor_mensal = i;
+    else if (h === 'valor fipe') colMap.valor_fipe = i;
+    else if (h.includes('ades')) colMap.valor_adesao = i;
+    else if (h.includes('ativa') && h.includes('data')) colMap.data_ativacao = i;
+    else if (h === 'data cancelamento') colMap.data_cancelamento = i;
+    else if (h === 'data cadastro') colMap.data_cadastro = i;
+    else if (h.includes('rastreador') && h.includes('mero')) colMap.numero_rastreador = i;
+    else if (h === 'telefone') colMap.telefone = i;
+    else if (h.includes('email')) colMap.email = i;
+    else if (h === 'dias atraso') colMap.dias_atraso = i;
+    else if (h === 'motivo situacao' || h === 'motivo situação') colMap.motivo_cancelamento = i;
+    else if (h === 'ano modelo') colMap.ano_fabricacao = i;
+    else if (h === 'dia vencimento') colMap.vencimento = i;
+    else if (h === 'desconto') colMap.desconto = i;
   }
 
-  return { data: allData, total: totalGeral };
+  var registros = [];
+  for (var r = 1; r < rows.length; r++) {
+    var row = rows[r];
+    if (!row || row.length < 5) continue;
+    var nome = row[colMap.nome] || '';
+    if (!nome) continue;
+    var situacao = (row[colMap.situacao] || '').toString().trim();
+    // Normalizar situação
+    if (situacao.toLowerCase().indexOf('ativo') !== -1 && situacao.toLowerCase().indexOf('in') === -1) situacao = 'Ativo';
+    else if (situacao.toLowerCase().indexOf('cancel') !== -1) situacao = 'Cancelado';
+    else if (situacao.toLowerCase().indexOf('suspen') !== -1) situacao = 'Suspenso';
+    else if (situacao.toLowerCase() === 'novo') situacao = 'Ativo';
+
+    var valMensal = colMap.valor_mensal !== undefined ? parseFloat(row[colMap.valor_mensal]) || 0 : 0;
+    var valFipe = colMap.valor_fipe !== undefined ? parseFloat(row[colMap.valor_fipe]) || 0 : 0;
+    var valAdesao = colMap.valor_adesao !== undefined ? parseFloat(row[colMap.valor_adesao]) || 0 : 0;
+
+    registros.push({
+      nome: nome.toString().trim(),
+      situacao: situacao,
+      categoria: colMap.categoria !== undefined ? (row[colMap.categoria] || '').toString().trim() : '',
+      plano: colMap.plano !== undefined ? (row[colMap.plano] || '').toString().trim() : '',
+      marca: colMap.marca !== undefined ? (row[colMap.marca] || '').toString().trim() : '',
+      modelo: colMap.modelo !== undefined ? (row[colMap.modelo] || '').toString().trim() : '',
+      placa: colMap.placa !== undefined ? (row[colMap.placa] || '').toString().trim() : '',
+      cidade: colMap.cidade !== undefined ? (row[colMap.cidade] || '').toString().trim() : '',
+      uf: colMap.uf !== undefined ? (row[colMap.uf] || '').toString().trim() : '',
+      consultor: colMap.consultor !== undefined ? (row[colMap.consultor] || '').toString().trim() : '',
+      valor_mensal: valMensal,
+      valor_fipe: valFipe,
+      valor_adesao: valAdesao,
+      data_ativacao: colMap.data_ativacao !== undefined ? (row[colMap.data_ativacao] || '').toString().trim() : '',
+      data_cancelamento: colMap.data_cancelamento !== undefined ? (row[colMap.data_cancelamento] || '').toString().trim() : '',
+      data_cadastro: colMap.data_cadastro !== undefined ? (row[colMap.data_cadastro] || '').toString().trim() : '',
+      numero_rastreador: colMap.numero_rastreador !== undefined ? (row[colMap.numero_rastreador] || '').toString().trim() : '',
+      rastreador: colMap.numero_rastreador !== undefined && row[colMap.numero_rastreador] ? 1 : 0,
+      telefone: colMap.telefone !== undefined ? (row[colMap.telefone] || '').toString().trim() : '',
+      email: colMap.email !== undefined ? (row[colMap.email] || '').toString().trim() : '',
+      dias_atraso: colMap.dias_atraso !== undefined ? parseInt(row[colMap.dias_atraso]) || 0 : 0,
+      motivo_cancelamento: colMap.motivo_cancelamento !== undefined ? (row[colMap.motivo_cancelamento] || '').toString().trim() : '',
+      ano_fabricacao: colMap.ano_fabricacao !== undefined ? parseInt(row[colMap.ano_fabricacao]) || 0 : 0,
+    });
+  }
+  return registros;
 }
 
 async function biLoadBase() {
@@ -4332,81 +4368,56 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Estado do progresso
-    var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
-    var sitProgress = {
-      1: { loaded: 0, total: 0, status: 'waiting', semestres: {} },
-      2: { loaded: 0, total: 0, status: 'waiting', semestres: {} },
-      3: { loaded: 0, total: 0, status: 'waiting', semestres: {} }
-    };
-    var totalEsperado = 63000;
+    // Baixar Excel Completo por ano (sequencial para não sobrecarregar)
+    var periodos = [
+      { ini: '2000-01-01', fim: '2023-12-31', label: 'ate 2023' },
+      { ini: '2024-01-01', fim: '2024-12-31', label: '2024' },
+      { ini: '2025-01-01', fim: '2025-12-31', label: '2025' },
+      { ini: '2026-01-01', fim: '2026-12-31', label: '2026' }
+    ];
+    var allData = [];
+    var detStatus = {};
+    for (var i = 0; i < periodos.length; i++) detStatus[periodos[i].label] = { status: 'waiting', count: 0 };
 
     function updateUI() {
-      var sumLoaded = sitProgress[1].loaded + sitProgress[2].loaded + sitProgress[3].loaded;
-      var sumTotal = sitProgress[1].total + sitProgress[2].total + sitProgress[3].total;
-      if (sumTotal > 0) totalEsperado = sumTotal;
-      var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
+      var totalLoaded = allData.length;
+      var pct = Math.round((totalLoaded / 63000) * 100);
       fill.style.width = Math.min(pct, 95) + '%';
-
-      // Current
-      var active = [];
-      for (var s in sitProgress) {
-        if (sitProgress[s].status === 'loading') {
-          active.push(sitLabels[s] + ': ' + sitProgress[s].loaded.toLocaleString('pt-BR') + '/' + (sitProgress[s].total > 0 ? sitProgress[s].total.toLocaleString('pt-BR') : '...'));
-        }
-      }
-      progCurrent.textContent = active.length > 0 ? '● ' + active.join('  |  ') : 'Processando...';
-      progSummary.textContent = sumLoaded.toLocaleString('pt-BR') + ' de ' + (sumTotal > 0 ? sumTotal.toLocaleString('pt-BR') : '~63.000') + ' registros';
-
-      // Details
+      progSummary.textContent = totalLoaded.toLocaleString('pt-BR') + ' registros carregados';
       var detHtml = '';
-      for (var s in sitProgress) {
-        var sp = sitProgress[s];
-        var icon = sp.status === 'done' ? '<span style="color:var(--green)">✓</span>' : sp.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
-        detHtml += '<div style="margin-bottom:8px">' + icon + ' <strong>' + sitLabels[s] + '</strong>';
-        if (sp.status === 'done') detHtml += ' — ' + sp.loaded.toLocaleString('pt-BR') + ' registros';
-        detHtml += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;margin-left:16px">';
-        for (var sem in sp.semestres) {
-          var ss = sp.semestres[sem];
-          var sIcon = ss.status === 'done' ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--amber)">●</span>';
-          detHtml += '<span style="background:var(--surface-2);padding:2px 6px;border-radius:4px;white-space:nowrap;font-size:.65rem">' + sIcon + ' ' + sem + (ss.count !== undefined ? ': ' + ss.count.toLocaleString('pt-BR') : '') + '</span>';
-        }
-        detHtml += '</div></div>';
+      for (var k in detStatus) {
+        var ds = detStatus[k];
+        var icon = ds.status === 'done' ? '<span style="color:var(--green)">✓</span>' : ds.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
+        var info = ds.status === 'done' ? ds.count.toLocaleString('pt-BR') + ' registros' : ds.status === 'loading' ? 'baixando Excel...' : 'aguardando';
+        detHtml += '<div style="margin-bottom:6px">' + icon + ' <strong>' + k + '</strong>: ' + info + '</div>';
       }
       progDetails.innerHTML = detHtml;
     }
 
-    updateUI();
-
-    // Lançar 3 situações em PARALELO, cada uma busca por semestre
-    var results = await Promise.all([1, 2, 3].map(function(sit) {
-      sitProgress[sit].status = 'loading';
+    for (var i = 0; i < periodos.length; i++) {
+      var p = periodos[i];
+      detStatus[p.label].status = 'loading';
+      progCurrent.textContent = '● Baixando Excel ' + p.label + '...';
       updateUI();
-      return biFetchSituacaoSemestral(session, sit,
-        function(loaded, total) {
-          sitProgress[sit].loaded = loaded;
-          sitProgress[sit].total = total;
-          updateUI();
-        },
-        function(semLabel, status, count) {
-          sitProgress[sit].semestres[semLabel] = { status: status, count: count };
-          updateUI();
-        }
-      ).then(function(result) {
-        sitProgress[sit] = { loaded: result.data.length, total: result.total, status: 'done', semestres: sitProgress[sit].semestres };
-        updateUI();
-        return { situacao: sit, data: result.data, total: result.total };
-      });
-    }));
 
-    // Consolidar
-    var allData = [];
+      var result = await biFetchExcel(session, p.ini, p.fim);
+      if (result.success && result.xlsx_base64) {
+        progCurrent.textContent = '● Processando ' + p.label + '...';
+        var registros = biParseExcel(result.xlsx_base64);
+        allData = allData.concat(registros);
+        detStatus[p.label] = { status: 'done', count: registros.length };
+      } else {
+        detStatus[p.label] = { status: 'done', count: 0 };
+      }
+      updateUI();
+    }
+
+    // Calcular totais
     var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
-    for (var i = 0; i < results.length; i++) {
-      allData = allData.concat(results[i].data);
-      if (results[i].situacao === 1) totaisReais.ativos = results[i].total;
-      else if (results[i].situacao === 2) totaisReais.suspensos = results[i].total;
-      else if (results[i].situacao === 3) totaisReais.cancelados = results[i].total;
+    for (var i = 0; i < allData.length; i++) {
+      if (allData[i].situacao === 'Ativo') totaisReais.ativos++;
+      else if (allData[i].situacao === 'Cancelado') totaisReais.cancelados++;
+      else if (allData[i].situacao === 'Suspenso') totaisReais.suspensos++;
     }
 
     BI_DATA = allData;

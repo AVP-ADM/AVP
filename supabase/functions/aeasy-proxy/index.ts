@@ -188,6 +188,46 @@ serve(async (req) => {
       }
     }
 
+    // ACTION: BASE_EXCEL
+    // Gera e baixa o Excel Completo da AEasy por período, retorna como base64
+    // Params: session_cookie, data_inicial, data_final
+    if (action === "base_excel") {
+      const { data_inicial: exDataIni, data_final: exDataFim } = body;
+      const exportUrl = `${AEASY_URL}/vendas/exportar-relatorio-completo-associados?DepartNivel=1&TipoData=VendasDataCadastro&DataInicial=${exDataIni}&DataFinal=${exDataFim}&Fidelidade=&IndividuosEnderecosLogradouro=&IndividuosEnderecosBairro=&VendasCarrosPlaca=&VendasCarrosPlacaImplemento=&VendasCarrosModelosId=&PossuiEvento=&DataNascimento=&VendasDiasAtraso=&TipoVendasFaturasPagas=&FaturasPagas=&VeiculoZero=&ValorFipeInicio=&ValorFipeFinal=&FormaPagamento=&VendasClassificacao=&PossuiRastreador=&VendasCarrosRastreadorObrigatorio=&CarneEmitido=&PossuiCarne=&ConsultoresIndicadoresConsultoresNome=&VendasTipoSuspensao=&VendasCarrosValorDescontoConsultor=&VendasCarrosOrigemMigracao=&VendasFuncionariosConsultoresId=&VendasCarrosPortabilidade=&AssociadosMaisPlacas=&VendasCarrosAssociacaoOrigem=&CarrosChassi=&VendasCarrosPlotagem=&FaturaNaoGeradaMesAno=&FaturaNaoGeradaTipo=&ParcelasDisponiveis=&DadosExtra=&TermoAdesaoAssinado=&AuxilioProfissional=&VendasCarrosChassiRemarcado=&VendasCarrosLeilao=&VendasCarrosMediaMonta=&VendasCarrosMotivosDeprecacaoId=&RetornarLiderComEquipe=&ProdutosId=&ContabilizaParaMeta=`;
+
+      try {
+        // Step 1: Solicitar geração do Excel
+        const genResp = await fetch(exportUrl, {
+          headers: { Cookie: session_cookie, "User-Agent": "Mozilla/5.0", "X-Requested-With": "XMLHttpRequest" }
+        });
+        const genData = await genResp.json();
+        if (!genData.redirect) {
+          return new Response(JSON.stringify({ success: false, error: "Falha ao gerar Excel: " + (genData.mensagem || "sem redirect") }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        // Step 2: Baixar o arquivo XLSX
+        const fileUrl = `${AEASY_URL}/${genData.redirect}`;
+        const fileResp = await fetch(fileUrl, {
+          headers: { Cookie: session_cookie, "User-Agent": "Mozilla/5.0" }
+        });
+        if (!fileResp.ok) {
+          return new Response(JSON.stringify({ success: false, error: "Falha ao baixar arquivo: " + fileResp.status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const fileBuffer = await fileResp.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+
+        return new Response(JSON.stringify({
+          success: true,
+          xlsx_base64: base64,
+          file_size: fileBuffer.byteLength,
+          periodo: `${exDataIni} a ${exDataFim}`,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e: any) {
+        return new Response(JSON.stringify({ success: false, error: e.message }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     // ACTION: BASE_ASSOCIADOS
     // Busca a base completa de associados (paginado)
     // Params: session_cookie, situacoes (array [1,2,3]), start (offset), length (batch size), data_inicial (opcional), data_final (opcional)
