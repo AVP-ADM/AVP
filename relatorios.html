@@ -4135,21 +4135,22 @@ async function biLoadFromSupabase() {
     // Atualizar mensagem
     if (emptyEl) emptyEl.querySelector('p').textContent = 'Carregando ' + metadata.totalRegistros.toLocaleString('pt-BR') + ' registros do servidor...';
 
-    // Buscar todos os chunks
-    var respChunks = await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache?chunk_index=gt.0&select=chunk_index,dados&order=chunk_index.asc', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    });
-    var chunks = await respChunks.json();
-    if (!chunks || chunks.length === 0) {
-      biResetEmpty(); return;
-    }
-
+    // Buscar chunks um a um (evita erro 500 por payload grande)
     var allData = [];
-    for (var i = 0; i < chunks.length; i++) {
-      allData = allData.concat(chunks[i].dados || []);
+    var chunkIndex = 1;
+    var totalChunks = Math.ceil(metadata.totalRegistros / 5000);
+    
+    while (true) {
+      var respChunk = await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache?chunk_index=eq.' + chunkIndex + '&select=dados', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      var chunkData = await respChunk.json();
+      if (!chunkData || chunkData.length === 0 || !chunkData[0].dados || chunkData[0].dados.length === 0) break;
+      allData = allData.concat(chunkData[0].dados);
+      chunkIndex++;
       if (emptyEl) {
-        var pct = Math.round(((i + 1) / chunks.length) * 100);
-        emptyEl.querySelector('p').textContent = 'Carregando do servidor... ' + pct + '%';
+        var pct = Math.round(((chunkIndex - 1) / totalChunks) * 100);
+        emptyEl.querySelector('p').textContent = 'Carregando do servidor... ' + pct + '% (' + allData.length.toLocaleString('pt-BR') + ' registros)';
       }
     }
 
