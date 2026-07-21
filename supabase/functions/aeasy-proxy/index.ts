@@ -238,7 +238,7 @@ serve(async (req) => {
           for (const r of rawData.data) {
             registros.push({
               nome: r.ClientesIndividuosNome || "",
-              situacao: r.VendasSituacao || "",
+              situacao: parseInt(r.VendasSituacaoEnum) === 1 ? "Ativo" : parseInt(r.VendasSituacaoEnum) === 2 ? "Suspenso" : parseInt(r.VendasSituacaoEnum) === 3 ? "Cancelado" : (r.VendasSituacao || ""),
               situacao_enum: parseInt(r.VendasSituacaoEnum) || 0,
               categoria: r.VendasCarrosCategoriasCarrosNome || "",
               plano: r.VendasCarrosCategoriasPlanosNome || "",

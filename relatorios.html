@@ -4247,10 +4247,10 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Situação × Ano (3 situações × 4 anos = 12 jobs em paralelo)
-    var anos = ['2023', '2024', '2025', '2026'];
-    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Cancelado, 3=Suspenso
-    var sitLabels = { 1: 'Ativos', 2: 'Cancelados', 3: 'Suspensos' };
+    // Situação × Ano (3 situações × anos = jobs em paralelo)
+    var anos = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'];
+    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Suspenso, 3=Cancelado (conforme AEasy real)
+    var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
     var jobs = [];
     for (var s = 0; s < situacoes.length; s++) {
       for (var a = 0; a < anos.length; a++) {
@@ -4307,8 +4307,8 @@ async function biLoadBase() {
     for (var i = 0; i < results.length; i++) {
       allData = allData.concat(results[i].data);
       if (results[i].situacao === 1) totaisReais.ativos += results[i].total;
-      else if (results[i].situacao === 2) totaisReais.cancelados += results[i].total;
-      else if (results[i].situacao === 3) totaisReais.suspensos += results[i].total;
+      else if (results[i].situacao === 2) totaisReais.suspensos += results[i].total;
+      else if (results[i].situacao === 3) totaisReais.cancelados += results[i].total;
     }
 
     BI_DATA = allData;
