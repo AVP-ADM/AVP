@@ -4234,22 +4234,34 @@ async function biFetchSituacaoAno(session_cookie, situacao, ano, onProgress) {
 async function biLoadBase() {
   if (BI_LOADING) return;
   BI_LOADING = true;
+  var startTime = Date.now();
   var overlay = document.createElement('div');
   overlay.className = 'bi-progress-overlay';
   overlay.id = 'biProgressOverlay';
-  overlay.innerHTML = '<div class="bi-progress-box"><h3>Atualizando base...</h3><div class="bi-progress-bar"><div class="bi-progress-bar-fill" id="biProgressFill" style="width:0%"></div></div><p class="bi-progress-text" id="biProgressText">Iniciando...</p></div>';
+  overlay.innerHTML = '<div class="bi-progress-box">' +
+    '<h3 id="biProgTitle">Atualizando base...</h3>' +
+    '<div class="bi-progress-bar"><div class="bi-progress-bar-fill" id="biProgressFill" style="width:0%"></div></div>' +
+    '<p class="bi-progress-text" id="biProgCurrent"></p>' +
+    '<p class="bi-progress-text" id="biProgSummary" style="margin-top:4px"></p>' +
+    '<button onclick="document.getElementById(\'biProgDetails\').style.display=document.getElementById(\'biProgDetails\').style.display===\'none\'?\'block\':\'none\';this.textContent=document.getElementById(\'biProgDetails\').style.display===\'none\'?\'Mostrar detalhes ▼\':\'Ocultar detalhes ▲\'" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:5px 12px;font-size:.7rem;color:var(--text2);cursor:pointer;font-family:var(--font)">Mostrar detalhes ▼</button>' +
+    '<div id="biProgDetails" style="display:none;margin-top:10px;text-align:left;font-size:.7rem;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px;background:var(--bg)"></div>' +
+    '</div>';
   document.body.appendChild(overlay);
 
   try {
     var fill = document.getElementById('biProgressFill');
-    var text = document.getElementById('biProgressText');
-    text.textContent = 'Fazendo login...';
+    var progCurrent = document.getElementById('biProgCurrent');
+    var progSummary = document.getElementById('biProgSummary');
+    var progDetails = document.getElementById('biProgDetails');
+    var progTitle = document.getElementById('biProgTitle');
+
+    progCurrent.textContent = 'Fazendo login...';
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Situação × Ano (3 situações × anos = jobs em paralelo)
+    // Situação × Ano (3 situações × 7 anos = 21 jobs em paralelo)
     var anos = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'];
-    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Suspenso, 3=Cancelado (conforme AEasy real)
+    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Suspenso, 3=Cancelado
     var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
     var jobs = [];
     for (var s = 0; s < situacoes.length; s++) {
@@ -4260,14 +4272,13 @@ async function biLoadBase() {
 
     var progress = {};
     var totalEsperado = 63000;
-    text.textContent = 'Buscando base (12 requests paralelos)...';
-
-    // Throttle: max 4 simultâneos
-    var allData = [];
-    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
-    var concurrency = 4;
-    var jobIndex = 0;
     var completedJobs = 0;
+    var activeJob = '';
+
+    // Initialize progress tracking
+    for (var j = 0; j < jobs.length; j++) {
+      progress[jobs[j].label] = { loaded: 0, total: 0, status: 'waiting' };
+    }
 
     function updateProgress() {
       var sumLoaded = 0, sumTotal = 0;
@@ -4275,16 +4286,53 @@ async function biLoadBase() {
       if (sumTotal > 0) totalEsperado = sumTotal;
       var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
       fill.style.width = Math.min(pct, 95) + '%';
-      text.textContent = 'Buscando... ' + sumLoaded.toLocaleString('pt-BR') + ' / ' + sumTotal.toLocaleString('pt-BR') + ' (' + completedJobs + '/' + jobs.length + ' concluidos)';
+
+      // Current job text
+      progCurrent.textContent = activeJob ? ('● ' + activeJob) : 'Processando...';
+
+      // Summary
+      progSummary.textContent = sumLoaded.toLocaleString('pt-BR') + ' de ' + sumTotal.toLocaleString('pt-BR') + ' registros  •  ' + completedJobs + '/' + jobs.length + ' concluidos';
+
+      // Details panel
+      var detHtml = '';
+      var groups = { 'Ativos': [], 'Suspensos': [], 'Cancelados': [] };
+      for (var k in progress) {
+        var p = progress[k];
+        var groupName = k.split(' ')[0];
+        var ano = k.split(' ')[1];
+        var icon = p.status === 'done' ? '<span style="color:var(--green)">✓</span>' : p.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
+        var info = p.status === 'done' ? p.loaded.toLocaleString('pt-BR') : p.status === 'loading' ? (p.loaded.toLocaleString('pt-BR') + '/' + p.total.toLocaleString('pt-BR')) : '';
+        if (groups[groupName]) groups[groupName].push({ ano: ano, icon: icon, info: info });
+      }
+      for (var g in groups) {
+        detHtml += '<div style="margin-bottom:8px"><strong style="color:var(--text1)">' + g + '</strong><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
+        for (var i = 0; i < groups[g].length; i++) {
+          var item = groups[g][i];
+          detHtml += '<span style="background:var(--surface-2);padding:2px 8px;border-radius:4px;white-space:nowrap">' + item.icon + ' ' + item.ano + (item.info ? ': ' + item.info : '') + '</span>';
+        }
+        detHtml += '</div></div>';
+      }
+      progDetails.innerHTML = detHtml;
     }
+
+    updateProgress();
+
+    // Throttle: max 4 simultâneos
+    var allData = [];
+    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
+    var concurrency = 4;
 
     async function runJob(job) {
       var key = job.label;
-      progress[key] = { loaded: 0, total: 0 };
+      progress[key] = { loaded: 0, total: 0, status: 'loading' };
+      activeJob = key;
+      updateProgress();
       var result = await biFetchSituacaoAno(session, job.situacao, job.ano, function(loaded, total) {
-        progress[key] = { loaded: loaded, total: total };
+        progress[key] = { loaded: loaded, total: total, status: 'loading' };
+        activeJob = key + ' — ' + loaded.toLocaleString('pt-BR') + '/' + total.toLocaleString('pt-BR');
         updateProgress();
       });
+      progress[key] = { loaded: result.data.length, total: result.total, status: 'done' };
       completedJobs++;
       updateProgress();
       return { situacao: job.situacao, ano: job.ano, data: result.data, total: result.total };
@@ -4313,15 +4361,23 @@ async function biLoadBase() {
 
     BI_DATA = allData;
     BI_TOTAIS_REAIS = totaisReais;
+
+    // Show completion state
+    var elapsed = Math.round((Date.now() - startTime) / 1000);
+    var mins = Math.floor(elapsed / 60);
+    var secs = elapsed % 60;
+    var timeStr = mins > 0 ? mins + 'min ' + secs + 's' : secs + 's';
     fill.style.width = '100%';
-    text.textContent = 'Concluido! ' + BI_DATA.length.toLocaleString('pt-BR') + ' registros carregados.';
+    progTitle.innerHTML = '<span style="color:var(--green)">✓</span> Base atualizada com sucesso!';
+    progCurrent.textContent = BI_DATA.length.toLocaleString('pt-BR') + ' registros carregados em ' + timeStr;
+    progSummary.textContent = 'Ativos: ' + totaisReais.ativos.toLocaleString('pt-BR') + '  •  Suspensos: ' + totaisReais.suspensos.toLocaleString('pt-BR') + '  •  Cancelados: ' + totaisReais.cancelados.toLocaleString('pt-BR');
     biSaveToCache();
 
     setTimeout(function() {
       var ov = document.getElementById('biProgressOverlay');
       if (ov) ov.remove();
       biShowDashboard();
-    }, 800);
+    }, 2000);
   } catch(e) {
     var ov = document.getElementById('biProgressOverlay');
     if (ov) ov.remove();
