@@ -4187,51 +4187,46 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchByYear(session_cookie, ano, progressCb) {
-  var allData = [];
-  var batchSize = 2000;
-  var total = 0;
+async function biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, start, length) {
   var maxRetries = 2;
+  var retries = 0;
+  while (retries <= maxRetries) {
+    try {
+      var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [situacao], start: start, length: length, data_inicial: dataInicial, data_final: dataFinal })
+      });
+      var d = await resp.json();
+      if (d.success) return d;
+      retries++;
+      if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
+      await new Promise(function(r){ setTimeout(r, 2000); });
+    } catch(e) {
+      retries++;
+      if (retries > maxRetries) return { success: false, recordsTotal: 0, data: [] };
+      await new Promise(function(r){ setTimeout(r, 2000); });
+    }
+  }
+  return { success: false, recordsTotal: 0, data: [] };
+}
+
+async function biFetchSituacaoAno(session_cookie, situacao, ano, onProgress) {
   var dataInicial = ano + '-01-01';
   var dataFinal = ano + '-12-31';
-  // First request to get total for this year
-  var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-    body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [1, 2, 3], start: 0, length: batchSize, data_inicial: dataInicial, data_final: dataFinal })
-  });
-  var d = await resp.json();
+  var batchSize = 2000;
+  var allData = [];
+  // First batch to get total
+  var d = await biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, 0, batchSize);
   if (!d.success) return { data: [], total: 0 };
-  total = d.recordsTotal;
+  var total = d.recordsTotal;
   allData = allData.concat(d.data || []);
-  if (progressCb) progressCb(allData.length, total, ano);
-  // Fetch remaining batches
+  if (onProgress) onProgress(allData.length, total);
+  // Remaining batches
   while (allData.length < total) {
-    var start = allData.length;
-    var retries = 0;
-    var batchOk = false;
-    while (retries < maxRetries && !batchOk) {
-      try {
-        resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
-          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-          body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacoes: [1, 2, 3], start: start, length: batchSize, data_inicial: dataInicial, data_final: dataFinal })
-        });
-        d = await resp.json();
-        if (d.success && d.data && d.data.length > 0) {
-          allData = allData.concat(d.data);
-          batchOk = true;
-        } else {
-          retries++;
-          if (retries >= maxRetries) break;
-          await new Promise(function(r){ setTimeout(r, 2000); });
-        }
-      } catch(e) {
-        retries++;
-        if (retries >= maxRetries) break;
-        await new Promise(function(r){ setTimeout(r, 2000); });
-      }
-    }
-    if (!batchOk) break;
-    if (progressCb) progressCb(allData.length, total, ano);
+    d = await biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, allData.length, batchSize);
+    if (!d.success || !d.data || d.data.length === 0) break;
+    allData = allData.concat(d.data);
+    if (onProgress) onProgress(allData.length, total);
   }
   return { data: allData, total: total };
 }
@@ -4252,40 +4247,68 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Buscar por ano em paralelo (2022-2026)
-    var anos = ['2022', '2023', '2024', '2025', '2026'];
-    var totalBaixado = 0;
-    var totalEsperado = 60000; // estimativa inicial
-    var allData = [];
-    var anoResults = {};
-
-    // Lançar todos os anos em paralelo
-    text.textContent = 'Buscando base por ano (paralelo)...';
-    var promises = anos.map(function(ano) {
-      return biFetchByYear(session, ano, function(loaded, total, anoLabel) {
-        anoResults[anoLabel] = { loaded: loaded, total: total };
-        var sumLoaded = 0, sumTotal = 0;
-        for (var k in anoResults) { sumLoaded += anoResults[k].loaded; sumTotal += anoResults[k].total; }
-        if (sumTotal > 0) totalEsperado = sumTotal;
-        var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
-        fill.style.width = Math.min(pct, 95) + '%';
-        text.textContent = 'Buscando... ' + sumLoaded.toLocaleString('pt-BR') + ' / ' + sumTotal.toLocaleString('pt-BR') + ' registros';
-      });
-    });
-
-    var results = await Promise.all(promises);
-
-    // Consolidar dados
-    for (var i = 0; i < results.length; i++) {
-      allData = allData.concat(results[i].data);
+    // Situação × Ano (3 situações × 4 anos = 12 jobs em paralelo)
+    var anos = ['2023', '2024', '2025', '2026'];
+    var situacoes = [1, 2, 3]; // 1=Ativo, 2=Cancelado, 3=Suspenso
+    var sitLabels = { 1: 'Ativos', 2: 'Cancelados', 3: 'Suspensos' };
+    var jobs = [];
+    for (var s = 0; s < situacoes.length; s++) {
+      for (var a = 0; a < anos.length; a++) {
+        jobs.push({ situacao: situacoes[s], ano: anos[a], label: sitLabels[situacoes[s]] + ' ' + anos[a] });
+      }
     }
 
-    // Calcular totais reais por situação (client-side)
+    var progress = {};
+    var totalEsperado = 63000;
+    text.textContent = 'Buscando base (12 requests paralelos)...';
+
+    // Throttle: max 4 simultâneos
+    var allData = [];
     var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
-    for (var i = 0; i < allData.length; i++) {
-      if (allData[i].situacao === 'Ativo') totaisReais.ativos++;
-      else if (allData[i].situacao === 'Suspenso') totaisReais.suspensos++;
-      else totaisReais.cancelados++;
+    var concurrency = 4;
+    var jobIndex = 0;
+    var completedJobs = 0;
+
+    function updateProgress() {
+      var sumLoaded = 0, sumTotal = 0;
+      for (var k in progress) { sumLoaded += progress[k].loaded; sumTotal += progress[k].total; }
+      if (sumTotal > 0) totalEsperado = sumTotal;
+      var pct = Math.round((sumLoaded / Math.max(totalEsperado, 1)) * 100);
+      fill.style.width = Math.min(pct, 95) + '%';
+      text.textContent = 'Buscando... ' + sumLoaded.toLocaleString('pt-BR') + ' / ' + sumTotal.toLocaleString('pt-BR') + ' (' + completedJobs + '/' + jobs.length + ' concluidos)';
+    }
+
+    async function runJob(job) {
+      var key = job.label;
+      progress[key] = { loaded: 0, total: 0 };
+      var result = await biFetchSituacaoAno(session, job.situacao, job.ano, function(loaded, total) {
+        progress[key] = { loaded: loaded, total: total };
+        updateProgress();
+      });
+      completedJobs++;
+      updateProgress();
+      return { situacao: job.situacao, ano: job.ano, data: result.data, total: result.total };
+    }
+
+    // Run with concurrency limit
+    var results = [];
+    var executing = [];
+    for (var i = 0; i < jobs.length; i++) {
+      var p = runJob(jobs[i]).then(function(r) { results.push(r); });
+      executing.push(p);
+      if (executing.length >= concurrency) {
+        await Promise.race(executing);
+        executing = executing.filter(function(ep) { return ep !== undefined; });
+      }
+    }
+    await Promise.all(executing);
+
+    // Consolidar
+    for (var i = 0; i < results.length; i++) {
+      allData = allData.concat(results[i].data);
+      if (results[i].situacao === 1) totaisReais.ativos += results[i].total;
+      else if (results[i].situacao === 2) totaisReais.cancelados += results[i].total;
+      else if (results[i].situacao === 3) totaisReais.suspensos += results[i].total;
     }
 
     BI_DATA = allData;
