@@ -4211,8 +4211,17 @@ async function biFetchChunk(session_cookie, situacao, dataInicial, dataFinal, st
 }
 
 async function biFetchSituacaoAno(session_cookie, situacao, ano, onProgress) {
-  var dataInicial = ano + '-01-01';
-  var dataFinal = ano + '-12-31';
+  // Suporta ranges como "2000-2022" ou anos simples como "2023"
+  var dataInicial, dataFinal;
+  if (ano.indexOf('-') > 4) {
+    // Range format: "2000-2022"
+    var parts = ano.split('-');
+    dataInicial = parts[0] + '-01-01';
+    dataFinal = parts[1] + '-12-31';
+  } else {
+    dataInicial = ano + '-01-01';
+    dataFinal = ano + '-12-31';
+  }
   var batchSize = 2000;
   var allData = [];
   // First batch to get total
@@ -4259,8 +4268,9 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Situação × Ano (3 situações × 7 anos = 21 jobs em paralelo)
-    var anos = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'];
+    // Situação × Ano (3 situações × 5 períodos = 15 jobs em paralelo)
+    // Usa DataCadastro para capturar toda a base (igual South)
+    var anos = ['2000-2022', '2023', '2024', '2025', '2026'];
     var situacoes = [1, 2, 3]; // 1=Ativo, 2=Suspenso, 3=Cancelado
     var sitLabels = { 1: 'Ativos', 2: 'Suspensos', 3: 'Cancelados' };
     var jobs = [];

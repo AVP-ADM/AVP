@@ -205,9 +205,9 @@ serve(async (req) => {
       formData.append("start", String(startOffset || 0));
       formData.append("length", String(batchLength || 5000));
       formData.append("formPesquisa[DepartNivel]", "1");
-      // Filtro de data (opcional — se presente, usa TipoData=VendasDataAtivacao)
+      // Filtro de data (opcional — usa VendasDataCadastro para capturar toda a base)
       if (biDataInicial && biDataFinal) {
-        formData.append("formPesquisa[TipoData]", "VendasDataAtivacao");
+        formData.append("formPesquisa[TipoData]", "VendasDataCadastro");
         formData.append("formPesquisa[DataInicial]", biDataInicial);
         formData.append("formPesquisa[DataFinal]", biDataFinal);
       }
