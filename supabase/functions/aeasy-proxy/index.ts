@@ -215,7 +215,15 @@ serve(async (req) => {
         }
 
         const fileBuffer = await fileResp.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+        // Convert to base64 in chunks to avoid stack overflow
+        const bytes = new Uint8Array(fileBuffer);
+        let base64 = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          const chunk = bytes.slice(i, i + chunkSize);
+          base64 += String.fromCharCode.apply(null, chunk as unknown as number[]);
+        }
+        base64 = btoa(base64);
 
         return new Response(JSON.stringify({
           success: true,
