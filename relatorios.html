@@ -4094,10 +4094,16 @@ function biLoadFromCache() {
       var obj = JSON.parse(cached);
       BI_DATA = obj.data || [];
       BI_TOTAIS_REAIS = obj.totaisReais || { ativos: 0, cancelados: 0, suspensos: 0 };
-      if (BI_DATA.length > 0) {
+      // Descarta cache se total for absurdo (dado de versão anterior com duplicatas)
+      if (BI_DATA.length > 0 && BI_DATA.length < 70000) {
         document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + (obj.timestamp || '-');
         biShowDashboard();
         return true;
+      } else {
+        // Cache inválido — limpa
+        localStorage.removeItem('avp-bi-base');
+        BI_DATA = [];
+        BI_TOTAIS_REAIS = { ativos: 0, cancelados: 0, suspensos: 0 };
       }
     } catch(e) {}
   }
