@@ -4368,12 +4368,18 @@ async function biLoadBase() {
     var session = await biLogin();
     if (!session) { throw new Error('Falha no login'); }
 
-    // Baixar Excel Completo por ano (sequencial para não sobrecarregar)
+    // Baixar Excel Completo por trimestre (periodos menores evitam timeout de 60s)
     var periodos = [
-      { ini: '2000-01-01', fim: '2023-12-31', label: 'ate 2023' },
-      { ini: '2024-01-01', fim: '2024-12-31', label: '2024' },
-      { ini: '2025-01-01', fim: '2025-12-31', label: '2025' },
-      { ini: '2026-01-01', fim: '2026-12-31', label: '2026' }
+      { ini: '2000-01-01', fim: '2022-12-31', label: 'ate 2022' },
+      { ini: '2023-01-01', fim: '2023-06-30', label: '2023-S1' },
+      { ini: '2023-07-01', fim: '2023-12-31', label: '2023-S2' },
+      { ini: '2024-01-01', fim: '2024-06-30', label: '2024-S1' },
+      { ini: '2024-07-01', fim: '2024-12-31', label: '2024-S2' },
+      { ini: '2025-01-01', fim: '2025-06-30', label: '2025-S1' },
+      { ini: '2025-07-01', fim: '2025-12-31', label: '2025-S2' },
+      { ini: '2026-01-01', fim: '2026-03-31', label: '2026-T1' },
+      { ini: '2026-04-01', fim: '2026-06-30', label: '2026-T2' },
+      { ini: '2026-07-01', fim: '2026-12-31', label: '2026-T3' }
     ];
     var allData = [];
     var detStatus = {};
