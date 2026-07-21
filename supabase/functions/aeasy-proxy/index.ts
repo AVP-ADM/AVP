@@ -188,6 +188,135 @@ serve(async (req) => {
       }
     }
 
+    // ACTION: BASE_ASSOCIADOS
+    // Busca a base completa de associados por situação (paginado)
+    // Params: session_cookie, situacao (1=Ativo,2=Cancelado,3=Suspenso), start (offset), length (batch size)
+    if (action === "base_associados") {
+      const { situacao, start: startOffset, length: batchLength } = body;
+      const url = `${AEASY_URL}/vendas/listagem`;
+      const formData = new URLSearchParams();
+      formData.append("draw", "1");
+      formData.append("columns[0][data]", "ClientesIndividuosNome");
+      formData.append("columns[0][name]", "ClientesIndividuosNome");
+      formData.append("columns[0][searchable]", "false");
+      formData.append("columns[0][orderable]", "true");
+      formData.append("order[0][column]", "0");
+      formData.append("order[0][dir]", "ASC");
+      formData.append("start", String(startOffset || 0));
+      formData.append("length", String(batchLength || 5000));
+      formData.append("formPesquisa[DepartNivel]", "1");
+      // Sem filtro de data — traz toda a base da situação
+      formData.append("formPesquisa[VendasSituacao][]", String(situacao || 1));
+      formData.append("formPesquisa[submitFilter]", "true");
+
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            Cookie: session_cookie,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Mozilla/5.0",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: formData.toString(),
+        });
+
+        const rawData = await resp.json();
+        const recordsTotal = parseInt(rawData.recordsTotal) || 0;
+        const registros: any[] = [];
+
+        if (rawData.data) {
+          for (const r of rawData.data) {
+            registros.push({
+              nome: r.ClientesIndividuosNome || "",
+              situacao: r.VendasSituacao || "",
+              situacao_enum: parseInt(r.VendasSituacaoEnum) || 0,
+              categoria: r.VendasCarrosCategoriasCarrosNome || "",
+              plano: r.VendasCarrosCategoriasPlanosNome || "",
+              marca: r.VendasCarrosMarcasNome || "",
+              modelo: r.VendasCarrosModelosNome || "",
+              cor: r.VendasCarrosCarrosCor || "",
+              ano_fabricacao: parseInt(r.CarrosAnoFabricacao) || 0,
+              placa: r.VendasCarrosPlaca || "",
+              cidade: r.IndividuosEnderecosCidadesNome || "",
+              uf: r.IndividuosEnderecosEstadosUf || "",
+              consultor: r.ConsultoresNome || "",
+              valor_mensal: parseValorBR(r.VendasValor),
+              valor_fipe: parseValorBR(r.VendasCarrosValorFipe),
+              valor_adesao: parseValorBR(r.VendasCarrosValorAdesao),
+              data_ativacao: r.VendasDataAtivacao || "",
+              data_cancelamento: r.VendasDataCancelamento || "",
+              data_suspensao: r.VendasDataSuspensao || "",
+              motivo_cancelamento: r.VendasMotivosCancelamentosNome || "",
+              rastreador: String(r.VendasCarrosRastreadorInstalado) === "1" ? 1 : 0,
+              numero_rastreador: r.VendasCarrosNumeroRastreador || "",
+              dias_atraso: parseInt(r.VendasDiasAtraso) || 0,
+              faturas_pagas: parseInt(r.VendasQuantidadeFaturasPagas) || 0,
+              forma_pagamento: parseInt(r.VendasFormaPagamentoEnum) || 0,
+              telefone: r.VendaTelefone || "",
+              email: r.ClientesIndividuosEmail || "",
+              classificacao: r.VendasClassificacao || "",
+              data_cadastro: r.VendasDataCadastro || "",
+            });
+          }
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          recordsTotal,
+          recordsReturned: registros.length,
+          start: startOffset || 0,
+          data: registros,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e: any) {
+        return new Response(JSON.stringify({ success: false, error: e.message, recordsTotal: 0, data: [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    // ACTION: BASE_ASSOCIADOS_COUNT
+    // Retorna apenas a contagem por situação (rápido, para KPIs iniciais)
+    if (action === "base_associados_count") {
+      const { situacao } = body;
+      const url = `${AEASY_URL}/vendas/listagem`;
+      const formData = new URLSearchParams();
+      formData.append("draw", "1");
+      formData.append("columns[0][data]", "ClientesIndividuosNome");
+      formData.append("columns[0][name]", "ClientesIndividuosNome");
+      formData.append("columns[0][searchable]", "false");
+      formData.append("columns[0][orderable]", "true");
+      formData.append("order[0][column]", "0");
+      formData.append("order[0][dir]", "ASC");
+      formData.append("start", "0");
+      formData.append("length", "1");
+      formData.append("formPesquisa[DepartNivel]", "1");
+      formData.append("formPesquisa[VendasSituacao][]", String(situacao || 1));
+      formData.append("formPesquisa[submitFilter]", "true");
+
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            Cookie: session_cookie,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Mozilla/5.0",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+          body: formData.toString(),
+        });
+
+        const rawData = await resp.json();
+        const recordsTotal = parseInt(rawData.recordsTotal) || 0;
+
+        return new Response(JSON.stringify({
+          success: true,
+          situacao: situacao || 1,
+          total: recordsTotal,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e: any) {
+        return new Response(JSON.stringify({ success: false, error: e.message, total: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     return new Response(JSON.stringify({ error: "action invalida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
