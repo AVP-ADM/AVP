@@ -4100,7 +4100,43 @@ function biLoadFromCache() {
       }
     } catch(e) {}
   }
+  // Se não tem no localStorage, tenta Supabase
+  biLoadFromSupabase();
   return false;
+}
+
+async function biLoadFromSupabase() {
+  try {
+    // Buscar metadata (chunk_index=0)
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache?chunk_index=eq.0&select=metadata,data_fetch', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    var meta = await resp.json();
+    if (!meta || meta.length === 0) return;
+    var metadata = meta[0].metadata || {};
+    if (!metadata.totalRegistros || metadata.totalRegistros === 0) return;
+
+    // Buscar todos os chunks
+    var respChunks = await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache?chunk_index=gt.0&select=chunk_index,dados&order=chunk_index.asc', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    var chunks = await respChunks.json();
+    if (!chunks || chunks.length === 0) return;
+
+    var allData = [];
+    for (var i = 0; i < chunks.length; i++) {
+      allData = allData.concat(chunks[i].dados || []);
+    }
+
+    if (allData.length > 0) {
+      BI_DATA = allData;
+      BI_TOTAIS_REAIS = metadata.totaisReais || { ativos: 0, cancelados: 0, suspensos: 0 };
+      document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + (metadata.timestamp || '-');
+      // Salvar no localStorage para acesso rápido na próxima vez
+      try { localStorage.setItem('avp-bi-base', JSON.stringify({ data: BI_DATA, timestamp: metadata.timestamp, totaisReais: BI_TOTAIS_REAIS })); } catch(e) {}
+      biShowDashboard();
+    }
+  } catch(e) { /* silently fail */ }
 }
 
 function biSaveToCache() {
@@ -4109,6 +4145,37 @@ function biSaveToCache() {
   var obj = { data: BI_DATA, timestamp: ts, totaisReais: BI_TOTAIS_REAIS };
   try { localStorage.setItem('avp-bi-base', JSON.stringify(obj)); } catch(e) {}
   document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + ts;
+  // Salvar no Supabase em chunks
+  biSaveToSupabase(ts);
+}
+
+async function biSaveToSupabase(timestamp) {
+  try {
+    var CHUNK_SIZE = 5000;
+    // 1. Deletar dados antigos
+    await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache?id=gt.0', {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' }
+    });
+
+    // 2. Salvar metadata (chunk_index=0)
+    await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ chunk_index: 0, total_registros: BI_DATA.length, dados: [], metadata: { timestamp: timestamp, totaisReais: BI_TOTAIS_REAIS, totalRegistros: BI_DATA.length } })
+    });
+
+    // 3. Salvar dados em chunks
+    var totalChunks = Math.ceil(BI_DATA.length / CHUNK_SIZE);
+    for (var i = 0; i < totalChunks; i++) {
+      var chunk = BI_DATA.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+      await fetch(SUPABASE_URL + '/rest/v1/bi_base_cache', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ chunk_index: i + 1, total_registros: chunk.length, dados: chunk, metadata: {} })
+      });
+    }
+  } catch(e) { /* silently fail - localStorage still has the data */ }
 }
 
 async function biLogin() {
