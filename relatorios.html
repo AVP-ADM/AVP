@@ -4084,6 +4084,7 @@ var BI_PER_PAGE = 50;
 var BI_SORT_COL = 'nome';
 var BI_SORT_DIR = 'asc';
 var BI_LOADING = false;
+var BI_TOTAIS_REAIS = { ativos: 0, cancelados: 0, suspensos: 0 };
 
 function biLoadFromCache() {
   var cached = localStorage.getItem('avp-bi-base');
@@ -4091,6 +4092,7 @@ function biLoadFromCache() {
     try {
       var obj = JSON.parse(cached);
       BI_DATA = obj.data || [];
+      BI_TOTAIS_REAIS = obj.totaisReais || { ativos: 0, cancelados: 0, suspensos: 0 };
       if (BI_DATA.length > 0) {
         document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + (obj.timestamp || '-');
         biShowDashboard();
@@ -4104,7 +4106,7 @@ function biLoadFromCache() {
 function biSaveToCache() {
   var now = new Date();
   var ts = now.toLocaleString('pt-BR');
-  var obj = { data: BI_DATA, timestamp: ts };
+  var obj = { data: BI_DATA, timestamp: ts, totaisReais: BI_TOTAIS_REAIS };
   try { localStorage.setItem('avp-bi-base', JSON.stringify(obj)); } catch(e) {}
   document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + ts;
 }
@@ -4121,8 +4123,9 @@ async function biLogin() {
 async function biFetchSituacao(session_cookie, situacao, progressCb) {
   var allData = [];
   var start = 0;
-  var batchSize = 5000;
+  var batchSize = 2000;
   var total = 0;
+  var maxRetries = 2;
   // First request to get total
   var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
@@ -4136,13 +4139,30 @@ async function biFetchSituacao(session_cookie, situacao, progressCb) {
   // Fetch remaining batches
   while (allData.length < total) {
     start = allData.length;
-    resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-      body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: start, length: batchSize })
-    });
-    d = await resp.json();
-    if (!d.success || !d.data || d.data.length === 0) break;
-    allData = allData.concat(d.data);
+    var retries = 0;
+    var batchOk = false;
+    while (retries < maxRetries && !batchOk) {
+      try {
+        resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+          body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: start, length: batchSize })
+        });
+        d = await resp.json();
+        if (d.success && d.data && d.data.length > 0) {
+          allData = allData.concat(d.data);
+          batchOk = true;
+        } else {
+          retries++;
+          if (retries >= maxRetries) break;
+          await new Promise(function(r){ setTimeout(r, 2000); });
+        }
+      } catch(e) {
+        retries++;
+        if (retries >= maxRetries) break;
+        await new Promise(function(r){ setTimeout(r, 2000); });
+      }
+    }
+    if (!batchOk) break;
     if (progressCb) progressCb(allData.length, total);
   }
   return { data: allData, total: total };
@@ -4167,20 +4187,26 @@ async function biLoadBase() {
     var allData = [];
     var situacoes = [1, 2, 3];
     var labels = ['Ativos', 'Cancelados', 'Suspensos'];
-    var totalEsperado = 0;
+    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
+    var totalGeral = 0;
 
     for (var i = 0; i < situacoes.length; i++) {
       text.textContent = 'Buscando ' + labels[i] + '...';
       var result = await biFetchSituacao(session, situacoes[i], function(loaded, total) {
-        var pct = Math.round(((allData.length + loaded) / Math.max(totalEsperado || total * 3, 1)) * 100);
+        var pct = Math.round(((allData.length + loaded) / Math.max(totalGeral || total * 3, 1)) * 100);
         fill.style.width = Math.min(pct, 95) + '%';
         text.textContent = 'Buscando ' + labels[i] + '... ' + loaded + '/' + total;
       });
-      if (i === 0) totalEsperado = result.total * 2.5; // estimate
+      // Salvar total REAL da API (recordsTotal)
+      if (situacoes[i] === 1) totaisReais.ativos = result.total;
+      else if (situacoes[i] === 2) totaisReais.cancelados = result.total;
+      else if (situacoes[i] === 3) totaisReais.suspensos = result.total;
+      if (i === 0) totalGeral = result.total * 2.5;
       allData = allData.concat(result.data);
     }
 
     BI_DATA = allData;
+    BI_TOTAIS_REAIS = totaisReais;
     fill.style.width = '100%';
     text.textContent = 'Concluido! ' + BI_DATA.length + ' registros carregados.';
     biSaveToCache();
@@ -4314,6 +4340,8 @@ function biClearFilters() {
 
 function biRenderKpis() {
   var data = BI_FILTERED;
+  var hasFilter = document.getElementById('biFiltroAno').value || document.getElementById('biFiltroMes').value || document.getElementById('biFiltroSituacao').value || document.getElementById('biFiltroCategoria').value || document.getElementById('biFiltroCidade').value || document.getElementById('biFiltroPlano').value || document.getElementById('biFiltroRastreador').checked || (document.getElementById('biSearchInput').value || '').trim();
+
   var ativos = 0, suspensos = 0, cancelados = 0, totalMensal = 0, comRastr = 0;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
@@ -4322,16 +4350,22 @@ function biRenderKpis() {
     else cancelados++;
     if (r.rastreador === 1) comRastr++;
   }
-  var total = data.length;
+
+  // Usar totais reais da API quando não tem filtro ativo
+  var dispAtivos = hasFilter ? ativos : BI_TOTAIS_REAIS.ativos;
+  var dispSuspensos = hasFilter ? suspensos : BI_TOTAIS_REAIS.suspensos;
+  var dispCancelados = hasFilter ? cancelados : BI_TOTAIS_REAIS.cancelados;
+  var dispTotal = dispAtivos + dispSuspensos + dispCancelados;
   var ticket = ativos > 0 ? totalMensal / ativos : 0;
+
   var html = '';
-  html += '<div class="bi-kpi" onclick="biFilterKpi(\'\')"><div class="bi-kpi-val">' + biFormatNum(total) + '</div><div class="bi-kpi-label">Total</div></div>';
-  html += '<div class="bi-kpi bi-green" onclick="biFilterKpi(\'Ativo\')"><div class="bi-kpi-val">' + biFormatNum(ativos) + '</div><div class="bi-kpi-label">Ativos</div><div class="bi-kpi-pct">' + (total > 0 ? (ativos / total * 100).toFixed(1) : 0) + '%</div></div>';
-  html += '<div class="bi-kpi bi-amber" onclick="biFilterKpi(\'Suspenso\')"><div class="bi-kpi-val">' + biFormatNum(suspensos) + '</div><div class="bi-kpi-label">Suspensos</div><div class="bi-kpi-pct">' + (total > 0 ? (suspensos / total * 100).toFixed(1) : 0) + '%</div></div>';
-  html += '<div class="bi-kpi bi-red" onclick="biFilterKpi(\'Cancelado\')"><div class="bi-kpi-val">' + biFormatNum(cancelados) + '</div><div class="bi-kpi-label">Cancelados</div><div class="bi-kpi-pct">' + (total > 0 ? (cancelados / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi" onclick="biFilterKpi(\'\')"><div class="bi-kpi-val">' + biFormatNum(dispTotal) + '</div><div class="bi-kpi-label">Total</div></div>';
+  html += '<div class="bi-kpi bi-green" onclick="biFilterKpi(\'Ativo\')"><div class="bi-kpi-val">' + biFormatNum(dispAtivos) + '</div><div class="bi-kpi-label">Ativos</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispAtivos / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-amber" onclick="biFilterKpi(\'Suspenso\')"><div class="bi-kpi-val">' + biFormatNum(dispSuspensos) + '</div><div class="bi-kpi-label">Suspensos</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispSuspensos / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-red" onclick="biFilterKpi(\'Cancelado\')"><div class="bi-kpi-val">' + biFormatNum(dispCancelados) + '</div><div class="bi-kpi-label">Cancelados</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispCancelados / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
   html += '<div class="bi-kpi bi-blue"><div class="bi-kpi-val">R$ ' + biFormatNum(Math.round(totalMensal)) + '</div><div class="bi-kpi-label">MRR (Ativos)</div></div>';
   html += '<div class="bi-kpi bi-purple"><div class="bi-kpi-val">R$ ' + ticket.toFixed(0) + '</div><div class="bi-kpi-label">Ticket Medio</div></div>';
-  html += '<div class="bi-kpi" onclick="document.getElementById(\'biFiltroRastreador\').checked=true;biApplyFilters();" style="border-left:3px solid #06b6d4"><div class="bi-kpi-val" style="color:#06b6d4">' + biFormatNum(comRastr) + '</div><div class="bi-kpi-label">Com Rastreador</div><div class="bi-kpi-pct">' + (total > 0 ? (comRastr / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi" onclick="document.getElementById(\'biFiltroRastreador\').checked=true;biApplyFilters();" style="border-left:3px solid #06b6d4"><div class="bi-kpi-val" style="color:#06b6d4">' + biFormatNum(comRastr) + '</div><div class="bi-kpi-label">Com Rastreador</div><div class="bi-kpi-pct">' + (data.length > 0 ? (comRastr / data.length * 100).toFixed(1) : 0) + '%</div></div>';
   document.getElementById('biKpis').innerHTML = html;
 }
 
