@@ -443,6 +443,88 @@ tr:last-child td{border-bottom:none}
 .detail-inline{padding:16px 20px;margin-left:20px;border-left:3px solid var(--accent);background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0}
 [data-theme="dark"] .detail-inline{background:var(--surface)}
 
+/* ========= BI BASE ========= */
+.bi-controls{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.bi-controls .bi-last-update{font-size:.7rem;color:var(--text3);margin-left:auto}
+.bi-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.bi-filters select,.bi-filters input{padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1);min-width:100px}
+.bi-filters label{display:flex;align-items:center;gap:5px;font-size:.74rem;font-weight:500;color:var(--text2);cursor:pointer}
+.bi-filters label input[type="checkbox"]{accent-color:var(--accent)}
+.bi-badge-filtro{display:inline-flex;align-items:center;gap:4px;background:var(--accent-light);color:var(--accent);font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:10px}
+.bi-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.bi-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.bi-kpi:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.bi-kpi.bi-kpi-active{box-shadow:0 0 0 2px var(--accent);transform:translateY(-2px)}
+.bi-kpi-val{font-size:1.5rem;font-weight:800;line-height:1.1}
+.bi-kpi-label{font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);margin-top:4px}
+.bi-kpi-pct{font-size:.62rem;color:var(--text3);margin-top:2px}
+.bi-kpi.bi-green .bi-kpi-val{color:var(--green)}
+.bi-kpi.bi-green{border-left:3px solid var(--green)}
+.bi-kpi.bi-amber .bi-kpi-val{color:var(--amber)}
+.bi-kpi.bi-amber{border-left:3px solid var(--amber)}
+.bi-kpi.bi-red .bi-kpi-val{color:var(--red)}
+.bi-kpi.bi-red{border-left:3px solid var(--red)}
+.bi-kpi.bi-blue .bi-kpi-val{color:var(--blue)}
+.bi-kpi.bi-blue{border-left:3px solid var(--blue)}
+.bi-kpi.bi-purple .bi-kpi-val{color:var(--purple)}
+.bi-kpi.bi-purple{border-left:3px solid var(--purple)}
+.bi-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.bi-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow)}
+.bi-chart-title{font-size:.8rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:var(--text1)}
+.bi-chart-title svg{width:14px;height:14px;color:var(--text3)}
+.bi-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bi-bar-label{width:140px;font-size:.68rem;font-weight:500;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.bi-bar-track{flex:1;height:18px;background:var(--surface-2);border-radius:3px;position:relative;overflow:hidden}
+.bi-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.bi-bar-fill.fill-green{background:linear-gradient(90deg,var(--green),#34d058)}
+.bi-bar-fill.fill-blue{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+.bi-bar-fill.fill-amber{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.bi-bar-fill.fill-purple{background:linear-gradient(90deg,var(--purple),#a78bfa)}
+.bi-bar-fill.fill-red{background:linear-gradient(90deg,var(--red),#f87171)}
+.bi-bar-value{font-size:.62rem;font-weight:700;color:var(--text2);min-width:50px;text-align:right;flex-shrink:0}
+.bi-donut-wrap{display:flex;align-items:center;justify-content:center;gap:20px;padding:8px 0}
+.bi-donut-svg{width:120px;height:120px}
+.bi-donut-legend{display:flex;flex-direction:column;gap:6px}
+.bi-donut-leg-item{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--text2)}
+.bi-donut-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bi-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bi-compare-card{background:var(--surface-2);border-radius:var(--radius);padding:14px;text-align:center}
+.bi-compare-card h4{font-size:.72rem;font-weight:700;margin-bottom:8px;color:var(--text2)}
+.bi-compare-val{font-size:1.1rem;font-weight:800}
+.bi-compare-sub{font-size:.62rem;color:var(--text3);margin-top:2px}
+.bi-table-controls{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.bi-table-controls .bi-search{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1)}
+.bi-table-info{font-size:.7rem;color:var(--text3)}
+.bi-pagination{display:flex;align-items:center;gap:6px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.bi-pagination button{padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text2);font-size:.72rem;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.bi-pagination button:hover{background:var(--surface-2);border-color:var(--border-strong)}
+.bi-pagination button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.bi-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.bi-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:var(--text3)}
+.bi-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.5}
+.bi-empty p{font-size:.84rem;margin-bottom:16px}
+.bi-progress-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center}
+.bi-progress-box{background:var(--surface);border-radius:var(--radius-lg);padding:32px 40px;text-align:center;box-shadow:var(--shadow-md);max-width:400px;width:90%}
+.bi-progress-box h3{font-size:1rem;font-weight:700;margin-bottom:12px;color:var(--text1)}
+.bi-progress-bar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.bi-progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px;transition:width .3s}
+.bi-progress-text{font-size:.72rem;color:var(--text3)}
+.bi-export-dropdown{position:relative;display:inline-block}
+.bi-export-menu{display:none;position:absolute;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);z-index:200;min-width:220px;overflow:hidden}
+.bi-export-menu.show{display:block}
+.bi-export-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;font-size:.76rem;font-family:var(--font);color:var(--text1);cursor:pointer;transition:background .15s;text-align:left}
+.bi-export-menu button:hover{background:var(--surface-2)}
+.bi-export-menu button svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
+#biTblBase th{cursor:pointer;position:relative}
+#biTblBase th:hover{background:var(--surface-2)}
+#biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
+#biTblBase th.sorted-asc::after{content:'▲'}
+#biTblBase th.sorted-desc::after{content:'▼'}
+.bi-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.bi-status-dot.st-ativo{background:var(--green)}
+.bi-status-dot.st-suspenso{background:var(--amber)}
+.bi-status-dot.st-cancelado{background:var(--red)}
+
 /* ========= RESPONSIVE ========= */
 @media(max-width:768px) and (pointer:coarse){
   .app-sidebar{display:none}
@@ -466,6 +548,12 @@ tr:last-child td{border-bottom:none}
   .equipe-table{font-size:.68rem}
   .equipe-table td,.equipe-table th{padding:5px 6px}
   .app-header{padding:10px 16px}
+  .bi-charts-grid{grid-template-columns:1fr}
+  .bi-kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .bi-bar-label{width:100px;font-size:.62rem}
+  .bi-compare-grid{grid-template-columns:1fr}
+  .bi-controls{flex-direction:column;align-items:stretch}
+  .bi-controls .bi-last-update{margin-left:0;text-align:center}
 }
 @media(min-width:769px){
   .bottom-nav{display:none!important}
@@ -520,6 +608,18 @@ tr:last-child td{border-bottom:none}
           </button>
           <button class="sidebar-sub-item" onclick="goPanel('campanha-consultores')">
             <span class="si-text">Consultores</span>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-group" data-group="base">
+        <button class="sidebar-item has-children" data-tooltip="Base" onclick="toggleSidebarGroup('base')">
+          <span class="si-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
+          <span class="si-text">Base</span>
+          <span class="si-expand si-text"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </button>
+        <div class="sidebar-sub">
+          <button class="sidebar-sub-item" onclick="goPanel('bi-base')">
+            <span class="si-text">BI Associados</span>
           </button>
         </div>
       </div>
@@ -900,6 +1000,110 @@ tr:last-child td{border-bottom:none}
         </div>
       </div>
 
+      <!-- PANEL: BI BASE ASSOCIADOS -->
+      <div class="panel" id="panel-bi-base">
+        <!-- Controls -->
+        <div class="bi-controls">
+          <h2 style="font-size:1.1rem;font-weight:700">BI Associados</h2>
+          <span class="bi-last-update" id="biLastUpdate"></span>
+          <button class="btn btn-green" id="biUpdateBtn" onclick="biLoadBase()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg> Atualizar Base</button>
+          <div class="bi-export-dropdown">
+            <button class="btn btn-export" onclick="biToggleExportMenu()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
+            <div class="bi-export-menu" id="biExportMenu">
+              <button onclick="biExportBase()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Base Completa</button>
+              <button onclick="biExportRastreadores()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15 1.65 1.65 0 003.17 14H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68 1.65 1.65 0 0010 3.17V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Rastreadores</button>
+              <button onclick="biExportFiltro()" id="biExportFiltroBtn" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtro Atual</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bi-filters" id="biFilters" style="display:none">
+          <select id="biFiltroAno" onchange="biApplyFilters()"><option value="">Ano</option></select>
+          <select id="biFiltroMes" onchange="biApplyFilters()"><option value="">Mes</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+          <select id="biFiltroSituacao" onchange="biApplyFilters()"><option value="">Situacao</option><option value="Ativo">Ativos</option><option value="Suspenso">Suspensos</option><option value="Cancelado">Cancelados</option></select>
+          <select id="biFiltroCategoria" onchange="biApplyFilters()"><option value="">Categoria</option></select>
+          <select id="biFiltroCidade" onchange="biApplyFilters()"><option value="">Cidade</option></select>
+          <select id="biFiltroPlano" onchange="biApplyFilters()"><option value="">Plano</option></select>
+          <label><input type="checkbox" id="biFiltroRastreador" onchange="biApplyFilters()"> Com Rastreador</label>
+          <button class="btn btn-outline" style="padding:4px 10px;font-size:.68rem" onclick="biClearFilters()">Limpar</button>
+          <span class="bi-badge-filtro" id="biBadgeFiltro" style="display:none"></span>
+        </div>
+
+        <!-- Empty state -->
+        <div class="bi-empty" id="biEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <p>Nenhuma base carregada.<br>Clique <strong>Atualizar Base</strong> para buscar os dados da AEasy.</p>
+        </div>
+
+        <!-- Dashboard content (hidden until data loads) -->
+        <div id="biDashboard" style="display:none">
+          <!-- KPIs -->
+          <div class="bi-kpi-grid" id="biKpis"></div>
+
+          <!-- Charts Grid -->
+          <div class="bi-charts-grid">
+            <!-- Donut: Situação -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg> Distribuicao por Situacao</div>
+              <div class="bi-donut-wrap" id="biDonut"></div>
+            </div>
+            <!-- Categorias -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Top Categorias</div>
+              <div id="biChartCategorias"></div>
+            </div>
+            <!-- Cidades -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Top Cidades</div>
+              <div id="biChartCidades"></div>
+            </div>
+            <!-- Marcas -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8l-4 4-4-4"/></svg> Top Marcas</div>
+              <div id="biChartMarcas"></div>
+            </div>
+            <!-- Planos -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20"/><path d="M5 20V10l7-7 7 7v10"/></svg> Distribuicao por Plano</div>
+              <div id="biChartPlanos"></div>
+            </div>
+            <!-- Rastreador comparativo -->
+            <div class="bi-chart-card">
+              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33"/></svg> Com vs Sem Rastreador</div>
+              <div class="bi-compare-grid" id="biCompareRastreador"></div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="bi-table-controls">
+            <input type="text" class="bi-search" id="biSearchInput" placeholder="Buscar nome, placa, cidade, modelo..." oninput="biApplyFilters()">
+            <span class="bi-table-info" id="biTableInfo"></span>
+          </div>
+          <div class="table-wrap" style="overflow-x:auto">
+            <table id="biTblBase" style="width:100%">
+              <thead>
+                <tr>
+                  <th onclick="biSortTable('nome')">#</th>
+                  <th onclick="biSortTable('nome')">Nome</th>
+                  <th onclick="biSortTable('situacao')">Situacao</th>
+                  <th onclick="biSortTable('categoria')">Categoria</th>
+                  <th onclick="biSortTable('plano')">Plano</th>
+                  <th onclick="biSortTable('marca')">Marca</th>
+                  <th onclick="biSortTable('cidade')">Cidade</th>
+                  <th onclick="biSortTable('uf')">UF</th>
+                  <th onclick="biSortTable('valor_mensal')" style="text-align:right">Mensal</th>
+                  <th onclick="biSortTable('rastreador')" style="text-align:center">Rastr.</th>
+                  <th onclick="biSortTable('data_ativacao')">Ativacao</th>
+                </tr>
+              </thead>
+              <tbody id="biTbody"></tbody>
+            </table>
+          </div>
+          <div class="bi-pagination" id="biPagination"></div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -922,6 +1126,10 @@ tr:last-child td{border-bottom:none}
     <button class="bottom-nav-item" onclick="goPanel('campanha-consultores')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       Consult.
+    </button>
+    <button class="bottom-nav-item" onclick="goPanel('bi-base')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      BI Base
     </button>
   </div>
 </nav>
@@ -3868,7 +4076,574 @@ function exportarConsultoresXLSX(){
   XLSX.writeFile(wb,'Campanha_Consultores_2026_'+dataHoje+'.xlsx');
 }
 
-/* ====== INIT CAMPANHA + ACORDO ====== */
+/* ====== BI BASE ASSOCIADOS ====== */
+var BI_DATA = [];
+var BI_FILTERED = [];
+var BI_PAGE = 0;
+var BI_PER_PAGE = 50;
+var BI_SORT_COL = 'nome';
+var BI_SORT_DIR = 'asc';
+var BI_LOADING = false;
+
+function biLoadFromCache() {
+  var cached = localStorage.getItem('avp-bi-base');
+  if (cached) {
+    try {
+      var obj = JSON.parse(cached);
+      BI_DATA = obj.data || [];
+      if (BI_DATA.length > 0) {
+        document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + (obj.timestamp || '-');
+        biShowDashboard();
+        return true;
+      }
+    } catch(e) {}
+  }
+  return false;
+}
+
+function biSaveToCache() {
+  var now = new Date();
+  var ts = now.toLocaleString('pt-BR');
+  var obj = { data: BI_DATA, timestamp: ts };
+  try { localStorage.setItem('avp-bi-base', JSON.stringify(obj)); } catch(e) {}
+  document.getElementById('biLastUpdate').textContent = 'Ultima atualizacao: ' + ts;
+}
+
+async function biLogin() {
+  var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ action: 'login' })
+  });
+  var d = await resp.json();
+  return d.success ? d.session_cookie : null;
+}
+
+async function biFetchSituacao(session_cookie, situacao, progressCb) {
+  var allData = [];
+  var start = 0;
+  var batchSize = 5000;
+  var total = 0;
+  // First request to get total
+  var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: 0, length: batchSize })
+  });
+  var d = await resp.json();
+  if (!d.success) return { data: [], total: 0 };
+  total = d.recordsTotal;
+  allData = allData.concat(d.data || []);
+  if (progressCb) progressCb(allData.length, total);
+  // Fetch remaining batches
+  while (allData.length < total) {
+    start = allData.length;
+    resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ action: 'base_associados', session_cookie: session_cookie, situacao: situacao, start: start, length: batchSize })
+    });
+    d = await resp.json();
+    if (!d.success || !d.data || d.data.length === 0) break;
+    allData = allData.concat(d.data);
+    if (progressCb) progressCb(allData.length, total);
+  }
+  return { data: allData, total: total };
+}
+async function biLoadBase() {
+  if (BI_LOADING) return;
+  BI_LOADING = true;
+  // Show progress
+  var overlay = document.createElement('div');
+  overlay.className = 'bi-progress-overlay';
+  overlay.id = 'biProgressOverlay';
+  overlay.innerHTML = '<div class="bi-progress-box"><h3>Atualizando base...</h3><div class="bi-progress-bar"><div class="bi-progress-bar-fill" id="biProgressFill" style="width:0%"></div></div><p class="bi-progress-text" id="biProgressText">Iniciando...</p></div>';
+  document.body.appendChild(overlay);
+
+  try {
+    var fill = document.getElementById('biProgressFill');
+    var text = document.getElementById('biProgressText');
+    text.textContent = 'Fazendo login...';
+    var session = await biLogin();
+    if (!session) { throw new Error('Falha no login'); }
+
+    var allData = [];
+    var situacoes = [1, 2, 3];
+    var labels = ['Ativos', 'Cancelados', 'Suspensos'];
+    var totalEsperado = 0;
+
+    for (var i = 0; i < situacoes.length; i++) {
+      text.textContent = 'Buscando ' + labels[i] + '...';
+      var result = await biFetchSituacao(session, situacoes[i], function(loaded, total) {
+        var pct = Math.round(((allData.length + loaded) / Math.max(totalEsperado || total * 3, 1)) * 100);
+        fill.style.width = Math.min(pct, 95) + '%';
+        text.textContent = 'Buscando ' + labels[i] + '... ' + loaded + '/' + total;
+      });
+      if (i === 0) totalEsperado = result.total * 2.5; // estimate
+      allData = allData.concat(result.data);
+    }
+
+    BI_DATA = allData;
+    fill.style.width = '100%';
+    text.textContent = 'Concluido! ' + BI_DATA.length + ' registros carregados.';
+    biSaveToCache();
+
+    setTimeout(function() {
+      var ov = document.getElementById('biProgressOverlay');
+      if (ov) ov.remove();
+      biShowDashboard();
+    }, 800);
+  } catch(e) {
+    var ov = document.getElementById('biProgressOverlay');
+    if (ov) ov.remove();
+    alert('Erro ao carregar base: ' + e.message);
+  }
+  BI_LOADING = false;
+}
+
+function biShowDashboard() {
+  document.getElementById('biEmpty').style.display = 'none';
+  document.getElementById('biDashboard').style.display = 'block';
+  document.getElementById('biFilters').style.display = 'flex';
+  biPopulateFilters();
+  biApplyFilters();
+}
+
+function biPopulateFilters() {
+  var categorias = {}, cidades = {}, planos = {}, anos = {};
+  for (var i = 0; i < BI_DATA.length; i++) {
+    var r = BI_DATA[i];
+    if (r.categoria) categorias[r.categoria] = 1;
+    if (r.cidade) cidades[r.cidade] = 1;
+    if (r.plano) planos[r.plano] = 1;
+    var a = biGetAno(r.data_ativacao);
+    if (a) anos[a] = 1;
+  }
+  biPopulateSelect('biFiltroCategoria', Object.keys(categorias).sort(), 'Categoria');
+  biPopulateSelect('biFiltroCidade', Object.keys(cidades).sort(), 'Cidade');
+  biPopulateSelect('biFiltroPlano', Object.keys(planos).sort(), 'Plano');
+  biPopulateSelect('biFiltroAno', Object.keys(anos).sort().reverse(), 'Ano');
+}
+
+function biPopulateSelect(id, items, placeholder) {
+  var sel = document.getElementById(id);
+  var val = sel.value;
+  sel.innerHTML = '<option value="">' + placeholder + '</option>';
+  for (var i = 0; i < items.length; i++) {
+    sel.innerHTML += '<option value="' + items[i] + '">' + items[i] + '</option>';
+  }
+  sel.value = val;
+}
+
+function biGetAno(dateStr) {
+  if (!dateStr || dateStr === '-') return null;
+  var parts = dateStr.split('/');
+  if (parts.length === 3) return parts[2].substring(0, 4);
+  return null;
+}
+
+function biGetMes(dateStr) {
+  if (!dateStr || dateStr === '-') return null;
+  var parts = dateStr.split('/');
+  if (parts.length === 3) return parseInt(parts[1]);
+  return null;
+}
+function biApplyFilters() {
+  var ano = document.getElementById('biFiltroAno').value;
+  var mes = document.getElementById('biFiltroMes').value;
+  var situacao = document.getElementById('biFiltroSituacao').value;
+  var categoria = document.getElementById('biFiltroCategoria').value;
+  var cidade = document.getElementById('biFiltroCidade').value;
+  var plano = document.getElementById('biFiltroPlano').value;
+  var rastreador = document.getElementById('biFiltroRastreador').checked;
+  var search = (document.getElementById('biSearchInput').value || '').toLowerCase().trim();
+
+  BI_FILTERED = [];
+  var filtroCount = 0;
+  if (ano) filtroCount++;
+  if (mes) filtroCount++;
+  if (situacao) filtroCount++;
+  if (categoria) filtroCount++;
+  if (cidade) filtroCount++;
+  if (plano) filtroCount++;
+  if (rastreador) filtroCount++;
+  if (search) filtroCount++;
+
+  for (var i = 0; i < BI_DATA.length; i++) {
+    var r = BI_DATA[i];
+    if (ano && biGetAno(r.data_ativacao) !== ano) continue;
+    if (mes && biGetMes(r.data_ativacao) !== parseInt(mes)) continue;
+    if (situacao && r.situacao !== situacao) continue;
+    if (categoria && r.categoria !== categoria) continue;
+    if (cidade && r.cidade !== cidade) continue;
+    if (plano && r.plano !== plano) continue;
+    if (rastreador && r.rastreador !== 1) continue;
+    if (search) {
+      var haystack = (r.nome + ' ' + r.placa + ' ' + r.cidade + ' ' + r.modelo + ' ' + r.marca + ' ' + r.consultor).toLowerCase();
+      if (haystack.indexOf(search) === -1) continue;
+    }
+    BI_FILTERED.push(r);
+  }
+
+  // Show/hide badge
+  var badge = document.getElementById('biBadgeFiltro');
+  var exportFiltroBtn = document.getElementById('biExportFiltroBtn');
+  if (filtroCount > 0) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = filtroCount + ' filtro' + (filtroCount > 1 ? 's' : '') + ' ativo' + (filtroCount > 1 ? 's' : '');
+    exportFiltroBtn.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+    exportFiltroBtn.style.display = 'none';
+  }
+
+  BI_PAGE = 0;
+  biRenderKpis();
+  biRenderCharts();
+  biRenderTable();
+}
+
+function biClearFilters() {
+  document.getElementById('biFiltroAno').value = '';
+  document.getElementById('biFiltroMes').value = '';
+  document.getElementById('biFiltroSituacao').value = '';
+  document.getElementById('biFiltroCategoria').value = '';
+  document.getElementById('biFiltroCidade').value = '';
+  document.getElementById('biFiltroPlano').value = '';
+  document.getElementById('biFiltroRastreador').checked = false;
+  document.getElementById('biSearchInput').value = '';
+  biApplyFilters();
+}
+
+function biRenderKpis() {
+  var data = BI_FILTERED;
+  var ativos = 0, suspensos = 0, cancelados = 0, totalMensal = 0, comRastr = 0;
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    if (r.situacao === 'Ativo') { ativos++; totalMensal += r.valor_mensal; }
+    else if (r.situacao === 'Suspenso') suspensos++;
+    else cancelados++;
+    if (r.rastreador === 1) comRastr++;
+  }
+  var total = data.length;
+  var ticket = ativos > 0 ? totalMensal / ativos : 0;
+  var html = '';
+  html += '<div class="bi-kpi" onclick="biFilterKpi(\'\')"><div class="bi-kpi-val">' + biFormatNum(total) + '</div><div class="bi-kpi-label">Total</div></div>';
+  html += '<div class="bi-kpi bi-green" onclick="biFilterKpi(\'Ativo\')"><div class="bi-kpi-val">' + biFormatNum(ativos) + '</div><div class="bi-kpi-label">Ativos</div><div class="bi-kpi-pct">' + (total > 0 ? (ativos / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-amber" onclick="biFilterKpi(\'Suspenso\')"><div class="bi-kpi-val">' + biFormatNum(suspensos) + '</div><div class="bi-kpi-label">Suspensos</div><div class="bi-kpi-pct">' + (total > 0 ? (suspensos / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-red" onclick="biFilterKpi(\'Cancelado\')"><div class="bi-kpi-val">' + biFormatNum(cancelados) + '</div><div class="bi-kpi-label">Cancelados</div><div class="bi-kpi-pct">' + (total > 0 ? (cancelados / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-blue"><div class="bi-kpi-val">R$ ' + biFormatNum(Math.round(totalMensal)) + '</div><div class="bi-kpi-label">MRR (Ativos)</div></div>';
+  html += '<div class="bi-kpi bi-purple"><div class="bi-kpi-val">R$ ' + ticket.toFixed(0) + '</div><div class="bi-kpi-label">Ticket Medio</div></div>';
+  html += '<div class="bi-kpi" onclick="document.getElementById(\'biFiltroRastreador\').checked=true;biApplyFilters();" style="border-left:3px solid #06b6d4"><div class="bi-kpi-val" style="color:#06b6d4">' + biFormatNum(comRastr) + '</div><div class="bi-kpi-label">Com Rastreador</div><div class="bi-kpi-pct">' + (total > 0 ? (comRastr / total * 100).toFixed(1) : 0) + '%</div></div>';
+  document.getElementById('biKpis').innerHTML = html;
+}
+
+function biFilterKpi(sit) {
+  document.getElementById('biFiltroSituacao').value = sit;
+  biApplyFilters();
+}
+
+function biFormatNum(n) {
+  return n.toLocaleString('pt-BR');
+}
+function biRenderCharts() {
+  biRenderDonut();
+  biRenderBarChart('biChartCategorias', 'categoria', 'fill-blue', 10);
+  biRenderBarChart('biChartCidades', 'cidade', 'fill-green', 10);
+  biRenderBarChart('biChartMarcas', 'marca', 'fill-purple', 10);
+  biRenderBarChart('biChartPlanos', 'plano', 'fill-amber', 8);
+  biRenderCompareRastreador();
+}
+
+function biRenderDonut() {
+  var ativos = 0, suspensos = 0, cancelados = 0;
+  for (var i = 0; i < BI_FILTERED.length; i++) {
+    if (BI_FILTERED[i].situacao === 'Ativo') ativos++;
+    else if (BI_FILTERED[i].situacao === 'Suspenso') suspensos++;
+    else cancelados++;
+  }
+  var total = BI_FILTERED.length || 1;
+  var r = 45, cx = 60, cy = 60, circ = 2 * Math.PI * r;
+  var pAtivos = ativos / total, pSuspensos = suspensos / total, pCancelados = cancelados / total;
+  var o1 = 0, o2 = pAtivos * circ, o3 = (pAtivos + pSuspensos) * circ;
+
+  var svg = '<svg class="bi-donut-svg" viewBox="0 0 120 120">';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--green)" stroke-width="16" stroke-dasharray="' + (pAtivos * circ) + ' ' + circ + '" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--amber)" stroke-width="16" stroke-dasharray="' + (pSuspensos * circ) + ' ' + circ + '" stroke-dashoffset="-' + o2 + '" transform="rotate(-90 60 60)"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--red)" stroke-width="16" stroke-dasharray="' + (pCancelados * circ) + ' ' + circ + '" stroke-dashoffset="-' + o3 + '" transform="rotate(-90 60 60)"/>';
+  svg += '<text x="60" y="56" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text1)">' + biFormatNum(BI_FILTERED.length) + '</text>';
+  svg += '<text x="60" y="72" text-anchor="middle" font-size="8" fill="var(--text3)">total</text>';
+  svg += '</svg>';
+
+  var legend = '<div class="bi-donut-legend">';
+  legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--green)"></span>Ativos: ' + biFormatNum(ativos) + ' (' + (pAtivos * 100).toFixed(1) + '%)</div>';
+  legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--amber)"></span>Suspensos: ' + biFormatNum(suspensos) + ' (' + (pSuspensos * 100).toFixed(1) + '%)</div>';
+  legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--red)"></span>Cancelados: ' + biFormatNum(cancelados) + ' (' + (pCancelados * 100).toFixed(1) + '%)</div>';
+  legend += '</div>';
+
+  document.getElementById('biDonut').innerHTML = svg + legend;
+}
+
+function biRenderBarChart(containerId, field, fillClass, maxBars) {
+  var counts = {};
+  for (var i = 0; i < BI_FILTERED.length; i++) {
+    var val = BI_FILTERED[i][field] || 'N/D';
+    counts[val] = (counts[val] || 0) + 1;
+  }
+  var sorted = Object.entries(counts).sort(function(a, b) { return b[1] - a[1]; }).slice(0, maxBars);
+  var maxVal = sorted.length > 0 ? sorted[0][1] : 1;
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var pct = (sorted[i][1] / maxVal * 100).toFixed(0);
+    html += '<div class="bi-bar-row">';
+    html += '<span class="bi-bar-label" title="' + sorted[i][0] + '">' + sorted[i][0] + '</span>';
+    html += '<div class="bi-bar-track"><div class="bi-bar-fill ' + fillClass + '" style="width:' + pct + '%"></div></div>';
+    html += '<span class="bi-bar-value">' + biFormatNum(sorted[i][1]) + '</span>';
+    html += '</div>';
+  }
+  document.getElementById(containerId).innerHTML = html || '<p style="font-size:.72rem;color:var(--text3)">Sem dados</p>';
+}
+
+function biRenderCompareRastreador() {
+  var comR = { count: 0, mensal: 0, ativos: 0 };
+  var semR = { count: 0, mensal: 0, ativos: 0 };
+  for (var i = 0; i < BI_FILTERED.length; i++) {
+    var r = BI_FILTERED[i];
+    if (r.rastreador === 1) {
+      comR.count++;
+      if (r.situacao === 'Ativo') { comR.ativos++; comR.mensal += r.valor_mensal; }
+    } else {
+      semR.count++;
+      if (r.situacao === 'Ativo') { semR.ativos++; semR.mensal += r.valor_mensal; }
+    }
+  }
+  var ticketCom = comR.ativos > 0 ? (comR.mensal / comR.ativos) : 0;
+  var ticketSem = semR.ativos > 0 ? (semR.mensal / semR.ativos) : 0;
+  var html = '';
+  html += '<div class="bi-compare-card"><h4>Com Rastreador</h4><div class="bi-compare-val" style="color:#06b6d4">' + biFormatNum(comR.count) + '</div><div class="bi-compare-sub">Ativos: ' + biFormatNum(comR.ativos) + '</div><div class="bi-compare-sub">Ticket: R$ ' + ticketCom.toFixed(0) + '</div></div>';
+  html += '<div class="bi-compare-card"><h4>Sem Rastreador</h4><div class="bi-compare-val" style="color:var(--text2)">' + biFormatNum(semR.count) + '</div><div class="bi-compare-sub">Ativos: ' + biFormatNum(semR.ativos) + '</div><div class="bi-compare-sub">Ticket: R$ ' + ticketSem.toFixed(0) + '</div></div>';
+  document.getElementById('biCompareRastreador').innerHTML = html;
+}
+function biRenderTable() {
+  // Sort
+  var data = BI_FILTERED.slice();
+  data.sort(function(a, b) {
+    var va = a[BI_SORT_COL], vb = b[BI_SORT_COL];
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'number' && typeof vb === 'number') {
+      return BI_SORT_DIR === 'asc' ? va - vb : vb - va;
+    }
+    va = String(va).toLowerCase();
+    vb = String(vb).toLowerCase();
+    if (va < vb) return BI_SORT_DIR === 'asc' ? -1 : 1;
+    if (va > vb) return BI_SORT_DIR === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  var totalPages = Math.ceil(data.length / BI_PER_PAGE) || 1;
+  if (BI_PAGE >= totalPages) BI_PAGE = totalPages - 1;
+  var startIdx = BI_PAGE * BI_PER_PAGE;
+  var pageData = data.slice(startIdx, startIdx + BI_PER_PAGE);
+
+  // Info
+  document.getElementById('biTableInfo').textContent = 'Mostrando ' + (startIdx + 1) + '-' + Math.min(startIdx + BI_PER_PAGE, data.length) + ' de ' + biFormatNum(data.length);
+
+  // Render rows
+  var html = '';
+  for (var i = 0; i < pageData.length; i++) {
+    var r = pageData[i];
+    var stClass = r.situacao === 'Ativo' ? 'st-ativo' : (r.situacao === 'Suspenso' ? 'st-suspenso' : 'st-cancelado');
+    html += '<tr>';
+    html += '<td>' + (startIdx + i + 1) + '</td>';
+    html += '<td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.nome || '') + '</td>';
+    html += '<td><span class="bi-status-dot ' + stClass + '"></span>' + (r.situacao || '') + '</td>';
+    html += '<td style="font-size:.68rem">' + (r.categoria || '') + '</td>';
+    html += '<td>' + (r.plano || '') + '</td>';
+    html += '<td>' + (r.marca || '') + '</td>';
+    html += '<td>' + (r.cidade || '') + '</td>';
+    html += '<td>' + (r.uf || '') + '</td>';
+    html += '<td style="text-align:right">R$ ' + (r.valor_mensal || 0).toFixed(2) + '</td>';
+    html += '<td style="text-align:center">' + (r.rastreador === 1 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</td>';
+    html += '<td>' + (r.data_ativacao || '') + '</td>';
+    html += '</tr>';
+  }
+  document.getElementById('biTbody').innerHTML = html;
+
+  // Pagination
+  biRenderPagination(totalPages);
+
+  // Sort indicators
+  document.querySelectorAll('#biTblBase th').forEach(function(th) { th.classList.remove('sorted-asc', 'sorted-desc'); });
+}
+
+function biRenderPagination(totalPages) {
+  var html = '';
+  html += '<button ' + (BI_PAGE === 0 ? 'disabled' : '') + ' onclick="biGoPage(0)">&#171;</button>';
+  html += '<button ' + (BI_PAGE === 0 ? 'disabled' : '') + ' onclick="biGoPage(' + (BI_PAGE - 1) + ')">&#8249;</button>';
+
+  var startP = Math.max(0, BI_PAGE - 3);
+  var endP = Math.min(totalPages - 1, BI_PAGE + 3);
+  for (var p = startP; p <= endP; p++) {
+    html += '<button class="' + (p === BI_PAGE ? 'active' : '') + '" onclick="biGoPage(' + p + ')">' + (p + 1) + '</button>';
+  }
+
+  html += '<button ' + (BI_PAGE >= totalPages - 1 ? 'disabled' : '') + ' onclick="biGoPage(' + (BI_PAGE + 1) + ')">&#8250;</button>';
+  html += '<button ' + (BI_PAGE >= totalPages - 1 ? 'disabled' : '') + ' onclick="biGoPage(' + (totalPages - 1) + ')">&#187;</button>';
+  document.getElementById('biPagination').innerHTML = html;
+}
+
+function biGoPage(p) {
+  BI_PAGE = p;
+  biRenderTable();
+  // Scroll to table
+  document.getElementById('biTblBase').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function biSortTable(col) {
+  if (BI_SORT_COL === col) {
+    BI_SORT_DIR = BI_SORT_DIR === 'asc' ? 'desc' : 'asc';
+  } else {
+    BI_SORT_COL = col;
+    BI_SORT_DIR = 'asc';
+  }
+  biRenderTable();
+}
+function biToggleExportMenu() {
+  var menu = document.getElementById('biExportMenu');
+  menu.classList.toggle('show');
+  // Close on click outside
+  setTimeout(function() {
+    document.addEventListener('click', function handler(e) {
+      if (!e.target.closest('.bi-export-dropdown')) {
+        menu.classList.remove('show');
+        document.removeEventListener('click', handler);
+      }
+    });
+  }, 10);
+}
+
+function biExportBase() {
+  document.getElementById('biExportMenu').classList.remove('show');
+  var data = BI_FILTERED.length > 0 ? BI_FILTERED : BI_DATA;
+  if (data.length === 0) { alert('Nenhum dado para exportar'); return; }
+
+  var rows = [['Nome', 'Situacao', 'Categoria', 'Plano', 'Marca', 'Modelo', 'Cor', 'Ano', 'Placa', 'Cidade', 'UF', 'Consultor', 'Mensalidade', 'Valor FIPE', 'Valor Adesao', 'Forma Pgto', 'Data Ativacao', 'Data Cancelamento', 'Data Suspensao', 'Motivo Cancelamento', 'Dias Atraso', 'Faturas Pagas', 'Rastreador', 'Nr Rastreador', 'Telefone', 'Email', 'Classificacao']];
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    rows.push([r.nome, r.situacao, r.categoria, r.plano, r.marca, r.modelo, r.cor, r.ano_fabricacao || '', r.placa, r.cidade, r.uf, r.consultor, r.valor_mensal, r.valor_fipe, r.valor_adesao, r.forma_pagamento === 1 ? 'Boleto' : (r.forma_pagamento === 2 ? 'Cartao' : r.forma_pagamento), r.data_ativacao, r.data_cancelamento, r.data_suspensao, r.motivo_cancelamento, r.dias_atraso, r.faturas_pagas, r.rastreador === 1 ? 'Sim' : 'Nao', r.numero_rastreador, r.telefone, r.email, r.classificacao]);
+  }
+  var ws1 = XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols'] = [{wch:30},{wch:10},{wch:22},{wch:10},{wch:14},{wch:22},{wch:10},{wch:6},{wch:10},{wch:18},{wch:4},{wch:28},{wch:12},{wch:14},{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:20},{wch:6},{wch:6},{wch:8},{wch:14},{wch:16},{wch:24},{wch:14}];
+
+  // Resumo por situacao
+  var sit = {};
+  for (var i = 0; i < data.length; i++) { var s = data[i].situacao || 'N/D'; sit[s] = (sit[s] || { count: 0, mensal: 0 }); sit[s].count++; if (data[i].situacao === 'Ativo') sit[s].mensal += data[i].valor_mensal; }
+  var r2 = [['Situacao', 'Qtd', '%', 'MRR']];
+  Object.keys(sit).forEach(function(k) { r2.push([k, sit[k].count, (sit[k].count / data.length * 100).toFixed(1) + '%', 'R$ ' + Math.round(sit[k].mensal).toLocaleString('pt-BR')]); });
+  var ws2 = XLSX.utils.aoa_to_sheet(r2);
+
+  // Resumo por categoria
+  var cats = {};
+  for (var i = 0; i < data.length; i++) { var c = data[i].categoria || 'N/D'; if (!cats[c]) cats[c] = { ativos: 0, suspensos: 0, cancelados: 0 }; if (data[i].situacao === 'Ativo') cats[c].ativos++; else if (data[i].situacao === 'Suspenso') cats[c].suspensos++; else cats[c].cancelados++; }
+  var r3 = [['Categoria', 'Ativos', 'Suspensos', 'Cancelados', 'Total']];
+  Object.entries(cats).sort(function(a, b) { return (b[1].ativos + b[1].suspensos + b[1].cancelados) - (a[1].ativos + a[1].suspensos + a[1].cancelados); }).forEach(function(e) { r3.push([e[0], e[1].ativos, e[1].suspensos, e[1].cancelados, e[1].ativos + e[1].suspensos + e[1].cancelados]); });
+  var ws3 = XLSX.utils.aoa_to_sheet(r3);
+
+  // Resumo por cidade
+  var cids = {};
+  for (var i = 0; i < data.length; i++) { var c = (data[i].cidade || 'N/D') + ' - ' + (data[i].uf || ''); if (!cids[c]) cids[c] = { ativos: 0, suspensos: 0, cancelados: 0 }; if (data[i].situacao === 'Ativo') cids[c].ativos++; else if (data[i].situacao === 'Suspenso') cids[c].suspensos++; else cids[c].cancelados++; }
+  var r4 = [['Cidade - UF', 'Ativos', 'Suspensos', 'Cancelados', 'Total']];
+  Object.entries(cids).sort(function(a, b) { return (b[1].ativos + b[1].suspensos + b[1].cancelados) - (a[1].ativos + a[1].suspensos + a[1].cancelados); }).forEach(function(e) { r4.push([e[0], e[1].ativos, e[1].suspensos, e[1].cancelados, e[1].ativos + e[1].suspensos + e[1].cancelados]); });
+  var ws4 = XLSX.utils.aoa_to_sheet(r4);
+
+  // Resumo por plano
+  var plns = {};
+  for (var i = 0; i < data.length; i++) { var p = data[i].plano || 'N/D'; if (!plns[p]) plns[p] = { ativos: 0, suspensos: 0, cancelados: 0, mensal: 0 }; if (data[i].situacao === 'Ativo') { plns[p].ativos++; plns[p].mensal += data[i].valor_mensal; } else if (data[i].situacao === 'Suspenso') plns[p].suspensos++; else plns[p].cancelados++; }
+  var r5 = [['Plano', 'Ativos', 'Suspensos', 'Cancelados', 'Total', 'Ticket Medio']];
+  Object.entries(plns).sort(function(a, b) { return (b[1].ativos + b[1].suspensos + b[1].cancelados) - (a[1].ativos + a[1].suspensos + a[1].cancelados); }).forEach(function(e) { var tk = e[1].ativos > 0 ? (e[1].mensal / e[1].ativos).toFixed(2) : '0'; r5.push([e[0], e[1].ativos, e[1].suspensos, e[1].cancelados, e[1].ativos + e[1].suspensos + e[1].cancelados, 'R$ ' + tk]); });
+  var ws5 = XLSX.utils.aoa_to_sheet(r5);
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Base Completa');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo Situacao');
+  XLSX.utils.book_append_sheet(wb, ws3, 'Resumo Categoria');
+  XLSX.utils.book_append_sheet(wb, ws4, 'Resumo Cidade');
+  XLSX.utils.book_append_sheet(wb, ws5, 'Resumo Plano');
+  var hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, 'Autovale_Base_Completa_' + hoje + '.xlsx');
+}
+function biExportRastreadores() {
+  document.getElementById('biExportMenu').classList.remove('show');
+  var data = BI_DATA.filter(function(r) { return r.rastreador === 1; });
+  if (data.length === 0) { alert('Nenhum associado com rastreador encontrado'); return; }
+
+  var rows = [['Nome', 'Situacao', 'Placa', 'Marca', 'Modelo', 'Categoria', 'Nr Rastreador', 'Cidade', 'UF', 'Mensalidade', 'Valor FIPE', 'Telefone', 'Data Ativacao', 'Data Cancelamento', 'Consultor']];
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    rows.push([r.nome, r.situacao, r.placa, r.marca, r.modelo, r.categoria, r.numero_rastreador, r.cidade, r.uf, r.valor_mensal, r.valor_fipe, r.telefone, r.data_ativacao, r.data_cancelamento, r.consultor]);
+  }
+  var ws1 = XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols'] = [{wch:30},{wch:10},{wch:10},{wch:14},{wch:22},{wch:22},{wch:14},{wch:18},{wch:4},{wch:12},{wch:14},{wch:16},{wch:12},{wch:12},{wch:28}];
+
+  // Resumo por cidade
+  var cids = {};
+  for (var i = 0; i < data.length; i++) {
+    var c = (data[i].cidade || 'N/D') + ' - ' + (data[i].uf || '');
+    if (!cids[c]) cids[c] = { ativos: 0, suspensos: 0, cancelados: 0 };
+    if (data[i].situacao === 'Ativo') cids[c].ativos++;
+    else if (data[i].situacao === 'Suspenso') cids[c].suspensos++;
+    else cids[c].cancelados++;
+  }
+  var r2 = [['Cidade - UF', 'Ativos', 'Suspensos', 'Cancelados', 'Total']];
+  Object.entries(cids).sort(function(a, b) { return (b[1].ativos + b[1].suspensos + b[1].cancelados) - (a[1].ativos + a[1].suspensos + a[1].cancelados); }).forEach(function(e) { r2.push([e[0], e[1].ativos, e[1].suspensos, e[1].cancelados, e[1].ativos + e[1].suspensos + e[1].cancelados]); });
+  var ws2 = XLSX.utils.aoa_to_sheet(r2);
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Com Rastreador');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo por Cidade');
+  var hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, 'Autovale_Rastreadores_' + hoje + '.xlsx');
+}
+
+function biExportFiltro() {
+  document.getElementById('biExportMenu').classList.remove('show');
+  if (BI_FILTERED.length === 0) { alert('Nenhum dado no filtro atual'); return; }
+
+  var data = BI_FILTERED;
+  var rows = [['Nome', 'Situacao', 'Categoria', 'Plano', 'Marca', 'Modelo', 'Placa', 'Cidade', 'UF', 'Consultor', 'Mensalidade', 'Valor FIPE', 'Rastreador', 'Data Ativacao', 'Telefone', 'Email']];
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    rows.push([r.nome, r.situacao, r.categoria, r.plano, r.marca, r.modelo, r.placa, r.cidade, r.uf, r.consultor, r.valor_mensal, r.valor_fipe, r.rastreador === 1 ? 'Sim' : 'Nao', r.data_ativacao, r.telefone, r.email]);
+  }
+  var ws1 = XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols'] = [{wch:30},{wch:10},{wch:22},{wch:10},{wch:14},{wch:22},{wch:10},{wch:18},{wch:4},{wch:28},{wch:12},{wch:14},{wch:8},{wch:12},{wch:16},{wch:24}];
+
+  // Info do filtro
+  var filtros = [];
+  if (document.getElementById('biFiltroAno').value) filtros.push('Ano: ' + document.getElementById('biFiltroAno').value);
+  if (document.getElementById('biFiltroMes').value) filtros.push('Mes: ' + document.getElementById('biFiltroMes').value);
+  if (document.getElementById('biFiltroSituacao').value) filtros.push('Situacao: ' + document.getElementById('biFiltroSituacao').value);
+  if (document.getElementById('biFiltroCategoria').value) filtros.push('Categoria: ' + document.getElementById('biFiltroCategoria').value);
+  if (document.getElementById('biFiltroCidade').value) filtros.push('Cidade: ' + document.getElementById('biFiltroCidade').value);
+  if (document.getElementById('biFiltroPlano').value) filtros.push('Plano: ' + document.getElementById('biFiltroPlano').value);
+  if (document.getElementById('biFiltroRastreador').checked) filtros.push('Com Rastreador: Sim');
+  if (document.getElementById('biSearchInput').value) filtros.push('Busca: ' + document.getElementById('biSearchInput').value);
+
+  var r2 = [['Informacoes do Filtro'], ['Gerado em: ' + new Date().toLocaleString('pt-BR')], ['Total registros: ' + data.length], [''], ['Filtros aplicados:']];
+  for (var i = 0; i < filtros.length; i++) r2.push([filtros[i]]);
+  var ws2 = XLSX.utils.aoa_to_sheet(r2);
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, 'Dados Filtrados');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Info Filtro');
+  var hoje = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, 'Autovale_Filtro_' + hoje + '.xlsx');
+}
+
+// Init BI on panel load
+function biInit() {
+  biLoadFromCache();
+}
+
+/* ====== INIT CAMPANHA + ACORDO + BI ====== */
 (async function(){
   await loadGestoresAcordo();
   await loadExcecoes();
@@ -3878,6 +4653,8 @@ function exportarConsultoresXLSX(){
   loadConsultoresFromCache();
   // Re-render acompanhamento with Acordo tags
   renderTabelaAcompFromUI();
+  // Init BI Base
+  biInit();
 })();
 </script>
 </body>
