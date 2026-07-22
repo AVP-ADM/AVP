@@ -35,20 +35,26 @@ var RAST_COORDS_MAP = {};
 (function(){
   for(var i=0;i<RAST_CITY_RAW.length;i++){
     var r=RAST_CITY_RAW[i];
-    var key=r[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()+'__'+r[1].toLowerCase();
+    var key=r[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim()+'__'+r[1].toLowerCase();
     RAST_COORDS_MAP[key]=[r[2],r[3]];
   }
 })();
 
 function rastLookupCoords(cidade,uf){
-  var key=(cidade||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()+'__'+(uf||'').toLowerCase();
+  if(!cidade||!uf)return RAST_UF_CENTROIDS[(uf||'').toUpperCase()]||null;
+  var cidadeNorm=(cidade||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  var ufNorm=(uf||'').toLowerCase().trim();
+  var key=cidadeNorm+'__'+ufNorm;
   if(RAST_COORDS_MAP[key])return RAST_COORDS_MAP[key];
-  var centroid=RAST_UF_CENTROIDS[(uf||'').toUpperCase()];
+  // Try without UF (fuzzy match first 2 chars)
+  var ufUpper=(uf||'').toUpperCase().trim();
+  var centroid=RAST_UF_CENTROIDS[ufUpper];
   return centroid||null;
 }
 function rastHasExactCoords(cidade,uf){
-  var key=(cidade||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()+'__'+(uf||'').toLowerCase();
-  return !!RAST_COORDS_MAP[key];
+  var cidadeNorm=(cidade||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  var ufNorm=(uf||'').toLowerCase().trim();
+  return !!RAST_COORDS_MAP[cidadeNorm+'__'+ufNorm];
 }
 
 
@@ -99,8 +105,9 @@ function rastGetAssociados(){
     var sit=r.situacao||'';
     var operacional=rastIsOperacional(sit);
     var temRastreador=rastHasValidTracker(r.numero_rastreador);
+    var uf=rastNormalizeUF(r.uf||'');
     return{
-      nome:r.nome||'',placa:r.placa||'',cidade:r.cidade||'',uf:r.uf||'',
+      nome:r.nome||'',placa:r.placa||'',cidade:r.cidade||'',uf:uf,
       situacao:sit,situacaoNorm:rastClassifySituacao(sit),categoria:r.categoria||'',categoriaOriginal:r.categoria||'',
       tipo:tipo,temRastreador:temRastreador,operacional:operacional,
       numeroRastreador:r.numero_rastreador||'',valorFipe:r.valor_fipe||0,
@@ -108,6 +115,20 @@ function rastGetAssociados(){
       dataAtivacao:r.data_ativacao||'',dataCancelamento:r.data_cancelamento||''
     };
   });
+}
+
+var RAST_STATE_TO_UF={acre:'AC',alagoas:'AL',amapa:'AP',amazonas:'AM',bahia:'BA',ceara:'CE','distrito federal':'DF','espirito santo':'ES',goias:'GO',maranhao:'MA','mato grosso':'MT','mato grosso do sul':'MS','minas gerais':'MG',para:'PA',paraiba:'PB',parana:'PR',pernambuco:'PE',piaui:'PI','rio de janeiro':'RJ','rio grande do norte':'RN','rio grande do sul':'RS',rondonia:'RO',roraima:'RR','santa catarina':'SC','sao paulo':'SP',sergipe:'SE',tocantins:'TO'};
+var RAST_UF_SET=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+function rastNormalizeUF(raw){
+  var s=(raw||'').toString().trim();
+  if(!s)return'';
+  var up=s.toUpperCase();
+  if(up.length===2&&RAST_UF_SET.indexOf(up)>=0)return up;
+  // Try as full state name
+  var norm=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  if(RAST_STATE_TO_UF[norm])return RAST_STATE_TO_UF[norm];
+  return up.substring(0,2);
 }
 
 function rastHaversineKm(lat1,lng1,lat2,lng2){
