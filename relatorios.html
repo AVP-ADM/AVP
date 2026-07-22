@@ -4531,8 +4531,9 @@ function biParseExcel(base64) {
   var colMap = {};
   for (var i = 0; i < headers.length; i++) {
     var h = (headers[i] || '').toString().trim().toLowerCase();
+    var hNorm = h.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
     if (h === 'associado') colMap.nome = i;
-    else if (h === 'situacao' || h === 'situação') colMap.situacao = i;
+    else if (h === 'situacao' || h === 'situação' || hNorm === 'situacao') colMap.situacao = i;
     else if (h === 'categoria') colMap.categoria = i;
     else if (h === 'plano') colMap.plano = i;
     else if (h === 'marca') colMap.marca = i;
@@ -4547,8 +4548,8 @@ function biParseExcel(base64) {
     else if (h.includes('ativa') && h.includes('data')) colMap.data_ativacao = i;
     else if (h === 'data cancelamento') colMap.data_cancelamento = i;
     else if (h === 'data cadastro') colMap.data_cadastro = i;
-    else if (h.includes('rastreador') && (h.includes('mero') || h.includes('codigo') || h.includes('cod'))) colMap.numero_rastreador = i;
-    else if (h === 'rastreador' || h === 'numero rastreador' || h === 'nr rastreador' || h === 'cod rastreador') colMap.numero_rastreador = i;
+    else if (hNorm.includes('rastreador') && (hNorm.includes('numero') || hNorm.includes('codigo') || hNorm.includes('cod'))) colMap.numero_rastreador = i;
+    else if (hNorm === 'rastreador' || hNorm === 'numero rastreador' || hNorm === 'nr rastreador' || hNorm === 'cod rastreador' || hNorm === 'codigo rastreador') colMap.numero_rastreador = i;
     else if (h === 'telefone') colMap.telefone = i;
     else if (h.includes('email')) colMap.email = i;
     else if (h === 'dias atraso') colMap.dias_atraso = i;
