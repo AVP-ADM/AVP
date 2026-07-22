@@ -1031,6 +1031,17 @@ tr:last-child td{border-bottom:none}
           <button class="btn btn-outline" style="padding:4px 10px;font-size:.68rem" onclick="biClearFilters()">Limpar</button>
           <span class="bi-badge-filtro" id="biBadgeFiltro" style="display:none"></span>
         </div>
+        <div class="bi-filters" id="biFiltersDate" style="display:none;margin-top:-8px">
+          <span style="font-size:.7rem;color:var(--text3);font-weight:600">Cadastro:</span>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:.65rem" onclick="biFilterDias(15)">+15 dias</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:.65rem" onclick="biFilterDias(30)">+30 dias</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:.65rem" onclick="biFilterDias(60)">+60 dias</button>
+          <button class="btn btn-outline" style="padding:3px 8px;font-size:.65rem" onclick="biFilterDias(90)">+90 dias</button>
+          <span style="font-size:.7rem;color:var(--text3);margin-left:8px">De:</span>
+          <input type="date" id="biFiltroDataDe" onchange="biApplyFilters()" style="padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
+          <span style="font-size:.7rem;color:var(--text3)">Ate:</span>
+          <input type="date" id="biFiltroDataAte" onchange="biApplyFilters()" style="padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
+        </div>
 
         <!-- Empty state -->
         <div class="bi-empty" id="biEmpty">
@@ -4459,6 +4470,7 @@ function biShowDashboard() {
   document.getElementById('biEmpty').style.display = 'none';
   document.getElementById('biDashboard').style.display = 'block';
   document.getElementById('biFilters').style.display = 'flex';
+  document.getElementById('biFiltersDate').style.display = 'flex';
   biPopulateFilters();
   biApplyFilters();
 }
@@ -4470,7 +4482,7 @@ function biPopulateFilters() {
     if (r.categoria) categorias[r.categoria] = 1;
     if (r.cidade) cidades[r.cidade] = 1;
     if (r.plano) planos[r.plano] = 1;
-    var a = biGetAno(r.data_ativacao);
+    var a = biGetAno(r.data_cadastro);
     if (a) anos[a] = 1;
   }
   biPopulateSelect('biFiltroCategoria', Object.keys(categorias).sort(), 'Categoria');
@@ -4511,6 +4523,8 @@ function biApplyFilters() {
   var plano = document.getElementById('biFiltroPlano').value;
   var rastreador = document.getElementById('biFiltroRastreador').checked;
   var search = (document.getElementById('biSearchInput').value || '').toLowerCase().trim();
+  var dataDe = document.getElementById('biFiltroDataDe').value;
+  var dataAte = document.getElementById('biFiltroDataAte').value;
 
   BI_FILTERED = [];
   var filtroCount = 0;
@@ -4522,11 +4536,17 @@ function biApplyFilters() {
   if (plano) filtroCount++;
   if (rastreador) filtroCount++;
   if (search) filtroCount++;
+  if (dataDe) filtroCount++;
+  if (dataAte) filtroCount++;
+
+  // Parse date filters
+  var dataDeParsed = dataDe ? new Date(dataDe + 'T00:00:00') : null;
+  var dataAteParsed = dataAte ? new Date(dataAte + 'T23:59:59') : null;
 
   for (var i = 0; i < BI_DATA.length; i++) {
     var r = BI_DATA[i];
-    if (ano && biGetAno(r.data_ativacao) !== ano) continue;
-    if (mes && biGetMes(r.data_ativacao) !== parseInt(mes)) continue;
+    if (ano && biGetAno(r.data_cadastro) !== ano) continue;
+    if (mes && biGetMes(r.data_cadastro) !== parseInt(mes)) continue;
     if (situacao && r.situacao !== situacao) continue;
     if (categoria && r.categoria !== categoria) continue;
     if (cidade && r.cidade !== cidade) continue;
@@ -4535,6 +4555,13 @@ function biApplyFilters() {
     if (search) {
       var haystack = (r.nome + ' ' + r.placa + ' ' + r.cidade + ' ' + r.modelo + ' ' + r.marca + ' ' + r.consultor).toLowerCase();
       if (haystack.indexOf(search) === -1) continue;
+    }
+    // Filtro de data cadastro
+    if (dataDeParsed || dataAteParsed) {
+      var dataCad = biParseDate(r.data_cadastro);
+      if (!dataCad) continue;
+      if (dataDeParsed && dataCad < dataDeParsed) continue;
+      if (dataAteParsed && dataCad > dataAteParsed) continue;
     }
     BI_FILTERED.push(r);
   }
@@ -4566,6 +4593,8 @@ function biClearFilters() {
   document.getElementById('biFiltroPlano').value = '';
   document.getElementById('biFiltroRastreador').checked = false;
   document.getElementById('biSearchInput').value = '';
+  document.getElementById('biFiltroDataDe').value = '';
+  document.getElementById('biFiltroDataAte').value = '';
   biApplyFilters();
 }
 
@@ -4600,6 +4629,33 @@ function biRenderKpis() {
 function biFilterKpi(sit) {
   document.getElementById('biFiltroSituacao').value = sit;
   biApplyFilters();
+}
+
+function biFilterDias(dias) {
+  // Filtra registros cadastrados há mais de X dias
+  var hoje = new Date();
+  var limite = new Date(hoje.getTime() - (dias * 24 * 60 * 60 * 1000));
+  var limiteStr = limite.toISOString().split('T')[0];
+  document.getElementById('biFiltroDataDe').value = '';
+  document.getElementById('biFiltroDataAte').value = limiteStr;
+  biApplyFilters();
+}
+
+function biParseDate(dateStr) {
+  if (!dateStr || dateStr === '-') return null;
+  // Formatos: "dd/mm/yyyy HH:MM:SS" ou "dd/mm/yyyy" ou "yyyy-mm-dd"
+  var s = dateStr.toString().trim();
+  if (s.indexOf('/') !== -1) {
+    var parts = s.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      var d = parseInt(parts[0]), m = parseInt(parts[1]) - 1, y = parseInt(parts[2]);
+      if (y < 100) y += 2000;
+      return new Date(y, m, d);
+    }
+  } else if (s.indexOf('-') !== -1) {
+    return new Date(s.split(' ')[0] + 'T00:00:00');
+  }
+  return null;
 }
 
 function biFormatNum(n) {
