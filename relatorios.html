@@ -4547,7 +4547,8 @@ function biParseExcel(base64) {
     else if (h.includes('ativa') && h.includes('data')) colMap.data_ativacao = i;
     else if (h === 'data cancelamento') colMap.data_cancelamento = i;
     else if (h === 'data cadastro') colMap.data_cadastro = i;
-    else if (h.includes('rastreador') && h.includes('mero')) colMap.numero_rastreador = i;
+    else if (h.includes('rastreador') && (h.includes('mero') || h.includes('codigo') || h.includes('cod'))) colMap.numero_rastreador = i;
+    else if (h === 'rastreador' || h === 'numero rastreador' || h === 'nr rastreador' || h === 'cod rastreador') colMap.numero_rastreador = i;
     else if (h === 'telefone') colMap.telefone = i;
     else if (h.includes('email')) colMap.email = i;
     else if (h === 'dias atraso') colMap.dias_atraso = i;
@@ -4592,7 +4593,7 @@ function biParseExcel(base64) {
       data_cancelamento: colMap.data_cancelamento !== undefined ? (row[colMap.data_cancelamento] || '').toString().trim() : '',
       data_cadastro: colMap.data_cadastro !== undefined ? (row[colMap.data_cadastro] || '').toString().trim() : '',
       numero_rastreador: colMap.numero_rastreador !== undefined ? (row[colMap.numero_rastreador] || '').toString().trim() : '',
-      rastreador: colMap.numero_rastreador !== undefined && row[colMap.numero_rastreador] ? 1 : 0,
+      rastreador: (function(){ if(colMap.numero_rastreador === undefined) return 0; var v = (row[colMap.numero_rastreador] || '').toString().trim().toLowerCase(); if(!v || v === '0' || v === 'nao' || v === 'não' || v === 'n/a' || v === 'na' || v === 'sem' || v === '-' || v === 'null' || /^0+$/.test(v)) return 0; return v.length >= 3 ? 1 : 0; })(),
       telefone: colMap.telefone !== undefined ? (row[colMap.telefone] || '').toString().trim() : '',
       email: colMap.email !== undefined ? (row[colMap.email] || '').toString().trim() : '',
       dias_atraso: colMap.dias_atraso !== undefined ? parseInt(row[colMap.dias_atraso]) || 0 : 0,
