@@ -522,11 +522,14 @@ tr:last-child td{border-bottom:none}
 #biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
 #biTblBase th.sorted-asc::after{content:'▲'}
 #biTblBase th.sorted-desc::after{content:'▼'}
-.bi-scroll-btn{position:sticky;top:50%;z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-md);color:var(--text2);transition:all .2s;opacity:.85;flex-shrink:0}
-.bi-scroll-btn:hover{background:var(--surface-2);color:var(--text1);opacity:1;box-shadow:var(--shadow-md);transform:scale(1.1)}
-.bi-scroll-btn.hidden{opacity:0;pointer-events:none}
-.bi-table-scroll-wrap{display:flex;align-items:stretch;position:relative}
+.bi-scroll-btn{display:none}
+.bi-table-scroll-wrap{position:relative}
 .bi-table-scroll-wrap .table-wrap{flex:1;overflow-x:auto;scrollbar-width:thin}
+.bi-table-scroll-wrap::before,.bi-table-scroll-wrap::after{content:'';position:absolute;top:0;bottom:0;width:40px;pointer-events:none;z-index:5;transition:opacity .3s}
+.bi-table-scroll-wrap::before{left:0;background:linear-gradient(to right,var(--surface),transparent);opacity:0}
+.bi-table-scroll-wrap::after{right:0;background:linear-gradient(to left,var(--surface),transparent);opacity:0}
+.bi-table-scroll-wrap.scroll-right::after{opacity:1}
+.bi-table-scroll-wrap.scroll-left::before{opacity:1}
 .bi-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .bi-status-dot.st-ativo{background:var(--green)}
 .bi-status-dot.st-novo{background:#8B5CF6}
@@ -1110,15 +1113,13 @@ tr:last-child td{border-bottom:none}
               </div>
             </div>
           </div>
-          <div class="bi-table-scroll-wrap">
-            <button class="bi-scroll-btn hidden" id="biScrollLeft" onclick="biScrollTable(-300)" title="Rolar esquerda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-            <div class="table-wrap" id="biTableWrap" style="overflow-x:auto" onscroll="biCheckScrollBtns()">
+          <div class="bi-table-scroll-wrap" id="biTableScrollWrap">
+            <div class="table-wrap" id="biTableWrap" onscroll="biCheckScrollFade()">
               <table id="biTblBase">
                 <thead><tr id="biTblHead"></tr></thead>
                 <tbody id="biTbody"></tbody>
               </table>
             </div>
-            <button class="bi-scroll-btn" id="biScrollRight" onclick="biScrollTable(300)" title="Rolar direita"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
           </div>
           <div class="bi-pagination" id="biPagination"></div>
         </div>
@@ -4932,7 +4933,7 @@ function biRenderTable() {
   document.getElementById('biTbody').innerHTML = html;
 
   biRenderPagination(totalPages);
-  setTimeout(biCheckScrollBtns, 100);
+  setTimeout(biCheckScrollFade, 100);
 }
 
 function biRenderPagination(totalPages) {
@@ -4971,18 +4972,16 @@ function biSortTable(col) {
 function biScrollTable(px) {
   var wrap = document.getElementById('biTableWrap');
   if (wrap) wrap.scrollBy({ left: px, behavior: 'smooth' });
-  setTimeout(biCheckScrollBtns, 350);
 }
 
-function biCheckScrollBtns() {
+function biCheckScrollFade() {
   var wrap = document.getElementById('biTableWrap');
-  var btnLeft = document.getElementById('biScrollLeft');
-  var btnRight = document.getElementById('biScrollRight');
-  if (!wrap || !btnLeft || !btnRight) return;
+  var container = document.getElementById('biTableScrollWrap');
+  if (!wrap || !container) return;
   var scrollLeft = wrap.scrollLeft;
   var maxScroll = wrap.scrollWidth - wrap.clientWidth;
-  btnLeft.classList.toggle('hidden', scrollLeft <= 5);
-  btnRight.classList.toggle('hidden', scrollLeft >= maxScroll - 5);
+  container.classList.toggle('scroll-left', scrollLeft > 5);
+  container.classList.toggle('scroll-right', scrollLeft < maxScroll - 5);
 }
 function biToggleExportMenu() {
   var menu = document.getElementById('biExportMenu');
