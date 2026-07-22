@@ -515,20 +515,20 @@ tr:last-child td{border-bottom:none}
 .bi-export-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;font-size:.76rem;font-family:var(--font);color:var(--text1);cursor:pointer;transition:background .15s;text-align:left}
 .bi-export-menu button:hover{background:var(--surface-2)}
 .bi-export-menu button svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
-#biTblBase th{cursor:pointer;position:relative;white-space:nowrap;padding:8px 10px}
-#biTblBase th:hover{background:var(--surface-2)}
-#biTblBase td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 10px}
-#biTblBase{border-collapse:collapse;width:max-content;min-width:100%}
-#biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
-#biTblBase th.sorted-asc::after{content:'▲'}
-#biTblBase th.sorted-desc::after{content:'▼'}
 .bi-table-scroll-wrap{position:relative}
-.bi-table-scroll-wrap .table-wrap{flex:1;overflow-x:auto;scrollbar-width:thin}
+.bi-table-scroll-wrap .table-wrap{overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
 .bi-table-scroll-wrap::before,.bi-table-scroll-wrap::after{content:'';position:absolute;top:0;bottom:0;width:60px;pointer-events:none;z-index:5;transition:opacity .3s}
 .bi-table-scroll-wrap::before{left:0;background:linear-gradient(to right,var(--surface),transparent);opacity:0}
 .bi-table-scroll-wrap::after{right:0;background:linear-gradient(to left,var(--surface),transparent);opacity:0}
 .bi-table-scroll-wrap.scroll-right::after{opacity:1}
 .bi-table-scroll-wrap.scroll-left::before{opacity:1}
+#biTblBase{border-collapse:collapse;width:max-content;min-width:100%}
+#biTblBase th{cursor:pointer;position:relative;white-space:nowrap;padding:8px 10px}
+#biTblBase th:hover{background:var(--surface-2)}
+#biTblBase td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 10px;max-width:220px}
+#biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
+#biTblBase th.sorted-asc::after{content:'▲'}
+#biTblBase th.sorted-desc::after{content:'▼'}
 .bi-scroll-hint{text-align:center;font-size:.68rem;color:var(--text3);padding:6px 0;transition:opacity .3s;display:flex;align-items:center;justify-content:center;gap:6px}
 .bi-scroll-hint.hidden{opacity:0;pointer-events:none;height:0;padding:0;overflow:hidden}
 .bi-scroll-hint svg{animation:biHintBounce 1.5s ease-in-out infinite}
