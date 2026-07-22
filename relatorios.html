@@ -1092,24 +1092,20 @@ tr:last-child td{border-bottom:none}
           <div class="bi-table-controls">
             <input type="text" class="bi-search" id="biSearchInput" placeholder="Buscar nome, placa, cidade, modelo..." oninput="biApplyFilters()">
             <span class="bi-table-info" id="biTableInfo"></span>
+            <div class="bi-export-dropdown">
+              <button class="btn btn-outline" onclick="biToggleColMenu()" style="padding:5px 10px;font-size:.7rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Colunas</button>
+              <div class="bi-export-menu" id="biColMenu" style="min-width:180px;max-height:320px;overflow-y:auto;padding:8px 0">
+                <div id="biColList"></div>
+                <div style="display:flex;gap:6px;padding:6px 14px;border-top:1px solid var(--border);margin-top:6px">
+                  <button onclick="biColAll(true)" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:none;font-size:.65rem;color:var(--text2);cursor:pointer;font-family:var(--font)">Todos</button>
+                  <button onclick="biColAll(false)" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:none;font-size:.65rem;color:var(--text2);cursor:pointer;font-family:var(--font)">Nenhum</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="table-wrap" style="overflow-x:auto">
-            <table id="biTblBase" style="width:100%">
-              <thead>
-                <tr>
-                  <th onclick="biSortTable('nome')">#</th>
-                  <th onclick="biSortTable('nome')">Nome</th>
-                  <th onclick="biSortTable('situacao')">Situacao</th>
-                  <th onclick="biSortTable('categoria')">Categoria</th>
-                  <th onclick="biSortTable('plano')">Plano</th>
-                  <th onclick="biSortTable('marca')">Marca</th>
-                  <th onclick="biSortTable('cidade')">Cidade</th>
-                  <th onclick="biSortTable('uf')">UF</th>
-                  <th onclick="biSortTable('valor_mensal')" style="text-align:right">Mensal</th>
-                  <th onclick="biSortTable('rastreador')" style="text-align:center">Rastr.</th>
-                  <th onclick="biSortTable('data_ativacao')">Ativacao</th>
-                </tr>
-              </thead>
+            <table id="biTblBase" style="min-width:900px">
+              <thead><tr id="biTblHead"></tr></thead>
               <tbody id="biTbody"></tbody>
             </table>
           </div>
@@ -4508,6 +4504,7 @@ function biShowDashboard() {
   document.getElementById('biDashboard').style.display = 'block';
   document.getElementById('biFilters').style.display = 'flex';
   document.getElementById('biFiltersDate').style.display = 'flex';
+  biLoadColPrefs();
   biPopulateFilters();
   biApplyFilters();
 }
@@ -4779,7 +4776,101 @@ function biRenderCompareRastreador() {
   html += '<div class="bi-compare-card"><h4>Sem Rastreador</h4><div class="bi-compare-val" style="color:var(--text2)">' + biFormatNum(semR.count) + '</div><div class="bi-compare-sub">Ativos: ' + biFormatNum(semR.ativos) + '</div><div class="bi-compare-sub">Ticket: R$ ' + ticketSem.toFixed(0) + '</div></div>';
   document.getElementById('biCompareRastreador').innerHTML = html;
 }
+var BI_COLUMNS = [
+  { key: '#', label: '#', field: null, visible: true, align: '' },
+  { key: 'nome', label: 'Nome', field: 'nome', visible: true, align: '' },
+  { key: 'situacao', label: 'Situacao', field: 'situacao', visible: true, align: '' },
+  { key: 'categoria', label: 'Categoria', field: 'categoria', visible: true, align: '' },
+  { key: 'plano', label: 'Plano', field: 'plano', visible: true, align: '' },
+  { key: 'marca', label: 'Marca', field: 'marca', visible: true, align: '' },
+  { key: 'modelo', label: 'Modelo', field: 'modelo', visible: false, align: '' },
+  { key: 'cidade', label: 'Cidade', field: 'cidade', visible: true, align: '' },
+  { key: 'uf', label: 'UF', field: 'uf', visible: true, align: '' },
+  { key: 'valor_mensal', label: 'Mensal', field: 'valor_mensal', visible: true, align: 'right' },
+  { key: 'valor_fipe', label: 'FIPE', field: 'valor_fipe', visible: false, align: 'right' },
+  { key: 'rastreador', label: 'Rastr.', field: 'rastreador', visible: true, align: 'center' },
+  { key: 'data_ativacao', label: 'Ativacao', field: 'data_ativacao', visible: true, align: '' },
+  { key: 'data_cadastro', label: 'Cadastro', field: 'data_cadastro', visible: false, align: '' },
+  { key: 'consultor', label: 'Consultor', field: 'consultor', visible: false, align: '' },
+  { key: 'telefone', label: 'Telefone', field: 'telefone', visible: false, align: '' },
+  { key: 'email', label: 'Email', field: 'email', visible: false, align: '' },
+  { key: 'placa', label: 'Placa', field: 'placa', visible: false, align: '' },
+  { key: 'dias_atraso', label: 'Dias Atraso', field: 'dias_atraso', visible: false, align: 'center' },
+  { key: 'motivo_cancelamento', label: 'Motivo Cancel.', field: 'motivo_cancelamento', visible: false, align: '' }
+];
+
+function biLoadColPrefs() {
+  try {
+    var saved = localStorage.getItem('avp-bi-cols');
+    if (saved) {
+      var prefs = JSON.parse(saved);
+      for (var i = 0; i < BI_COLUMNS.length; i++) {
+        if (prefs[BI_COLUMNS[i].key] !== undefined) BI_COLUMNS[i].visible = prefs[BI_COLUMNS[i].key];
+      }
+    }
+  } catch(e) {}
+}
+
+function biSaveColPrefs() {
+  var prefs = {};
+  for (var i = 0; i < BI_COLUMNS.length; i++) prefs[BI_COLUMNS[i].key] = BI_COLUMNS[i].visible;
+  try { localStorage.setItem('avp-bi-cols', JSON.stringify(prefs)); } catch(e) {}
+}
+
+function biToggleColMenu() {
+  var menu = document.getElementById('biColMenu');
+  menu.classList.toggle('show');
+  biRenderColMenu();
+  setTimeout(function() {
+    document.addEventListener('click', function handler(e) {
+      if (!e.target.closest('.bi-export-dropdown')) { menu.classList.remove('show'); document.removeEventListener('click', handler); }
+    });
+  }, 10);
+}
+
+function biRenderColMenu() {
+  var html = '';
+  for (var i = 0; i < BI_COLUMNS.length; i++) {
+    var c = BI_COLUMNS[i];
+    if (c.key === '#') continue;
+    html += '<label style="display:flex;align-items:center;gap:8px;padding:5px 14px;font-size:.72rem;cursor:pointer;color:var(--text1)"><input type="checkbox" ' + (c.visible ? 'checked' : '') + ' onchange="biToggleCol(\'' + c.key + '\',this.checked)" style="accent-color:var(--accent)"> ' + c.label + '</label>';
+  }
+  document.getElementById('biColList').innerHTML = html;
+}
+
+function biToggleCol(key, checked) {
+  for (var i = 0; i < BI_COLUMNS.length; i++) {
+    if (BI_COLUMNS[i].key === key) { BI_COLUMNS[i].visible = checked; break; }
+  }
+  biSaveColPrefs();
+  biRenderTable();
+}
+
+function biColAll(show) {
+  for (var i = 0; i < BI_COLUMNS.length; i++) { if (BI_COLUMNS[i].key !== '#') BI_COLUMNS[i].visible = show; }
+  biSaveColPrefs();
+  biRenderColMenu();
+  biRenderTable();
+}
+
+function biGetVisibleColumns() {
+  return BI_COLUMNS.filter(function(c) { return c.visible; });
+}
+
 function biRenderTable() {
+  biLoadColPrefs();
+  var visCols = biGetVisibleColumns();
+
+  // Render header
+  var headHtml = '';
+  for (var c = 0; c < visCols.length; c++) {
+    var col = visCols[c];
+    var style = col.align ? 'text-align:' + col.align : '';
+    var onclick = col.field ? ' onclick="biSortTable(\'' + col.field + '\')"' : '';
+    headHtml += '<th' + onclick + ' style="' + style + '">' + col.label + '</th>';
+  }
+  document.getElementById('biTblHead').innerHTML = headHtml;
+
   // Sort
   var data = BI_FILTERED.slice();
   data.sort(function(a, b) {
@@ -4801,35 +4892,35 @@ function biRenderTable() {
   var startIdx = BI_PAGE * BI_PER_PAGE;
   var pageData = data.slice(startIdx, startIdx + BI_PER_PAGE);
 
-  // Info
   document.getElementById('biTableInfo').textContent = 'Mostrando ' + (startIdx + 1) + '-' + Math.min(startIdx + BI_PER_PAGE, data.length) + ' de ' + biFormatNum(data.length);
 
-  // Render rows
   var html = '';
   for (var i = 0; i < pageData.length; i++) {
     var r = pageData[i];
-    var stClass = r.situacao === 'Ativo' ? 'st-ativo' : (r.situacao === 'Novo' ? 'st-novo' : (r.situacao === 'Suspenso' ? 'st-suspenso' : 'st-cancelado'));
     html += '<tr>';
-    html += '<td>' + (startIdx + i + 1) + '</td>';
-    html += '<td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.nome || '') + '</td>';
-    html += '<td><span class="bi-status-dot ' + stClass + '"></span>' + (r.situacao || '') + '</td>';
-    html += '<td style="font-size:.68rem">' + (r.categoria || '') + '</td>';
-    html += '<td>' + (r.plano || '') + '</td>';
-    html += '<td>' + (r.marca || '') + '</td>';
-    html += '<td>' + (r.cidade || '') + '</td>';
-    html += '<td>' + (r.uf || '') + '</td>';
-    html += '<td style="text-align:right">R$ ' + (r.valor_mensal || 0).toFixed(2) + '</td>';
-    html += '<td style="text-align:center">' + (r.rastreador === 1 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</td>';
-    html += '<td>' + (r.data_ativacao || '') + '</td>';
+    for (var c = 0; c < visCols.length; c++) {
+      var col = visCols[c];
+      var style = col.align ? 'text-align:' + col.align + ';' : '';
+      if (col.key === '#') {
+        html += '<td>' + (startIdx + i + 1) + '</td>';
+      } else if (col.key === 'nome') {
+        html += '<td style="font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.nome || '') + '</td>';
+      } else if (col.key === 'situacao') {
+        var stClass = r.situacao === 'Ativo' ? 'st-ativo' : (r.situacao === 'Novo' ? 'st-novo' : (r.situacao === 'Suspenso' ? 'st-suspenso' : 'st-cancelado'));
+        html += '<td><span class="bi-status-dot ' + stClass + '"></span>' + (r.situacao || '') + '</td>';
+      } else if (col.key === 'valor_mensal' || col.key === 'valor_fipe') {
+        html += '<td style="' + style + '">R$ ' + ((r[col.field] || 0).toFixed(2)) + '</td>';
+      } else if (col.key === 'rastreador') {
+        html += '<td style="' + style + '">' + (r.rastreador === 1 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</td>';
+      } else {
+        html += '<td style="' + style + 'font-size:.68rem">' + (r[col.field] || '') + '</td>';
+      }
+    }
     html += '</tr>';
   }
   document.getElementById('biTbody').innerHTML = html;
 
-  // Pagination
   biRenderPagination(totalPages);
-
-  // Sort indicators
-  document.querySelectorAll('#biTblBase th').forEach(function(th) { th.classList.remove('sorted-asc', 'sorted-desc'); });
 }
 
 function biRenderPagination(totalPages) {
@@ -4966,13 +5057,23 @@ function biExportFiltro() {
   if (BI_FILTERED.length === 0) { alert('Nenhum dado no filtro atual'); return; }
 
   var data = BI_FILTERED;
-  var rows = [['Nome', 'Situacao', 'Categoria', 'Plano', 'Marca', 'Modelo', 'Placa', 'Cidade', 'UF', 'Consultor', 'Mensalidade', 'Valor FIPE', 'Rastreador', 'Data Ativacao', 'Telefone', 'Email']];
+  var visCols = biGetVisibleColumns().filter(function(c) { return c.key !== '#'; });
+
+  // Header baseado nas colunas visíveis
+  var header = visCols.map(function(c) { return c.label; });
+  var rows = [header];
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    rows.push([r.nome, r.situacao, r.categoria, r.plano, r.marca, r.modelo, r.placa, r.cidade, r.uf, r.consultor, r.valor_mensal, r.valor_fipe, r.rastreador === 1 ? 'Sim' : 'Nao', r.data_ativacao, r.telefone, r.email]);
+    var row = [];
+    for (var c = 0; c < visCols.length; c++) {
+      var col = visCols[c];
+      if (col.key === 'rastreador') row.push(r.rastreador === 1 ? 'Sim' : 'Nao');
+      else if (col.key === 'valor_mensal' || col.key === 'valor_fipe') row.push(r[col.field] || 0);
+      else row.push(r[col.field] || '');
+    }
+    rows.push(row);
   }
   var ws1 = XLSX.utils.aoa_to_sheet(rows);
-  ws1['!cols'] = [{wch:30},{wch:10},{wch:22},{wch:10},{wch:14},{wch:22},{wch:10},{wch:18},{wch:4},{wch:28},{wch:12},{wch:14},{wch:8},{wch:12},{wch:16},{wch:24}];
 
   // Info do filtro
   var filtros = [];
