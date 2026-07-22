@@ -4248,13 +4248,15 @@ async function biLogin() {
   return d.success ? d.session_cookie : null;
 }
 
-async function biFetchExcel(session_cookie, dataIni, dataFim) {
+async function biFetchExcel(session_cookie, dataIni, dataFim, situacaoFiltro) {
   var maxRetries = 2;
   for (var attempt = 0; attempt <= maxRetries; attempt++) {
     try {
+      var payload = { action: 'base_excel', session_cookie: session_cookie, data_inicial: dataIni, data_final: dataFim };
+      if (situacaoFiltro) payload.situacao_filtro = situacaoFiltro;
       var resp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY, 'apikey': SUPABASE_KEY },
-        body: JSON.stringify({ action: 'base_excel', session_cookie: session_cookie, data_inicial: dataIni, data_final: dataFim })
+        body: JSON.stringify(payload)
       });
       var d = await resp.json();
       if (d.success && d.xlsx_base64) return d;
@@ -4395,37 +4397,72 @@ async function biLoadBase() {
     ];
     var allData = [];
     var detStatus = {};
-    for (var i = 0; i < periodos.length; i++) detStatus[periodos[i].label] = { status: 'waiting', count: 0 };
+
+    // Fase 1: Ativos + Novos + Suspensos (sem filtro de situação)
+    for (var i = 0; i < periodos.length; i++) detStatus['Atv ' + periodos[i].label] = { status: 'waiting', count: 0 };
+    // Fase 2: Cancelados (com VendasSituacao[]=3)
+    for (var i = 0; i < periodos.length; i++) detStatus['Canc ' + periodos[i].label] = { status: 'waiting', count: 0 };
 
     function updateUI() {
       var totalLoaded = allData.length;
       var pct = Math.round((totalLoaded / 63000) * 100);
       fill.style.width = Math.min(pct, 95) + '%';
       progSummary.textContent = totalLoaded.toLocaleString('pt-BR') + ' registros carregados';
-      var detHtml = '';
-      for (var k in detStatus) {
+      var detHtml = '<div style="margin-bottom:8px"><strong style="color:var(--green)">Ativos / Novos / Suspensos</strong></div>';
+      for (var i = 0; i < periodos.length; i++) {
+        var k = 'Atv ' + periodos[i].label;
         var ds = detStatus[k];
         var icon = ds.status === 'done' ? '<span style="color:var(--green)">✓</span>' : ds.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
-        var info = ds.status === 'done' ? ds.count.toLocaleString('pt-BR') + ' registros' : ds.status === 'loading' ? 'baixando Excel...' : 'aguardando';
-        detHtml += '<div style="margin-bottom:6px">' + icon + ' <strong>' + k + '</strong>: ' + info + '</div>';
+        var info = ds.status === 'done' ? ds.count.toLocaleString('pt-BR') : ds.status === 'loading' ? 'baixando...' : '';
+        detHtml += '<span style="display:inline-block;background:var(--surface-2);padding:2px 6px;border-radius:4px;font-size:.62rem;margin:2px">' + icon + ' ' + periodos[i].label + (info ? ': ' + info : '') + '</span>';
+      }
+      detHtml += '<div style="margin-top:10px;margin-bottom:8px"><strong style="color:var(--red)">Cancelados</strong></div>';
+      for (var i = 0; i < periodos.length; i++) {
+        var k = 'Canc ' + periodos[i].label;
+        var ds = detStatus[k];
+        var icon = ds.status === 'done' ? '<span style="color:var(--green)">✓</span>' : ds.status === 'loading' ? '<span style="color:var(--amber)">●</span>' : '<span style="color:var(--text3)">○</span>';
+        var info = ds.status === 'done' ? ds.count.toLocaleString('pt-BR') : ds.status === 'loading' ? 'baixando...' : '';
+        detHtml += '<span style="display:inline-block;background:var(--surface-2);padding:2px 6px;border-radius:4px;font-size:.62rem;margin:2px">' + icon + ' ' + periodos[i].label + (info ? ': ' + info : '') + '</span>';
       }
       progDetails.innerHTML = detHtml;
     }
 
+    // Fase 1: Ativos + Novos + Suspensos
+    progCurrent.textContent = '● Buscando Ativos/Novos/Suspensos...';
     for (var i = 0; i < periodos.length; i++) {
       var p = periodos[i];
-      detStatus[p.label].status = 'loading';
-      progCurrent.textContent = '● Baixando Excel ' + p.label + '...';
+      var key = 'Atv ' + p.label;
+      detStatus[key].status = 'loading';
+      progCurrent.textContent = '● Ativos ' + p.label + '...';
       updateUI();
 
-      var result = await biFetchExcel(session, p.ini, p.fim);
+      var result = await biFetchExcel(session, p.ini, p.fim, null);
       if (result.success && result.xlsx_base64) {
-        progCurrent.textContent = '● Processando ' + p.label + '...';
         var registros = biParseExcel(result.xlsx_base64);
         allData = allData.concat(registros);
-        detStatus[p.label] = { status: 'done', count: registros.length };
+        detStatus[key] = { status: 'done', count: registros.length };
       } else {
-        detStatus[p.label] = { status: 'done', count: 0 };
+        detStatus[key] = { status: 'done', count: 0 };
+      }
+      updateUI();
+    }
+
+    // Fase 2: Cancelados
+    progCurrent.textContent = '● Buscando Cancelados...';
+    for (var i = 0; i < periodos.length; i++) {
+      var p = periodos[i];
+      var key = 'Canc ' + p.label;
+      detStatus[key].status = 'loading';
+      progCurrent.textContent = '● Cancelados ' + p.label + '...';
+      updateUI();
+
+      var result = await biFetchExcel(session, p.ini, p.fim, '3');
+      if (result.success && result.xlsx_base64) {
+        var registros = biParseExcel(result.xlsx_base64);
+        allData = allData.concat(registros);
+        detStatus[key] = { status: 'done', count: registros.length };
+      } else {
+        detStatus[key] = { status: 'done', count: 0 };
       }
       updateUI();
     }

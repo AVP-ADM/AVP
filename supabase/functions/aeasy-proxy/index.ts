@@ -192,8 +192,12 @@ serve(async (req) => {
     // Gera e baixa o Excel Completo da AEasy por período, retorna como base64
     // Params: session_cookie, data_inicial, data_final
     if (action === "base_excel") {
-      const { data_inicial: exDataIni, data_final: exDataFim } = body;
-      const exportUrl = `${AEASY_URL}/vendas/exportar-relatorio-completo-associados?DepartNivel=1&TipoData=VendasDataCadastro&DataInicial=${exDataIni}&DataFinal=${exDataFim}&Fidelidade=&IndividuosEnderecosLogradouro=&IndividuosEnderecosBairro=&VendasCarrosPlaca=&VendasCarrosPlacaImplemento=&VendasCarrosModelosId=&PossuiEvento=&DataNascimento=&VendasDiasAtraso=&TipoVendasFaturasPagas=&FaturasPagas=&VeiculoZero=&ValorFipeInicio=&ValorFipeFinal=&FormaPagamento=&VendasClassificacao=&PossuiRastreador=&VendasCarrosRastreadorObrigatorio=&CarneEmitido=&PossuiCarne=&ConsultoresIndicadoresConsultoresNome=&VendasTipoSuspensao=&VendasCarrosValorDescontoConsultor=&VendasCarrosOrigemMigracao=&VendasFuncionariosConsultoresId=&VendasCarrosPortabilidade=&AssociadosMaisPlacas=&VendasCarrosAssociacaoOrigem=&CarrosChassi=&VendasCarrosPlotagem=&FaturaNaoGeradaMesAno=&FaturaNaoGeradaTipo=&ParcelasDisponiveis=&DadosExtra=&TermoAdesaoAssinado=&AuxilioProfissional=&VendasCarrosChassiRemarcado=&VendasCarrosLeilao=&VendasCarrosMediaMonta=&VendasCarrosMotivosDeprecacaoId=&RetornarLiderComEquipe=&ProdutosId=&ContabilizaParaMeta=`;
+      const { data_inicial: exDataIni, data_final: exDataFim, situacao_filtro } = body;
+      let situacaoParam = '';
+      if (situacao_filtro) {
+        situacaoParam = '&VendasSituacao%5B%5D=' + situacao_filtro;
+      }
+      const exportUrl = `${AEASY_URL}/vendas/exportar-relatorio-completo-associados?DepartNivel=1&TipoData=VendasDataCadastro&DataInicial=${exDataIni}&DataFinal=${exDataFim}${situacaoParam}&Fidelidade=&IndividuosEnderecosLogradouro=&IndividuosEnderecosBairro=&VendasCarrosPlaca=&VendasCarrosPlacaImplemento=&VendasCarrosModelosId=&PossuiEvento=&DataNascimento=&VendasDiasAtraso=&TipoVendasFaturasPagas=&FaturasPagas=&VeiculoZero=&ValorFipeInicio=&ValorFipeFinal=&FormaPagamento=&VendasClassificacao=&PossuiRastreador=&VendasCarrosRastreadorObrigatorio=&CarneEmitido=&PossuiCarne=&ConsultoresIndicadoresConsultoresNome=&VendasTipoSuspensao=&VendasCarrosValorDescontoConsultor=&VendasCarrosOrigemMigracao=&VendasFuncionariosConsultoresId=&VendasCarrosPortabilidade=&AssociadosMaisPlacas=&VendasCarrosAssociacaoOrigem=&CarrosChassi=&VendasCarrosPlotagem=&FaturaNaoGeradaMesAno=&FaturaNaoGeradaTipo=&ParcelasDisponiveis=&DadosExtra=&TermoAdesaoAssinado=&AuxilioProfissional=&VendasCarrosChassiRemarcado=&VendasCarrosLeilao=&VendasCarrosMediaMonta=&VendasCarrosMotivosDeprecacaoId=&RetornarLiderComEquipe=&ProdutosId=&ContabilizaParaMeta=`;
 
       try {
         // Step 1: Solicitar geração do Excel
