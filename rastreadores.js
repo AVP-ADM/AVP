@@ -400,10 +400,14 @@ function rastRenderMapa(){
   // Clear all layers
   Object.keys(RAST_MAP_LAYERS).forEach(function(k){RAST_MAP_LAYERS[k].forEach(function(l){RAST_MAP.removeLayer(l);});RAST_MAP_LAYERS[k]=[];});
 
+  // Map priority filter
+  var prioFiltro=(document.getElementById('rastMapaPrioridade')||{}).value||'';
+
   // Layer: Registros (city bubbles)
   if(showRegistros){
     for(var i=0;i<RAST_CITIES.length;i++){
       var c=RAST_CITIES[i];if(!c.lat||!c.lng)continue;
+      if(prioFiltro&&c.prioridade!==prioFiltro)continue;
       var val,radius;
       if(metrica==='semRastreador'){val=c.semRastreador;radius=Math.max(5,Math.min(40,Math.sqrt(val)*1.5));}
       else if(metrica==='operacionais'){val=c.operacionais;radius=Math.max(5,Math.min(40,Math.sqrt(val)*1.2));}
@@ -455,18 +459,46 @@ function rastOpenDrawer(tipo,data){
   if(tipo==='cidade'){
     var c=data;
     html+=c.cidade+' - '+c.uf+'</h3><button class="btn btn-outline" style="padding:4px 8px;font-size:.7rem" onclick="rastCloseDrawer()">✕</button></div>';
-    html+='<div class="detail-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">';
-    html+='<div class="detail-card green"><div class="dc-value">'+biFormatNum(c.comRastreador)+'</div><div class="dc-label">Com Rastr.</div></div>';
-    html+='<div class="detail-card" style="border-left:2px solid var(--red)"><div class="dc-value" style="color:var(--red)">'+biFormatNum(c.semRastreador)+'</div><div class="dc-label">Sem Rastr.</div></div>';
-    html+='<div class="detail-card blue"><div class="dc-value">'+(c.cobertura*100).toFixed(1)+'%</div><div class="dc-label">Cobertura</div></div>';
+    // KPI cards
+    html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">';
+    html+='<div style="background:var(--surface-2);border-radius:var(--radius);padding:10px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--green)">'+biFormatNum(c.comRastreador)+'</div><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase">Com Rastr.</div></div>';
+    html+='<div style="background:var(--surface-2);border-radius:var(--radius);padding:10px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--red)">'+biFormatNum(c.semRastreador)+'</div><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase">Sem Rastr.</div></div>';
+    html+='<div style="background:var(--surface-2);border-radius:var(--radius);padding:10px;text-align:center"><div style="font-size:1.1rem;font-weight:800;color:var(--blue)">'+(c.cobertura*100).toFixed(1)+'%</div><div style="font-size:.6rem;color:var(--text3);text-transform:uppercase">Cobertura</div></div>';
     html+='</div>';
-    html+='<div style="font-size:.72rem;color:var(--text2);margin-bottom:8px"><b>Score:</b> '+c.score+' ('+c.prioridade+') | <b>Motos:</b> '+c.motos+' | <b>Carros:</b> '+c.carros+' | <b>Caminhões:</b> '+c.caminhoes+'</div>';
-    html+='<div style="font-size:.72rem;color:var(--text2)"><b>Prestadores:</b> '+c.prestadoresAtivos+' ativos / '+c.prestadoresNecessarios+' necessários (déficit: '+c.deficit+')</div>';
-    html+='<div style="font-size:.72rem;color:var(--text2);margin-top:4px"><b>Cancelados com rastreador:</b> '+c.canceladosComRastreador+'</div>';
+    // Info
+    html+='<div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;line-height:1.8">';
+    html+='<b>Score:</b> '+c.score+' (<span class="rast-nivel-tag '+c.prioridade+'" style="font-size:.58rem">'+c.prioridade+'</span>)<br>';
+    html+='<b>Operacionais:</b> '+biFormatNum(c.operacionais)+' | <b>Total:</b> '+biFormatNum(c.total)+'<br>';
+    html+='<b>Motos:</b> '+c.motos+' | <b>Carros:</b> '+c.carros+' | <b>Caminhões:</b> '+c.caminhoes+'<br>';
+    html+='<b>Prestadores:</b> '+c.prestadoresAtivos+' ativos / '+c.prestadoresNecessarios+' necessários<br>';
+    html+='<b>Déficit:</b> <span style="color:'+(c.deficit>0?'var(--red)':'var(--green)')+'">'+c.deficit+'</span><br>';
+    html+='<b>Cancelados com rastr.:</b> '+c.canceladosComRastreador+'</div>';
+    // Associados sem rastreador (lista)
+    var assocs=rastGetAssociados();
+    var cityAssocs=assocs.filter(function(a){
+      var aKey=(a.cidade+'__'+a.uf).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      return a.operacional&&!a.temRastreador&&aKey===c.chave;
+    }).slice(0,30);
+    if(cityAssocs.length>0){
+      html+='<div style="margin-top:10px;font-size:.72rem;font-weight:700;color:var(--text1);margin-bottom:6px">Sem rastreador ('+biFormatNum(c.semRastreador)+'):</div>';
+      html+='<div style="max-height:200px;overflow-y:auto"><table class="equipe-table"><thead><tr><th>Nome</th><th>Tipo</th><th>Plano</th></tr></thead><tbody>';
+      for(var j=0;j<cityAssocs.length;j++){var a=cityAssocs[j];var tl=a.tipo==='moto'?'Moto':a.tipo==='carro'?'Carro':a.tipo==='caminhao'?'Caminhão':'N/C';html+='<tr><td style="font-size:.68rem">'+a.nome+'</td><td style="font-size:.68rem">'+tl+'</td><td style="font-size:.68rem">'+(a.plano||'-')+'</td></tr>';}
+      html+='</tbody></table></div>';
+      if(c.semRastreador>30)html+='<p style="font-size:.62rem;color:var(--text3);margin-top:4px">Mostrando 30 de '+c.semRastreador+'</p>';
+    }
   }
   drawer.innerHTML=html;
 }
 function rastCloseDrawer(){var d=document.getElementById('rastMapaDrawer');if(d)d.style.display='none';RAST_DRAWER_OPEN=false;}
+
+function rastMapaFiltroChanged(){
+  // Sync tipo filter with the global one and re-compute
+  var tipo=(document.getElementById('rastMapaTipo')||{}).value||'todos';
+  var globalFiltro=document.getElementById('rastFiltroTipo');
+  if(globalFiltro)globalFiltro.value=tipo;
+  rastRefreshAll();
+  setTimeout(function(){rastRenderMapa();},100);
+}
 
 function rastExportMapaXLSX(){
   if(!RAST_CITIES.length){alert('Sem dados');return;}
