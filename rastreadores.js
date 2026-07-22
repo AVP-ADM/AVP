@@ -126,13 +126,29 @@ function rastRefreshAll() {
   var assocs = rastGetAssociados();
   var filtroTipo = (document.getElementById('rastFiltroTipo') || {}).value || 'todos';
   if (assocs.length === 0) {
-    document.getElementById('rastVisaoNodata').style.display = 'flex';
+    // Check if BI is currently loading (BI_LOADING flag or biEmpty shows spinner)
+    var biLoading = (typeof BI_LOADING !== 'undefined' && BI_LOADING);
+    var biEmptyEl = document.getElementById('biEmpty');
+    var isLoadingFromCache = biEmptyEl && biEmptyEl.style.display !== 'none' && biEmptyEl.innerHTML.indexOf('spin') >= 0;
+
+    if (biLoading || isLoadingFromCache) {
+      // Show loading state
+      var loadingHtml = '<div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="animation:spin 1s linear infinite;width:48px;height:48px;margin-bottom:12px;opacity:.5"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg><p style="color:var(--text2)">Carregando base do servidor...</p><p style="font-size:.72rem;color:var(--text3);margin-top:4px">Aguarde, os dados aparecerão automaticamente</p></div>';
+      ['rastVisaoNodata','rastPriorNodata','rastMapaNodata','rastQualNodata'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'flex'; el.innerHTML = loadingHtml; }
+      });
+    } else {
+      // Show "carregue a base" state
+      var nodataHtml = '<div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin-bottom:12px;opacity:.4"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4"/></svg><p>Carregue a base no <strong>BI Associados</strong> primeiro.</p><button class="btn btn-green" onclick="goPanel(\'bi-base\')" style="margin-top:12px">Ir para BI Associados</button></div>';
+      ['rastVisaoNodata','rastPriorNodata','rastMapaNodata','rastQualNodata'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'flex'; el.innerHTML = nodataHtml; }
+      });
+    }
     document.getElementById('rastVisaoContent').style.display = 'none';
-    document.getElementById('rastPriorNodata').style.display = 'flex';
     document.getElementById('rastPriorContent').style.display = 'none';
-    document.getElementById('rastMapaNodata').style.display = 'flex';
     document.getElementById('rastMapaContent').style.display = 'none';
-    document.getElementById('rastQualNodata').style.display = 'flex';
     document.getElementById('rastQualContent').style.display = 'none';
     return;
   }
@@ -735,8 +751,10 @@ goPanel = function(panelId) {
     // Refresh data when navigating to rastreadores panels
     if (panelId === 'rast-visao' || panelId === 'rast-priorizacao' || panelId === 'rast-qualidade') {
       rastRefreshAll();
+      rastStartPolling();
     } else if (panelId === 'rast-mapa') {
       rastRefreshAll();
+      rastStartPolling();
       setTimeout(function() {
         rastRenderMapa();
         if (RAST_MAP) RAST_MAP.invalidateSize();
@@ -748,6 +766,25 @@ goPanel = function(panelId) {
     }
   }
 };
+
+// Polling: if BI_DATA is empty but loading, check every 2s until data arrives
+var _rastPollTimer = null;
+function rastStartPolling() {
+  if (_rastPollTimer) return;
+  if (BI_DATA && BI_DATA.length > 0) return; // already have data
+  _rastPollTimer = setInterval(function() {
+    if (BI_DATA && BI_DATA.length > 0) {
+      clearInterval(_rastPollTimer);
+      _rastPollTimer = null;
+      rastRefreshAll();
+      // If map panel is active, also render map
+      var mapPanel = document.getElementById('panel-rast-mapa');
+      if (mapPanel && mapPanel.classList.contains('active')) {
+        setTimeout(function() { rastRenderMapa(); if (RAST_MAP) RAST_MAP.invalidateSize(); }, 200);
+      }
+    }
+  }, 2000);
+}
 
 // Load prestadores and areas on init
 (async function() {

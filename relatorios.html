@@ -4763,6 +4763,8 @@ function biShowDashboard() {
   biLoadColPrefs();
   biPopulateFilters();
   biApplyFilters();
+  // Auto-refresh Rastreadores if panel is active
+  if (typeof rastRefreshAll === 'function') rastRefreshAll();
 }
 
 function biPopulateFilters() {
