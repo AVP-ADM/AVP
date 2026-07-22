@@ -1209,96 +1209,68 @@ tr:last-child td{border-bottom:none}
 
       <!-- PANEL: RASTREADORES - VISÃO GERAL -->
       <div class="panel" id="panel-rast-visao">
-        <div class="rast-nodata" id="rastVisaoNodata">
-          <div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4"/></svg><p>Carregue a base no <strong>BI Associados</strong> primeiro.</p><button class="btn btn-green" onclick="goPanel('bi-base')" style="margin-top:12px">Ir para BI Associados</button></div>
-        </div>
+        <div class="rast-nodata" id="rastVisaoNodata" style="display:flex"></div>
         <div id="rastVisaoContent" style="display:none">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
             <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Visão Geral</h2>
             <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
               <select id="rastFiltroTipo" onchange="rastRefreshAll()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-                <option value="todos">Todos os veículos</option>
-                <option value="moto">Motos</option>
-                <option value="carro">Carros</option>
-                <option value="caminhao">Caminhões</option>
+                <option value="todos">Todos os veículos</option><option value="moto">Motos</option><option value="carro">Carros</option><option value="caminhao">Caminhões</option>
               </select>
             </div>
           </div>
-          <!-- KPIs -->
           <div class="bi-kpi-grid" id="rastKpis"></div>
-          <!-- Charts -->
           <div class="bi-charts-grid" style="margin-top:20px">
-            <div class="bi-chart-card">
-              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 118 2.83"/><path d="M22 12A10 10 0 0012 2v10z"/></svg> Cobertura por Tipo</div>
-              <div id="rastChartTipo"></div>
-            </div>
-            <div class="bi-chart-card">
-              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Top 10 Cidades Sem Rastreador</div>
-              <div id="rastChartCidades"></div>
-            </div>
-            <div class="bi-chart-card">
-              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Distribuição por Prioridade</div>
-              <div id="rastChartPrioridade"></div>
-            </div>
-            <div class="bi-chart-card">
-              <div class="bi-chart-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg> Cancelados com Rastreador (recuperar)</div>
-              <div id="rastChartRecuperar"></div>
-            </div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Cobertura por Tipo</div><div id="rastChartTipo"></div></div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Top 15 Cidades Sem Rastreador</div><div id="rastChartCidades"></div></div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Distribuição por Prioridade</div><div id="rastChartPrioridade"></div></div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Cancelados com Rastreador (recuperar)</div><div id="rastChartRecuperar"></div></div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Cobertura por UF</div><div id="rastChartUF"></div></div>
+            <div class="bi-chart-card"><div class="bi-chart-title">Top 15 Cidades por Operacionais</div><div id="rastChartOperacionais"></div></div>
           </div>
         </div>
       </div>
 
       <!-- PANEL: RASTREADORES - PRIORIZAÇÃO -->
       <div class="panel" id="panel-rast-priorizacao">
-        <div class="rast-nodata" id="rastPriorNodata">
-          <div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/></svg><p>Carregue a base no <strong>BI Associados</strong> primeiro.</p><button class="btn btn-green" onclick="goPanel('bi-base')" style="margin-top:12px">Ir para BI Associados</button></div>
-        </div>
+        <div class="rast-nodata" id="rastPriorNodata" style="display:flex"></div>
         <div id="rastPriorContent" style="display:none">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
             <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Priorização</h2>
-            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-              <select id="rastPriorFiltro" onchange="rastRenderPriorizacao()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-                <option value="">Todas as prioridades</option>
-                <option value="critico">Crítica (>500 sem rastr.)</option>
-                <option value="alto">Alta (200-500)</option>
-                <option value="medio">Média (50-200)</option>
-                <option value="baixo">Baixa (<50)</option>
-              </select>
-              <input type="text" id="rastPriorBusca" placeholder="Buscar cidade..." oninput="rastRenderPriorizacao()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:160px">
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="rastPriorFiltro" onchange="rastRenderPriorizacao()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Todas prioridades</option><option value="critico">Crítica</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Baixa</option></select>
+              <select id="rastPriorUF" onchange="rastRenderPriorizacao()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Todos UFs</option></select>
+              <input type="text" id="rastPriorBusca" placeholder="Buscar cidade..." oninput="rastRenderPriorizacao()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1);width:140px">
+              <button class="btn btn-export" onclick="rastExportPriorizacaoCSV()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
             </div>
           </div>
-          <!-- Prioridade badges -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="rastPriorBadges"></div>
-          <!-- Table -->
-          <div class="table-wrap">
-            <table id="tblRastPrior">
-              <thead><tr><th>#</th><th>Cidade</th><th>UF</th><th style="text-align:center">Operacionais</th><th style="text-align:center">Com Rastr.</th><th style="text-align:center">Sem Rastr.</th><th style="text-align:center">Cobertura</th><th style="text-align:center">Score</th><th>Prioridade</th></tr></thead>
-              <tbody id="tbodyRastPrior"></tbody>
-            </table>
-          </div>
-          <!-- Expanded detail container -->
-          <div id="rastPriorDetail" style="display:none;margin-top:16px"></div>
+          <div class="table-wrap"><table id="tblRastPrior"><thead><tr><th>#</th><th>Cidade</th><th>UF</th><th style="text-align:center">Operacionais</th><th style="text-align:center">Com Rastr.</th><th style="text-align:center">Sem Rastr.</th><th style="text-align:center">Cobertura</th><th style="text-align:center">Prest. Ativos</th><th style="text-align:center">Prest. Necess.</th><th style="text-align:center">Déficit</th><th style="text-align:center">Score</th><th>Prioridade</th></tr></thead><tbody id="tbodyRastPrior"></tbody></table></div>
+          <p style="font-size:.7rem;color:var(--text3);margin-top:8px" id="rastPriorInfo"></p>
         </div>
       </div>
 
       <!-- PANEL: RASTREADORES - MAPA -->
       <div class="panel" id="panel-rast-mapa">
-        <div class="rast-nodata" id="rastMapaNodata">
-          <div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><p>Carregue a base no <strong>BI Associados</strong> primeiro.</p><button class="btn btn-green" onclick="goPanel('bi-base')" style="margin-top:12px">Ir para BI Associados</button></div>
-        </div>
+        <div class="rast-nodata" id="rastMapaNodata" style="display:flex"></div>
         <div id="rastMapaContent" style="display:none">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
             <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Mapa</h2>
-            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-              <select id="rastMapaMetrica" onchange="rastRenderMapa()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-                <option value="semRastreador">Sem Rastreador</option>
-                <option value="operacionais">Operacionais</option>
-                <option value="cobertura">Cobertura %</option>
-                <option value="score">Score Prioridade</option>
-              </select>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="rastMapaMetrica" onchange="rastRenderMapa()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="semRastreador">Sem Rastreador</option><option value="operacionais">Operacionais</option><option value="cobertura">Cobertura %</option><option value="score">Score</option></select>
+              <button class="btn btn-export" onclick="rastExportMapaXLSX()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
             </div>
           </div>
-          <div id="rastMapaContainer" style="height:500px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)"></div>
+          <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRegistros" checked onchange="rastRenderMapa()" style="accent-color:var(--accent)"> Cidades</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerPrestadores" checked onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Prestadores</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRaios" onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Raios</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRisco" checked onchange="rastRenderMapa()" style="accent-color:var(--red)"> Áreas de Risco</label>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="flex:1"><div id="rastMapaContainer" style="height:520px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)"></div></div>
+            <div id="rastMapaDrawer" style="display:none;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;overflow-y:auto;max-height:520px;box-shadow:var(--shadow)"></div>
+          </div>
           <div style="display:flex;gap:12px;margin-top:8px;font-size:.68rem;color:var(--text3);align-items:center;flex-wrap:wrap" id="rastMapaLegend"></div>
         </div>
       </div>
@@ -1307,22 +1279,18 @@ tr:last-child td{border-bottom:none}
       <div class="panel" id="panel-rast-prestadores">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Prestadores</h2>
-          <div style="margin-left:auto;display:flex;gap:8px">
-            <button class="btn btn-green" onclick="rastPrestadorAdd()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo Prestador</button>
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-green" onclick="rastPrestadorAdd()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo</button>
+            <button class="btn btn-outline" onclick="rastPrestadorImport()" style="padding:6px 12px;font-size:.72rem">Importar</button>
+            <button class="btn btn-outline" onclick="rastPrestadorExportModelo()" style="padding:6px 12px;font-size:.72rem">Modelo XLSX</button>
           </div>
         </div>
+        <div class="bi-kpi-grid" id="rastPrestKpis" style="margin-bottom:16px"></div>
         <div class="search-row" style="margin-bottom:12px">
           <input type="text" id="rastPrestBusca" placeholder="Buscar prestador, cidade..." oninput="rastRenderPrestadores()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-          <select id="rastPrestStatus" onchange="rastRenderPrestadores()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-            <option value="">Todos</option><option value="ativo">Ativos</option><option value="pendente">Pendentes</option><option value="inativo">Inativos</option>
-          </select>
+          <select id="rastPrestStatus" onchange="rastRenderPrestadores()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Todos</option><option value="ativo">Ativos</option><option value="pendente">Pendentes</option><option value="inativo">Inativos</option></select>
         </div>
-        <div class="table-wrap">
-          <table id="tblRastPrest">
-            <thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>UF</th><th style="text-align:center">Tipos</th><th style="text-align:center">Raio (km)</th><th style="text-align:center">Capacidade</th><th>Status</th><th class="col-actions"></th></tr></thead>
-            <tbody id="tbodyRastPrest"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table id="tblRastPrest"><thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>UF</th><th style="text-align:center">Tipos</th><th style="text-align:center">Raio (km)</th><th style="text-align:center">Capacidade</th><th>Status</th><th class="col-actions"></th></tr></thead><tbody id="tbodyRastPrest"></tbody></table></div>
         <p style="font-size:.7rem;color:var(--text3);margin-top:8px" id="rastPrestInfo"></p>
       </div>
 
@@ -1330,37 +1298,30 @@ tr:last-child td{border-bottom:none}
       <div class="panel" id="panel-rast-risco">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Áreas de Risco</h2>
-          <div style="margin-left:auto;display:flex;gap:8px">
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-green" onclick="rastRiscoAdd()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova Área</button>
+            <button class="btn btn-outline" onclick="rastRiscoImport()" style="padding:6px 12px;font-size:.72rem">Importar</button>
+            <button class="btn btn-outline" onclick="rastRiscoExportModelo()" style="padding:6px 12px;font-size:.72rem">Modelo</button>
+            <button class="btn btn-export" onclick="rastRiscoExportAll()" style="padding:6px 12px;font-size:.72rem">Exportar Todas</button>
           </div>
         </div>
         <div class="search-row" style="margin-bottom:12px">
           <input type="text" id="rastRiscoBusca" placeholder="Buscar área, cidade..." oninput="rastRenderRisco()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.78rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-          <select id="rastRiscoNivel" onchange="rastRenderRisco()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)">
-            <option value="">Todos os níveis</option><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Médio</option><option value="baixo">Baixo</option>
-          </select>
+          <select id="rastRiscoNivel" onchange="rastRenderRisco()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Todos níveis</option><option value="critico">Crítico</option><option value="alto">Alto</option><option value="medio">Médio</option><option value="baixo">Baixo</option></select>
         </div>
-        <div class="table-wrap">
-          <table id="tblRastRisco">
-            <thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>UF</th><th style="text-align:center">Nível</th><th>Política</th><th style="text-align:center">Raio (km)</th><th>Tipo Veículo</th><th>Status</th><th class="col-actions"></th></tr></thead>
-            <tbody id="tbodyRastRisco"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table id="tblRastRisco"><thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>UF</th><th style="text-align:center">Nível</th><th>Política</th><th style="text-align:center">Raio</th><th>Tipo</th><th>Bairro</th><th>Status</th><th class="col-actions"></th></tr></thead><tbody id="tbodyRastRisco"></tbody></table></div>
         <p style="font-size:.7rem;color:var(--text3);margin-top:8px" id="rastRiscoInfo"></p>
       </div>
 
       <!-- PANEL: RASTREADORES - QUALIDADE -->
       <div class="panel" id="panel-rast-qualidade">
-        <div class="rast-nodata" id="rastQualNodata">
-          <div class="bi-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>Carregue a base no <strong>BI Associados</strong> primeiro.</p><button class="btn btn-green" onclick="goPanel('bi-base')" style="margin-top:12px">Ir para BI Associados</button></div>
-        </div>
+        <div class="rast-nodata" id="rastQualNodata" style="display:flex"></div>
         <div id="rastQualContent" style="display:none">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
             <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Qualidade da Base</h2>
+            <button class="btn btn-export" onclick="rastExportQualidadeXLSX()" style="margin-left:auto;padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar XLSX</button>
           </div>
-          <!-- Summary cards -->
           <div class="bi-kpi-grid" id="rastQualKpis"></div>
-          <!-- Issues table -->
           <div id="rastQualIssues" style="margin-top:20px"></div>
         </div>
       </div>
