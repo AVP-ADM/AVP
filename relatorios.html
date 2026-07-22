@@ -522,6 +522,11 @@ tr:last-child td{border-bottom:none}
 .bi-table-scroll-wrap::after{right:0;background:linear-gradient(to left,var(--surface),transparent);opacity:0}
 .bi-table-scroll-wrap.scroll-right::after{opacity:1}
 .bi-table-scroll-wrap.scroll-left::before{opacity:1}
+.bi-scroll-pill{position:sticky;top:calc(50% - 35px);z-index:10;width:28px;height:70px;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);color:var(--text3);transition:all .25s;flex-shrink:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);background:color-mix(in srgb,var(--surface) 80%,transparent)}
+.bi-scroll-pill:hover{color:var(--text1);border-color:var(--accent);background:color-mix(in srgb,var(--surface) 95%,transparent);transform:scale(1.05);box-shadow:var(--shadow-md)}
+.bi-scroll-pill.hidden{opacity:0;pointer-events:none}
+.bi-scroll-pill svg{width:16px;height:16px}
+.bi-table-outer{display:flex;align-items:stretch;gap:0}
 #biTblBase{border-collapse:collapse;width:max-content;min-width:100%}
 #biTblBase th{cursor:pointer;position:relative;white-space:nowrap;padding:8px 10px}
 #biTblBase th:hover{background:var(--surface-2)}
@@ -1116,13 +1121,17 @@ tr:last-child td{border-bottom:none}
               </div>
             </div>
           </div>
-          <div class="bi-table-scroll-wrap" id="biTableScrollWrap">
-            <div class="table-wrap" id="biTableWrap" onscroll="biCheckScrollFade()">
-              <table id="biTblBase">
-                <thead><tr id="biTblHead"></tr></thead>
-                <tbody id="biTbody"></tbody>
-              </table>
+          <div class="bi-table-outer" id="biTableOuter">
+            <button class="bi-scroll-pill hidden" id="biPillLeft" onclick="biScrollTable(-300)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div class="bi-table-scroll-wrap" id="biTableScrollWrap">
+              <div class="table-wrap" id="biTableWrap" onscroll="biCheckScrollFade()">
+                <table id="biTblBase">
+                  <thead><tr id="biTblHead"></tr></thead>
+                  <tbody id="biTbody"></tbody>
+                </table>
+              </div>
             </div>
+            <button class="bi-scroll-pill" id="biPillRight" onclick="biScrollTable(300)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
           </div>
           <div class="bi-scroll-hint" id="biScrollHint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg> Deslize para ver mais colunas</div>
           <div class="bi-pagination" id="biPagination"></div>
@@ -4986,20 +4995,47 @@ function biSortTable(col) {
 function biScrollTable(px) {
   var wrap = document.getElementById('biTableWrap');
   if (wrap) wrap.scrollBy({ left: px, behavior: 'smooth' });
+  setTimeout(biCheckScrollFade, 350);
 }
 
 function biCheckScrollFade() {
   var wrap = document.getElementById('biTableWrap');
   var container = document.getElementById('biTableScrollWrap');
+  var pillLeft = document.getElementById('biPillLeft');
+  var pillRight = document.getElementById('biPillRight');
   var hint = document.getElementById('biScrollHint');
   if (!wrap || !container) return;
   var scrollLeft = wrap.scrollLeft;
   var maxScroll = wrap.scrollWidth - wrap.clientWidth;
   container.classList.toggle('scroll-left', scrollLeft > 5);
   container.classList.toggle('scroll-right', scrollLeft < maxScroll - 5);
+  // Pill buttons
+  if (pillLeft) pillLeft.classList.toggle('hidden', scrollLeft <= 5);
+  if (pillRight) pillRight.classList.toggle('hidden', maxScroll <= 5 || scrollLeft >= maxScroll - 5);
   // Esconde hint após primeiro scroll
   if (hint && scrollLeft > 10) hint.classList.add('hidden');
 }
+
+// IntersectionObserver: fade pills when table leaves viewport
+(function() {
+  if (!window.IntersectionObserver) return;
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var outer = document.getElementById('biTableOuter');
+      if (!outer) return;
+      var pills = outer.querySelectorAll('.bi-scroll-pill');
+      pills.forEach(function(p) {
+        p.style.opacity = entry.isIntersecting ? '' : '0';
+        p.style.pointerEvents = entry.isIntersecting ? '' : 'none';
+      });
+    });
+  }, { threshold: 0.1 });
+  // Observe after DOM ready
+  setTimeout(function() {
+    var el = document.getElementById('biTableOuter');
+    if (el) observer.observe(el);
+  }, 1000);
+})();
 function biToggleExportMenu() {
   var menu = document.getElementById('biExportMenu');
   menu.classList.toggle('show');
