@@ -522,14 +522,17 @@ tr:last-child td{border-bottom:none}
 #biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
 #biTblBase th.sorted-asc::after{content:'▲'}
 #biTblBase th.sorted-desc::after{content:'▼'}
-.bi-scroll-btn{display:none}
 .bi-table-scroll-wrap{position:relative}
 .bi-table-scroll-wrap .table-wrap{flex:1;overflow-x:auto;scrollbar-width:thin}
-.bi-table-scroll-wrap::before,.bi-table-scroll-wrap::after{content:'';position:absolute;top:0;bottom:0;width:40px;pointer-events:none;z-index:5;transition:opacity .3s}
+.bi-table-scroll-wrap::before,.bi-table-scroll-wrap::after{content:'';position:absolute;top:0;bottom:0;width:60px;pointer-events:none;z-index:5;transition:opacity .3s}
 .bi-table-scroll-wrap::before{left:0;background:linear-gradient(to right,var(--surface),transparent);opacity:0}
 .bi-table-scroll-wrap::after{right:0;background:linear-gradient(to left,var(--surface),transparent);opacity:0}
 .bi-table-scroll-wrap.scroll-right::after{opacity:1}
 .bi-table-scroll-wrap.scroll-left::before{opacity:1}
+.bi-scroll-hint{text-align:center;font-size:.68rem;color:var(--text3);padding:6px 0;transition:opacity .3s;display:flex;align-items:center;justify-content:center;gap:6px}
+.bi-scroll-hint.hidden{opacity:0;pointer-events:none;height:0;padding:0;overflow:hidden}
+.bi-scroll-hint svg{animation:biHintBounce 1.5s ease-in-out infinite}
+@keyframes biHintBounce{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
 .bi-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .bi-status-dot.st-ativo{background:var(--green)}
 .bi-status-dot.st-novo{background:#8B5CF6}
@@ -1121,6 +1124,7 @@ tr:last-child td{border-bottom:none}
               </table>
             </div>
           </div>
+          <div class="bi-scroll-hint" id="biScrollHint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg> Deslize para ver mais colunas</div>
           <div class="bi-pagination" id="biPagination"></div>
         </div>
       </div>
@@ -4933,7 +4937,17 @@ function biRenderTable() {
   document.getElementById('biTbody').innerHTML = html;
 
   biRenderPagination(totalPages);
-  setTimeout(biCheckScrollFade, 100);
+  setTimeout(function() {
+    biCheckScrollFade();
+    // Mostra hint apenas se tabela tem scroll disponível
+    var wrap = document.getElementById('biTableWrap');
+    var hint = document.getElementById('biScrollHint');
+    if (wrap && hint) {
+      var hasScroll = wrap.scrollWidth > wrap.clientWidth;
+      if (!hasScroll || wrap.scrollLeft > 10) hint.classList.add('hidden');
+      else hint.classList.remove('hidden');
+    }
+  }, 100);
 }
 
 function biRenderPagination(totalPages) {
@@ -4977,11 +4991,14 @@ function biScrollTable(px) {
 function biCheckScrollFade() {
   var wrap = document.getElementById('biTableWrap');
   var container = document.getElementById('biTableScrollWrap');
+  var hint = document.getElementById('biScrollHint');
   if (!wrap || !container) return;
   var scrollLeft = wrap.scrollLeft;
   var maxScroll = wrap.scrollWidth - wrap.clientWidth;
   container.classList.toggle('scroll-left', scrollLeft > 5);
   container.classList.toggle('scroll-right', scrollLeft < maxScroll - 5);
+  // Esconde hint após primeiro scroll
+  if (hint && scrollLeft > 10) hint.classList.add('hidden');
 }
 function biToggleExportMenu() {
   var menu = document.getElementById('biExportMenu');
