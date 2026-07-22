@@ -390,6 +390,12 @@ function rastExportPriorizacaoCSV(){
 /* ====== MAPA COMPLETO (filtros + camadas + drawer) ====== */
 function rastRenderMapa(){
   var container=document.getElementById('rastMapaContainer');if(!container)return;
+  // Ensure data is computed
+  if(RAST_CITIES.length===0&&BI_DATA&&BI_DATA.length>0){
+    var assocs=rastGetAssociados();
+    var filtroTipo=(document.getElementById('rastFiltroTipo')||{}).value||'todos';
+    RAST_CITIES=rastComputeCities(assocs,filtroTipo);
+  }
   var metrica=(document.getElementById('rastMapaMetrica')||{}).value||'semRastreador';
   var showRegistros=document.getElementById('rastLayerRegistros')?document.getElementById('rastLayerRegistros').checked:true;
   var showPrest=document.getElementById('rastLayerPrestadores')?document.getElementById('rastLayerPrestadores').checked:true;
@@ -445,10 +451,11 @@ function rastRenderMapa(){
     }
   }
   // Legend
+  var cidadesNoMapa=RAST_CITIES.filter(function(c){return c.lat&&c.lng;}).length;
   var legendHtml='<span><span class="rast-prio-dot critico"></span> Crítica</span><span><span class="rast-prio-dot alto"></span> Alta</span><span><span class="rast-prio-dot medio"></span> Média</span><span><span class="rast-prio-dot baixo"></span> Baixa</span>';
   legendHtml+='<span style="margin-left:8px;color:var(--purple)">● Prestador</span>';
   legendHtml+='<span style="margin-left:8px">⚠️ Área de Risco</span>';
-  legendHtml+='<span style="margin-left:auto;font-weight:600">'+RAST_CITIES.filter(function(c){return c.lat&&c.lng;}).length+' cidades no mapa</span>';
+  legendHtml+='<span style="margin-left:auto;font-weight:600">'+cidadesNoMapa+' cidades no mapa (total: '+RAST_CITIES.length+')</span>';
   document.getElementById('rastMapaLegend').innerHTML=legendHtml;
 }
 
@@ -725,7 +732,7 @@ goPanel=function(panelId){
   _origGoPanel(panelId);
   if(panelId.indexOf('rast-')===0){
     if(panelId==='rast-visao'||panelId==='rast-priorizacao'||panelId==='rast-qualidade'){rastRefreshAll();rastStartPolling();}
-    else if(panelId==='rast-mapa'){rastRefreshAll();rastStartPolling();setTimeout(function(){rastRenderMapa();if(RAST_MAP)RAST_MAP.invalidateSize();},200);}
+    else if(panelId==='rast-mapa'){rastRefreshAll();rastStartPolling();setTimeout(function(){if(RAST_CITIES.length>0){rastRenderMapa();}if(RAST_MAP)RAST_MAP.invalidateSize();},300);}
     else if(panelId==='rast-prestadores'){rastLoadPrestadores();}
     else if(panelId==='rast-risco'){rastLoadRisco();}
   }
