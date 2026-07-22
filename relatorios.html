@@ -515,11 +515,17 @@ tr:last-child td{border-bottom:none}
 .bi-export-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;font-size:.76rem;font-family:var(--font);color:var(--text1);cursor:pointer;transition:background .15s;text-align:left}
 .bi-export-menu button:hover{background:var(--surface-2)}
 .bi-export-menu button svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
-#biTblBase th{cursor:pointer;position:relative}
+#biTblBase th{cursor:pointer;position:relative;white-space:nowrap;padding:8px 10px}
 #biTblBase th:hover{background:var(--surface-2)}
+#biTblBase td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 10px}
+#biTblBase{border-collapse:collapse;width:max-content;min-width:100%}
 #biTblBase th.sorted-asc::after,#biTblBase th.sorted-desc::after{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:.6rem;color:var(--accent)}
 #biTblBase th.sorted-asc::after{content:'▲'}
 #biTblBase th.sorted-desc::after{content:'▼'}
+.bi-scroll-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:10;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow);color:var(--text2);transition:all .15s}
+.bi-scroll-btn:hover{background:var(--surface-2);color:var(--text1);box-shadow:var(--shadow-md)}
+.bi-scroll-left{left:-14px}
+.bi-scroll-right{right:-14px}
 .bi-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .bi-status-dot.st-ativo{background:var(--green)}
 .bi-status-dot.st-novo{background:#8B5CF6}
@@ -1103,11 +1109,15 @@ tr:last-child td{border-bottom:none}
               </div>
             </div>
           </div>
-          <div class="table-wrap" style="overflow-x:auto">
-            <table id="biTblBase" style="min-width:900px">
-              <thead><tr id="biTblHead"></tr></thead>
-              <tbody id="biTbody"></tbody>
-            </table>
+          <div style="position:relative">
+            <button class="bi-scroll-btn bi-scroll-left" onclick="biScrollTable(-300)" title="Rolar esquerda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <button class="bi-scroll-btn bi-scroll-right" onclick="biScrollTable(300)" title="Rolar direita"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+            <div class="table-wrap" id="biTableWrap" style="overflow-x:auto">
+              <table id="biTblBase">
+                <thead><tr id="biTblHead"></tr></thead>
+                <tbody id="biTbody"></tbody>
+              </table>
+            </div>
           </div>
           <div class="bi-pagination" id="biPagination"></div>
         </div>
@@ -4777,26 +4787,26 @@ function biRenderCompareRastreador() {
   document.getElementById('biCompareRastreador').innerHTML = html;
 }
 var BI_COLUMNS = [
-  { key: '#', label: '#', field: null, visible: true, align: '' },
-  { key: 'nome', label: 'Nome', field: 'nome', visible: true, align: '' },
-  { key: 'situacao', label: 'Situacao', field: 'situacao', visible: true, align: '' },
-  { key: 'categoria', label: 'Categoria', field: 'categoria', visible: true, align: '' },
-  { key: 'plano', label: 'Plano', field: 'plano', visible: true, align: '' },
-  { key: 'marca', label: 'Marca', field: 'marca', visible: true, align: '' },
-  { key: 'modelo', label: 'Modelo', field: 'modelo', visible: false, align: '' },
-  { key: 'cidade', label: 'Cidade', field: 'cidade', visible: true, align: '' },
-  { key: 'uf', label: 'UF', field: 'uf', visible: true, align: '' },
-  { key: 'valor_mensal', label: 'Mensal', field: 'valor_mensal', visible: true, align: 'right' },
-  { key: 'valor_fipe', label: 'FIPE', field: 'valor_fipe', visible: false, align: 'right' },
-  { key: 'rastreador', label: 'Rastr.', field: 'rastreador', visible: true, align: 'center' },
-  { key: 'data_ativacao', label: 'Ativacao', field: 'data_ativacao', visible: true, align: '' },
-  { key: 'data_cadastro', label: 'Cadastro', field: 'data_cadastro', visible: false, align: '' },
-  { key: 'consultor', label: 'Consultor', field: 'consultor', visible: false, align: '' },
-  { key: 'telefone', label: 'Telefone', field: 'telefone', visible: false, align: '' },
-  { key: 'email', label: 'Email', field: 'email', visible: false, align: '' },
-  { key: 'placa', label: 'Placa', field: 'placa', visible: false, align: '' },
-  { key: 'dias_atraso', label: 'Dias Atraso', field: 'dias_atraso', visible: false, align: 'center' },
-  { key: 'motivo_cancelamento', label: 'Motivo Cancel.', field: 'motivo_cancelamento', visible: false, align: '' }
+  { key: '#', label: '#', field: null, visible: true, align: '', minW: '35px' },
+  { key: 'nome', label: 'Nome', field: 'nome', visible: true, align: '', minW: '200px' },
+  { key: 'situacao', label: 'Situacao', field: 'situacao', visible: true, align: '', minW: '80px' },
+  { key: 'categoria', label: 'Categoria', field: 'categoria', visible: true, align: '', minW: '140px' },
+  { key: 'plano', label: 'Plano', field: 'plano', visible: true, align: '', minW: '70px' },
+  { key: 'marca', label: 'Marca', field: 'marca', visible: true, align: '', minW: '90px' },
+  { key: 'modelo', label: 'Modelo', field: 'modelo', visible: false, align: '', minW: '160px' },
+  { key: 'cidade', label: 'Cidade', field: 'cidade', visible: true, align: '', minW: '120px' },
+  { key: 'uf', label: 'UF', field: 'uf', visible: true, align: '', minW: '40px' },
+  { key: 'valor_mensal', label: 'Mensal', field: 'valor_mensal', visible: true, align: 'right', minW: '85px' },
+  { key: 'valor_fipe', label: 'FIPE', field: 'valor_fipe', visible: false, align: 'right', minW: '85px' },
+  { key: 'rastreador', label: 'Rastr.', field: 'rastreador', visible: true, align: 'center', minW: '50px' },
+  { key: 'data_ativacao', label: 'Ativacao', field: 'data_ativacao', visible: true, align: '', minW: '90px' },
+  { key: 'data_cadastro', label: 'Cadastro', field: 'data_cadastro', visible: false, align: '', minW: '130px' },
+  { key: 'consultor', label: 'Consultor', field: 'consultor', visible: false, align: '', minW: '150px' },
+  { key: 'telefone', label: 'Telefone', field: 'telefone', visible: false, align: '', minW: '110px' },
+  { key: 'email', label: 'Email', field: 'email', visible: false, align: '', minW: '160px' },
+  { key: 'placa', label: 'Placa', field: 'placa', visible: false, align: '', minW: '75px' },
+  { key: 'dias_atraso', label: 'Dias Atraso', field: 'dias_atraso', visible: false, align: 'center', minW: '60px' },
+  { key: 'motivo_cancelamento', label: 'Motivo Cancel.', field: 'motivo_cancelamento', visible: false, align: '', minW: '140px' }
 ];
 
 function biLoadColPrefs() {
@@ -4865,7 +4875,7 @@ function biRenderTable() {
   var headHtml = '';
   for (var c = 0; c < visCols.length; c++) {
     var col = visCols[c];
-    var style = col.align ? 'text-align:' + col.align : '';
+    var style = 'min-width:' + col.minW + ';' + (col.align ? 'text-align:' + col.align + ';' : '');
     var onclick = col.field ? ' onclick="biSortTable(\'' + col.field + '\')"' : '';
     headHtml += '<th' + onclick + ' style="' + style + '">' + col.label + '</th>';
   }
@@ -4954,6 +4964,11 @@ function biSortTable(col) {
     BI_SORT_DIR = 'asc';
   }
   biRenderTable();
+}
+
+function biScrollTable(px) {
+  var wrap = document.getElementById('biTableWrap');
+  if (wrap) wrap.scrollBy({ left: px, behavior: 'smooth' });
 }
 function biToggleExportMenu() {
   var menu = document.getElementById('biExportMenu');
