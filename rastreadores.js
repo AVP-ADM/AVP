@@ -491,7 +491,7 @@ function rastPrestadorForm(existing) {
   html += '<div class="rast-form-group"><label>UF</label><input id="rpfUf" value="' + (existing?existing.uf:'') + '" maxlength="2" style="text-transform:uppercase"></div>';
   html += '<div class="rast-form-group"><label>Raio (km)</label><input type="number" id="rpfRaio" value="' + (existing?existing.raio_km:30) + '"></div>';
   html += '<div class="rast-form-group"><label>Capacidade Mensal</label><input type="number" id="rpfCap" value="' + (existing&&existing.capacidade_mensal?existing.capacidade_mensal:'') + '"></div>';
-  html += '<div class="rast-form-group"><label>Tipos Atendidos</label><select id="rpfTipos" multiple style="height:80px"><option value="moto"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('moto')>=0?' selected':'') + '>Moto</option><option value="carro"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('carro')>=0?' selected':'') + '>Carro</option><option value="caminhao"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('caminhao')>=0?' selected':'') + '>Caminhão</option></select></div>';
+  html += '<div class="rast-form-group"><label>Tipos Atendidos</label><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.78rem;transition:all .15s"><input type="checkbox" id="rpfTipoMoto" value="moto"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('moto')>=0?' checked':'') + ' style="accent-color:var(--accent)"> Moto</label><label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.78rem;transition:all .15s"><input type="checkbox" id="rpfTipoCarro" value="carro"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('carro')>=0?' checked':'') + ' style="accent-color:var(--accent)"> Carro</label><label style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:.78rem;transition:all .15s"><input type="checkbox" id="rpfTipoCaminhao" value="caminhao"' + (existing&&existing.tipos_atendidos&&existing.tipos_atendidos.indexOf('caminhao')>=0?' checked':'') + ' style="accent-color:var(--accent)"> Caminhão</label></div></div>';
   html += '<div class="rast-form-group"><label>Status</label><select id="rpfStatus"><option value="ativo"' + (existing&&existing.status==='ativo'?' selected':'') + '>Ativo</option><option value="pendente"' + (existing&&existing.status==='pendente'?' selected':'') + '>Pendente</option><option value="inativo"' + (existing&&existing.status==='inativo'?' selected':'') + '>Inativo</option></select></div>';
   html += '</div>';
   html += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">';
@@ -505,7 +505,10 @@ function rastPrestadorForm(existing) {
 async function rastPrestadorSave(id) {
   var nome = document.getElementById('rpfNome').value.trim();
   if (!nome) { alert('Nome é obrigatório'); return; }
-  var tipos = Array.from(document.getElementById('rpfTipos').selectedOptions).map(function(o){return o.value});
+  var tipos = [];
+  if (document.getElementById('rpfTipoMoto').checked) tipos.push('moto');
+  if (document.getElementById('rpfTipoCarro').checked) tipos.push('carro');
+  if (document.getElementById('rpfTipoCaminhao').checked) tipos.push('caminhao');
   var body = {
     nome: nome,
     cidade: document.getElementById('rpfCidade').value.trim(),
