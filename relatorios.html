@@ -522,6 +522,7 @@ tr:last-child td{border-bottom:none}
 #biTblBase th.sorted-desc::after{content:'▼'}
 .bi-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 .bi-status-dot.st-ativo{background:var(--green)}
+.bi-status-dot.st-novo{background:#8B5CF6}
 .bi-status-dot.st-suspenso{background:var(--amber)}
 .bi-status-dot.st-cancelado{background:var(--red)}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -1022,7 +1023,7 @@ tr:last-child td{border-bottom:none}
         <div class="bi-filters" id="biFilters" style="display:none">
           <select id="biFiltroAno" onchange="biApplyFilters()"><option value="">Ano</option></select>
           <select id="biFiltroMes" onchange="biApplyFilters()"><option value="">Mes</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
-          <select id="biFiltroSituacao" onchange="biApplyFilters()"><option value="">Situacao</option><option value="Ativo">Ativos</option><option value="Suspenso">Suspensos</option><option value="Cancelado">Cancelados</option></select>
+          <select id="biFiltroSituacao" onchange="biApplyFilters()"><option value="">Situacao</option><option value="Ativo">Ativos</option><option value="Novo">Novos</option><option value="Suspenso">Suspensos</option><option value="Cancelado">Cancelados</option></select>
           <select id="biFiltroCategoria" onchange="biApplyFilters()"><option value="">Categoria</option></select>
           <select id="biFiltroCidade" onchange="biApplyFilters()"><option value="">Cidade</option></select>
           <select id="biFiltroPlano" onchange="biApplyFilters()"><option value="">Plano</option></select>
@@ -4301,11 +4302,11 @@ function biParseExcel(base64) {
     var nome = row[colMap.nome] || '';
     if (!nome) continue;
     var situacao = (row[colMap.situacao] || '').toString().trim();
-    // Normalizar situação
-    if (situacao.toLowerCase().indexOf('ativo') !== -1 && situacao.toLowerCase().indexOf('in') === -1) situacao = 'Ativo';
+    // Normalizar situação (manter Novo como categoria separada)
+    if (situacao.toLowerCase() === 'ativo') situacao = 'Ativo';
+    else if (situacao.toLowerCase() === 'novo') situacao = 'Novo';
     else if (situacao.toLowerCase().indexOf('cancel') !== -1) situacao = 'Cancelado';
     else if (situacao.toLowerCase().indexOf('suspen') !== -1) situacao = 'Suspenso';
-    else if (situacao.toLowerCase() === 'novo') situacao = 'Ativo';
 
     var valMensal = colMap.valor_mensal !== undefined ? parseFloat(row[colMap.valor_mensal]) || 0 : 0;
     var valFipe = colMap.valor_fipe !== undefined ? parseFloat(row[colMap.valor_fipe]) || 0 : 0;
@@ -4419,9 +4420,10 @@ async function biLoadBase() {
     }
 
     // Calcular totais
-    var totaisReais = { ativos: 0, cancelados: 0, suspensos: 0 };
+    var totaisReais = { ativos: 0, novos: 0, cancelados: 0, suspensos: 0 };
     for (var i = 0; i < allData.length; i++) {
       if (allData[i].situacao === 'Ativo') totaisReais.ativos++;
+      else if (allData[i].situacao === 'Novo') totaisReais.novos++;
       else if (allData[i].situacao === 'Cancelado') totaisReais.cancelados++;
       else if (allData[i].situacao === 'Suspenso') totaisReais.suspensos++;
     }
@@ -4437,7 +4439,7 @@ async function biLoadBase() {
     fill.style.width = '100%';
     progTitle.innerHTML = '<span style="color:var(--green)">✓</span> Base atualizada com sucesso!';
     progCurrent.textContent = BI_DATA.length.toLocaleString('pt-BR') + ' registros carregados em ' + timeStr;
-    progSummary.textContent = 'Ativos: ' + totaisReais.ativos.toLocaleString('pt-BR') + '  •  Suspensos: ' + totaisReais.suspensos.toLocaleString('pt-BR') + '  •  Cancelados: ' + totaisReais.cancelados.toLocaleString('pt-BR');
+    progSummary.textContent = 'Ativos: ' + totaisReais.ativos.toLocaleString('pt-BR') + '  •  Novos: ' + totaisReais.novos.toLocaleString('pt-BR') + '  •  Suspensos: ' + totaisReais.suspensos.toLocaleString('pt-BR') + '  •  Cancelados: ' + totaisReais.cancelados.toLocaleString('pt-BR');
     biSaveToCache();
 
     setTimeout(function() {
@@ -4569,32 +4571,29 @@ function biClearFilters() {
 
 function biRenderKpis() {
   var data = BI_FILTERED;
-  var hasFilter = document.getElementById('biFiltroAno').value || document.getElementById('biFiltroMes').value || document.getElementById('biFiltroSituacao').value || document.getElementById('biFiltroCategoria').value || document.getElementById('biFiltroCidade').value || document.getElementById('biFiltroPlano').value || document.getElementById('biFiltroRastreador').checked || (document.getElementById('biSearchInput').value || '').trim();
 
-  var ativos = 0, suspensos = 0, cancelados = 0, totalMensal = 0, comRastr = 0;
+  var ativos = 0, novos = 0, suspensos = 0, cancelados = 0, totalMensal = 0, comRastr = 0;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
     if (r.situacao === 'Ativo') { ativos++; totalMensal += r.valor_mensal; }
+    else if (r.situacao === 'Novo') novos++;
     else if (r.situacao === 'Suspenso') suspensos++;
-    else cancelados++;
+    else if (r.situacao === 'Cancelado') cancelados++;
     if (r.rastreador === 1) comRastr++;
   }
 
-  // Usar totais reais da API quando não tem filtro ativo
-  var dispAtivos = hasFilter ? ativos : BI_TOTAIS_REAIS.ativos;
-  var dispSuspensos = hasFilter ? suspensos : BI_TOTAIS_REAIS.suspensos;
-  var dispCancelados = hasFilter ? cancelados : BI_TOTAIS_REAIS.cancelados;
-  var dispTotal = dispAtivos + dispSuspensos + dispCancelados;
+  var total = data.length;
   var ticket = ativos > 0 ? totalMensal / ativos : 0;
 
   var html = '';
-  html += '<div class="bi-kpi" onclick="biFilterKpi(\'\')"><div class="bi-kpi-val">' + biFormatNum(dispTotal) + '</div><div class="bi-kpi-label">Total</div></div>';
-  html += '<div class="bi-kpi bi-green" onclick="biFilterKpi(\'Ativo\')"><div class="bi-kpi-val">' + biFormatNum(dispAtivos) + '</div><div class="bi-kpi-label">Ativos</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispAtivos / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
-  html += '<div class="bi-kpi bi-amber" onclick="biFilterKpi(\'Suspenso\')"><div class="bi-kpi-val">' + biFormatNum(dispSuspensos) + '</div><div class="bi-kpi-label">Suspensos</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispSuspensos / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
-  html += '<div class="bi-kpi bi-red" onclick="biFilterKpi(\'Cancelado\')"><div class="bi-kpi-val">' + biFormatNum(dispCancelados) + '</div><div class="bi-kpi-label">Cancelados</div><div class="bi-kpi-pct">' + (dispTotal > 0 ? (dispCancelados / dispTotal * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi" onclick="biFilterKpi(\'\')"><div class="bi-kpi-val">' + biFormatNum(total) + '</div><div class="bi-kpi-label">Total</div></div>';
+  html += '<div class="bi-kpi bi-green" onclick="biFilterKpi(\'Ativo\')"><div class="bi-kpi-val">' + biFormatNum(ativos) + '</div><div class="bi-kpi-label">Ativos</div><div class="bi-kpi-pct">' + (total > 0 ? (ativos / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi" onclick="biFilterKpi(\'Novo\')" style="border-left:3px solid #8B5CF6"><div class="bi-kpi-val" style="color:#8B5CF6">' + biFormatNum(novos) + '</div><div class="bi-kpi-label">Novos</div><div class="bi-kpi-pct">' + (total > 0 ? (novos / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-amber" onclick="biFilterKpi(\'Suspenso\')"><div class="bi-kpi-val">' + biFormatNum(suspensos) + '</div><div class="bi-kpi-label">Suspensos</div><div class="bi-kpi-pct">' + (total > 0 ? (suspensos / total * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi bi-red" onclick="biFilterKpi(\'Cancelado\')"><div class="bi-kpi-val">' + biFormatNum(cancelados) + '</div><div class="bi-kpi-label">Cancelados</div><div class="bi-kpi-pct">' + (total > 0 ? (cancelados / total * 100).toFixed(1) : 0) + '%</div></div>';
   html += '<div class="bi-kpi bi-blue"><div class="bi-kpi-val">R$ ' + biFormatNum(Math.round(totalMensal)) + '</div><div class="bi-kpi-label">MRR (Ativos)</div></div>';
   html += '<div class="bi-kpi bi-purple"><div class="bi-kpi-val">R$ ' + ticket.toFixed(0) + '</div><div class="bi-kpi-label">Ticket Medio</div></div>';
-  html += '<div class="bi-kpi" onclick="document.getElementById(\'biFiltroRastreador\').checked=true;biApplyFilters();" style="border-left:3px solid #06b6d4"><div class="bi-kpi-val" style="color:#06b6d4">' + biFormatNum(comRastr) + '</div><div class="bi-kpi-label">Com Rastreador</div><div class="bi-kpi-pct">' + (data.length > 0 ? (comRastr / data.length * 100).toFixed(1) : 0) + '%</div></div>';
+  html += '<div class="bi-kpi" onclick="document.getElementById(\'biFiltroRastreador\').checked=true;biApplyFilters();" style="border-left:3px solid #06b6d4"><div class="bi-kpi-val" style="color:#06b6d4">' + biFormatNum(comRastr) + '</div><div class="bi-kpi-label">Com Rastreador</div><div class="bi-kpi-pct">' + (total > 0 ? (comRastr / total * 100).toFixed(1) : 0) + '%</div></div>';
   document.getElementById('biKpis').innerHTML = html;
 }
 
@@ -4616,27 +4615,30 @@ function biRenderCharts() {
 }
 
 function biRenderDonut() {
-  var ativos = 0, suspensos = 0, cancelados = 0;
+  var ativos = 0, novos = 0, suspensos = 0, cancelados = 0;
   for (var i = 0; i < BI_FILTERED.length; i++) {
     if (BI_FILTERED[i].situacao === 'Ativo') ativos++;
+    else if (BI_FILTERED[i].situacao === 'Novo') novos++;
     else if (BI_FILTERED[i].situacao === 'Suspenso') suspensos++;
     else cancelados++;
   }
   var total = BI_FILTERED.length || 1;
   var r = 45, cx = 60, cy = 60, circ = 2 * Math.PI * r;
-  var pAtivos = ativos / total, pSuspensos = suspensos / total, pCancelados = cancelados / total;
-  var o1 = 0, o2 = pAtivos * circ, o3 = (pAtivos + pSuspensos) * circ;
+  var pAtivos = ativos / total, pNovos = novos / total, pSuspensos = suspensos / total, pCancelados = cancelados / total;
+  var o1 = 0, o2 = pAtivos * circ, o3 = (pAtivos + pNovos) * circ, o4 = (pAtivos + pNovos + pSuspensos) * circ;
 
   var svg = '<svg class="bi-donut-svg" viewBox="0 0 120 120">';
   svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--green)" stroke-width="16" stroke-dasharray="' + (pAtivos * circ) + ' ' + circ + '" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>';
-  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--amber)" stroke-width="16" stroke-dasharray="' + (pSuspensos * circ) + ' ' + circ + '" stroke-dashoffset="-' + o2 + '" transform="rotate(-90 60 60)"/>';
-  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--red)" stroke-width="16" stroke-dasharray="' + (pCancelados * circ) + ' ' + circ + '" stroke-dashoffset="-' + o3 + '" transform="rotate(-90 60 60)"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#8B5CF6" stroke-width="16" stroke-dasharray="' + (pNovos * circ) + ' ' + circ + '" stroke-dashoffset="-' + o2 + '" transform="rotate(-90 60 60)"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--amber)" stroke-width="16" stroke-dasharray="' + (pSuspensos * circ) + ' ' + circ + '" stroke-dashoffset="-' + o3 + '" transform="rotate(-90 60 60)"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--red)" stroke-width="16" stroke-dasharray="' + (pCancelados * circ) + ' ' + circ + '" stroke-dashoffset="-' + o4 + '" transform="rotate(-90 60 60)"/>';
   svg += '<text x="60" y="56" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text1)">' + biFormatNum(BI_FILTERED.length) + '</text>';
   svg += '<text x="60" y="72" text-anchor="middle" font-size="8" fill="var(--text3)">total</text>';
   svg += '</svg>';
 
   var legend = '<div class="bi-donut-legend">';
   legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--green)"></span>Ativos: ' + biFormatNum(ativos) + ' (' + (pAtivos * 100).toFixed(1) + '%)</div>';
+  legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:#8B5CF6"></span>Novos: ' + biFormatNum(novos) + ' (' + (pNovos * 100).toFixed(1) + '%)</div>';
   legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--amber)"></span>Suspensos: ' + biFormatNum(suspensos) + ' (' + (pSuspensos * 100).toFixed(1) + '%)</div>';
   legend += '<div class="bi-donut-leg-item"><span class="bi-donut-leg-dot" style="background:var(--red)"></span>Cancelados: ' + biFormatNum(cancelados) + ' (' + (pCancelados * 100).toFixed(1) + '%)</div>';
   legend += '</div>';
@@ -4713,7 +4715,7 @@ function biRenderTable() {
   var html = '';
   for (var i = 0; i < pageData.length; i++) {
     var r = pageData[i];
-    var stClass = r.situacao === 'Ativo' ? 'st-ativo' : (r.situacao === 'Suspenso' ? 'st-suspenso' : 'st-cancelado');
+    var stClass = r.situacao === 'Ativo' ? 'st-ativo' : (r.situacao === 'Novo' ? 'st-novo' : (r.situacao === 'Suspenso' ? 'st-suspenso' : 'st-cancelado'));
     html += '<tr>';
     html += '<td>' + (startIdx + i + 1) + '</td>';
     html += '<td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.nome || '') + '</td>';
