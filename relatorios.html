@@ -1254,26 +1254,59 @@ tr:last-child td{border-bottom:none}
       <div class="panel" id="panel-rast-mapa">
         <div class="rast-nodata" id="rastMapaNodata" style="display:flex"></div>
         <div id="rastMapaContent" style="display:none">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
-            <h2 style="font-size:1.1rem;font-weight:700">Rastreadores — Mapa</h2>
-            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <select id="rastMapaMetrica" onchange="rastRenderMapa()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.76rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="semRastreador">Sem Rastreador</option><option value="operacionais">Operacionais</option><option value="cobertura">Cobertura %</option><option value="score">Score</option></select>
-              <button class="btn btn-export" onclick="rastExportMapaXLSX()" style="padding:6px 12px;font-size:.72rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
+          <!-- KPIs do mapa -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px" id="rastMapaKpis"></div>
+          <!-- Chips de filtro ativo -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center" id="rastMapaChips"></div>
+          <!-- Controls row -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <select id="rastMapaMetrica" onchange="rastRenderMapa()" style="padding:5px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.72rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="semRastreador">Sem Rastreador</option><option value="operacionais">Operacionais</option><option value="cobertura">Cobertura %</option><option value="score">Score</option></select>
+            <button class="btn btn-export" onclick="rastExportMapaXLSX()" style="padding:5px 12px;font-size:.7rem"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar</button>
+          </div>
+          <!-- Main layout: Filtros + Mapa + Drawer -->
+          <div style="display:flex;gap:0">
+            <!-- Painel de Filtros (lateral esquerda) -->
+            <div id="rastMapaFiltros" style="width:240px;min-width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg) 0 0 var(--radius-lg);padding:14px;overflow-y:auto;max-height:520px;font-size:.72rem">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:.8rem">Filtros do mapa</b></div>
+              <!-- Visualização -->
+              <div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--text2);font-size:.68rem;text-transform:uppercase;letter-spacing:.3px">Visualização</div>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastLayerRegistros" checked onchange="rastRenderMapa()" style="accent-color:var(--accent)"> Bolhas de registros</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastLayerPrestadores" checked onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Marcadores de prestadores</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastLayerRaios" onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Raios de prestadores</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastLayerRisco" checked onchange="rastRenderMapa()" style="accent-color:var(--red)"> Áreas de risco (círculos)</label>
+              </div>
+              <!-- Tipo de veículo -->
+              <div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--text2);font-size:.68rem;text-transform:uppercase;letter-spacing:.3px">Tipo de veículo <span style="font-weight:400;color:var(--text3)">(vazio = todos)</span></div>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFCarro" onchange="rastMapaFilterChanged()" style="accent-color:var(--blue)"> Carro</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFMoto" onchange="rastMapaFilterChanged()" style="accent-color:var(--purple)"> Moto</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFCaminhao" onchange="rastMapaFilterChanged()" style="accent-color:var(--amber)"> Caminhão</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFNaoClass" onchange="rastMapaFilterChanged()" style="accent-color:var(--text3)"> Não classificado</label>
+              </div>
+              <!-- Situação -->
+              <div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--text2);font-size:.68rem;text-transform:uppercase;letter-spacing:.3px">Situação do associado</div>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFAtivo" checked onchange="rastMapaFilterChanged()" style="accent-color:var(--green)"> Ativo</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFSuspenso" checked onchange="rastMapaFilterChanged()" style="accent-color:var(--amber)"> Suspenso</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFCancelado" onchange="rastMapaFilterChanged()" style="accent-color:var(--red)"> Cancelado</label>
+              </div>
+              <!-- Rastreamento -->
+              <div style="margin-bottom:14px"><div style="font-weight:700;margin-bottom:6px;color:var(--text2);font-size:.68rem;text-transform:uppercase;letter-spacing:.3px">Rastreamento</div>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFComRast" onchange="rastMapaFilterChanged()" style="accent-color:var(--green)"> Com rastreador válido</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFSemRast" onchange="rastMapaFilterChanged()" style="accent-color:var(--red)"> Sem rastreador válido</label>
+                <label style="display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer"><input type="checkbox" id="rastMapaFCancelRast" onchange="rastMapaFilterChanged()" style="accent-color:var(--amber)"> Cancelado c/ rastreador</label>
+              </div>
+              <!-- Contagem -->
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:.68rem;color:var(--text3)">
+                <span style="font-weight:700;color:var(--text1)">Registros: <span id="rastMapaRegCount" style="color:var(--accent)">0</span></span>
+              </div>
             </div>
+            <!-- Mapa -->
+            <div style="flex:1;position:relative">
+              <div id="rastMapaContainer" style="height:520px;border-radius:0;overflow:hidden;border:1px solid var(--border);border-left:none;background:var(--surface-2)"></div>
+            </div>
+            <!-- Drawer (direita) -->
+            <div id="rastMapaDrawer" style="display:none;width:300px;min-width:300px;background:var(--surface);border:1px solid var(--border);border-left:none;border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:14px;overflow-y:auto;max-height:520px;box-shadow:var(--shadow)"></div>
           </div>
-          <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
-            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRegistros" checked onchange="rastRenderMapa()" style="accent-color:var(--accent)"> Cidades</label>
-            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerPrestadores" checked onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Prestadores</label>
-            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRaios" onchange="rastRenderMapa()" style="accent-color:var(--purple)"> Raios</label>
-            <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;color:var(--text2);cursor:pointer"><input type="checkbox" id="rastLayerRisco" checked onchange="rastRenderMapa()" style="accent-color:var(--red)"> Áreas de Risco</label>
-            <span style="border-left:1px solid var(--border);height:16px;margin:0 4px"></span>
-            <select id="rastMapaTipo" onchange="rastMapaFiltroChanged()" style="padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.7rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="todos">Todos tipos</option><option value="moto">Motos</option><option value="carro">Carros</option><option value="caminhao">Caminhões</option></select>
-            <select id="rastMapaPrioridade" onchange="rastRenderMapa()" style="padding:4px 8px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:.7rem;font-family:var(--font);background:var(--surface);color:var(--text1)"><option value="">Todas prioridades</option><option value="critico">Crítica</option><option value="alto">Alta</option><option value="medio">Média</option><option value="baixo">Baixa</option></select>
-          </div>
-          <div style="display:flex;gap:12px">
-            <div style="flex:1"><div id="rastMapaContainer" style="height:520px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:var(--surface-2)"></div></div>
-            <div id="rastMapaDrawer" style="display:none;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;overflow-y:auto;max-height:520px;box-shadow:var(--shadow)"></div>
-          </div>
+          <!-- Legend -->
           <div style="display:flex;gap:12px;margin-top:8px;font-size:.68rem;color:var(--text3);align-items:center;flex-wrap:wrap" id="rastMapaLegend"></div>
         </div>
       </div>

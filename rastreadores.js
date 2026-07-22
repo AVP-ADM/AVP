@@ -519,13 +519,95 @@ function rastOpenDrawer(tipo,data){
 }
 function rastCloseDrawer(){var d=document.getElementById('rastMapaDrawer');if(d)d.style.display='none';RAST_DRAWER_OPEN=false;}
 
-function rastMapaFiltroChanged(){
-  // Sync tipo filter with the global one and re-compute
-  var tipo=(document.getElementById('rastMapaTipo')||{}).value||'todos';
-  var globalFiltro=document.getElementById('rastFiltroTipo');
-  if(globalFiltro)globalFiltro.value=tipo;
-  rastRefreshAll();
-  setTimeout(function(){rastRenderMapa();},100);
+function rastMapaFilterChanged(){
+  // Re-compute cities with filters applied and re-render map
+  rastComputeMapFiltered();
+  rastRenderMapa();
+  rastRenderMapaKpis();
+  rastRenderMapaChips();
+}
+
+function rastGetMapFilteredAssocs(){
+  var assocs=rastGetAssociados();
+  // Tipo filter
+  var tipos=[];
+  if(document.getElementById('rastMapaFCarro')&&document.getElementById('rastMapaFCarro').checked)tipos.push('carro');
+  if(document.getElementById('rastMapaFMoto')&&document.getElementById('rastMapaFMoto').checked)tipos.push('moto');
+  if(document.getElementById('rastMapaFCaminhao')&&document.getElementById('rastMapaFCaminhao').checked)tipos.push('caminhao');
+  if(document.getElementById('rastMapaFNaoClass')&&document.getElementById('rastMapaFNaoClass').checked)tipos.push('nao_classificado');
+  // Situação
+  var sits=[];
+  if(document.getElementById('rastMapaFAtivo')&&document.getElementById('rastMapaFAtivo').checked)sits.push('Ativo');
+  if(document.getElementById('rastMapaFSuspenso')&&document.getElementById('rastMapaFSuspenso').checked)sits.push('Suspenso');
+  if(document.getElementById('rastMapaFCancelado')&&document.getElementById('rastMapaFCancelado').checked)sits.push('Cancelado');
+  // Rastreamento
+  var rasts=[];
+  if(document.getElementById('rastMapaFComRast')&&document.getElementById('rastMapaFComRast').checked)rasts.push('com');
+  if(document.getElementById('rastMapaFSemRast')&&document.getElementById('rastMapaFSemRast').checked)rasts.push('sem');
+  if(document.getElementById('rastMapaFCancelRast')&&document.getElementById('rastMapaFCancelRast').checked)rasts.push('cancel_com');
+
+  return assocs.filter(function(a){
+    if(tipos.length>0&&tipos.indexOf(a.tipo)<0)return false;
+    if(sits.length>0&&sits.indexOf(a.situacaoNorm)<0)return false;
+    if(rasts.length>0){
+      var match=false;
+      if(rasts.indexOf('com')>=0&&a.temRastreador&&a.operacional)match=true;
+      if(rasts.indexOf('sem')>=0&&!a.temRastreador&&a.operacional)match=true;
+      if(rasts.indexOf('cancel_com')>=0&&a.situacaoNorm==='Cancelado'&&a.temRastreador)match=true;
+      if(!match)return false;
+    }
+    return true;
+  });
+}
+
+function rastComputeMapFiltered(){
+  var filtered=rastGetMapFilteredAssocs();
+  RAST_CITIES=rastComputeCities(filtered,'todos');
+  // Update count
+  var countEl=document.getElementById('rastMapaRegCount');
+  if(countEl)countEl.textContent=biFormatNum(filtered.length);
+}
+
+function rastRenderMapaKpis(){
+  var filtered=rastGetMapFilteredAssocs();
+  var cidadesComCoord=RAST_CITIES.filter(function(c){return c.lat&&c.lng;}).length;
+  var prestAtendendo=RAST_PRESTADORES.filter(function(p){return p.status==='ativo';}).length;
+  var cidadesSemPrest=RAST_CITIES.filter(function(c){return c.prestadoresAtivos===0;}).length;
+  var el=document.getElementById('rastMapaKpis');
+  if(!el)return;
+  el.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px"><div style="font-size:.62rem;color:var(--text3);text-transform:uppercase;font-weight:600">Registros no recorte</div><div style="font-size:1.2rem;font-weight:800;color:var(--text1)">'+biFormatNum(filtered.length)+'</div></div>'
+    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px"><div style="font-size:.62rem;color:var(--text3);text-transform:uppercase;font-weight:600">Cidades</div><div style="font-size:1.2rem;font-weight:800;color:var(--text1)">'+RAST_CITIES.length+'</div></div>'
+    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px"><div style="font-size:.62rem;color:var(--text3);text-transform:uppercase;font-weight:600">Prestadores que atendem</div><div style="font-size:1.2rem;font-weight:800;color:var(--text1)">'+prestAtendendo+'</div></div>'
+    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px"><div style="font-size:.62rem;color:var(--text3);text-transform:uppercase;font-weight:600">Cidades sem prestador</div><div style="font-size:1.2rem;font-weight:800;color:var(--red)">'+cidadesSemPrest+'</div></div>';
+}
+
+function rastRenderMapaChips(){
+  var chips=[];
+  if(document.getElementById('rastMapaFAtivo')&&document.getElementById('rastMapaFAtivo').checked)chips.push('situação: ativo');
+  if(document.getElementById('rastMapaFSuspenso')&&document.getElementById('rastMapaFSuspenso').checked)chips.push('situação: suspenso');
+  if(document.getElementById('rastMapaFCancelado')&&document.getElementById('rastMapaFCancelado').checked)chips.push('situação: cancelado');
+  if(document.getElementById('rastMapaFCarro')&&document.getElementById('rastMapaFCarro').checked)chips.push('tipo: carro');
+  if(document.getElementById('rastMapaFMoto')&&document.getElementById('rastMapaFMoto').checked)chips.push('tipo: moto');
+  if(document.getElementById('rastMapaFCaminhao')&&document.getElementById('rastMapaFCaminhao').checked)chips.push('tipo: caminhão');
+  if(document.getElementById('rastMapaFComRast')&&document.getElementById('rastMapaFComRast').checked)chips.push('rastr: com válido');
+  if(document.getElementById('rastMapaFSemRast')&&document.getElementById('rastMapaFSemRast').checked)chips.push('rastr: sem válido');
+  if(document.getElementById('rastMapaFCancelRast')&&document.getElementById('rastMapaFCancelRast').checked)chips.push('rastr: cancelado c/ rastr');
+  var el=document.getElementById('rastMapaChips');
+  if(!el)return;
+  if(chips.length===0){el.innerHTML='';return;}
+  var html='';
+  for(var i=0;i<chips.length;i++){html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:.65rem;font-weight:600;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent)">'+chips[i]+'</span>';}
+  html+='<button onclick="rastMapaClearFilters()" style="background:none;border:none;font-size:.65rem;color:var(--text3);cursor:pointer;text-decoration:underline;font-family:var(--font)">Limpar todos</button>';
+  el.innerHTML=html;
+}
+
+function rastMapaClearFilters(){
+  ['rastMapaFCarro','rastMapaFMoto','rastMapaFCaminhao','rastMapaFNaoClass'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  var atEl=document.getElementById('rastMapaFAtivo');if(atEl)atEl.checked=true;
+  var susEl=document.getElementById('rastMapaFSuspenso');if(susEl)susEl.checked=true;
+  var canEl=document.getElementById('rastMapaFCancelado');if(canEl)canEl.checked=false;
+  ['rastMapaFComRast','rastMapaFSemRast','rastMapaFCancelRast'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  rastMapaFilterChanged();
 }
 
 function rastExportMapaXLSX(){
@@ -753,7 +835,7 @@ goPanel=function(panelId){
   _origGoPanel(panelId);
   if(panelId.indexOf('rast-')===0){
     if(panelId==='rast-visao'||panelId==='rast-priorizacao'||panelId==='rast-qualidade'){rastRefreshAll();rastStartPolling();}
-    else if(panelId==='rast-mapa'){rastRefreshAll();rastStartPolling();setTimeout(function(){if(RAST_CITIES.length>0){rastRenderMapa();}if(RAST_MAP)RAST_MAP.invalidateSize();},300);}
+    else if(panelId==='rast-mapa'){rastRefreshAll();rastStartPolling();setTimeout(function(){rastComputeMapFiltered();rastRenderMapa();rastRenderMapaKpis();rastRenderMapaChips();if(RAST_MAP)RAST_MAP.invalidateSize();},300);}
     else if(panelId==='rast-prestadores'){rastLoadPrestadores();}
     else if(panelId==='rast-risco'){rastLoadRisco();}
   }
