@@ -1081,7 +1081,7 @@ tr:last-child td{border-bottom:none}
           </div>
           <table id="tblConsultores" style="display:none">
             <thead>
-              <tr><th>#</th><th>Consultor</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th><th class="col-actions"></th></tr>
+              <tr><th>#</th><th>Consultor</th><th>Cidade</th><th style="text-align:center">Ativados</th><th style="text-align:right">Mensalidade</th><th style="text-align:center">Ticket Medio</th><th style="text-align:center">Score</th><th style="text-align:center">Pontuacao</th><th>Premiacao</th><th class="col-actions"></th></tr>
             </thead>
             <tbody id="tbodyConsultores"></tbody>
             <tfoot id="tfootConsultores"></tfoot>
@@ -4012,7 +4012,18 @@ async function consultoresAtualizar(){
 
     if(!consResult.success)throw new Error(consResult.error||'Falha ao buscar consultores');
 
-    updProg(80,'Processando dados...');
+    updProg(80,'Buscando cidades dos consultores...');
+
+    // Buscar cidades de todos os consultores via endpoint de listagem
+    var cidadesMap={};
+    try{
+      var cidResult=await edgeCall({action:'consultores_cidades',session_cookie:sessionCookie});
+      if(cidResult.success&&cidResult.consultores){
+        cidResult.consultores.forEach(function(c){cidadesMap[c.nome.toUpperCase()]=c.cidade||'';});
+      }
+    }catch(e){console.warn('Falha ao buscar cidades:',e);}
+
+    updProg(90,'Processando dados...');
 
     // Processar todos os consultores (incluindo gestores)
     var results=[];
@@ -4023,8 +4034,10 @@ async function consultoresAtualizar(){
       var score=getScoreConsultor(ticket);
       var pontuacao=c.ativados*score;
       var premiacao=getPremiacaoConsultor(pontuacao);
+      var cidade=cidadesMap[c.nome.toUpperCase()]||'';
       results.push({
         nome:c.nome,
+        cidade:cidade,
         ativados:c.ativados,
         mensalidade:c.mensalidade,
         ticket_medio:Math.round(ticket*100)/100,
@@ -4204,12 +4217,13 @@ function renderConsultoresTable(data){
     var rowCls=idx===0?'row-gold':idx===1?'row-silver':idx===2?'row-bronze':'';
     var gestorTag=c.isGestor?'<span class="tag-badge tag-gestor">Gestor</span>':'';
     var safeNome=c.nome.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    var cidade=c.cidade||'-';
     sumAtv+=c.ativados;sumMens+=c.mensalidade;
-    html+='<tr class="'+rowCls+'"><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+gestorTag+'</td><td class="col-num">'+fk(c.ativados)+'</td><td class="col-money">'+fmtBRL(c.mensalidade)+'</td><td class="col-num">R$ '+c.ticket_medio.toFixed(2).replace('.',',')+'</td><td class="col-num">'+c.score+'</td><td class="col-num" style="min-width:110px"><strong>'+fk(c.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pct+'%;background:'+pColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td><td><span class="campanha-premio '+c.premiacao_css+'">'+c.premiacao+'</span></td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideConsultor(\''+safeNome+'\')" title="Ocultar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
+    html+='<tr class="'+rowCls+'"><td class="col-pos">'+(idx+1)+'</td><td class="col-gestor">'+c.nome+gestorTag+'</td><td class="col-sede">'+cidade+'</td><td class="col-num">'+fk(c.ativados)+'</td><td class="col-money">'+fmtBRL(c.mensalidade)+'</td><td class="col-num">R$ '+c.ticket_medio.toFixed(2).replace('.',',')+'</td><td class="col-num">'+c.score+'</td><td class="col-num" style="min-width:110px"><strong>'+fk(c.pontuacao)+'</strong><div class="campanha-progress"><div class="campanha-progress-fill" style="width:'+pct+'%;background:'+pColor+'"></div></div><div class="camp-proj">'+projLabel+'</div></td><td><span class="campanha-premio '+c.premiacao_css+'">'+c.premiacao+'</span></td><td class="col-actions"><button class="btn-hide" onclick="event.stopPropagation();hideConsultor(\''+safeNome+'\')" title="Ocultar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></td></tr>';
   });
   document.getElementById('tbodyConsultores').innerHTML=html;
   var tkFilt=sumAtv>0?(sumMens/sumAtv):0;
-  document.getElementById('tfootConsultores').innerHTML='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' consultores)</td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+tkFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td><td></td></tr>';
+  document.getElementById('tfootConsultores').innerHTML='<tr class="camp-tfoot"><td></td><td class="tf-label">TOTAL ('+data.length+' consultores)</td><td></td><td class="col-num">'+fk(sumAtv)+'</td><td class="col-money">'+fmtBRL(sumMens)+'</td><td class="col-num">R$ '+tkFilt.toFixed(2).replace('.',',')+'</td><td></td><td></td><td></td><td></td></tr>';
 }
 
 /* ====== CONSULTORES: OCULTAR (independente) ====== */
@@ -4285,7 +4299,7 @@ function loadConsultoresFromCache(){
     if(data&&data.length>0){
       CONSULTORES_DATA=data.map(function(row){
         var premiacao=getPremiacaoConsultor(row.pontuacao);
-        return{nome:row.consultor_nome,ativados:row.ativados,mensalidade:parseFloat(row.mensalidade)||0,ticket_medio:parseFloat(row.ticket_medio)||0,score:row.score,pontuacao:row.pontuacao,premiacao:premiacao.label,premiacao_css:premiacao.css,isGestor:row.is_gestor||false};
+        return{nome:row.consultor_nome,cidade:row.cidade||'',ativados:row.ativados,mensalidade:parseFloat(row.mensalidade)||0,ticket_medio:parseFloat(row.ticket_medio)||0,score:row.score,pontuacao:row.pontuacao,premiacao:premiacao.label,premiacao_css:premiacao.css,isGestor:row.is_gestor||false};
       });
       document.getElementById('consultoresCacheInfo').textContent='Cache Supabase - salvo em '+new Date(data[0].updated_at).toLocaleString('pt-BR');
       renderConsultores();
@@ -4304,7 +4318,7 @@ async function saveConsultoresToSupabase(results){
   try{
     await sbFetch('campanha_consultores_dados?consultor_nome=neq.',{method:'DELETE',headers:{'Prefer':'return=minimal'}});
     var registros=results.map(function(c){
-      return{consultor_nome:c.nome,ativados:c.ativados,mensalidade:c.mensalidade,ticket_medio:c.ticket_medio,score:c.score,pontuacao:c.pontuacao,is_gestor:c.isGestor||false,updated_at:new Date().toISOString()};
+      return{consultor_nome:c.nome,cidade:c.cidade||null,ativados:c.ativados,mensalidade:c.mensalidade,ticket_medio:c.ticket_medio,score:c.score,pontuacao:c.pontuacao,is_gestor:c.isGestor||false,updated_at:new Date().toISOString()};
     });
     await sbFetch('campanha_consultores_dados',{method:'POST',body:JSON.stringify(registros),headers:{'Prefer':'return=minimal'}});
   }catch(e){console.warn('Falha ao salvar consultores no Supabase',e)}
