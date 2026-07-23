@@ -4730,6 +4730,43 @@ async function biLoadBase() {
     BI_DATA = allData;
     BI_TOTAIS_REAIS = totaisReais;
 
+    // === ETAPA EXTRA: Buscar placas com rastreador e cruzar ===
+    try {
+      progCurrent.textContent = '● Buscando associados com rastreador...';
+      fill.style.width = '96%';
+      var rastPlacas = new Set();
+      var rastTotal = 0;
+      var rastStart = 0;
+      while (true) {
+        var rastResp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
+          body: JSON.stringify({ action: 'base_associados', session_cookie: session, situacoes: [1, 2, 3], start: rastStart, length: 5000, possui_rastreador: '1' })
+        });
+        var rastData = await rastResp.json();
+        if (!rastData.success || !rastData.data || rastData.data.length === 0) break;
+        rastTotal = rastData.recordsTotal || 0;
+        for (var ri = 0; ri < rastData.data.length; ri++) {
+          var rPlaca = (rastData.data[ri].placa || '').toUpperCase().trim();
+          if (rPlaca) rastPlacas.add(rPlaca);
+        }
+        if (rastStart + rastData.data.length >= rastTotal) break;
+        rastStart += 5000;
+      }
+      // Cruzar por placa
+      var rastMarcados = 0;
+      for (var i = 0; i < BI_DATA.length; i++) {
+        var placa = (BI_DATA[i].placa || '').toUpperCase().trim();
+        if (placa && rastPlacas.has(placa)) {
+          BI_DATA[i].rastreador = 1;
+          BI_DATA[i].numero_rastreador = BI_DATA[i].numero_rastreador || 'instalado';
+          rastMarcados++;
+        }
+      }
+      progCurrent.textContent = '● ' + rastMarcados + ' associados marcados com rastreador (de ' + rastPlacas.size + ' encontrados)';
+    } catch(rastErr) {
+      console.warn('Falha ao buscar rastreadores:', rastErr);
+    }
+
     // Show completion state
     var elapsed = Math.round((Date.now() - startTime) / 1000);
     var mins = Math.floor(elapsed / 60);
