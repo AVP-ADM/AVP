@@ -1057,7 +1057,8 @@ tr:last-child td{border-bottom:none}
 
         <!-- Filtros -->
         <div class="search-row" style="margin-bottom:12px;flex-wrap:wrap">
-          <input type="text" id="filterConsultores" placeholder="Filtrar por consultor..." oninput="filtrarConsultores()" style="min-width:160px">
+          <input type="text" id="filterConsultores" placeholder="Filtrar por consultor, cidade..." oninput="filtrarConsultores()" style="min-width:160px">
+          <select id="filterConsGestor" onchange="filtrarConsultores()" style="min-width:100px"><option value="">Todos</option><option value="sim">Gestores</option><option value="nao">Não gestores</option></select>
           <select id="filterConsAtivados" onchange="filtrarConsultores()" style="min-width:120px"><option value="">Ativados</option><option value="10">10+</option><option value="50">50+</option><option value="100">100+</option><option value="200">200+</option><option value="500">500+</option></select>
           <select id="filterConsScore" onchange="filtrarConsultores()" style="min-width:100px"><option value="">Score</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="5">5+</option><option value="7">7+</option><option value="10">10</option></select>
           <select id="filterConsPontuacao" onchange="filtrarConsultores()" style="min-width:130px"><option value="">Pontuacao</option><option value="100">100+</option><option value="300">300+</option><option value="600">600+</option><option value="1200">1.200+</option></select>
@@ -4187,9 +4188,12 @@ function filtrarConsultores(){
   var minAtv=parseInt((document.getElementById('filterConsAtivados')||{}).value)||0;
   var minScore=parseInt((document.getElementById('filterConsScore')||{}).value)||0;
   var minPts=parseInt((document.getElementById('filterConsPontuacao')||{}).value)||0;
+  var gestorFiltro=(document.getElementById('filterConsGestor')||{}).value||'';
   var visible=getConsultoresVisible();
   var filtered=visible.filter(function(c){
-    if(s&&c.nome.toLowerCase().indexOf(s)<0)return false;
+    if(s&&c.nome.toLowerCase().indexOf(s)<0&&(c.cidade||'').toLowerCase().indexOf(s)<0)return false;
+    if(gestorFiltro==='sim'&&!c.isGestor)return false;
+    if(gestorFiltro==='nao'&&c.isGestor)return false;
     if(minAtv&&c.ativados<minAtv)return false;
     if(minScore&&c.score<minScore)return false;
     if(minPts&&c.pontuacao<minPts)return false;
