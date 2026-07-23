@@ -4730,13 +4730,14 @@ async function biLoadBase() {
     BI_DATA = allData;
     BI_TOTAIS_REAIS = totaisReais;
 
-    // === ETAPA EXTRA: Buscar placas com rastreador e cruzar ===
+    // === ETAPA EXTRA: Buscar associados com rastreador e cruzar (chave: placa+nome) ===
     try {
       progCurrent.textContent = '● Buscando associados com rastreador...';
       fill.style.width = '96%';
-      var rastPlacas = new Set();
+      var rastChaves = new Set();
       var rastTotal = 0;
       var rastStart = 0;
+      var rastPlacasUnicas = new Set();
       while (true) {
         var rastResp = await fetch(SUPABASE_URL + '/functions/v1/aeasy-proxy', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
@@ -4747,22 +4748,28 @@ async function biLoadBase() {
         rastTotal = rastData.recordsTotal || 0;
         for (var ri = 0; ri < rastData.data.length; ri++) {
           var rPlaca = (rastData.data[ri].placa || '').toUpperCase().trim();
-          if (rPlaca) rastPlacas.add(rPlaca);
+          var rNome = (rastData.data[ri].nome || '').toUpperCase().trim();
+          if (rPlaca) {
+            rastChaves.add(rPlaca + '||' + rNome);
+            rastPlacasUnicas.add(rPlaca);
+          }
         }
         if (rastStart + rastData.data.length >= rastTotal) break;
         rastStart += 5000;
       }
-      // Cruzar por placa
+      // Cruzar por chave placa+nome (resultado exato igual AEasy)
       var rastMarcados = 0;
       for (var i = 0; i < BI_DATA.length; i++) {
         var placa = (BI_DATA[i].placa || '').toUpperCase().trim();
-        if (placa && rastPlacas.has(placa)) {
+        var nome = (BI_DATA[i].nome || '').toUpperCase().trim();
+        if (placa && rastChaves.has(placa + '||' + nome)) {
           BI_DATA[i].rastreador = 1;
           BI_DATA[i].numero_rastreador = BI_DATA[i].numero_rastreador || 'instalado';
           rastMarcados++;
         }
       }
-      progCurrent.textContent = '● ' + rastMarcados + ' associados marcados com rastreador (de ' + rastPlacas.size + ' encontrados)';
+      var rastDuplicatas = rastTotal - rastPlacasUnicas.size;
+      progCurrent.textContent = '● ' + rastMarcados + ' com rastreador (' + rastPlacasUnicas.size + ' placas únicas + ' + rastDuplicatas + ' duplicatas)';
     } catch(rastErr) {
       console.warn('Falha ao buscar rastreadores:', rastErr);
     }
