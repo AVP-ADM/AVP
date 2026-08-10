@@ -731,13 +731,13 @@ tr:last-child td{border-bottom:none}
         <div class="notif-bar" id="notifSemana" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span id="notifSemanaText">Semana pendente de fechamento.</span>
-          <button class="btn btn-green" style="padding:5px 12px;font-size:.72rem" onclick="fecharSemana()">Fechar agora</button>
+          <button class="btn btn-green" style="padding:5px 12px;font-size:.72rem" id="notifFecharBtn" onclick="iniciarFechamento('semana')">Fechar agora</button>
         </div>
 
         <!-- Month selector -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <button class="btn btn-outline" onclick="acompMesAnterior()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <h2 id="acompMesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h2>
+          <h2 id="acompMesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Carregando...</h2>
           <button class="btn btn-outline" onclick="acompMesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           <div style="margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-green" onclick="iniciarFechamento('semana')" id="btnFecharSemana"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
@@ -846,7 +846,7 @@ tr:last-child td{border-bottom:none}
       <div class="panel" id="panel-top20-consultores">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
           <button class="btn btn-outline" onclick="top20MesAnterior()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <h2 id="top20MesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Julho 2026</h2>
+          <h2 id="top20MesLabel" style="font-size:1.1rem;font-weight:700;min-width:160px;text-align:center">Carregando...</h2>
           <button class="btn btn-outline" onclick="top20MesSeguinte()" style="padding:6px 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn btn-green" onclick="top20FecharSemana()" id="btnTop20Fechar" style="margin-left:auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Fechar Semana</button>
           <button class="btn btn-outline" onclick="top20Desfazer()" id="btnTop20Desfazer" style="display:none;padding:6px 12px;font-size:.72rem" title="Desfazer ultimo fechamento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg></button>
@@ -1874,15 +1874,15 @@ function renderHiddenPanel(){
 }
 
 /* ====== ACOMPANHAMENTO SEMANAL ====== */
-var ACOMP_MES = 7;
-var ACOMP_ANO = 2026;
+var ACOMP_MES = new Date().getMonth()+1;
+var ACOMP_ANO = new Date().getFullYear();
 var ACOMP_DATA = {};
 var MESES_NOMES = ['','Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 // Limites: apenas meses com dados
 var ACOMP_MES_MIN = 1;
 var ACOMP_ANO_MIN = 2026;
-var ACOMP_MES_MAX = 7;
-var ACOMP_ANO_MAX = 2026;
+var ACOMP_MES_MAX = new Date().getMonth()+1;
+var ACOMP_ANO_MAX = new Date().getFullYear();
 
 function acompMesAnterior(){
   if(ACOMP_ANO===ACOMP_ANO_MIN && ACOMP_MES<=ACOMP_MES_MIN) return;
@@ -1929,6 +1929,16 @@ function renderAcompanhamento(data){
     document.getElementById('acompMedia').textContent='-';
     document.getElementById('acompSemanasCards').innerHTML='<p style="color:var(--text3);font-size:.82rem">Nenhum dado para este mes.</p>';
     document.getElementById('tbodyAcomp').innerHTML='';
+    // Esconder notificacao quando nao ha dados
+    var notif=document.getElementById('notifSemana');
+    if(notif)notif.style.display='none';
+    // Mostrar botao Fechar Semana para o mes atual sem dados
+    var btnFecharSem=document.getElementById('btnFecharSemana');
+    var btnFecharMes=document.getElementById('btnFecharMes');
+    var btnDesfazer=document.getElementById('btnDesfazer');
+    if(btnFecharSem)btnFecharSem.style.display='inline-flex';
+    if(btnFecharMes)btnFecharMes.style.display='none';
+    if(btnDesfazer)btnDesfazer.style.display='none';
     return;
   }
 
@@ -1948,11 +1958,13 @@ function renderAcompanhamento(data){
   var btnFecharSem=document.getElementById('btnFecharSemana');
   var btnFecharMes=document.getElementById('btnFecharMes');
   var btnDesfazer=document.getElementById('btnDesfazer');
+  var notif=document.getElementById('notifSemana');
   if(fechamento){
-    // Mes ja fechado - esconde ambos, mostra desfazer
+    // Mes ja fechado - esconde ambos, mostra desfazer, esconde notificacao
     if(btnFecharSem)btnFecharSem.style.display='none';
     if(btnFecharMes)btnFecharMes.style.display='none';
     if(btnDesfazer)btnDesfazer.style.display='inline-flex';
+    if(notif)notif.style.display='none';
   }else{
     // Verificar se todas as segundas do mes ja passaram (hora de fechar mes)
     var lastDay=new Date(ACOMP_ANO,ACOMP_MES,0).getDate();
@@ -1968,10 +1980,29 @@ function renderAcompanhamento(data){
       // Mostrar "Fechar Mes"
       if(btnFecharSem)btnFecharSem.style.display='none';
       if(btnFecharMes)btnFecharMes.style.display='inline-flex';
+      // Mostrar notificacao apenas se o mes ja acabou e ainda nao foi fechado
+      if(mesJaAcabou&&notif){
+        notif.style.display='flex';
+        document.getElementById('notifSemanaText').textContent='Mes pendente de fechamento.';
+        var notifBtn=document.getElementById('notifFecharBtn');
+        if(notifBtn)notifBtn.setAttribute('onclick',"iniciarFechamento('mes')");
+      }else if(notif){
+        notif.style.display='none';
+      }
     }else{
       // Mostrar "Fechar Semana"
       if(btnFecharSem)btnFecharSem.style.display='inline-flex';
       if(btnFecharMes)btnFecharMes.style.display='none';
+      // Mostrar notificacao se hoje eh segunda-feira e estamos no mes corrente
+      var isCurrentMonth=ACOMP_ANO===today.getFullYear()&&ACOMP_MES===(today.getMonth()+1);
+      if(isCurrentMonth&&today.getDay()===1&&notif){
+        notif.style.display='flex';
+        document.getElementById('notifSemanaText').textContent='Semana pendente de fechamento.';
+        var notifBtn=document.getElementById('notifFecharBtn');
+        if(notifBtn)notifBtn.setAttribute('onclick',"iniciarFechamento('semana')");
+      }else if(notif){
+        notif.style.display='none';
+      }
     }
     if(btnDesfazer)btnDesfazer.style.display=(semanasOrdenadas.length>0)?'inline-flex':'none';
   }
@@ -2641,15 +2672,11 @@ function exportarAcompXLSX(){
 
 /* ====== CHECK PENDING WEEK ====== */
 function checkPendingWeek(){
-  var today=new Date();
-  if(today.getDay()===1){// Monday
-    var notif=document.getElementById('notifSemana');
-    if(notif)notif.style.display='flex';
-  }
+  // Only show notification after loadAcompanhamento determines there's a pending week
+  // The notification is now managed by renderAcompanhamento based on actual data
 }
 
-// Check pending week on load
-checkPendingWeek();
+// Notification is now controlled by renderAcompanhamento() based on actual fechamento data
 
 // Set default dates (Data Inicial = 1o dia do mes, Data Final = hoje)
 (function(){
